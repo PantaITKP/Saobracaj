@@ -300,19 +300,27 @@
     <Compile Include="Administracija\frmDodeliGrupu.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Administracija\frmDodeliGrupu.Designer.cs" />
+    <Compile Include="Administracija\frmDodeliGrupu.designer.cs">
+      <DependentUpon>frmDodeliGrupu.cs</DependentUpon>
+    </Compile>
     <Compile Include="Administracija\frmDozvoleGrupe.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Administracija\frmDozvoleGrupe.Designer.cs" />
+    <Compile Include="Administracija\frmDozvoleGrupe.designer.cs">
+      <DependentUpon>frmDozvoleGrupe.cs</DependentUpon>
+    </Compile>
     <Compile Include="Administracija\frmForme.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Administracija\frmForme.Designer.cs" />
+    <Compile Include="Administracija\frmForme.designer.cs">
+      <DependentUpon>frmForme.cs</DependentUpon>
+    </Compile>
     <Compile Include="Administracija\frmFormePrava.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Administracija\frmFormePrava.Designer.cs" />
+    <Compile Include="Administracija\frmFormePrava.designer.cs">
+      <DependentUpon>frmFormePrava.cs</DependentUpon>
+    </Compile>
     <Compile Include="Administracija\frmKorisnici.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -322,7 +330,9 @@
     <Compile Include="Administracija\frmKreirajGrupu.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Administracija\frmKreirajGrupu.Designer.cs" />
+    <Compile Include="Administracija\frmKreirajGrupu.designer.cs">
+      <DependentUpon>frmKreirajGrupu.cs</DependentUpon>
+    </Compile>
     <Compile Include="Administracija\frmSistematizacija.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -930,7 +940,7 @@
     <Compile Include="MainP.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainP.Designer.cs">
+    <Compile Include="MainP.designer.cs">
       <DependentUpon>MainP.cs</DependentUpon>
     </Compile>
     <Compile Include="MDB_ScheduleDataProvider.cs" />
@@ -1454,14 +1464,24 @@
     <Compile Include="Testiranje\TestiranjeStampa.Designer.cs">
       <DependentUpon>TestiranjeStampa.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Administracija\frmDodeliGrupu.resx" />
-    <EmbeddedResource Include="Administracija\frmDozvoleGrupe.resx" />
-    <EmbeddedResource Include="Administracija\frmForme.resx" />
-    <EmbeddedResource Include="Administracija\frmFormePrava.resx" />
+    <EmbeddedResource Include="Administracija\frmDodeliGrupu.resx">
+      <DependentUpon>frmDodeliGrupu.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Administracija\frmDozvoleGrupe.resx">
+      <DependentUpon>frmDozvoleGrupe.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Administracija\frmForme.resx">
+      <DependentUpon>frmForme.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Administracija\frmFormePrava.resx">
+      <DependentUpon>frmFormePrava.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Administracija\frmKorisnici.resx">
       <DependentUpon>frmKorisnici.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Administracija\frmKreirajGrupu.resx" />
+    <EmbeddedResource Include="Administracija\frmKreirajGrupu.resx">
+      <DependentUpon>frmKreirajGrupu.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Administracija\frmSistematizacija.resx">
       <DependentUpon>frmSistematizacija.cs</DependentUpon>
     </EmbeddedResource>
