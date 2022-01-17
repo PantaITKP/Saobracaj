@@ -78,13 +78,13 @@
       <HintPath>..\packages\AjaxMin.5.14.5506.26202\lib\net40\AjaxMin.dll</HintPath>
     </Reference>
     <Reference Include="Bunifu_UI_v1.52">
-      <HintPath>C:\Users\pantelija\Desktop\Bunifu_UI_v1.52.dll</HintPath>
+      <HintPath>..\..\..\Users\Stefan Obradovic\Desktop\DLL\Bunifu_UI_v1.52.dll</HintPath>
     </Reference>
     <Reference Include="GMap.NET.Core">
-      <HintPath>C:\References\GMap.NET.Core.dll</HintPath>
+      <HintPath>..\..\..\Users\Stefan Obradovic\Desktop\DLL\GMap.NET.Core.dll</HintPath>
     </Reference>
     <Reference Include="GMap.NET.WindowsForms">
-      <HintPath>C:\References\GMap.NET.WindowsForms.dll</HintPath>
+      <HintPath>..\..\..\Users\Stefan Obradovic\Desktop\DLL\GMap.NET.WindowsForms.dll</HintPath>
     </Reference>
     <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -112,9 +112,12 @@
       <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.150.1404.0\lib\net40\Microsoft.ReportViewer.WebDesign.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ReportViewer.WebForms, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.150.1404.0\lib\net40\Microsoft.ReportViewer.WebForms.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Users\Stefan Obradovic\Desktop\DLL\New folder\Microsoft.ReportViewer.WebForms.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.ReportViewer.WinForms, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.ReportViewer.WinForms, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\..\..\Users\Stefan Obradovic\Desktop\DLL\New folder\Microsoft.ReportViewer.WinForms.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.SqlServer.Types, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.Types.14.0.314.76\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
     </Reference>
@@ -294,12 +297,32 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Administracija\frmDodeliGrupu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Administracija\frmDodeliGrupu.Designer.cs" />
+    <Compile Include="Administracija\frmDozvoleGrupe.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Administracija\frmDozvoleGrupe.Designer.cs" />
+    <Compile Include="Administracija\frmForme.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Administracija\frmForme.Designer.cs" />
+    <Compile Include="Administracija\frmFormePrava.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Administracija\frmFormePrava.Designer.cs" />
     <Compile Include="Administracija\frmKorisnici.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Administracija\frmKorisnici.Designer.cs">
       <DependentUpon>frmKorisnici.cs</DependentUpon>
     </Compile>
+    <Compile Include="Administracija\frmKreirajGrupu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Administracija\frmKreirajGrupu.Designer.cs" />
     <Compile Include="Administracija\frmSistematizacija.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -313,7 +336,10 @@
       <DependentUpon>frmSistematizacijaPovezivanje.cs</DependentUpon>
     </Compile>
     <Compile Include="Administracija\InsertAdministracije.cs" />
+    <Compile Include="Administracija\InsertForme.cs" />
+    <Compile Include="Administracija\InsertGrupe.cs" />
     <Compile Include="Administracija\InsertKorisnici.cs" />
+    <Compile Include="Administracija\InsertKorisnikGrupa.cs" />
     <Compile Include="Administracija\InsertSistematizacija.cs" />
     <Compile Include="Dokumenta\frmAutomobili.cs">
       <SubType>Form</SubType>
@@ -1428,9 +1454,14 @@
     <Compile Include="Testiranje\TestiranjeStampa.Designer.cs">
       <DependentUpon>TestiranjeStampa.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Administracija\frmDodeliGrupu.resx" />
+    <EmbeddedResource Include="Administracija\frmDozvoleGrupe.resx" />
+    <EmbeddedResource Include="Administracija\frmForme.resx" />
+    <EmbeddedResource Include="Administracija\frmFormePrava.resx" />
     <EmbeddedResource Include="Administracija\frmKorisnici.resx">
       <DependentUpon>frmKorisnici.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Administracija\frmKreirajGrupu.resx" />
     <EmbeddedResource Include="Administracija\frmSistematizacija.resx">
       <DependentUpon>frmSistematizacija.cs</DependentUpon>
     </EmbeddedResource>

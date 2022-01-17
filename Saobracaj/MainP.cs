@@ -116,8 +116,6 @@ namespace Saobracaj
         {
             Dokumenta.frmNajava frmNaj = new Dokumenta.frmNajava(Korisnik, 1);
             frmNaj.Show();
-
-          
         }
 
         private void toolStripButton17_Click(object sender, EventArgs e)
@@ -196,22 +194,20 @@ namespace Saobracaj
         {
             Dokumenta.frmRadniNalogPregled frmp2 = new Dokumenta.frmRadniNalogPregled();
             frmp2.Show();
-//Ovde imam duplo
-          //  Dokumenta.frmRadniNalogPregled frmRN = new Dokumenta.frmRadniNalogPregled();
-          //  frmRN.Show();
+            //Ovde imam duplo
+            //  Dokumenta.frmRadniNalogPregled frmRN = new Dokumenta.frmRadniNalogPregled();
+            //  frmRN.Show();
         }
 
         private void toolStripButton30_Click(object sender, EventArgs e)
         {
-         
+
             Dokumenta.frmRAdniNalogPregledPoLokomotivama rnpl = new Dokumenta.frmRAdniNalogPregledPoLokomotivama();
             rnpl.Show();
         }
 
         private void toolStripButton31_Click(object sender, EventArgs e)
         {
-           
-
             Dokumenta.frmStampaRadnogNaloga srn = new Dokumenta.frmStampaRadnogNaloga();
             srn.Show();
         }
@@ -362,7 +358,7 @@ namespace Saobracaj
             osnzar.Show();
 
 
-          
+
         }
 
         private void toolStripButton69_Click(object sender, EventArgs e)
@@ -391,7 +387,7 @@ namespace Saobracaj
 
         private void toolStripButton62_Click(object sender, EventArgs e)
         {
-           Servis.frmPrijavaMasinovodje mas = new Servis.frmPrijavaMasinovodje();
+            Servis.frmPrijavaMasinovodje mas = new Servis.frmPrijavaMasinovodje();
             mas.Show();
         }
 
@@ -523,8 +519,8 @@ namespace Saobracaj
         }
         private void RibbonPanel_Click(object sender, EventArgs e)
         {
-          //  Sifarnici.frmSifarnikKontrolnihGresaka skg = new Sifarnici.frmSifarnikKontrolnihGresaka();
-           // skg.Show();
+            //  Sifarnici.frmSifarnikKontrolnihGresaka skg = new Sifarnici.frmSifarnikKontrolnihGresaka();
+            // skg.Show();
         }
         private void toolStripButton85_Click(object sender, EventArgs e)
         {
@@ -655,32 +651,43 @@ namespace Saobracaj
 
         private void toolStripButton111_Click(object sender, EventArgs e)
         {
-          
-            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
-            myConnection.Open();
             SqlCommand myCommand = myConnection.CreateCommand();
             myCommand.CommandText = "sp_AzuriranjeOdmora";
             myCommand.CommandType = System.Data.CommandType.StoredProcedure;
-            SqlTransaction myTransaction = myConnection.BeginTransaction();
-            myCommand.Transaction = myTransaction;
             myCommand.ExecuteNonQuery();
-            myConnection.Close();
-            MessageBox.Show("Obrada zavrsena");
-/*
-            myConnection.Open();
-            SqlTransaction myTransaction = myConnection.BeginTransaction();
-            myCommand.Transaction = myTransaction;
-            bool error = true;
-            try
-            {
-                myCommand.ExecuteNonQuery();
-                myTransaction.Commit();
-                myTransaction = myConnection.BeginTransaction();
-                myCommand.Transaction = myTransaction;
-            }
-*/
+        }
+
+        private void toolStripButton116_Click(object sender, EventArgs e)
+        {
+
+            Administracija.frmForme forme = new Administracija.frmForme();
+            forme.Show();
+
+        }
+        private void toolStripButton114_Click(object sender, EventArgs e)
+        {
+            Administracija.frmKreirajGrupu kreirajGrupu = new Administracija.frmKreirajGrupu();
+            kreirajGrupu.Show();
+        }
+
+        private void toolStripButton115_Click(object sender, EventArgs e)
+        {
+            Administracija.frmDodeliGrupu dodeliGrupu = new Administracija.frmDodeliGrupu();
+            dodeliGrupu.Show();
+        }
+
+
+
+        private void toolStripButton117_Click(object sender, EventArgs e)
+        {
+            Administracija.frmFormePrava formePrava = new Administracija.frmFormePrava();
+            formePrava.Show();
+        }
+
+        private void MainP_Load(object sender, EventArgs e)
+        {
 
         }
     }
