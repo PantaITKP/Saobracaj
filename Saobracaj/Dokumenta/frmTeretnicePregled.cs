@@ -25,6 +25,7 @@ namespace Saobracaj.Dokumenta
         bool update;
         bool delete;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
+        public int Teren;
 
         string Korisnik = "";
         public frmTeretnicePregled()

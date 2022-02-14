@@ -29,35 +29,72 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
-            this.panel2 = new System.Windows.Forms.Panel();
+            this.btn_Stanica = new System.Windows.Forms.Button();
+            this.combo_Stanice = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel1.Controls.Add(this.btn_Stanica);
+            this.panel1.Controls.Add(this.combo_Stanice);
+            this.panel1.Controls.Add(this.label1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(111, 450);
+            this.panel1.Size = new System.Drawing.Size(415, 1184);
             this.panel1.TabIndex = 0;
             // 
-            // panel2
+            // btn_Stanica
             // 
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel2.Location = new System.Drawing.Point(709, 0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(91, 450);
-            this.panel2.TabIndex = 1;
+            this.btn_Stanica.BackColor = System.Drawing.SystemColors.Control;
+            this.btn_Stanica.Location = new System.Drawing.Point(253, 45);
+            this.btn_Stanica.Name = "btn_Stanica";
+            this.btn_Stanica.Size = new System.Drawing.Size(136, 37);
+            this.btn_Stanica.TabIndex = 172;
+            this.btn_Stanica.Text = "Prikaži stanice";
+            this.btn_Stanica.UseVisualStyleBackColor = false;
+            this.btn_Stanica.Click += new System.EventHandler(this.btn_Stanica_Click);
+            // 
+            // combo_Stanice
+            // 
+            this.combo_Stanice.BackColor = System.Drawing.SystemColors.Control;
+            this.combo_Stanice.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.combo_Stanice.FormattingEnabled = true;
+            this.combo_Stanice.Location = new System.Drawing.Point(4, 49);
+            this.combo_Stanice.Name = "combo_Stanice";
+            this.combo_Stanice.Size = new System.Drawing.Size(229, 28);
+            this.combo_Stanice.TabIndex = 1;
+            this.combo_Stanice.TextChanged += new System.EventHandler(this.combo_Stanice_TextChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(13, 409);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(65, 20);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Stanice";
             // 
             // frmTest
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.panel2);
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.ClientSize = new System.Drawing.Size(1661, 1184);
             this.Controls.Add(this.panel1);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmTest";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "frmTest";
             this.Load += new System.EventHandler(this.frmTest_Load);
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -65,6 +102,8 @@
         #endregion
 
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.ComboBox combo_Stanice;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btn_Stanica;
     }
 }

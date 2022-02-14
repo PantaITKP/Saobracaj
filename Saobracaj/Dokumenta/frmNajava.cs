@@ -1250,7 +1250,6 @@ namespace Saobracaj.Dokumenta
                 //Obraditi checked
                 cboNHM.SelectedValue = Convert.ToInt32(dr["RobaNHM"].ToString());
                 txtRelacija.Text = dr["PrevozniPut"].ToString();
-               // txtRelacija.Text = dr["NaPNaziv"].ToString();
                 txtNetoTezina.Value = Convert.ToDecimal(dr["Tezina"].ToString());
                 txtDuzinaM.Value = Convert.ToDecimal(dr["Duzina"].ToString());
                 txtBrojKola.Value = Convert.ToDecimal(dr["BrojKola"].ToString());
@@ -2049,12 +2048,12 @@ namespace Saobracaj.Dokumenta
             " NaPNaziv, NaPKolNar2 , NaPOpomba, NaSifObjekt, NaOpomba1 " +
             "  from Narocilo inner join NarociloPostav " +
             " on Narocilo.NaStNar = NarociloPostav.NaPStNar " +
-            " where  NarociloPostav.NaPNarZap =" + PorudzbinaID, con);
+            " where NaStatus = 'PO' and NarociloPostav.NaPNarZap =" + PorudzbinaID, con);
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
             {
-                
+                txtRelacija.Text = dr["NaPNaziv"].ToString();
                 /*
                   if (dr["NaPKolNar2"].ToString() != null)
                   { 
@@ -2507,6 +2506,11 @@ namespace Saobracaj.Dokumenta
 
 
             RefreshDataGrid5();
+        }
+
+        private void cboPlatilac_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
 
         /*

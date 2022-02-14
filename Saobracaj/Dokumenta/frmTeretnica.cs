@@ -22,7 +22,6 @@ namespace Saobracaj.Dokumenta
         int pomPredajna = 0;
         int pomPrevozna = 0;
         string Korisnik = "";
-
         public frmTeretnica()
         {
             InitializeComponent();
@@ -796,6 +795,12 @@ namespace Saobracaj.Dokumenta
             }
            
             con.Close();
+        }
+
+        private void toolStripButton7_Click(object sender, EventArgs e)
+        {
+            frmTeretnicaTerenIzmena teren = new frmTeretnicaTerenIzmena(txtSifra.Text);
+            teren.Show();
         }
     }
 }
