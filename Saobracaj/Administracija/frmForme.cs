@@ -24,6 +24,8 @@ namespace Saobracaj.Administracija
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = false;
+
+        //dddddddd
         public frmForme()
         {
             InitializeComponent();
