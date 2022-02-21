@@ -610,8 +610,8 @@ namespace Saobracaj
 
         private void markeriRNToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmTest test = new frmTest();
-            test.Show();
+            frmMapa mapa = new frmMapa();
+            mapa.Show();
         }
 
         private void evidencijaGodišnjihOdmoraToolStripMenuItem_Click(object sender, EventArgs e)
