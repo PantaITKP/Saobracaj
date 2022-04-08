@@ -847,5 +847,16 @@ namespace Saobracaj
             Dokumenta.frmMailNajava mail = new Dokumenta.frmMailNajava();
             mail.Show();
         }
+
+        private void toolStripButton120_Click(object sender, EventArgs e)
+        {
+            Administracija.frmNotifikacije not = new Administracija.frmNotifikacije();
+            PravoP = not.Pravo;
+            if (PravoP == true)
+            {
+                not.Show();
+            }
+            else { return; }
+        }
     }
 }
