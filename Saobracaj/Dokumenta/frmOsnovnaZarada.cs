@@ -604,5 +604,11 @@ namespace Saobracaj.Dokumenta
             chkPregleFiksni.Checked = false;
             RefreshDataGridNisuFiksni();
         }
+
+        private void toolStripButton4_Click(object sender, EventArgs e)
+        {
+            frmLogDodatnihPrevoza fldp = new frmLogDodatnihPrevoza();
+            fldp.Show();
+        }
     }
 }

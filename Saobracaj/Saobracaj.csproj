@@ -656,6 +656,12 @@
     <Compile Include="Dokumenta\frmLogAktivnosti.Designer.cs">
       <DependentUpon>frmLogAktivnosti.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmLogDodatnihPrevoza.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmLogDodatnihPrevoza.Designer.cs">
+      <DependentUpon>frmLogDodatnihPrevoza.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmMailNajava.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1761,6 +1767,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmLogAktivnosti.resx">
       <DependentUpon>frmLogAktivnosti.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmLogDodatnihPrevoza.resx">
+      <DependentUpon>frmLogDodatnihPrevoza.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmMailNajava.resx">
       <DependentUpon>frmMailNajava.cs</DependentUpon>
