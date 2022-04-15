@@ -57,6 +57,12 @@
             this.btnMinimalnaDrzavna = new MetroFramework.Controls.MetroButton();
             this.label5 = new System.Windows.Forms.Label();
             this.txtMinimalnaDrzavna = new System.Windows.Forms.NumericUpDown();
+            this.chkBenificirani = new System.Windows.Forms.CheckBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.cboTipRadnika = new System.Windows.Forms.ComboBox();
+            this.chkPregleFiksni = new System.Windows.Forms.CheckBox();
+            this.txtPrevoz = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
             this.tsNew = new System.Windows.Forms.ToolStripButton();
             this.tsSave = new System.Windows.Forms.ToolStripButton();
             this.tsDelete = new System.Windows.Forms.ToolStripButton();
@@ -67,10 +73,7 @@
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
-            this.chkBenificirani = new System.Windows.Forms.CheckBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.cboTipRadnika = new System.Windows.Forms.ComboBox();
-            this.chkPregleFiksni = new System.Windows.Forms.CheckBox();
+            this.toolStripButton4 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalna)).BeginInit();
@@ -78,6 +81,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.txtPrviDeo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtDrugiDeo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalnaDrzavna)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrevoz)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -93,7 +97,8 @@
             this.tsPoslednja,
             this.toolStripButton1,
             this.toolStripButton2,
-            this.toolStripButton3});
+            this.toolStripButton3,
+            this.toolStripButton4});
             this.toolStrip1.Location = new System.Drawing.Point(20, 60);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(932, 25);
@@ -111,9 +116,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(20, 226);
+            this.dataGridView1.Location = new System.Drawing.Point(20, 220);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(948, 247);
+            this.dataGridView1.Size = new System.Drawing.Size(948, 199);
             this.dataGridView1.TabIndex = 32;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
@@ -389,6 +394,77 @@
             this.txtMinimalnaDrzavna.TabIndex = 158;
             this.txtMinimalnaDrzavna.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // chkBenificirani
+            // 
+            this.chkBenificirani.AutoSize = true;
+            this.chkBenificirani.Checked = true;
+            this.chkBenificirani.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkBenificirani.Location = new System.Drawing.Point(478, 197);
+            this.chkBenificirani.Name = "chkBenificirani";
+            this.chkBenificirani.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkBenificirani.Size = new System.Drawing.Size(96, 17);
+            this.chkBenificirani.TabIndex = 159;
+            this.chkBenificirani.Text = "Ima benificirani";
+            this.chkBenificirani.UseVisualStyleBackColor = true;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(603, 174);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(63, 13);
+            this.label7.TabIndex = 161;
+            this.label7.Text = "Tip radnika:";
+            // 
+            // cboTipRadnika
+            // 
+            this.cboTipRadnika.BackColor = System.Drawing.Color.White;
+            this.cboTipRadnika.FormattingEnabled = true;
+            this.cboTipRadnika.Items.AddRange(new object[] {
+            "Osnivač",
+            "Radnik",
+            "Penzioner"});
+            this.cboTipRadnika.Location = new System.Drawing.Point(606, 193);
+            this.cboTipRadnika.Name = "cboTipRadnika";
+            this.cboTipRadnika.Size = new System.Drawing.Size(212, 21);
+            this.cboTipRadnika.TabIndex = 160;
+            // 
+            // chkPregleFiksni
+            // 
+            this.chkPregleFiksni.AutoSize = true;
+            this.chkPregleFiksni.Checked = true;
+            this.chkPregleFiksni.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkPregleFiksni.Location = new System.Drawing.Point(589, 19);
+            this.chkPregleFiksni.Name = "chkPregleFiksni";
+            this.chkPregleFiksni.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkPregleFiksni.Size = new System.Drawing.Size(98, 17);
+            this.chkPregleFiksni.TabIndex = 162;
+            this.chkPregleFiksni.Text = "Rad sa Fiksnim";
+            this.chkPregleFiksni.UseVisualStyleBackColor = true;
+            // 
+            // txtPrevoz
+            // 
+            this.txtPrevoz.DecimalPlaces = 2;
+            this.txtPrevoz.Location = new System.Drawing.Point(367, 179);
+            this.txtPrevoz.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtPrevoz.Name = "txtPrevoz";
+            this.txtPrevoz.Size = new System.Drawing.Size(100, 20);
+            this.txtPrevoz.TabIndex = 164;
+            this.txtPrevoz.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(324, 181);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(43, 13);
+            this.label8.TabIndex = 163;
+            this.label8.Text = "Prevoz:";
+            // 
             // tsNew
             // 
             this.tsNew.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
@@ -484,59 +560,23 @@
             this.toolStripButton3.Text = "Prikaži one koji nisu fiksni";
             this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
             // 
-            // chkBenificirani
+            // toolStripButton4
             // 
-            this.chkBenificirani.AutoSize = true;
-            this.chkBenificirani.Checked = true;
-            this.chkBenificirani.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkBenificirani.Location = new System.Drawing.Point(478, 197);
-            this.chkBenificirani.Name = "chkBenificirani";
-            this.chkBenificirani.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkBenificirani.Size = new System.Drawing.Size(96, 17);
-            this.chkBenificirani.TabIndex = 159;
-            this.chkBenificirani.Text = "Ima benificirani";
-            this.chkBenificirani.UseVisualStyleBackColor = true;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(603, 174);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(63, 13);
-            this.label7.TabIndex = 161;
-            this.label7.Text = "Tip radnika:";
-            // 
-            // cboTipRadnika
-            // 
-            this.cboTipRadnika.BackColor = System.Drawing.Color.White;
-            this.cboTipRadnika.FormattingEnabled = true;
-            this.cboTipRadnika.Items.AddRange(new object[] {
-            "Osnivač",
-            "Radnik",
-            "Penzioner"});
-            this.cboTipRadnika.Location = new System.Drawing.Point(606, 193);
-            this.cboTipRadnika.Name = "cboTipRadnika";
-            this.cboTipRadnika.Size = new System.Drawing.Size(212, 21);
-            this.cboTipRadnika.TabIndex = 160;
-            // 
-            // chkPregleFiksni
-            // 
-            this.chkPregleFiksni.AutoSize = true;
-            this.chkPregleFiksni.Checked = true;
-            this.chkPregleFiksni.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkPregleFiksni.Location = new System.Drawing.Point(589, 19);
-            this.chkPregleFiksni.Name = "chkPregleFiksni";
-            this.chkPregleFiksni.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkPregleFiksni.Size = new System.Drawing.Size(98, 17);
-            this.chkPregleFiksni.TabIndex = 162;
-            this.chkPregleFiksni.Text = "Rad sa Fiksnim";
-            this.chkPregleFiksni.UseVisualStyleBackColor = true;
+            this.toolStripButton4.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton4.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton4.Image")));
+            this.toolStripButton4.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton4.Name = "toolStripButton4";
+            this.toolStripButton4.Size = new System.Drawing.Size(164, 22);
+            this.toolStripButton4.Text = "Prikaži Log Dodatnih Prevoza";
+            this.toolStripButton4.Click += new System.EventHandler(this.toolStripButton4_Click);
             // 
             // frmOsnovnaZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(972, 422);
+            this.Controls.Add(this.txtPrevoz);
+            this.Controls.Add(this.label8);
             this.Controls.Add(this.chkPregleFiksni);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.cboTipRadnika);
@@ -579,6 +619,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.txtPrviDeo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtDrugiDeo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalnaDrzavna)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrevoz)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -628,5 +669,8 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox cboTipRadnika;
         private System.Windows.Forms.CheckBox chkPregleFiksni;
+        private System.Windows.Forms.NumericUpDown txtPrevoz;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.ToolStripButton toolStripButton4;
     }
 }

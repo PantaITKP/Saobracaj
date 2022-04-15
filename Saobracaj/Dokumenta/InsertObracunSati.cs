@@ -76,7 +76,6 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-
         public void UpdUkupno1(DateTime VremeOd, DateTime VremeDo)
         {
 
@@ -584,7 +583,6 @@ namespace Saobracaj.Dokumenta
 
             }
         }
-
 
         public void UpdZakljucavanjeSmene(DateTime VremeOd)
         {
@@ -1276,6 +1274,52 @@ namespace Saobracaj.Dokumenta
             SqlConnection myConnection = new SqlConnection(s_connection);
             SqlCommand myCommand = myConnection.CreateCommand();
             myCommand.CommandText = "SelectPNBrisanje5";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešan brisanje obracuna u Bazu");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Nije uspeo ", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+
+
+            }
+        }
+
+        public void SelectObracunMMVPrevoz()
+        {
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "SelectObracunMMVPrevoz";
             myCommand.CommandType = System.Data.CommandType.StoredProcedure;
 
             myConnection.Open();

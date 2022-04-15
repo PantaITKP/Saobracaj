@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertOsnovnaZarada
     {
-        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika)
+        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -100,6 +100,13 @@ namespace Saobracaj.Dokumenta
             parameter11.Value = TipRadnika;
             myCommand.Parameters.Add(parameter11);
 
+            SqlParameter parameter12 = new SqlParameter();
+            parameter12.ParameterName = "@Prevoz";
+            parameter12.SqlDbType = SqlDbType.Decimal;
+            parameter12.Direction = ParameterDirection.Input;
+            parameter12.Value = Prevoz;
+            myCommand.Parameters.Add(parameter12);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -137,7 +144,7 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika)
+        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -222,6 +229,13 @@ namespace Saobracaj.Dokumenta
             parameter11.Direction = ParameterDirection.Input;
             parameter11.Value = TipRadnika;
             myCommand.Parameters.Add(parameter11);
+
+            SqlParameter parameter12 = new SqlParameter();
+            parameter12.ParameterName = "@Prevoz";
+            parameter12.SqlDbType = SqlDbType.Decimal;
+            parameter12.Direction = ParameterDirection.Input;
+            parameter12.Value = Prevoz;
+            myCommand.Parameters.Add(parameter12);
 
 
             myConnection.Open();

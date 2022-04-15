@@ -55,6 +55,7 @@
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.button9 = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtZarada)).BeginInit();
@@ -115,6 +116,7 @@
             // 
             // dataGridView1
             // 
+            this.dataGridView1.AllowUserToAddRows = false;
             this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -343,11 +345,22 @@
             this.button9.UseVisualStyleBackColor = true;
             this.button9.Click += new System.EventHandler(this.button9_Click_1);
             // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(546, 21);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(115, 24);
+            this.button10.TabIndex = 303;
+            this.button10.Text = "Uključi prevoz";
+            this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
+            // 
             // frmIzracunZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1143, 574);
+            this.Controls.Add(this.button10);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.label6);
@@ -417,5 +430,6 @@
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button button10;
     }
 }
