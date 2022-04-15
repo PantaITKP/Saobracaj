@@ -236,7 +236,7 @@ namespace Saobracaj.Dokumenta
 
             select = " SELECT [ID] ,[Zaposleni],[VanLokomotive],[Lokomotiva] " +
       " ,[Milsped]   ,[Ukupno1] ,[Ciljna] ,[Osnovna],[Kazna],[UkupnoDIN],PrimaMinimalac, KaznaMinimalac, KaznaUkupno,[PutniNalozi],[PutniNaloziBroj], PutniNaloziBrojPola, " +
-      " PutniNaloziBrisanjeCeli,PutniNaloziBrisanjePola, Dodatak, [MinusPutni] ,[MinusPutniOsnovna] from ObracunZaposleni";
+      " PutniNaloziBrisanjeCeli,PutniNaloziBrisanjePola, Dodatak, [MinusPutni] ,[MinusPutniOsnovna], Prevoz, UkupnoSaPrevozom as IznosDIN from ObracunZaposleni";
 
             /*
        SELECT [ID]
@@ -468,6 +468,16 @@ namespace Saobracaj.Dokumenta
 
         private void button9_Click_1(object sender, EventArgs e)
         {
+            RefreshDataGrid();
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            // SelectObracunMMVPrevoz
+            InsertObracunSati ins = new InsertObracunSati();
+
+            ins.SelectObracunMMVPrevoz();
+
             RefreshDataGrid();
         }
     }

@@ -416,14 +416,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
-                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text);
+                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value));
                 RefreshDataGrid();
                 status = false;
             }
             else
             {
                 InsertOsnovnaZarada upd = new InsertOsnovnaZarada();
-                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text);
+                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value));
                 status = false;
                /// txtSifra.Enabled = false;
                 RefreshDataGrid();
