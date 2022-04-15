@@ -858,5 +858,16 @@ namespace Saobracaj
             }
             else { return; }
         }
+
+        private void toolStripButton121_Click(object sender, EventArgs e)
+        {
+            Servis.frmPlombe pl = new Servis.frmPlombe();
+            PravoP = pl.Pravo;
+            if (PravoP == true)
+            {
+                pl.Show();
+            }
+            else { return; }
+        }
     }
 }

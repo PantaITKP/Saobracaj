@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
     class InsertPropratnica
     {
         string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-        public void InsPropratnica(int IdNajave, string Napomena)
+        public void InsPropratnica(int IdNajave, string Napomena,int Zaduzen,int ZaduzenaFirma)
         {
             SqlConnection conn = new SqlConnection(connect);
             SqlCommand cmd = conn.CreateCommand();
@@ -34,6 +34,20 @@ namespace Saobracaj.Dokumenta
             paramNapomena.Direction = ParameterDirection.Input;
             paramNapomena.Value = Napomena;
             cmd.Parameters.Add(paramNapomena);
+
+            SqlParameter zaduzen = new SqlParameter();
+            zaduzen.ParameterName = "@Zaduzen";
+            zaduzen.SqlDbType = SqlDbType.Int;
+            zaduzen.Direction = ParameterDirection.Input;
+            zaduzen.Value = Zaduzen;
+            cmd.Parameters.Add(zaduzen);
+
+            SqlParameter zaduzenaF = new SqlParameter();
+            zaduzenaF.ParameterName = "@ZaduzenaFirma";
+            zaduzenaF.SqlDbType = SqlDbType.Int;
+            zaduzenaF.Direction = ParameterDirection.Input;
+            zaduzenaF.Value = ZaduzenaFirma;
+            cmd.Parameters.Add(zaduzenaF);
 
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();
@@ -64,7 +78,7 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
-        public void UpdPropratnica(int ID, int IdNajave, string Napomena)
+        public void UpdPropratnica(int ID, int IdNajave, string Napomena,int Zaduzen,int ZaduzenaFirma)
         {
             SqlConnection conn = new SqlConnection(connect);
             SqlCommand cmd = new SqlCommand();
@@ -92,6 +106,20 @@ namespace Saobracaj.Dokumenta
             paramNapomena.Direction = ParameterDirection.Input;
             paramNapomena.Value = Napomena;
             cmd.Parameters.Add(paramNapomena);
+
+            SqlParameter zaduzen = new SqlParameter();
+            zaduzen.ParameterName = "@Zaduzen";
+            zaduzen.SqlDbType = SqlDbType.Int;
+            zaduzen.Direction = ParameterDirection.Input;
+            zaduzen.Value = Zaduzen;
+            cmd.Parameters.Add(zaduzen);
+
+            SqlParameter zaduzenaF = new SqlParameter();
+            zaduzenaF.ParameterName = "@ZaduzenaFirma";
+            zaduzenaF.SqlDbType = SqlDbType.Int;
+            zaduzenaF.Direction = ParameterDirection.Input;
+            zaduzenaF.Value = ZaduzenaFirma;
+            cmd.Parameters.Add(zaduzenaF);
 
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();

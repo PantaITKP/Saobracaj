@@ -775,7 +775,7 @@ namespace Saobracaj.Dokumenta
                 DateTime date = new DateTime(1900, 1, 1);
                 log.insNajavaLog(Kor.ToString().TrimEnd(), "Unos novog zapisa", DateTime.Now, id, brNajave, voz, posiljalac, prevoznik, otpravna, uputna, primalac, roba, put, tezina
                     , duzina, kola, rid, pPrimanje, sPrimanje, pPredaja, sPredaja, status, onB, verzija, razlog, date, ridB, komentar, vozP, granicna, platilac, ad, prevoznikZa, faktura,
-                    zadatak, cim, korisnik, disp, tip, neto, por, povrat, teh, roba2, dodatno, date) ;
+                    zadatak, cim, korisnik, disp, tip, neto, por, povrat, teh, roba2, dodatno, date,false) ;
 
             }
             conn.Close();
@@ -883,7 +883,7 @@ namespace Saobracaj.Dokumenta
                         Convert.ToInt32(cboVozP.SelectedValue), Convert.ToInt32(cboGranicna.SelectedValue), Convert.ToInt32(cboPlatilac.SelectedValue), ad,
                         Convert.ToInt32(cboPrevoznikZa.SelectedValue), txtUgovor.Text, txtZadatak.Text, cim, KorisnikNajava, txtDispecerRID.Text,
                         Convert.ToInt32(cboTipPrevoza.SelectedValue), Convert.ToDecimal(txtNetoTezinaM.Value), Convert.ToInt32(multiColumnComboBox1.Text),
-                        PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text, date);
+                        PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text, date,false);
             }
         }
 
@@ -1125,7 +1125,7 @@ namespace Saobracaj.Dokumenta
                         Convert.ToInt32(cboVozP.SelectedValue), Convert.ToInt32(cboGranicna.SelectedValue), Convert.ToInt32(cboPlatilac.SelectedValue), ad,
                         Convert.ToInt32(cboPrevoznikZa.SelectedValue), txtUgovor.Text, txtZadatak.Text, cim, KorisnikNajava, txtDispecerRID.Text,
                         Convert.ToInt32(cboTipPrevoza.SelectedValue), Convert.ToDecimal(txtNetoTezinaM.Value), Convert.ToInt32(multiColumnComboBox1.Text),
-                        PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text, date);
+                        PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text, date,false);
 
                 InsertNajava del = new InsertNajava();
                 del.DeleteNaj(Convert.ToInt32(txtSifra.Text));

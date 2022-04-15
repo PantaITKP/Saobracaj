@@ -28,16 +28,16 @@ namespace Saobracaj.Dokumenta
         }
         private void FillGV()
         {
-            var query = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Posiljalac,Najava.ID,Otpravna,RTrim(stanice.Opis)," +
-                "Uputna,RTrim(stanice1.Opis),Najava.Granicna,RTrim(stanice2.Opis),Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak " +
+            var query = "SELECT Distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID,Otpravna,RTrim(stanice.Opis),Uputna,RTrim(stanice1.Opis),Najava.Granicna," +
+                "RTrim(Stanice2.Opis),Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak,StvarnoPrimanje,StvarnaPredaja " +
                 "FROM Partnerji " +
-                "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
-                "inner join Najava on Partnerji.PaSifra = Najava.Posiljalac " +
-                "inner join stanice on Najava.Otpravna = stanice.ID " +
-                "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
-                "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
-                "WHERE Najava.Faktura = '' and Partnerji.Posiljalac = 1 and partnerjiKontOseba.PaKOTip = 1 and(status = 1 or status = 2 or status = 4 or status = 5) " +
-                "order by PaSifra";
+                "Inner Join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
+                "Inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
+                "Inner join stanice on Najava.Otpravna = stanice.ID " +
+                "Inner Join stanice as stanice1 on najava.Uputna = stanice1.ID " +
+                "inner join stanice as stanice2 on najava.Granicna = stanice2.ID " +
+                "Where Partnerji.Primalac = 1 and(status = 1 or status = 2 or status = 4 or status = 5) " +
+                "Order by PaSifra desc";
 
             SqlConnection conn = new SqlConnection(connect);
             var dataAdapter = new SqlDataAdapter(query, conn);
@@ -79,16 +79,15 @@ namespace Saobracaj.Dokumenta
         }
         private void FillCheck()
         {
-            SqlConnection con = new SqlConnection(connect);
-            con.Open();
+          SqlConnection con = new SqlConnection(connect);
             string query = "SELECT distinct PaSifra,RTrim(PaNaziv) as Partner " +
                 "FROM Partnerji " +
-                "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
-                "inner join Najava on Partnerji.PaSifra = Najava.Posiljalac " +
-                "inner join stanice on Najava.Otpravna = stanice.ID " +
-                "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
-                "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
-                "WHERE Najava.Faktura = '' and Partnerji.Posiljalac = 1 and partnerjiKontOseba.PaKOTip = 1 and(status = 1 or status = 2 or status = 4 or status = 5)";
+                "Inner Join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
+                "Inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
+              "Inner join stanice on Najava.Otpravna = stanice.ID " +
+              "Inner Join stanice as stanice1 on najava.Uputna = stanice1.ID " +
+              "inner join stanice as stanice2 on najava.Granicna = stanice2.ID " +
+              "Where Partnerji.Primalac = 1 and(status = 1 or status = 2 or status = 4 or status = 5) order by PaSifra desc";
             SqlCommand cmd = new SqlCommand(query, con);
             SqlDataAdapter da;
             DataSet ds = new DataSet();
@@ -107,16 +106,16 @@ namespace Saobracaj.Dokumenta
 
         private void btn_Filter_Click(object sender, EventArgs e)
         {
-            var query = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Posiljalac,Najava.ID,Otpravna,RTrim(stanice.Opis), " +
-                "Uputna,RTrim(stanice1.Opis),Najava.Granicna,RTrim(stanice2.Opis),Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak " +
-                "FROM Partnerji " +
-                "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
-                "inner join Najava on Partnerji.PaSifra = Najava.Posiljalac " +
-                "inner join stanice on Najava.Otpravna = stanice.ID " +
-                "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
-                "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
-                "WHERE Najava.Faktura = '' and Partnerji.Posiljalac = 1 and partnerjiKontOseba.PaKOTip = 1 and status= "+Convert.ToInt32(comboBox1.SelectedValue) +
-                "order by PaSifra";
+             var query = "SELECT Distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID,Otpravna,RTrim(stanice.Opis),Uputna,RTrim(stanice1.Opis),Najava.Granicna," +
+    "RTrim(Stanice2.Opis),Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak,StvarnoPrimanje,StvarnaPredaja " +
+    "FROM Partnerji " +
+    "Inner Join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
+    "Inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
+    "Inner join stanice on Najava.Otpravna = stanice.ID " +
+    "Inner Join stanice as stanice1 on najava.Uputna = stanice1.ID " +
+    "inner join stanice as stanice2 on najava.Granicna = stanice2.ID " +
+    "Where Partnerji.Primalac = 1 and status = "+Convert.ToInt32(comboBox1.SelectedValue) +
+    "Order by PaSifra desc";
 
             SqlConnection conn = new SqlConnection(connect);
             var dataAdapter = new SqlDataAdapter(query, conn);
@@ -144,6 +143,25 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[10].Width = 50;
             dataGridView1.Columns[11].Width = 60;
             dataGridView1.Columns[14].Width = 190;
+
+            string query2 = "SELECT distinct PaSifra,RTrim(PaNaziv) as Partner " +
+               "FROM Partnerji " +
+               "Inner Join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
+               "Inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
+             "Inner join stanice on Najava.Otpravna = stanice.ID " +
+             "Inner Join stanice as stanice1 on najava.Uputna = stanice1.ID " +
+             "inner join stanice as stanice2 on najava.Granicna = stanice2.ID " +
+             "Where Partnerji.Primalac = 1 and status= "+Convert.ToInt32(comboBox1.SelectedValue)+" order by PaSifra desc";
+            SqlCommand cmd2 = new SqlCommand(query2, conn);
+            SqlDataAdapter da2;
+            DataSet ds2 = new DataSet();
+            da2 = new SqlDataAdapter(cmd2);
+            da2.Fill(ds2);
+
+            //cbList_Partneri.DataSource = ds.Tables[0];
+            cbList_Partneri.DataSource = ds2.Tables[0];
+            cbList_Partneri.DisplayMember = "Partner";
+            cbList_Partneri.ValueMember = "PaSifra";
         }
 
         private void btn_Svi_Click(object sender, EventArgs e)
@@ -180,11 +198,10 @@ namespace Saobracaj.Dokumenta
                             nizMail = nizMail + "," + dr["PaKoMail"].ToString();
                             count++;
                         }
-
                     }
                     if (nizMail == "")
                     {
-                        MessageBox.Show("Za ovog partnera nije uneta mail adresa");
+                        MessageBox.Show("Za partnera: "+PaSifra.ToString()+" nije uneta mail adresa");
                         return;
                     }
                     conn.Close();
@@ -194,20 +211,18 @@ namespace Saobracaj.Dokumenta
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
                         mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs,milos.cpajak@kprevoz.co.rs,pantelija.petrovic@kprevoz.co.rs");
-                        mailMessage.CC.Add(cuvaj);
                         mailMessage.Subject = "Status najave";
 
-                        var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Posiljalac,Najava.ID as Najava,Otpravna," +
+                       var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
                             "RTrim(stanice.Opis) as [OtpravnaStanica],Uputna,RTrim(stanice1.Opis) as [UputnaStanica],Najava.Granicna," +
-                            "RTrim(stanice2.Opis) as [TrenutnaStanica],Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak " +
+                            "RTrim(stanice2.Opis) as [TrenutnaStanica],Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak,StvarnoPrimanje,StvarnaPredaja " +
                             "FROM Partnerji " +
                             "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
-                            "inner join Najava on Partnerji.PaSifra = Najava.Posiljalac " +
+                            "inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
                             "inner join stanice on Najava.Otpravna = stanice.ID " +
                             "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
                             "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
-                            "WHERE Najava.Faktura = '' and Partnerji.Posiljalac = 1 and partnerjiKontOseba.PaKOTip = 1 and" +
-                            "(status = 1 or status = 2 or status = 4 or status = 5) and PaSifra = "+PaSifra+" " +
+                            "WHERE Partnerji.Primalac = 1 and (status = 1 or status = 2 or status = 4 or status = 5) and PaSifra = "+PaSifra+" " +
                             "order by Najava.ID";
                         var dataAdapter = new SqlDataAdapter(select, conn);
 
@@ -226,24 +241,33 @@ namespace Saobracaj.Dokumenta
                             body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
                             body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
-                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false)
+                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPrimanje.Checked==false && cb_sPredaja.Checked==false)
                             {
                                 if (status == 1 || status == 2)
                                 {
-                                    body = body + "ETA: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                    body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                                 }
                                 else
                                 {
-                                    body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                                 }
                             }
                             if (cb_Eta.Checked == true)
                             {
-                                body = body + "ETA: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_pPrimanje.Checked == true)
                             {
                                 body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                            }
+                            if (cb_sPredaja.Checked == true)
+                            {
+                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                            }
+                            if (cb_sPrimanje.Checked == true)
+                            {
+                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><br/>";
                             body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
@@ -261,7 +285,7 @@ namespace Saobracaj.Dokumenta
 
                         smtpClient.EnableSsl = true;
                         smtpClient.Send(mailMessage);
-                        MessageBox.Show("Uspesno poslato");
+                        MessageBox.Show("Uspešno poslato");
                     }
                     catch (Exception ex)
                     {
@@ -303,29 +327,26 @@ namespace Saobracaj.Dokumenta
                     }
                     if (nizMail == "")
                     {
-                        MessageBox.Show("Za ovog partnera nije uneta mail adresa");
+                        MessageBox.Show("Za partnera: "+PaSifra+" nije uneta mail adresa");
                     }
                     conn.Close();
-                    MessageBox.Show(nizMail);
 
                     try
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
                         mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs,milos.cpajak@kprevoz.co.rs,pantelija.petrovic@kprevoz.co.rs");
-                        mailMessage.CC.Add(cuvaj);
                         mailMessage.Subject = "Status najave";
 
-                        var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Posiljalac,Najava.ID as Najava,Otpravna," +
+                        var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
                             "RTrim(stanice.Opis) as [OtpravnaStanica],Uputna,RTrim(stanice1.Opis) as [UputnaStanica],Najava.Granicna," +
-                            "RTrim(stanice2.Opis) as [TrenutnaStanica],Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak " +
+                            "RTrim(stanice2.Opis) as [TrenutnaStanica],Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak,StvarnoPrimanje,StvarnaPredaja " +
                             "FROM Partnerji " +
                             "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
-                            "inner join Najava on Partnerji.PaSifra = Najava.Posiljalac " +
+                            "inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
                             "inner join stanice on Najava.Otpravna = stanice.ID " +
                             "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
                             "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
-                            "WHERE Najava.Faktura = '' and Partnerji.Posiljalac = 1 and partnerjiKontOseba.PaKOTip = 1 and" +
-                            "(status = 1 or status = 2 or status = 4 or status = 5) and PaSifra = " + PaSifra + " " +
+                            "WHERE Partnerji.Primalac = 1 and (status = 1 or status = 2 or status = 4 or status = 5) and PaSifra = " + PaSifra + " " +
                             "order by Najava.ID";
                         var dataAdapter = new SqlDataAdapter(select, conn);
 
@@ -334,39 +355,48 @@ namespace Saobracaj.Dokumenta
                         dataAdapter.Fill(ds);
                         string body = "";
 
-                        body = body + "                             STATUS NAJAVE \n\n<br/><br/>";
+                        body = body + "STATUS NAJAVE <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "\n<br/>";
-                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "\n<br/>";
-                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "\n<br/>";
-                            body = body + "Status: " + myRow["Status"].ToString() + "\n<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "\n<br/>";
-                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "\n<br/>";
+                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
+                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
+                            body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
+                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
-                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false)
+                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked==false && cb_sPrimanje.Checked==false)
                             {
                                 if (status == 1 || status == 2)
                                 {
-                                    body = body + "ETA: " + myRow["PredvidjenoPrimanje"].ToString() + "\n<br/>";
+                                    body = body + "Predvidjeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                                 }
                                 else
                                 {
-                                    body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "\n<br/>";
+                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                                 }
                             }
                             if (cb_Eta.Checked == true)
                             {
-                                body = body + "ETA: " + myRow["PredvidjenoPrimanje"].ToString() + "\n<br/>";
+                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_pPrimanje.Checked == true)
                             {
-                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "\n<br/>";
+                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "\n<br/>";
+                            if (cb_sPrimanje.Checked == true)
+                            {
+                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                            }
+                            if (cb_sPredaja.Checked == true)
+                            {
+                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                            }
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
                             body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
                         }
-                        body = body + "<br/>Srdačan pozdrav, \n<br/>" + "Dispečerska služba, Kombinovani prevoz";
+                        body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
                         
                         mailMessage.Body = body;
                         mailMessage.IsBodyHtml = true;
@@ -379,8 +409,7 @@ namespace Saobracaj.Dokumenta
 
                         smtpClient.EnableSsl = true;
                         smtpClient.Send(mailMessage);
-                        MessageBox.Show(body);
-                        MessageBox.Show("Uspesno poslato");
+                        MessageBox.Show("Uspešno poslato");
                     }
                     catch (Exception ex)
                     {
@@ -388,6 +417,137 @@ namespace Saobracaj.Dokumenta
                     }
                 }
             }
+        }
+
+        private void btn_PosaljiFilter_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < cbList_Partneri.Items.Count; i++)
+            {
+                if (cbList_Partneri.GetItemCheckState(i) == CheckState.Checked)
+                {
+                    cbList_Partneri.SetSelected(i, true);
+                    PaSifra = Convert.ToInt32(cbList_Partneri.SelectedValue);
+
+                    string query = "Select PaKOMail From PartnerjiKontOseba Where PaKoTip=1 and PaKOSifra= " + PaSifra;
+                    SqlConnection conn = new SqlConnection(connect);
+                    conn.Open();
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    int count = 0;
+                    string nizMail = "";
+                    while (dr.Read())
+                    {
+                        if (count == 0)
+                        {
+                            nizMail = dr["PaKoMail"].ToString();
+                            count++;
+                        }
+                        else
+                        {
+                            nizMail = nizMail + "," + dr["PaKoMail"].ToString();
+                            count++;
+                        }
+
+                    }
+                    if (nizMail == "")
+                    {
+                        MessageBox.Show("Za partnera: " + PaSifra + " nije uneta mail adresa");
+                    }
+                    conn.Close();
+                    MessageBox.Show(nizMail);
+
+                    try
+                    {
+                        string cuvaj = "disp@kprevoz.co.rs";
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs");
+                        mailMessage.Subject = "Status najave";
+
+                        var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
+                            "RTrim(stanice.Opis) as [OtpravnaStanica],Uputna,RTrim(stanice1.Opis) as [UputnaStanica],Najava.Granicna," +
+                            "RTrim(stanice2.Opis) as [TrenutnaStanica],Najava.Status,BrojKola,PredvidjenoPrimanje,PredvidjenaPredaja,Zadatak,StvarnoPrimanje,StvarnaPredaja " +
+                            "FROM Partnerji " +
+                            "Inner join partnerjiKontOseba on Partnerji.PaSifra = partnerjiKontOseba.PaKOSifra " +
+                            "inner join Najava on Partnerji.PaSifra = Najava.Platilac " +
+                            "inner join stanice on Najava.Otpravna = stanice.ID " +
+                            "inner join stanice as stanice1 on najava.Uputna = stanice1.ID " +
+                            "inner join stanice as stanice2 on Najava.Granicna = stanice2.ID " +
+                            "WHERE Partnerji.Primalac = 1 and status= "+Convert.ToString(comboBox1.SelectedValue)+" and PaSifra = " + PaSifra + " " +
+                            "order by Najava.ID";
+                        var dataAdapter = new SqlDataAdapter(select, conn);
+
+                        var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                        var ds = new DataSet();
+                        dataAdapter.Fill(ds);
+                        string body = "";
+
+                        body = body + "                             STATUS NAJAVE <br/><br/>";
+                        foreach (DataRow myRow in ds.Tables[0].Rows)
+                        {
+                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
+                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
+                            body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
+                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
+                            int status = Convert.ToInt32(myRow["Status"]);
+                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked==false && cb_sPrimanje.Checked==false)
+                            {
+                                if (status == 1 || status == 2)
+                                {
+                                    body = body + "Predvidjeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                }
+                                else
+                                {
+                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                }
+                            }
+                            if (cb_Eta.Checked == true)
+                            {
+                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                            }
+                            if (cb_pPrimanje.Checked == true)
+                            {
+                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                            }
+                            if (cb_sPredaja.Checked == true)
+                            {
+                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                            }
+                            if (cb_sPrimanje.Checked == true)
+                            {
+                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                            }
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
+                            body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
+                        }
+                        body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
+
+                        mailMessage.Body = body;
+                        mailMessage.IsBodyHtml = true;
+                        SmtpClient smtpClient = new SmtpClient();
+                        smtpClient.Host = "mail.kprevoz.co.rs";
+
+                        smtpClient.Port = 25;
+                        smtpClient.UseDefaultCredentials = true;
+                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "pele1122.disp");
+
+                        smtpClient.EnableSsl = true;
+                        smtpClient.Send(mailMessage);
+                        MessageBox.Show("Uspešno poslato");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message.ToString());
+                    }
+                }
+            }
+        }
+
+        private void btn_Arhivirano_Click(object sender, EventArgs e)
+        {
+            frmNajavaMailArhivirano arh = new frmNajavaMailArhivirano();
+            arh.Show();
         }
     }
 }

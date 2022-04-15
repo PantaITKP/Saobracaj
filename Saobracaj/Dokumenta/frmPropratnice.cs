@@ -7,6 +7,9 @@ using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -26,6 +29,7 @@ namespace Saobracaj.Dokumenta
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         bool status = false;
         string niz = "";
+        MailMessage mailMessage;
         public string IdGrupe()
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -115,10 +119,31 @@ namespace Saobracaj.Dokumenta
             IdGrupe();
             IdForme();
             PravoPristupa();
+            FillCombo();
 
-            txt_ID.ReadOnly = true;
+            txt_ID.Enabled = false;
             //txt_putanjaZ.Visible = false;
             //txt_putanjaR.Visible = false;
+        }
+        private void FillCombo()
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            var query = "Select PaSifra,PaNaziv From Partnerji Where Posiljalac=1 order by PaSifra";
+            SqlConnection conn = new SqlConnection(s_connection);
+            SqlDataAdapter da = new SqlDataAdapter(query, conn);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            combo_Firma.DataSource = ds.Tables[0];
+            combo_Firma.DisplayMember = "PaNaziv";
+            combo_Firma.ValueMember = "PaSifra";
+
+            var query2 = "Select DeSifra,RTrim(DeIme)+' '+RTrim(DePriimek) as Zaposleni From Delavci order by Zaposleni";
+            SqlDataAdapter da2 = new SqlDataAdapter(query2, conn);
+            DataSet ds2 = new DataSet();
+            da2.Fill(ds2);
+            combo_Zaduzen.DataSource = ds2.Tables[0];
+            combo_Zaduzen.DisplayMember = "Zaposleni";
+            combo_Zaduzen.ValueMember = "DeSifra";
         }
         private void frmPropratnice_Load(object sender, EventArgs e)
         {
@@ -128,9 +153,12 @@ namespace Saobracaj.Dokumenta
         }
         private void GVPropratince()
         {
-            var select = "select * from Propratnica order by ID desc";
+            var select = "select ID,IDNajave,Zaduzen,RTrim(Delavci.DeIme)+' '+RTrim(Delavci.DePriimek) as Zaposleni,ZaduzenaFirma,RTrim(Partnerji.PaNaziv),Napomena " +
+                "from Propratnica " +
+                "Inner Join Delavci on Propratnica.Zaduzen = Delavci.DeSifra " +
+                "Inner Join Partnerji on Propratnica.ZaduzenaFirma = Partnerji.PaSifra " +
+                "Order by ID desc";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
             var dataAdapter = new SqlDataAdapter(select, c);
             var ds = new DataSet();
@@ -138,11 +166,16 @@ namespace Saobracaj.Dokumenta
             dataGridView3.ReadOnly = true;
             dataGridView3.DataSource = ds.Tables[0];
             dataGridView3.Columns[0].HeaderText = "ID";
-            dataGridView3.Columns[0].Width = 50;
+            dataGridView3.Columns[0].Width = 40;
             dataGridView3.Columns[1].HeaderText = "ID Najave";
             dataGridView3.Columns[1].Width = 50;
-            dataGridView3.Columns[2].HeaderText = "Napomena";
-            dataGridView3.Columns[2].Width = 250;
+            dataGridView3.Columns[2].Visible = false; //Zaduzen
+            dataGridView3.Columns[3].HeaderText = "Zaduzen";
+            dataGridView3.Columns[3].Width = 130;
+            dataGridView3.Columns[4].Visible = false;
+            dataGridView3.Columns[5].HeaderText = "Zaduzena Firma";
+            dataGridView3.Columns[5].Width = 180;
+            dataGridView3.Columns[6].Width = 150;
         }
         private void GVZaduzivanje()
         {
@@ -160,11 +193,12 @@ namespace Saobracaj.Dokumenta
             dataGridView1.DataSource = ds.Tables[0];
             dataGridView1.Columns[0].HeaderText = "ID";
             dataGridView1.Columns[0].Width = 40;
-            dataGridView1.Columns[1].Width = 50;
-            dataGridView1.Columns[3].Width = 50;
-            dataGridView1.Columns[4].Width = 50;
+            dataGridView1.Columns[1].Width = 60;
+            dataGridView1.Columns[3].Width = 60;
+            dataGridView1.Columns[4].Width = 70;
             dataGridView1.Columns[5].Width = 60;
-            dataGridView1.Columns[8].Width = 90;
+            dataGridView1.Columns[6].Width = 120;
+            dataGridView1.Columns[8].Width = 120;
         }
         public void filterZaduzivanje(int najava)
         {
@@ -183,11 +217,12 @@ namespace Saobracaj.Dokumenta
             dataGridView1.DataSource = ds.Tables[0];
             dataGridView1.Columns[0].HeaderText = "ID";
             dataGridView1.Columns[0].Width = 40;
-            dataGridView1.Columns[1].Width = 50;
-            dataGridView1.Columns[3].Width = 50;
-            dataGridView1.Columns[4].Width = 50;
+            dataGridView1.Columns[1].Width = 60;
+            dataGridView1.Columns[3].Width = 60;
+            dataGridView1.Columns[4].Width = 70;
             dataGridView1.Columns[5].Width = 60;
-            dataGridView1.Columns[8].Width = 90;
+            dataGridView1.Columns[6].Width = 120;
+            dataGridView1.Columns[8].Width = 120;
         }
 
         private void GVRazduzivanje()
@@ -206,11 +241,12 @@ namespace Saobracaj.Dokumenta
             dataGridView2.DataSource = ds.Tables[0];
             dataGridView2.Columns[0].HeaderText = "ID";
             dataGridView2.Columns[0].Width = 40;
-            dataGridView2.Columns[1].Width = 50;
-            dataGridView2.Columns[3].Width = 50;
-            dataGridView2.Columns[4].Width = 50;
+            dataGridView2.Columns[1].Width = 60;
+            dataGridView2.Columns[3].Width = 60;
+            dataGridView2.Columns[4].Width = 70;
             dataGridView2.Columns[5].Width = 60;
-            dataGridView2.Columns[8].Width = 90;
+            dataGridView2.Columns[6].Width = 120;
+            dataGridView2.Columns[8].Width = 120;
         }
         private void filterRazduzivanje(int najava)
         {
@@ -229,11 +265,12 @@ namespace Saobracaj.Dokumenta
             dataGridView2.DataSource = ds.Tables[0];
             dataGridView2.Columns[0].HeaderText = "ID";
             dataGridView2.Columns[0].Width = 40;
-            dataGridView2.Columns[1].Width = 50;
-            dataGridView2.Columns[3].Width = 50;
-            dataGridView2.Columns[4].Width = 50;
+            dataGridView2.Columns[1].Width = 60;
+            dataGridView2.Columns[3].Width = 60;
+            dataGridView2.Columns[4].Width = 70;
             dataGridView2.Columns[5].Width = 60;
-            dataGridView2.Columns[8].Width = 90;
+            dataGridView2.Columns[6].Width = 120;
+            dataGridView2.Columns[8].Width = 120;
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)
@@ -253,7 +290,9 @@ namespace Saobracaj.Dokumenta
                     {
                         txt_ID.Text = row.Cells[0].Value.ToString();
                         txt_IdNajave.Text = row.Cells[1].Value.ToString();
-                        txt_Napomena.Text = row.Cells[2].Value.ToString();
+                        txt_Napomena.Text = row.Cells[6].Value.ToString();
+                        combo_Zaduzen.SelectedValue = row.Cells[2].Value.ToString();
+                        combo_Firma.SelectedValue = row.Cells[4].Value.ToString();
                         filterZaduzivanje(Convert.ToInt32(txt_IdNajave.Text));
                         filterRazduzivanje(Convert.ToInt32(txt_IdNajave.Text));
                     }
@@ -274,14 +313,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertPropratnica ins = new InsertPropratnica();
-                ins.InsPropratnica(Convert.ToInt32(txt_IdNajave.Text.ToString().TrimEnd()), txt_Napomena.Text.ToString().TrimEnd());
+                ins.InsPropratnica(Convert.ToInt32(txt_IdNajave.Text.ToString().TrimEnd()), txt_Napomena.Text.ToString().TrimEnd(),Convert.ToInt32(combo_Zaduzen.SelectedValue),Convert.ToInt32(combo_Firma.SelectedValue));
                 status = false;
                 GVPropratince();
             }
             else
             {
                 InsertPropratnica upd = new InsertPropratnica();
-                upd.UpdPropratnica(Convert.ToInt32(txt_ID.Text.ToString().TrimEnd()), Convert.ToInt32(txt_IdNajave.Text.ToString().TrimEnd()), txt_Napomena.Text.ToString().TrimEnd());
+                upd.UpdPropratnica(Convert.ToInt32(txt_ID.Text.ToString().TrimEnd()), Convert.ToInt32(txt_IdNajave.Text.ToString().TrimEnd()), txt_Napomena.Text.ToString().TrimEnd(), Convert.ToInt32(combo_Zaduzen.SelectedValue), Convert.ToInt32(combo_Firma.SelectedValue));
                 GVPropratince();
             }
         }
@@ -361,6 +400,154 @@ namespace Saobracaj.Dokumenta
             else
             {
                 System.Diagnostics.Process.Start(txt_putanjaR.Text);
+            }
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            var connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            DialogResult dr = MessageBox.Show("Da li želite da dodate prilog uz mail?", "Attachment", MessageBoxButtons.YesNoCancel);
+            if (dr == DialogResult.Yes)
+            {
+                OpenFileDialog dialog = new OpenFileDialog();
+                dialog.Title = "Izaberite datoteku";
+                
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string file = dialog.FileName;
+                    string query = "Select DeEmail From Delavci Where DeSifra= " + Convert.ToInt32(combo_Zaduzen.SelectedValue);
+                    SqlConnection conn = new SqlConnection(connect);
+                    conn.Open();
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    SqlDataReader dRead = cmd.ExecuteReader();
+                    int count = 0;
+                    string nizMail = "";
+                    while (dRead.Read())
+                    {
+                        if (count == 0)
+                        {
+                            nizMail = dRead["DeEmail"].ToString();
+                            count++;
+                        }
+                        else
+                        {
+                            nizMail = nizMail + "," + dRead["DeEmail"].ToString();
+                            count++;
+                        }
+
+                    }
+                    if (nizMail == "")
+                    {
+                        MessageBox.Show("Za ovog korisnika nije uneta mail adresa");
+                        return;
+                    }
+                    conn.Close();
+                    try
+                    {
+                        string cuvaj = "disp@kprevoz.co.rs";
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs",nizMail);
+                        mailMessage.CC.Add(cuvaj);
+                        mailMessage.Subject = "Zaduženje";
+                        string body = "";
+                        body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: "+combo_Zaduzen.Text.ToString().TrimEnd()+"<br/>";
+                        body = body + "Najava: " + txt_IdNajave.Text.ToString().TrimEnd()+"<br/>";
+                        body = body + "Zadužena firma: " + combo_Firma.Text.ToString().TrimEnd() + "<br/>";
+                        body = body + "Napomena: " + txt_Napomena.Text.ToString().TrimEnd() + "<br/><br/>";
+                        body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
+
+                        mailMessage.Body = body;
+                        mailMessage.IsBodyHtml = true;
+                        SmtpClient smtpClient = new SmtpClient();
+                        smtpClient.Host = "mail.kprevoz.co.rs";
+
+                        Attachment data = new Attachment(file, MediaTypeNames.Application.Octet);
+
+                        // Add time stamp information for the file.
+                        ContentDisposition disposition = data.ContentDisposition;
+                        disposition.CreationDate = System.IO.File.GetCreationTime(file);
+                        disposition.ModificationDate = System.IO.File.GetLastWriteTime(file);
+                        disposition.ReadDate = System.IO.File.GetLastAccessTime(file);
+
+                        // Add the file attachment to this e-mail message.
+                        mailMessage.Attachments.Add(data);
+
+                        smtpClient.Port = 25;
+                        smtpClient.UseDefaultCredentials = true;
+                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "pele1122.disp");
+
+                        smtpClient.EnableSsl = true;
+                        smtpClient.Send(mailMessage);
+                        MessageBox.Show("Uspesno poslato");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message.ToString());
+                    }
+                }
+            }
+            else if (dr == DialogResult.No)
+            {
+                string query = "Select DeEmail From Delavci Where DeSifra= " + Convert.ToInt32(combo_Zaduzen.SelectedValue);
+                SqlConnection conn = new SqlConnection(connect);
+                conn.Open();
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader dRead = cmd.ExecuteReader();
+                int count = 0;
+                string nizMail = "";
+                while (dRead.Read())
+                {
+                    if (count == 0)
+                    {
+                        nizMail = dRead["DeEmail"].ToString();
+                        count++;
+                    }
+                    else
+                    {
+                        nizMail = nizMail + "," + dRead["DeEmail"].ToString();
+                        count++;
+                    }
+
+                }
+                if (nizMail == "")
+                {
+                    MessageBox.Show("Za ovog korisnika nije uneta mail adresa");
+                    return;
+                }
+                conn.Close();
+                try
+                {
+                    string cuvaj = "disp@kprevoz.co.rs";
+                    mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
+                    mailMessage.CC.Add(cuvaj);
+                    mailMessage.Subject = "Zaduženje";
+                    string body = "";
+                    body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: " + combo_Zaduzen.Text.ToString().TrimEnd() + "<br/>";
+                    body = body + "Najava: " + txt_IdNajave.Text.ToString().TrimEnd() + "<br/>";
+                    body = body + "Zadužena firma: " + combo_Firma.Text.ToString().TrimEnd() + "<br/>";
+                    body = body + "Napomena: " + txt_Napomena.Text.ToString().TrimEnd() + "<br/><br/>";
+                    body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
+
+                    mailMessage.Body = body;
+                    mailMessage.IsBodyHtml = true;
+                    SmtpClient smtpClient = new SmtpClient();
+                    smtpClient.Host = "mail.kprevoz.co.rs";
+
+                    smtpClient.Port = 25;
+                    smtpClient.UseDefaultCredentials = true;
+                    smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "pele1122.disp");
+
+                    smtpClient.EnableSsl = true;
+                    smtpClient.Send(mailMessage);
+                    MessageBox.Show("Uspesno poslato");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message.ToString());
+                }
+            }
+            else if (dr == DialogResult.Cancel)
+            {
+                return;
             }
         }
     }
