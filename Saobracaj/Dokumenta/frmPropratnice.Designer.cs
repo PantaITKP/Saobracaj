@@ -51,6 +51,11 @@ namespace Saobracaj.Dokumenta
             this.btn_prikaziR = new System.Windows.Forms.Button();
             this.txt_putanjaZ = new System.Windows.Forms.TextBox();
             this.txt_putanjaR = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.combo_Firma = new System.Windows.Forms.ComboBox();
+            this.combo_Zaduzen = new System.Windows.Forms.ComboBox();
+            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -65,10 +70,11 @@ namespace Saobracaj.Dokumenta
             this.tsSave,
             this.tsDelete,
             this.toolStripSeparator1,
-            this.toolStripButton1});
+            this.toolStripButton1,
+            this.toolStripButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1691, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(1203, 27);
             this.toolStrip1.TabIndex = 36;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -120,22 +126,22 @@ namespace Saobracaj.Dokumenta
             // dataGridView1
             // 
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(622, 68);
+            this.dataGridView1.Location = new System.Drawing.Point(12, 343);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(1054, 269);
+            this.dataGridView1.Size = new System.Drawing.Size(1176, 212);
             this.dataGridView1.TabIndex = 37;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
             // dataGridView2
             // 
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(622, 392);
+            this.dataGridView2.Location = new System.Drawing.Point(12, 615);
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.RowHeadersWidth = 51;
             this.dataGridView2.RowTemplate.Height = 24;
-            this.dataGridView2.Size = new System.Drawing.Size(1054, 271);
+            this.dataGridView2.Size = new System.Drawing.Size(1176, 211);
             this.dataGridView2.TabIndex = 37;
             this.dataGridView2.SelectionChanged += new System.EventHandler(this.dataGridView2_SelectionChanged);
             // 
@@ -143,7 +149,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(618, 45);
+            this.label1.Location = new System.Drawing.Point(21, 318);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(188, 20);
             this.label1.TabIndex = 38;
@@ -153,7 +159,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(618, 360);
+            this.label2.Location = new System.Drawing.Point(21, 583);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(200, 20);
             this.label2.TabIndex = 39;
@@ -162,11 +168,11 @@ namespace Saobracaj.Dokumenta
             // dataGridView3
             // 
             this.dataGridView3.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView3.Location = new System.Drawing.Point(25, 199);
+            this.dataGridView3.Location = new System.Drawing.Point(379, 38);
             this.dataGridView3.Name = "dataGridView3";
             this.dataGridView3.RowHeadersWidth = 51;
             this.dataGridView3.RowTemplate.Height = 24;
-            this.dataGridView3.Size = new System.Drawing.Size(540, 464);
+            this.dataGridView3.Size = new System.Drawing.Size(809, 249);
             this.dataGridView3.TabIndex = 40;
             this.dataGridView3.SelectionChanged += new System.EventHandler(this.dataGridView3_SelectionChanged);
             // 
@@ -174,7 +180,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(21, 45);
+            this.label3.Location = new System.Drawing.Point(21, 38);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(26, 20);
             this.label3.TabIndex = 38;
@@ -184,17 +190,17 @@ namespace Saobracaj.Dokumenta
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(21, 111);
+            this.label4.Location = new System.Drawing.Point(21, 168);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(82, 20);
+            this.label4.Size = new System.Drawing.Size(72, 20);
             this.label4.TabIndex = 38;
-            this.label4.Text = "ID Najave";
+            this.label4.Text = "Zadužen";
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(214, 45);
+            this.label5.Location = new System.Drawing.Point(21, 96);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(89, 20);
             this.label5.TabIndex = 38;
@@ -202,29 +208,29 @@ namespace Saobracaj.Dokumenta
             // 
             // txt_ID
             // 
-            this.txt_ID.Location = new System.Drawing.Point(25, 68);
+            this.txt_ID.Location = new System.Drawing.Point(25, 61);
             this.txt_ID.Name = "txt_ID";
-            this.txt_ID.Size = new System.Drawing.Size(140, 22);
+            this.txt_ID.Size = new System.Drawing.Size(64, 22);
             this.txt_ID.TabIndex = 41;
             // 
             // txt_IdNajave
             // 
-            this.txt_IdNajave.Location = new System.Drawing.Point(25, 134);
+            this.txt_IdNajave.Location = new System.Drawing.Point(122, 61);
             this.txt_IdNajave.Name = "txt_IdNajave";
             this.txt_IdNajave.Size = new System.Drawing.Size(140, 22);
             this.txt_IdNajave.TabIndex = 41;
             // 
             // txt_Napomena
             // 
-            this.txt_Napomena.Location = new System.Drawing.Point(218, 68);
+            this.txt_Napomena.Location = new System.Drawing.Point(25, 119);
             this.txt_Napomena.Multiline = true;
             this.txt_Napomena.Name = "txt_Napomena";
-            this.txt_Napomena.Size = new System.Drawing.Size(347, 88);
+            this.txt_Napomena.Size = new System.Drawing.Size(291, 43);
             this.txt_Napomena.TabIndex = 41;
             // 
             // btn_prikaziZ
             // 
-            this.btn_prikaziZ.Location = new System.Drawing.Point(868, 30);
+            this.btn_prikaziZ.Location = new System.Drawing.Point(453, 303);
             this.btn_prikaziZ.Name = "btn_prikaziZ";
             this.btn_prikaziZ.Size = new System.Drawing.Size(192, 34);
             this.btn_prikaziZ.TabIndex = 42;
@@ -234,7 +240,7 @@ namespace Saobracaj.Dokumenta
             // 
             // btn_prikaziR
             // 
-            this.btn_prikaziR.Location = new System.Drawing.Point(868, 354);
+            this.btn_prikaziR.Location = new System.Drawing.Point(453, 569);
             this.btn_prikaziR.Name = "btn_prikaziR";
             this.btn_prikaziR.Size = new System.Drawing.Size(192, 34);
             this.btn_prikaziR.TabIndex = 42;
@@ -244,23 +250,71 @@ namespace Saobracaj.Dokumenta
             // 
             // txt_putanjaZ
             // 
-            this.txt_putanjaZ.Location = new System.Drawing.Point(1115, 36);
+            this.txt_putanjaZ.Location = new System.Drawing.Point(671, 309);
             this.txt_putanjaZ.Name = "txt_putanjaZ";
             this.txt_putanjaZ.Size = new System.Drawing.Size(517, 22);
             this.txt_putanjaZ.TabIndex = 43;
             // 
             // txt_putanjaR
             // 
-            this.txt_putanjaR.Location = new System.Drawing.Point(1115, 360);
+            this.txt_putanjaR.Location = new System.Drawing.Point(671, 587);
             this.txt_putanjaR.Name = "txt_putanjaR";
             this.txt_putanjaR.Size = new System.Drawing.Size(517, 22);
             this.txt_putanjaR.TabIndex = 43;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(118, 38);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(82, 20);
+            this.label6.TabIndex = 38;
+            this.label6.Text = "ID Najave";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(21, 235);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(129, 20);
+            this.label7.TabIndex = 38;
+            this.label7.Text = "Zadužena Firma";
+            // 
+            // combo_Firma
+            // 
+            this.combo_Firma.FormattingEnabled = true;
+            this.combo_Firma.Location = new System.Drawing.Point(25, 263);
+            this.combo_Firma.Name = "combo_Firma";
+            this.combo_Firma.Size = new System.Drawing.Size(291, 24);
+            this.combo_Firma.TabIndex = 44;
+            // 
+            // combo_Zaduzen
+            // 
+            this.combo_Zaduzen.FormattingEnabled = true;
+            this.combo_Zaduzen.Location = new System.Drawing.Point(25, 196);
+            this.combo_Zaduzen.Name = "combo_Zaduzen";
+            this.combo_Zaduzen.Size = new System.Drawing.Size(291, 24);
+            this.combo_Zaduzen.TabIndex = 44;
+            // 
+            // toolStripButton2
+            // 
+            this.toolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
+            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton2.Name = "toolStripButton2";
+            this.toolStripButton2.Size = new System.Drawing.Size(88, 24);
+            this.toolStripButton2.Text = "Pošalji mail";
+            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
             // frmPropratnice
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1691, 685);
+            this.ClientSize = new System.Drawing.Size(1203, 840);
+            this.Controls.Add(this.combo_Zaduzen);
+            this.Controls.Add(this.combo_Firma);
             this.Controls.Add(this.txt_putanjaR);
             this.Controls.Add(this.txt_putanjaZ);
             this.Controls.Add(this.btn_prikaziR);
@@ -271,6 +325,8 @@ namespace Saobracaj.Dokumenta
             this.Controls.Add(this.dataGridView3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label5);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label1);
@@ -313,5 +369,10 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.Button btn_prikaziR;
         private System.Windows.Forms.TextBox txt_putanjaZ;
         private System.Windows.Forms.TextBox txt_putanjaR;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ComboBox combo_Firma;
+        private System.Windows.Forms.ComboBox combo_Zaduzen;
+        private System.Windows.Forms.ToolStripButton toolStripButton2;
     }
 }

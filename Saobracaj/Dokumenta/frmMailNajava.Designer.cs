@@ -39,6 +39,10 @@ namespace Saobracaj.Dokumenta
             this.btn_PosaljiSvi = new System.Windows.Forms.Button();
             this.btn_Posalji = new System.Windows.Forms.Button();
             this.btn_Svi = new System.Windows.Forms.Button();
+            this.btn_PosaljiFilter = new System.Windows.Forms.Button();
+            this.cb_sPrimanje = new System.Windows.Forms.CheckBox();
+            this.cb_sPredaja = new System.Windows.Forms.CheckBox();
+            this.btn_Arhivirano = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -73,7 +77,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.cb_Eta.AutoSize = true;
             this.cb_Eta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_Eta.Location = new System.Drawing.Point(300, 37);
+            this.cb_Eta.Location = new System.Drawing.Point(334, 22);
             this.cb_Eta.Name = "cb_Eta";
             this.cb_Eta.Size = new System.Drawing.Size(61, 22);
             this.cb_Eta.TabIndex = 3;
@@ -84,7 +88,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.cb_pPrimanje.AutoSize = true;
             this.cb_pPrimanje.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cb_pPrimanje.Location = new System.Drawing.Point(300, 68);
+            this.cb_pPrimanje.Location = new System.Drawing.Point(334, 53);
             this.cb_pPrimanje.Name = "cb_pPrimanje";
             this.cb_pPrimanje.Size = new System.Drawing.Size(183, 22);
             this.cb_pPrimanje.TabIndex = 4;
@@ -115,17 +119,17 @@ namespace Saobracaj.Dokumenta
             this.btn_PosaljiSvi.Name = "btn_PosaljiSvi";
             this.btn_PosaljiSvi.Size = new System.Drawing.Size(146, 53);
             this.btn_PosaljiSvi.TabIndex = 7;
-            this.btn_PosaljiSvi.Text = "Posalji svima";
+            this.btn_PosaljiSvi.Text = "Pošalji svima";
             this.btn_PosaljiSvi.UseVisualStyleBackColor = true;
             this.btn_PosaljiSvi.Click += new System.EventHandler(this.btn_PosaljiSvi_Click);
             // 
             // btn_Posalji
             // 
-            this.btn_Posalji.Location = new System.Drawing.Point(1172, 53);
+            this.btn_Posalji.Location = new System.Drawing.Point(1153, 53);
             this.btn_Posalji.Name = "btn_Posalji";
             this.btn_Posalji.Size = new System.Drawing.Size(146, 53);
             this.btn_Posalji.TabIndex = 7;
-            this.btn_Posalji.Text = "Posalji";
+            this.btn_Posalji.Text = "Pošalji izabranima";
             this.btn_Posalji.UseVisualStyleBackColor = true;
             this.btn_Posalji.Click += new System.EventHandler(this.btn_Posalji_Click);
             // 
@@ -139,16 +143,63 @@ namespace Saobracaj.Dokumenta
             this.btn_Svi.UseVisualStyleBackColor = true;
             this.btn_Svi.Click += new System.EventHandler(this.btn_Svi_Click);
             // 
+            // btn_PosaljiFilter
+            // 
+            this.btn_PosaljiFilter.Location = new System.Drawing.Point(1329, 53);
+            this.btn_PosaljiFilter.Name = "btn_PosaljiFilter";
+            this.btn_PosaljiFilter.Size = new System.Drawing.Size(146, 53);
+            this.btn_PosaljiFilter.TabIndex = 7;
+            this.btn_PosaljiFilter.Text = "Pošalji filtrirano";
+            this.btn_PosaljiFilter.UseVisualStyleBackColor = true;
+            this.btn_PosaljiFilter.Click += new System.EventHandler(this.btn_PosaljiFilter_Click);
+            // 
+            // cb_sPrimanje
+            // 
+            this.cb_sPrimanje.AutoSize = true;
+            this.cb_sPrimanje.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_sPrimanje.Location = new System.Drawing.Point(334, 84);
+            this.cb_sPrimanje.Name = "cb_sPrimanje";
+            this.cb_sPrimanje.Size = new System.Drawing.Size(157, 22);
+            this.cb_sPrimanje.TabIndex = 4;
+            this.cb_sPrimanje.Text = "Stvarno primanje";
+            this.cb_sPrimanje.UseVisualStyleBackColor = true;
+            // 
+            // cb_sPredaja
+            // 
+            this.cb_sPredaja.AutoSize = true;
+            this.cb_sPredaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cb_sPredaja.Location = new System.Drawing.Point(334, 115);
+            this.cb_sPredaja.Name = "cb_sPredaja";
+            this.cb_sPredaja.Size = new System.Drawing.Size(147, 22);
+            this.cb_sPredaja.TabIndex = 4;
+            this.cb_sPredaja.Text = "Stvarna predaja";
+            this.cb_sPredaja.UseVisualStyleBackColor = true;
+            // 
+            // btn_Arhivirano
+            // 
+            this.btn_Arhivirano.BackColor = System.Drawing.Color.Orange;
+            this.btn_Arhivirano.Location = new System.Drawing.Point(1367, 153);
+            this.btn_Arhivirano.Name = "btn_Arhivirano";
+            this.btn_Arhivirano.Size = new System.Drawing.Size(170, 32);
+            this.btn_Arhivirano.TabIndex = 8;
+            this.btn_Arhivirano.Text = "Arhivirano";
+            this.btn_Arhivirano.UseVisualStyleBackColor = false;
+            this.btn_Arhivirano.Click += new System.EventHandler(this.btn_Arhivirano_Click);
+            // 
             // frmMailNajava
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1563, 853);
+            this.Controls.Add(this.btn_Arhivirano);
             this.Controls.Add(this.btn_Svi);
+            this.Controls.Add(this.btn_PosaljiFilter);
             this.Controls.Add(this.btn_Posalji);
             this.Controls.Add(this.btn_PosaljiSvi);
             this.Controls.Add(this.btn_Filter);
             this.Controls.Add(this.cbList_Partneri);
+            this.Controls.Add(this.cb_sPredaja);
+            this.Controls.Add(this.cb_sPrimanje);
             this.Controls.Add(this.cb_pPrimanje);
             this.Controls.Add(this.cb_Eta);
             this.Controls.Add(this.label1);
@@ -175,5 +226,9 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.Button btn_PosaljiSvi;
         private System.Windows.Forms.Button btn_Posalji;
         private System.Windows.Forms.Button btn_Svi;
+        private System.Windows.Forms.Button btn_PosaljiFilter;
+        private System.Windows.Forms.CheckBox cb_sPrimanje;
+        private System.Windows.Forms.CheckBox cb_sPredaja;
+        private System.Windows.Forms.Button btn_Arhivirano;
     }
 }

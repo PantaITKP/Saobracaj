@@ -18,7 +18,7 @@ namespace Saobracaj.Dokumenta
            int Uputna,int Primalac,int RobaNHM,string PrevozniPut,decimal Tezina,decimal Duzina,int BrojKola,int RID,DateTime PredvidjenoPrimanje,
            DateTime StvarnoPrimanje,DateTime PredvidjenaPredaja,DateTime StvarnaPredaja,int Status,string OnBroj,int Verzija,int Razlog,DateTime DatumUnosa,
            string RIDBroj,string Komentar,int VozP,int Granicna,int Platilac,int AdHoc,int PrevoznikZa,string Faktura,string Zadatak,int CIM,string Korisnik,
-           string DispecerRID,int TipPrevoza,decimal NetoTezinaM,int PorudzbinaID,int ImaPovrat,int TehnologijaID,int RobaNhm2,string DodatnoPorudzbina,DateTime PomocniDatum)
+           string DispecerRID,int TipPrevoza,decimal NetoTezinaM,int PorudzbinaID,int ImaPovrat,int TehnologijaID,int RobaNhm2,string DodatnoPorudzbina,DateTime PomocniDatum,bool PoslatMail)
         {
             
             SqlConnection conn = new SqlConnection(connect);
@@ -360,6 +360,12 @@ namespace Saobracaj.Dokumenta
             pDat.Value = PomocniDatum;
             cmd.Parameters.Add(pDat);
 
+            SqlParameter mail = new SqlParameter();
+            mail.ParameterName = "@PoslatMail";
+            mail.SqlDbType = SqlDbType.Bit;
+            mail.Direction = ParameterDirection.Input;
+            mail.Value = PoslatMail;
+            cmd.Parameters.Add(mail);
 
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();
