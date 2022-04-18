@@ -24,6 +24,7 @@ namespace Saobracaj.Administracija
         bool insert;
         bool update;
         bool delete;
+        int kreirao;
         public frmNotifikacije()
         {
             InitializeComponent();
@@ -34,6 +35,20 @@ namespace Saobracaj.Administracija
             PravoPristupa();
 
             txt_ID.Enabled = false;
+
+            SqlConnection conn = new SqlConnection(connect);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("Select DeSifra from Korisnici Where Korisnik='" + Kor.ToString() + "'", conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    kreirao = Convert.ToInt32(dr["DeSifra"].ToString());
+                }
+            }
+            conn.Close();
+
         }
         public string IdGrupe()
         {
@@ -120,9 +135,11 @@ namespace Saobracaj.Administracija
         }
         private void FillGV()
         {
-            var query = "Select ID,Kreirao,Poruka,Korisnik,(RTrim(Delavci.DePriimek)+' '+RTrim(Delavci.DeIme)) as Zaposleni,DatumSlanja,Procitao,DatumCitanja " +
+            var query = "Select ID,Kreirao,RTrim(Korisnici.Korisnik) as KorisnikKreirao,RTrim(Poruka) as Poruka,Notifikacije.Korisnik,(RTrim(Delavci.DePriimek)+' '+RTrim(Delavci.DeIme)) as Zaposleni," +
+                "DatumSlanja,Procitao,DatumCitanja " +
                 "From Notifikacije " +
                 "Inner join Delavci on Notifikacije.Korisnik = Delavci.DeSifra " +
+                "inner join Korisnici on Notifikacije.Kreirao = Korisnici.DeSifra " +
                 "order by ID desc";
             SqlConnection conn = new SqlConnection(connect);
             var da = new SqlDataAdapter(query, conn);
@@ -132,11 +149,13 @@ namespace Saobracaj.Administracija
             dataGridView1.DataSource = ds.Tables[0];
 
             dataGridView1.Columns[0].Width = 50;
-            dataGridView1.Columns[1].Width = 60;
-            dataGridView1.Columns[2].Width = 180;
-            dataGridView1.Columns[3].Width = 50;
-            dataGridView1.Columns[4].Width = 120;
-            dataGridView1.Columns[6].Width = 50;
+            dataGridView1.Columns[1].Visible = false;
+            dataGridView1.Columns[2].HeaderText = "Kreirao";
+            dataGridView1.Columns[2].Width = 90;
+            dataGridView1.Columns[3].Width = 180;
+            dataGridView1.Columns[4].Visible = false;
+            dataGridView1.Columns[5].Width = 120;
+            dataGridView1.Columns[7].Width = 50;
         }
         private void FillCheck()
         {
@@ -167,14 +186,14 @@ namespace Saobracaj.Administracija
                     if (row.Selected)
                     {
                         txt_ID.Text = row.Cells[0].Value.ToString();
-                        txt_Obavestenje.Text = row.Cells[2].Value.ToString();
-                        dt_Slanje.Value = Convert.ToDateTime(row.Cells[5].Value.ToString());
-                        dt_Citanje.Value = Convert.ToDateTime(row.Cells[7].Value.ToString());
-                        bool procitao = Convert.ToBoolean(row.Cells[6].Value.ToString());
+                        txt_Obavestenje.Text = row.Cells[3].Value.ToString();
+                        dt_Slanje.Value = Convert.ToDateTime(row.Cells[6].Value.ToString());
+                        dt_Citanje.Value = Convert.ToDateTime(row.Cells[8].Value.ToString());
+                        bool procitao = Convert.ToBoolean(row.Cells[7].Value.ToString());
                         if (procitao == true) { cb_Procitan.Checked = true; }
                         if (procitao == false)
                         { cb_Procitan.Checked = false; }
-                        cbList_Korisnici.SelectedValue = Convert.ToInt32(row.Cells[3].Value.ToString());
+                        cbList_Korisnici.SelectedValue = Convert.ToInt32(row.Cells[4].Value.ToString());
                         for (int i = 0; i < cbList_Korisnici.Items.Count; i++)
                         {
                             if (cbList_Korisnici.GetSelected(i))
@@ -184,7 +203,7 @@ namespace Saobracaj.Administracija
 
                         }
                     }
-                    
+
                 }
             }
             catch
@@ -209,7 +228,7 @@ namespace Saobracaj.Administracija
 
         private void tsSave_Click(object sender, EventArgs e)
         {
-            
+
             InsertObavestenje obavestenja = new InsertObavestenje();
             if (status == true)
             {
@@ -219,7 +238,7 @@ namespace Saobracaj.Administracija
                     {
                         cbList_Korisnici.SetSelected(i, true);
                         int PaSifra = Convert.ToInt32(cbList_Korisnici.SelectedValue);
-                        obavestenja.InsObavestenje(Kor.ToString().TrimEnd(), PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()), false, Convert.ToDateTime(dt_Citanje.Value.ToString()));
+                        obavestenja.InsObavestenje(kreirao, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()), false, Convert.ToDateTime(dt_Citanje.Value.ToString()));
                     }
                 }
                 for (int i = 0; i < cbList_Korisnici.Items.Count; i++)
@@ -236,7 +255,7 @@ namespace Saobracaj.Administracija
                 bool procitan;
                 int PaSifra = Convert.ToInt32(cbList_Korisnici.SelectedValue);
                 if (cb_Procitan.Checked == true) { procitan = true; } else { procitan = false; }
-                obavestenja.UpdObavestenje(Convert.ToInt32(txt_ID.Text), Kor, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()),
+                obavestenja.UpdObavestenje(Convert.ToInt32(txt_ID.Text), kreirao, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()),
                     procitan, Convert.ToDateTime(dt_Citanje.Value.ToString()));
             }
             FillGV();
