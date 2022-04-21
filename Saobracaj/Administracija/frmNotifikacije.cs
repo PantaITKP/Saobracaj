@@ -33,6 +33,7 @@ namespace Saobracaj.Administracija
             IdGrupe();
             IdForme();
             PravoPristupa();
+            FillCombo();
 
             txt_ID.Enabled = false;
 
@@ -167,9 +168,18 @@ namespace Saobracaj.Administracija
             cbList_Korisnici.DataSource = ds.Tables[0];
             cbList_Korisnici.DisplayMember = "Korisnik";
             cbList_Korisnici.ValueMember = "DeSifra";
-
         }
-
+        private void FillCombo()
+        {
+            var query = "select distinct DmNaziv from DelovnaMesta order by DmNaziv";
+            SqlConnection conn = new SqlConnection(connect);
+            var da = new SqlDataAdapter(query, conn);
+            var ds = new DataSet();
+            da.Fill(ds);
+            combo_RadnoMesto.DataSource = ds.Tables[0];
+            combo_RadnoMesto.DisplayMember = "DmNaziv";
+            combo_RadnoMesto.ValueMember = "DmNaziv";
+        }
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
         {
             try
@@ -266,6 +276,22 @@ namespace Saobracaj.Administracija
             InsertObavestenje obavestenja = new InsertObavestenje();
             obavestenja.DelObavestenje(Convert.ToInt32(txt_ID.Text));
             FillGV();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var query = "select Korisnici.DeSifra,Korisnik,DmNaziv,DmSifra " +
+                "From Korisnici " +
+                "Inner join Delavci on Korisnici.DeSifra = Delavci.DeSifra " +
+                "Inner join DelovnaMesta on Delavci.DeSifDelMes = DelovnaMesta.DmSifra " +
+                "Where DmNaziv ='"+combo_RadnoMesto.SelectedValue+"' order by Korisnici.DeSifra";
+            SqlConnection conn = new SqlConnection(connect);
+            var da = new SqlDataAdapter(query, conn);
+            var ds = new DataSet();
+            da.Fill(ds);
+            cbList_Korisnici.DataSource = ds.Tables[0];
+            cbList_Korisnici.DisplayMember = "Korisnik";
+            cbList_Korisnici.ValueMember = "DeSifra";
         }
     }
 }

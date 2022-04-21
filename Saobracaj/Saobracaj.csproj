@@ -85,6 +85,7 @@
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.SqlServer.dll</HintPath>
@@ -1059,6 +1060,7 @@
     <Compile Include="Dokumenta\InsertOsnovnaZarada.cs" />
     <Compile Include="Dokumenta\InsertOsobljeLok.cs" />
     <Compile Include="Dokumenta\InsertPotNal.cs" />
+    <Compile Include="Dokumenta\InsertPPK.cs" />
     <Compile Include="Dokumenta\InsertPravoAktivnosti.cs" />
     <Compile Include="Dokumenta\InsertPrekovremeniRad.cs" />
     <Compile Include="Dokumenta\InsertPrijemnica.cs" />
@@ -1082,6 +1084,12 @@
     </Compile>
     <Compile Include="Dokumenta\frmTeretnicaTerenIzmena.Designer.cs">
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPPK.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPPK.Designer.cs">
+      <DependentUpon>frmPPK.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\WebMapa.cs">
       <SubType>Form</SubType>
@@ -1138,7 +1146,7 @@
     <Compile Include="MainP.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainP.Designer.cs">
+    <Compile Include="MainP.designer.cs">
       <DependentUpon>MainP.cs</DependentUpon>
     </Compile>
     <Compile Include="MDB_ScheduleDataProvider.cs" />
@@ -1974,6 +1982,9 @@
       <DependentUpon>frmZarade.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmZaradeMasinovodje.rdlc" />
+    <EmbeddedResource Include="Dokumenta\frmPPK.resx">
+      <DependentUpon>frmPPK.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\rptGodisnjiOdmor.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoNeplaceno.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoTrue.rdlc" />

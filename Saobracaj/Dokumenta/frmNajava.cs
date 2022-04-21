@@ -396,10 +396,10 @@ namespace Saobracaj.Dokumenta
                 txtRID.Enabled = false;
                 txtRIDBroj.Enabled = false;
             
-            dtpPredvidjenoPrimanje.Value = DateTime.Now;
-            dtpStvarnoPrimanje.Value = DateTime.Now;
-            dtpPredvidjenaPredaja.Value = DateTime.Now;
-            dtpStvarnaPredaja.Value = DateTime.Now;
+            //dtpPredvidjenoPrimanje.Value = DateTime.Now;
+            //dtpStvarnoPrimanje.Value = DateTime.Now;
+            //dtpPredvidjenaPredaja.Value = DateTime.Now;
+            //dtpStvarnaPredaja.Value = DateTime.Now;
             //cboStatusPredaje.Text, 
             cboStatusPredaje.SelectedValue =1;
             txtRID.Text = "";
@@ -2655,6 +2655,146 @@ namespace Saobracaj.Dokumenta
         {
             frmNajavaLog log = new frmNajavaLog();
             log.Show();
+        }
+
+        private void toolStripButton7_Click(object sender, EventArgs e)
+        {
+            var select = "SELECT najava.ID, stanice_4.opis as Granicna,Najava.BrojNajave, Najava.Voz, Partnerji_1.PaNaziv as Posiljalac,Partnerji.PaNaziv AS Prevoznik, " +
+                "Partnerji_2.PaNaziv AS Primalac,stanice.Opis AS Uputna, stanice_1.Opis AS Otpravna,Najava.PrevozniPut as Relacija, Najava.PredvidjenoPrimanje, " +
+                "Najava.StvarnoPrimanje,Najava.PredvidjenaPredaja, Najava.StvarnaPredaja,CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StatusN ," +
+                "Najava.ONBroj,  Najava.Status, Najava.Tezina, Najava.Duzina,Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv as PrevoznikZa, " +
+                "Najava.Faktura, Najava.Korisnik,Najava.Platilac " +
+                "FROM  Najava " +
+                "INNER JOIN Partnerji AS Partnerji_1 ON Najava.Posiljalac = Partnerji_1.PaSifra " +
+                "INNER JOIN Partnerji ON Najava.Prevoznik = Partnerji.PaSifra " +
+                "INNER JOIN Partnerji AS Partnerji_2 ON Najava.Primalac = Partnerji_2.PaSifra " +
+                "INNER JOIN  stanice ON Najava.Uputna = stanice.ID " +
+                "INNER JOIN  stanice AS stanice_1 ON Najava.Otpravna = stanice_1.ID " +
+                "inner JOIN  stanice AS stanice_4 ON Najava.Granicna = stanice_4.ID " +
+                "INNER JOIN Partnerji as Partnerji_3 ON Najava.PrevoznikZa = Partnerji_3.PaSifra " +
+                "Where Najava.Platilac=" + Convert.ToInt32(cboPlatilac.SelectedValue);
+            if (Arhiv == 0)
+            {
+                select = select + " and (Status <> 7 or Status = 7 and Faktura ='') order by Najava.ID desc";
+            }
+            else
+            {
+                select = select + " and (Status = 7 or Status = 8) order by Najava.ID desc";
+            }
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 70;
+
+            DataGridViewColumn column2 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Granična";
+            dataGridView1.Columns[1].Width = 100;
+
+            DataGridViewColumn column3 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Broj";
+            dataGridView1.Columns[2].Width = 50;
+
+            DataGridViewColumn column4 = dataGridView1.Columns[3];
+            dataGridView1.Columns[3].HeaderText = "Voz";
+            dataGridView1.Columns[3].Width = 50;
+
+            DataGridViewColumn column5 = dataGridView1.Columns[4];
+            dataGridView1.Columns[4].HeaderText = "Posiljalac";
+            dataGridView1.Columns[4].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView1.Columns[5];
+            dataGridView1.Columns[5].HeaderText = "Prevoznik";
+            dataGridView1.Columns[5].Width = 50;
+
+            DataGridViewColumn column7 = dataGridView1.Columns[6];
+            dataGridView1.Columns[6].HeaderText = "Primalac";
+            dataGridView1.Columns[6].Width = 50;
+
+            DataGridViewColumn column8 = dataGridView1.Columns[7];
+            dataGridView1.Columns[7].HeaderText = "Uputna";
+            dataGridView1.Columns[7].Width = 50;
+
+            DataGridViewColumn column9 = dataGridView1.Columns[8];
+            dataGridView1.Columns[8].HeaderText = "Otpravna";
+            dataGridView1.Columns[8].Width = 50;
+
+            DataGridViewColumn column10 = dataGridView1.Columns[9];
+            dataGridView1.Columns[9].HeaderText = "Relacija";
+            dataGridView1.Columns[9].Width = 150;
+
+
+            DataGridViewColumn column11 = dataGridView1.Columns[10];
+            dataGridView1.Columns[10].HeaderText = "Predviđeno Primanje";
+            dataGridView1.Columns[10].Width = 100;
+
+            DataGridViewColumn column12 = dataGridView1.Columns[11];
+            dataGridView1.Columns[11].HeaderText = "Stvarno primanje";
+            dataGridView1.Columns[11].Width = 100;
+
+            DataGridViewColumn column13 = dataGridView1.Columns[12];
+            dataGridView1.Columns[12].HeaderText = "Predviđena predaja";
+            dataGridView1.Columns[12].Width = 100;
+
+            DataGridViewColumn column14 = dataGridView1.Columns[13];
+            dataGridView1.Columns[13].HeaderText = "Stvarna predaja";
+            dataGridView1.Columns[13].Width = 100;
+
+            DataGridViewColumn column15 = dataGridView1.Columns[14];
+            dataGridView1.Columns[14].HeaderText = "RID";
+            dataGridView1.Columns[14].Width = 50;
+
+            DataGridViewColumn column16 = dataGridView1.Columns[15];
+            dataGridView1.Columns[15].HeaderText = "RID broj";
+            dataGridView1.Columns[15].Width = 50;
+
+            DataGridViewColumn column17 = dataGridView1.Columns[16];
+            dataGridView1.Columns[16].HeaderText = "Status";
+            dataGridView1.Columns[16].Width = 50;
+
+            DataGridViewColumn column18 = dataGridView1.Columns[17];
+            dataGridView1.Columns[17].HeaderText = "Težina";
+            dataGridView1.Columns[17].Width = 50;
+
+            DataGridViewColumn column19 = dataGridView1.Columns[18];
+            dataGridView1.Columns[18].HeaderText = "Dužina";
+            dataGridView1.Columns[18].Width = 50;
+
+            DataGridViewColumn column20 = dataGridView1.Columns[19];
+            dataGridView1.Columns[19].HeaderText = "Broj kola";
+            dataGridView1.Columns[19].Width = 50;
+
+            DataGridViewColumn column21 = dataGridView1.Columns[20];
+            dataGridView1.Columns[20].HeaderText = "Neto";
+            dataGridView1.Columns[20].Width = 50;
+
+            DataGridViewColumn column22 = dataGridView1.Columns[21];
+            dataGridView1.Columns[21].HeaderText = "Datum promene";
+            dataGridView1.Columns[21].Width = 100;
+
+            DataGridViewColumn column23 = dataGridView1.Columns[22];
+            dataGridView1.Columns[22].HeaderText = "Prevoznik za";
+            dataGridView1.Columns[22].Width = 100;
+
+            DataGridViewColumn column24 = dataGridView1.Columns[23];
+            dataGridView1.Columns[23].HeaderText = "Faktura";
+            dataGridView1.Columns[23].Width = 80;
+
+        }
+
+        private void toolStripButton8_Click(object sender, EventArgs e)
+        {
+            RefreshDataGrid();
         }
 
         /*
