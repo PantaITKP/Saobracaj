@@ -47,6 +47,8 @@ namespace Saobracaj.Administracija
             this.dt_Citanje = new System.Windows.Forms.DateTimePicker();
             this.label5 = new System.Windows.Forms.Label();
             this.txt_ID = new System.Windows.Forms.TextBox();
+            this.combo_RadnoMesto = new System.Windows.Forms.ComboBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -121,7 +123,7 @@ namespace Saobracaj.Administracija
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 252);
+            this.label2.Location = new System.Drawing.Point(12, 303);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(85, 17);
             this.label2.TabIndex = 147;
@@ -130,15 +132,15 @@ namespace Saobracaj.Administracija
             // cbList_Korisnici
             // 
             this.cbList_Korisnici.FormattingEnabled = true;
-            this.cbList_Korisnici.Location = new System.Drawing.Point(117, 252);
+            this.cbList_Korisnici.Location = new System.Drawing.Point(117, 303);
             this.cbList_Korisnici.Name = "cbList_Korisnici";
-            this.cbList_Korisnici.Size = new System.Drawing.Size(253, 446);
+            this.cbList_Korisnici.Size = new System.Drawing.Size(253, 395);
             this.cbList_Korisnici.TabIndex = 150;
             // 
             // cb_Procitan
             // 
             this.cb_Procitan.AutoSize = true;
-            this.cb_Procitan.Location = new System.Drawing.Point(411, 251);
+            this.cb_Procitan.Location = new System.Drawing.Point(402, 443);
             this.cb_Procitan.Name = "cb_Procitan";
             this.cb_Procitan.Size = new System.Drawing.Size(82, 21);
             this.cb_Procitan.TabIndex = 151;
@@ -209,11 +211,31 @@ namespace Saobracaj.Administracija
             this.txt_ID.Size = new System.Drawing.Size(86, 22);
             this.txt_ID.TabIndex = 148;
             // 
+            // combo_RadnoMesto
+            // 
+            this.combo_RadnoMesto.FormattingEnabled = true;
+            this.combo_RadnoMesto.Location = new System.Drawing.Point(11, 251);
+            this.combo_RadnoMesto.Name = "combo_RadnoMesto";
+            this.combo_RadnoMesto.Size = new System.Drawing.Size(359, 24);
+            this.combo_RadnoMesto.TabIndex = 154;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(397, 251);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(87, 27);
+            this.button1.TabIndex = 155;
+            this.button1.Text = "Nadji";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // frmNotifikacije
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1641, 716);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.combo_RadnoMesto);
             this.Controls.Add(this.dt_Citanje);
             this.Controls.Add(this.dt_Slanje);
             this.Controls.Add(this.dataGridView1);
@@ -257,5 +279,7 @@ namespace Saobracaj.Administracija
         private System.Windows.Forms.DateTimePicker dt_Citanje;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox txt_ID;
+        private System.Windows.Forms.ComboBox combo_RadnoMesto;
+        private System.Windows.Forms.Button button1;
     }
 }

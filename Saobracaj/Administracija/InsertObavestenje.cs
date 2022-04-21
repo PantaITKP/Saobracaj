@@ -13,7 +13,7 @@ namespace Saobracaj.Administracija
     class InsertObavestenje
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-        public void InsObavestenje(string Kreirao,int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+        public void InsObavestenje(int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
         {
 
             SqlConnection conn = new SqlConnection(connect);
@@ -21,10 +21,9 @@ namespace Saobracaj.Administracija
             cmd.CommandText = "InsertNotifikacije";
             cmd.CommandType = CommandType.StoredProcedure;
 
-            SqlParameter kreirao= new SqlParameter();
+            SqlParameter kreirao = new SqlParameter();
             kreirao.ParameterName = "@Kreirao";
-            kreirao.SqlDbType = SqlDbType.NVarChar;
-            kreirao.Size = 50;
+            kreirao.SqlDbType = SqlDbType.Int;
             kreirao.Direction = ParameterDirection.Input;
             kreirao.Value = Kreirao;
             cmd.Parameters.Add(kreirao);
@@ -95,7 +94,7 @@ namespace Saobracaj.Administracija
 
             }
         }
-        public void UpdObavestenje(int ID, string Kreirao,int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+        public void UpdObavestenje(int ID, int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
         {
 
             SqlConnection conn = new SqlConnection(connect);
@@ -112,8 +111,7 @@ namespace Saobracaj.Administracija
 
             SqlParameter kreirao = new SqlParameter();
             kreirao.ParameterName = "@Kreirao";
-            kreirao.SqlDbType = SqlDbType.NVarChar;
-            kreirao.Size = 50;
+            kreirao.SqlDbType = SqlDbType.Int;
             kreirao.Direction = ParameterDirection.Input;
             kreirao.Value = Kreirao;
             cmd.Parameters.Add(kreirao);

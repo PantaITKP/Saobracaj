@@ -114,19 +114,22 @@ namespace Saobracaj.Dokumenta
             // 
             // dataGridView1
             // 
+            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(12, 203);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(1573, 543);
+            this.dataGridView1.Size = new System.Drawing.Size(1790, 650);
             this.dataGridView1.TabIndex = 12;
             // 
             // frmNajavaMailArhivirano
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1597, 758);
+            this.ClientSize = new System.Drawing.Size(1814, 865);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btn_Posalji);
             this.Controls.Add(this.btn_PosaljiSvi);
