@@ -13,7 +13,9 @@ namespace Saobracaj.Administracija
     class InsertObavestenje
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+
         public void InsObavestenje(int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+
         {
 
             SqlConnection conn = new SqlConnection(connect);
@@ -94,7 +96,9 @@ namespace Saobracaj.Administracija
 
             }
         }
+
         public void UpdObavestenje(int ID, int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+
         {
 
             SqlConnection conn = new SqlConnection(connect);
