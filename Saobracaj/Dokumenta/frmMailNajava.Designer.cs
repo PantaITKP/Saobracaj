@@ -48,12 +48,15 @@ namespace Saobracaj.Dokumenta
             // 
             // dataGridView1
             // 
+            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(6, 191);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(1545, 650);
+            this.dataGridView1.Size = new System.Drawing.Size(1531, 732);
             this.dataGridView1.TabIndex = 0;
             // 
             // comboBox1
@@ -190,7 +193,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1563, 853);
+            this.ClientSize = new System.Drawing.Size(1557, 935);
             this.Controls.Add(this.btn_Arhivirano);
             this.Controls.Add(this.btn_Svi);
             this.Controls.Add(this.btn_PosaljiFilter);
@@ -207,6 +210,7 @@ namespace Saobracaj.Dokumenta
             this.Controls.Add(this.dataGridView1);
             this.Name = "frmMailNajava";
             this.Text = "frmMailNajava";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmMailNajava_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
