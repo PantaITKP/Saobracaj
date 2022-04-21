@@ -2095,7 +2095,7 @@ namespace Saobracaj
             this.toolStripButton106.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton106.Image")));
             this.toolStripButton106.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton106.Name = "toolStripButton106";
-            this.toolStripButton106.Size = new System.Drawing.Size(203, 23);r
+            this.toolStripButton106.Size = new System.Drawing.Size(203, 23);
             this.toolStripButton106.Text = "Štampa testa";
             this.toolStripButton106.Click += new System.EventHandler(this.toolStripButton106_Click);
             // 
@@ -2286,7 +2286,7 @@ namespace Saobracaj
             this.toolStripEx33.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton117,
             this.toolStripButton118});
-            this.toolStripEx33.Location = new System.Drawing.Point(795, 1);r
+            this.toolStripEx33.Location = new System.Drawing.Point(795, 1);
             this.toolStripEx33.Name = "toolStripEx33";
             this.toolStripEx33.Office12Mode = false;
             this.toolStripEx33.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
