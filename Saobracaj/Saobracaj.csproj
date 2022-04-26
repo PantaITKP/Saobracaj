@@ -740,6 +740,12 @@
     <Compile Include="Dokumenta\frmPodtrase.Designer.cs">
       <DependentUpon>frmPodtrase.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmPPKGlavna.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPPKGlavna.Designer.cs">
+      <DependentUpon>frmPPKGlavna.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmPravoAktivnosti.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1829,6 +1835,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPodtrase.resx">
       <DependentUpon>frmPodtrase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPPKGlavna.resx">
+      <DependentUpon>frmPPKGlavna.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPravoAktivnosti.resx">
       <DependentUpon>frmPravoAktivnosti.cs</DependentUpon>

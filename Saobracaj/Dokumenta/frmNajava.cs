@@ -834,8 +834,10 @@ namespace Saobracaj.Dokumenta
                 int sp = Convert.ToInt32(cboStatusPredaje.SelectedValue);
                 if (sp == 7 || sp == 9)
                 {
-                    if (cboPosiljalac.Text =="" || cboPrimalac.Text=="" || cboPrevoznik.Text=="" || cboPrevoznikZa.Text=="" || cboOtpravna.Text == "" || cboUputna.Text == "" || 
-                        cboGranicna.Text == "" || cboTipPrevoza.Text == "Nije definisan" || txtNetoTezina.Value == 0 || txtNetoTezinaM.Value ==0|| txtBrojKola.Value==0 || txtDuzinaM.Value==0)
+                    if (cboPosiljalac.Text =="" || cboPrimalac.Text=="" || cboPrevoznik.Text=="" || cboPrevoznikZa.Text=="" || cboOtpravna.Text == "" || 
+                        cboUputna.Text == "" || cboGranicna.Text == "" || cboTipPrevoza.Text == "Nije definisan" || 
+                        cboTipPrevoza.Text!= "Unutrašnji prazan" || cboTipPrevoza.Text!= "Uvoz/Izvoz/Tranzit prazno"
+                        || txtNetoTezina.Value == 0 || txtNetoTezinaM.Value ==0|| txtBrojKola.Value==0 || txtDuzinaM.Value==0)
                     {
                         MessageBox.Show("Moraju se popuniti sva obavezna polja:\n-Pošiljalac \n-Primalac \n-Otrpavna \n-Uputna \n-Trenutna \n-Preuzima od \n-Predaje za" +
                             "\n-Tip Prevoza \n-Bruto \n-Neto \n-Dužina \n-Broj Kola","Ispravnost unetih polja", MessageBoxButtons.OK, MessageBoxIcon.Warning);
