@@ -740,6 +740,12 @@
     <Compile Include="Dokumenta\frmPodtrase.Designer.cs">
       <DependentUpon>frmPodtrase.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmPPK.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPPK.Designer.cs">
+      <DependentUpon>frmPPK.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmPPKGlavna.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1090,12 +1096,6 @@
     </Compile>
     <Compile Include="Dokumenta\frmTeretnicaTerenIzmena.Designer.cs">
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Dokumenta\frmPPK.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Dokumenta\frmPPK.Designer.cs">
-      <DependentUpon>frmPPK.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\WebMapa.cs">
       <SubType>Form</SubType>
@@ -1836,6 +1836,9 @@
     <EmbeddedResource Include="Dokumenta\frmPodtrase.resx">
       <DependentUpon>frmPodtrase.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPPK.resx">
+      <DependentUpon>frmPPK.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPPKGlavna.resx">
       <DependentUpon>frmPPKGlavna.cs</DependentUpon>
     </EmbeddedResource>
@@ -1991,9 +1994,6 @@
       <DependentUpon>frmZarade.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmZaradeMasinovodje.rdlc" />
-    <EmbeddedResource Include="Dokumenta\frmPPK.resx">
-      <DependentUpon>frmPPK.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\rptGodisnjiOdmor.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoNeplaceno.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoTrue.rdlc" />
