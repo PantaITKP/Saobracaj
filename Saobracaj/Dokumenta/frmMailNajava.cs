@@ -210,7 +210,7 @@ namespace Saobracaj.Dokumenta
                     try
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
-                        mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs,milos.cpajak@kprevoz.co.rs,pantelija.petrovic@kprevoz.co.rs");
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
                         mailMessage.Subject = "Status najave";
 
                        var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
@@ -270,7 +270,6 @@ namespace Saobracaj.Dokumenta
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><br/>";
-                            body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
                         }
                         body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
                         
@@ -334,7 +333,7 @@ namespace Saobracaj.Dokumenta
                     try
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
-                        mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs,milos.cpajak@kprevoz.co.rs,pantelija.petrovic@kprevoz.co.rs");
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
                         mailMessage.Subject = "Status najave";
 
                         var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
@@ -394,7 +393,7 @@ namespace Saobracaj.Dokumenta
                                 body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
-                            body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
+                            
                         }
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
                         
@@ -459,7 +458,7 @@ namespace Saobracaj.Dokumenta
                     try
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
-                        mailMessage = new MailMessage("disp@kprevoz.co.rs", "stefan.obradovic@kprevoz.co.rs");
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
                         mailMessage.Subject = "Status najave";
 
                         var select = "SELECT distinct Partnerji.PaSifra,RTrim(PaNaziv) as Partner,Partnerji.Primalac,Najava.ID as Najava,Otpravna," +
@@ -519,7 +518,7 @@ namespace Saobracaj.Dokumenta
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
-                            body = body + "Salje na mail (dok je u fazi testiranja sluzi za proveru mail adresa): " + nizMail + "<br/><br/>";
+                           
                         }
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
 
