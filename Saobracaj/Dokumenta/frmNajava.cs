@@ -415,11 +415,17 @@ namespace Saobracaj.Dokumenta
             cboPrevoznikZa.SelectedValue = 0;
             txtUgovor.Text = "";
             txtZadatak.Text = "";
-          
 
-   /*
-   Napisati kod
-   */
+            DateTime dt = new DateTime(1900, 1, 1, 00, 00, 00);
+            dtpPredvidjenaPredaja.Value = dt;
+            dtpPredvidjenoPrimanje.Value = dt;
+            dtpStvarnaPredaja.Value = dt;
+            dtpStvarnoPrimanje.Value = dt;
+
+
+            /*
+            Napisati kod
+            */
 
 
             status = true;
