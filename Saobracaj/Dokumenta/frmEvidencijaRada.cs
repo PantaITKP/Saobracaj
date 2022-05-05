@@ -2189,6 +2189,12 @@ namespace Saobracaj.Dokumenta
         {
 
         }
+
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            frmPPKGlavna ppkg = new frmPPKGlavna();
+            ppkg.Show();
+        }
     }
 
         /* protected void Submit(object sender, EventArgs e)

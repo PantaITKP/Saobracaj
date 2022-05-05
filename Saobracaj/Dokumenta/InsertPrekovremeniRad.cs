@@ -12,7 +12,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertPrekovremeniRad
     {
-        public void InsPrekovremeniRad(DateTime DatumOd, DateTime DatumDo, double Ukupno, int ZaposleniID, string Napomena, int Praznik)
+        public void InsPrekovremeniRad(DateTime DatumOd, DateTime DatumDo, double Ukupno, int ZaposleniID, string Napomena, int Praznik, string Kreirao)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -65,6 +65,13 @@ namespace Saobracaj.Dokumenta
             parameter5.Value = Praznik;
             myCommand.Parameters.Add(parameter5);
 
+            SqlParameter parameter6 = new SqlParameter();
+            parameter6.ParameterName = "@Kreirao";
+            parameter6.SqlDbType = SqlDbType.NVarChar;
+            parameter6.Size = 50;
+            parameter6.Direction = ParameterDirection.Input;
+            parameter6.Value = Kreirao;
+            myCommand.Parameters.Add(parameter6);
 
 
             myConnection.Open();
@@ -104,7 +111,7 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-        public void UpdPrekovremeniRad(int ID, DateTime DatumOd, DateTime DatumDo, double Ukupno, int ZaposleniID, string Napomena, int Praznik)
+        public void UpdPrekovremeniRad(int ID, DateTime DatumOd, DateTime DatumDo, double Ukupno, int ZaposleniID, string Napomena, int Praznik,string Kreirao)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -165,6 +172,13 @@ namespace Saobracaj.Dokumenta
             parameter5.Value = Praznik;
             myCommand.Parameters.Add(parameter5);
 
+            SqlParameter parameter6 = new SqlParameter();
+            parameter6.ParameterName = "@Kreirao";
+            parameter6.SqlDbType = SqlDbType.NVarChar;
+            parameter6.Size = 50;
+            parameter6.Direction = ParameterDirection.Input;
+            parameter6.Value = Kreirao;
+            myCommand.Parameters.Add(parameter6);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();

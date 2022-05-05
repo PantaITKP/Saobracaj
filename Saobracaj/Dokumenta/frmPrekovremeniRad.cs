@@ -154,11 +154,18 @@ namespace Saobracaj.Dokumenta
                 Praznik = 1;
 
             }
+            DateTime OD = dtpVremeOd.Value;
+            DateTime DO = dtpVremeDo.Value;
+            TimeSpan span = DO.Subtract(OD);
+
+            int ukupno = Convert.ToInt32(span.Hours);
+            txtUkupno.Text = ukupno.ToString();
+
             if (status == true)
             {
                
                 InsertPrekovremeniRad ins = new InsertPrekovremeniRad();
-                ins.InsPrekovremeniRad(dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik);
+                ins.InsPrekovremeniRad(dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik,Kor.TrimEnd().ToString());
                 status = false;
                 RefreshDataGrid1();
 
@@ -166,7 +173,7 @@ namespace Saobracaj.Dokumenta
             else
             {
                 InsertPrekovremeniRad upd = new InsertPrekovremeniRad();
-                upd.UpdPrekovremeniRad(Convert.ToInt32(txtSifra.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik);
+                upd.UpdPrekovremeniRad(Convert.ToInt32(txtSifra.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik, Kor.TrimEnd().ToString());
                 RefreshDataGrid1();
             }
         }
@@ -185,13 +192,13 @@ namespace Saobracaj.Dokumenta
 
         private void RefreshDataGrid1()
         {
-            var select = " Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik " +
+            var select = " Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
  " from PrekovremeniRad inner join Delavci on " +
  " PrekovremeniRad.ZaposleniID = Delavci.DeSifra  where PrekovremeniRad.ZaposleniID = " + Convert.ToInt32(cboZaposleni.SelectedValue) + " order by id desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
-            var c = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection) ;
             var dataAdapter = new SqlDataAdapter(select, c);
 
             var commandBuilder = new SqlCommandBuilder(dataAdapter);
@@ -230,7 +237,7 @@ namespace Saobracaj.Dokumenta
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var select = " Select PrekovremeiRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik " +
+            var select = " Select PrekovremeiRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
 " from PrekovremeiRad inner join Delavci on " +
 " PrekovremeiRad.ZaposleniID = Delavci.DeSifra order by id desc";
 
@@ -283,6 +290,10 @@ namespace Saobracaj.Dokumenta
                     {
 
                         txtSifra.Text = row.Cells[0].Value.ToString();
+                        dtpVremeOd.Value = Convert.ToDateTime(row.Cells[1].Value);
+                        dtpVremeDo.Value = Convert.ToDateTime(row.Cells[2].Value);
+                        txtUkupno.Text = row.Cells[3].Value.ToString();
+                        txtNapomena.Text = row.Cells[4].Value.ToString();
                         RefreshDataGrid1();
                         // txtOpis.Text = row.Cells[1].Value.ToString();
                     }
