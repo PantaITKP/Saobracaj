@@ -365,5 +365,40 @@ namespace Saobracaj.Servis
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
         }
+
+        private void txt_Vise_Click(object sender, EventArgs e)
+        {
+          
+        }
+
+        private void btn_PromeniVise_Click(object sender, EventArgs e)
+        {
+            InsertPrijavaKvara kvar = new InsertPrijavaKvara();
+            try
+            {
+                foreach (DataGridViewRow row in dataGridView1.SelectedRows)
+                {
+                    int kvarID = 0;
+                    var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                    SqlConnection con = new SqlConnection(s_connection);
+
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select Kvarovi.Id as ID from Kvarovi inner join GrupaKvarova on Kvarovi.GrupaKvarovaID = GrupaKvarova.ID Where Kvarovi.Naziv=" + row.Cells[5].ToString(), con);
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    while (dr.Read())
+                    {
+                        kvarID = Convert.ToInt32(dr["ID"].ToString());
+                    }
+                    con.Close();
+                    kvar.UpdPrijavaKvarovi(Convert.ToInt32(row.Cells[0].Value.ToString()), row.Cells[1].Value.ToString(), Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToDateTime(row.Cells[3].Value),
+                    kvarID, Convert.ToInt32(cboStatusKvara.SelectedValue), Convert.ToInt32(cboPromenio.SelectedValue), row.Cells[9].Value.ToString());
+
+                }
+                RefreshDataGrid();
+            }
+            catch { }
+
+        }
     }
 }
