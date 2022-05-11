@@ -845,7 +845,7 @@ namespace Saobracaj.Dokumenta
                         if (cboPosiljalac.Text == "" || cboPrimalac.Text == "" || cboPrevoznik.Text == "" || cboPrevoznikZa.Text == "" || cboOtpravna.Text == "" ||
                         cboUputna.Text == "" || cboGranicna.Text == "" || txtBrojKola.Value == 0 || txtDuzinaM.Value == 0)
                         {
-                            MessageBox.Show("aaaaaaMoraju se popuniti sva obavezna polja:\n-Pošiljalac \n-Primalac \n-Otpravna \n-Uputna \n-Trenutna \n-Preuzima od \n-Predaje za" +
+                            MessageBox.Show("=Moraju se popuniti sva obavezna polja:\n-Pošiljalac \n-Primalac \n-Otpravna \n-Uputna \n-Trenutna \n-Preuzima od \n-Predaje za" +
                                                         "\n-Tip Prevoza \n-Bruto \n-Neto \n-Dužina \n-Broj Kola", "Ispravnost unetih polja", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
