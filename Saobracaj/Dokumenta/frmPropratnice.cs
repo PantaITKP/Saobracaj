@@ -179,10 +179,14 @@ namespace Saobracaj.Dokumenta
         }
         private void GVZaduzivanje()
         {
-            var select = "select p.Id,p.IdNajave,p.Napomena as NapomenaNajava,z.IdPropratnica,z.ZaposleniId,RTrim(k.Korisnik) as Zaposleni,z.Napomena as NapomenaZaduzenje," +
-                "z.VremeZaduzenja,s.Slika,s.Ime " +
-                "From Propratnica p,PropratnicaZaduzenje z,PropratniceZaduzivanjeSlike s,Korisnici k " +
-                "Where p.IDNajave=z.IdNajave and z.IdPropratnica=s.PropratnicaZaduzivanjeId and z.ZaposleniId=k.DeSifra order by p.ID desc";
+            var select = "select PropratnicaZaduzenje.ID,PropratnicaZaduzenje.IdNajave,Propratnica.Napomena as NapomenaPropratnica,IdPropratnica,ZaposleniId," +
+                "RTrim(Korisnici.Korisnik) as Zaposleni,PropratnicaZaduzenje.Napomena as NapomenaZaduzenje,VremeZaduzenja,PropratniceZaduzivanjeSlike.Slika," +
+                "PropratniceZaduzivanjeSlike.Ime " +
+                "From PropratnicaZaduzenje " +
+                "Inner join Propratnica on PropratnicaZaduzenje.IdNajave = Propratnica.IDNajave " +
+                "inner join Korisnici on PropratnicaZaduzenje.ZaposleniId = Korisnici.DeSifra " +
+                "Inner join PropratniceZaduzivanjeSlike on PropratnicaZaduzenje.ID = PropratniceZaduzivanjeSlike.PropratnicaZaduzivanjeId " +
+                "order by IdPropratnica desc";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             var c = new SqlConnection(s_connection);
             var dataAdapter = new SqlDataAdapter(select, c);
@@ -202,10 +206,14 @@ namespace Saobracaj.Dokumenta
         }
         public void filterZaduzivanje(int najava)
         {
-            var select = "select p.Id,p.IdNajave,p.Napomena as NapomenaNajava,z.IdPropratnica,z.ZaposleniId,RTrim(k.Korisnik) as Zaposleni,z.Napomena as NapomenaZaduzenje," +
-                "z.VremeZaduzenja,s.Slika,s.Ime " +
-                "From Propratnica p,PropratnicaZaduzenje z,PropratniceZaduzivanjeSlike s,Korisnici k" +
-                " Where p.IDNajave=z.IdNajave and p.IDNajave="+najava+"and z.IdPropratnica=s.PropratnicaZaduzivanjeId and z.ZaposleniId=k.DeSifra order by p.ID desc";
+            var select = "select PropratnicaZaduzenje.ID,PropratnicaZaduzenje.IdNajave,Propratnica.Napomena as NapomenaPropratnica,IdPropratnica,ZaposleniId," +
+                "RTrim(Korisnici.Korisnik) as Zaposleni,PropratnicaZaduzenje.Napomena as NapomenaZaduzenje,VremeZaduzenja,PropratniceZaduzivanjeSlike.Slika," +
+                "PropratniceZaduzivanjeSlike.Ime " +
+                "From PropratnicaZaduzenje " +
+                "Inner join Propratnica on PropratnicaZaduzenje.IdNajave = Propratnica.IDNajave " +
+                "inner join Korisnici on PropratnicaZaduzenje.ZaposleniId = Korisnici.DeSifra " +
+                "Inner join PropratniceZaduzivanjeSlike on PropratnicaZaduzenje.ID = PropratniceZaduzivanjeSlike.PropratnicaZaduzivanjeId Where Propratnica.IdNajave="+najava +
+                "order by IdPropratnica desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             var c = new SqlConnection(s_connection);
@@ -227,10 +235,14 @@ namespace Saobracaj.Dokumenta
 
         private void GVRazduzivanje()
         {
-            var select = "select p.Id,p.IdNajave,p.Napomena as NapomenaNajava,z.IdPropratnica,z.ZaposleniId,RTrim(k.Korisnik) as Zaposleni,z.Napomena as NapomenaRazduzenje," +
-     "z.VremeRazduzenja,s.Slika,s.Ime " +
-     "From Propratnica p,PropratnicaRazduzenje z,PropratniceRazduzivanjeSlike s,Korisnici k " +
-     "Where p.IDNajave=z.IdNajave and z.IdPropratnica=s.PropratnicaRazduzivanjeId and z.ZaposleniId=k.DeSifra order by p.ID desc";
+            var select = "select PropratnicaRazduzenje.ID,PropratnicaRazduzenje.IdNajave,Propratnica.Napomena as NapomenaPropratnica,IdPropratnica,ZaposleniId," +
+                "RTrim(Korisnici.Korisnik) as Zaposleni,PropratnicaRazduzenje.Napomena as NapomenaRazduzivanje,VremeRazduzenja,PropratniceRazduzivanjeSlike.Slika," +
+                "PropratniceRazduzivanjeSlike.Ime " +
+                "From PropratnicaRazduzenje " +
+                "Inner join Propratnica on PropratnicaRazduzenje.IdNajave = Propratnica.IDNajave " +
+                "inner join Korisnici on PropratnicaRazduzenje.ZaposleniId = Korisnici.DeSifra " +
+                "Inner join PropratniceRazduzivanjeSlike on PropratnicaRazduzenje.ID = PropratniceRazduzivanjeSlike.PropratnicaRazduzivanjeId " +
+                "order by IdPropratnica desc";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             var c = new SqlConnection(s_connection);
             var dataAdapter = new SqlDataAdapter(select, c);
@@ -250,10 +262,15 @@ namespace Saobracaj.Dokumenta
         }
         private void filterRazduzivanje(int najava)
         {
-            var select = "select p.Id,p.IdNajave,p.Napomena as NapomenaNajava,z.IdPropratnica,z.ZaposleniId,RTrim(k.Korisnik) as Zaposleni,z.Napomena as NapomenaRazduzenje," +
-                 "z.VremeRazduzenja,s.Slika,s.Ime " +
-                 "From Propratnica p,PropratnicaRazduzenje z,PropratniceRazduzivanjeSlike s,Korisnici k" +
-                 " Where p.IDNajave=z.IdNajave and p.IDNajave=" + najava + "and z.IdPropratnica=s.PropratnicaRazduzivanjeId and z.ZaposleniId=k.DeSifra order by p.ID desc";
+            var select = "select PropratnicaRazduzenje.ID,PropratnicaRazduzenje.IdNajave,Propratnica.Napomena as NapomenaPropratnica,IdPropratnica,ZaposleniId," +
+                 "RTrim(Korisnici.Korisnik) as Zaposleni,PropratnicaRazduzenje.Napomena as NapomenaRazduzivanje,VremeRazduzenja,PropratniceRazduzivanjeSlike.Slika," +
+                 "PropratniceRazduzivanjeSlike.Ime " +
+                 "From PropratnicaRazduzenje " +
+                 "Inner join Propratnica on PropratnicaRazduzenje.IdNajave = Propratnica.IDNajave " +
+                 "inner join Korisnici on PropratnicaRazduzenje.ZaposleniId = Korisnici.DeSifra " +
+                 "Inner join PropratniceRazduzivanjeSlike on PropratnicaRazduzenje.ID = PropratniceRazduzivanjeSlike.PropratnicaRazduzivanjeId " +
+                 "Where Propratnica.IDNajave="+najava +
+                 "order by IdPropratnica desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             var c = new SqlConnection(s_connection);
@@ -549,6 +566,11 @@ namespace Saobracaj.Dokumenta
             {
                 return;
             }
+        }
+
+        private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 
