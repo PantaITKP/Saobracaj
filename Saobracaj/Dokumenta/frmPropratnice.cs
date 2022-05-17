@@ -401,7 +401,7 @@ namespace Saobracaj.Dokumenta
                     SqlDataReader dr = cmd.ExecuteReader();
                     while (dr.Read())
                     {
-                        txt_putanjaR.Text = dr["Slika"].ToString().TrimEnd();
+                       txt_putanjaR.Text = dr["Slika"].ToString().TrimEnd();
                     }
                     conn.Close();
                 }
@@ -427,11 +427,12 @@ namespace Saobracaj.Dokumenta
             if (dr == DialogResult.Yes)
             {
                 OpenFileDialog dialog = new OpenFileDialog();
+                dialog.Multiselect = true;
                 dialog.Title = "Izaberite datoteku";
                 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    string file = dialog.FileName;
+                    string[] file = dialog.FileNames;
                     string query = "Select DeEmail From Delavci Where DeSifra= " + Convert.ToInt32(combo_Zaduzen.SelectedValue);
                     SqlConnection conn = new SqlConnection(connect);
                     conn.Open();
@@ -462,12 +463,12 @@ namespace Saobracaj.Dokumenta
                     try
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
-                        mailMessage = new MailMessage("disp@kprevoz.co.rs",nizMail);
-                        mailMessage.CC.Add(cuvaj);
+                        mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
+                        //mailMessage.CC.Add(cuvaj);
                         mailMessage.Subject = "Zaduženje";
                         string body = "";
-                        body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: "+combo_Zaduzen.Text.ToString().TrimEnd()+"<br/>";
-                        body = body + "Najava: " + txt_IdNajave.Text.ToString().TrimEnd()+"<br/>";
+                        body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: " + combo_Zaduzen.Text.ToString().TrimEnd() + "<br/>";
+                        body = body + "Najava: " + txt_IdNajave.Text.ToString().TrimEnd() + "<br/>";
                         body = body + "Zadužena firma: " + combo_Firma.Text.ToString().TrimEnd() + "<br/>";
                         body = body + "Napomena: " + txt_Napomena.Text.ToString().TrimEnd() + "<br/><br/>";
                         body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
@@ -476,17 +477,20 @@ namespace Saobracaj.Dokumenta
                         mailMessage.IsBodyHtml = true;
                         SmtpClient smtpClient = new SmtpClient();
                         smtpClient.Host = "mail.kprevoz.co.rs";
+                        for (int i = 0; i < file.Length; i++)
+                        {
+                            Attachment data = new Attachment(file[i], MediaTypeNames.Application.Octet);
 
-                        Attachment data = new Attachment(file, MediaTypeNames.Application.Octet);
+                            // Add time stamp information for the file.
+                            ContentDisposition disposition = data.ContentDisposition;
+                            disposition.CreationDate = System.IO.File.GetCreationTime(file[i]);
+                            disposition.ModificationDate = System.IO.File.GetLastWriteTime(file[i]);
+                            disposition.ReadDate = System.IO.File.GetLastAccessTime(file[i]);
 
-                        // Add time stamp information for the file.
-                        ContentDisposition disposition = data.ContentDisposition;
-                        disposition.CreationDate = System.IO.File.GetCreationTime(file);
-                        disposition.ModificationDate = System.IO.File.GetLastWriteTime(file);
-                        disposition.ReadDate = System.IO.File.GetLastAccessTime(file);
-
-                        // Add the file attachment to this e-mail message.
-                        mailMessage.Attachments.Add(data);
+                            // Add the file attachment to this e-mail message.
+                            mailMessage.Attachments.Add(data);
+                        }
+                       
 
                         smtpClient.Port = 25;
                         smtpClient.UseDefaultCredentials = true;
@@ -523,7 +527,6 @@ namespace Saobracaj.Dokumenta
                         nizMail = nizMail + "," + dRead["DeEmail"].ToString();
                         count++;
                     }
-
                 }
                 if (nizMail == "")
                 {
