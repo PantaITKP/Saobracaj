@@ -869,5 +869,16 @@ namespace Saobracaj
             }
             else { return; }
         }
+
+        private void toolStripButton122_Click(object sender, EventArgs e)
+        {
+            Sifarnici.frmVagoniSerije lok = new Sifarnici.frmVagoniSerije();
+            PravoP = lok.Pravo;
+            if (PravoP == true)
+            {
+                lok.Show();
+            }
+            else { return; }
+        }
     }
 }

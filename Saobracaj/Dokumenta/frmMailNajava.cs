@@ -234,7 +234,7 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE: <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
                             body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
@@ -269,7 +269,7 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
                         body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
                         
@@ -357,7 +357,7 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
                             body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
@@ -392,7 +392,7 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                             
                         }
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
@@ -453,7 +453,7 @@ namespace Saobracaj.Dokumenta
                         MessageBox.Show("Za partnera: " + PaSifra + " nije uneta mail adresa");
                     }
                     conn.Close();
-                    MessageBox.Show(nizMail);
+                    
 
                     try
                     {
@@ -482,7 +482,7 @@ namespace Saobracaj.Dokumenta
                         body = body + "                             STATUS NAJAVE <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
                             body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
@@ -517,7 +517,7 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><hr>";
                            
                         }
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";

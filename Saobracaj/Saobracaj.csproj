@@ -1445,6 +1445,12 @@
     <Compile Include="Sifarnici\frmLokomotive.Designer.cs">
       <DependentUpon>frmLokomotive.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\frmVagoniSerije.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\frmVagoniSerije.Designer.cs">
+      <DependentUpon>frmVagoniSerije.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmNHM.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1585,6 +1591,7 @@
     <Compile Include="Sifarnici\InsertKontrolneGreskeTipDokumenta.cs" />
     <Compile Include="Sifarnici\InsertLokomotivaSerija.cs" />
     <Compile Include="Sifarnici\InsertLokomotive.cs" />
+    <Compile Include="Sifarnici\InsertVagoniSerije.cs" />
     <Compile Include="Sifarnici\Insertnhm.cs" />
     <Compile Include="Sifarnici\InsertParametri.cs" />
     <Compile Include="Sifarnici\InsertPartnerji.cs" />
@@ -2143,6 +2150,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmLokomotive.resx">
       <DependentUpon>frmLokomotive.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\frmVagoniSerije.resx">
+      <DependentUpon>frmVagoniSerije.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmNHM.resx">
       <DependentUpon>frmNHM.cs</DependentUpon>
