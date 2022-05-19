@@ -1414,6 +1414,7 @@
     <Compile Include="Servis\frmEvidencijaKvarovaAnaliza.Designer.cs">
       <DependentUpon>frmEvidencijaKvarovaAnaliza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Settings.cs" />
     <Compile Include="Sifarnici\frmCenaPoRadniku.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2007,6 +2008,9 @@
     <EmbeddedResource Include="Dokumenta\frmTeretnicaTerenIzmena.resx">
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
     </EmbeddedResource>
+    <Content Include="Dokumenta\rptregistrator2019.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="Dokumenta\Troskovi.rdlc" />
     <EmbeddedResource Include="Dokumenta\WebMapa.resx">
       <DependentUpon>WebMapa.cs</DependentUpon>

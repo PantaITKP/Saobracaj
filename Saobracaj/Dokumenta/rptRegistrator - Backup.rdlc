@@ -523,10 +523,6 @@
                                   <Value>=Fields!PaUlicaHisnaSt.Value</Value>
                                   <Style />
                                 </TextRun>
-                                <TextRun>
-                                  <Value xml:space="preserve"> </Value>
-                                  <Style />
-                                </TextRun>
                               </TextRuns>
                               <Style />
                             </Paragraph>
