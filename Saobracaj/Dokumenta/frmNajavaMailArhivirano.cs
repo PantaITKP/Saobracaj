@@ -157,7 +157,7 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE: <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
                             najava = Convert.ToInt32(myRow["Najava"].ToString());
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
@@ -185,7 +185,7 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
                         body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
 
@@ -287,7 +287,7 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE: <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "Najava broj: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
                             najava = Convert.ToInt32(myRow["Najava"].ToString());
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
@@ -315,7 +315,7 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
                         body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
 

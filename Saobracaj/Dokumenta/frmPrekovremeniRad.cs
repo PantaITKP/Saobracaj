@@ -237,9 +237,9 @@ namespace Saobracaj.Dokumenta
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var select = " Select PrekovremeiRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
-" from PrekovremeiRad inner join Delavci on " +
-" PrekovremeiRad.ZaposleniID = Delavci.DeSifra order by id desc";
+            var select = " Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
+" from PrekovremeniRad inner join Delavci on " +
+" PrekovremeniRad.ZaposleniID = Delavci.DeSifra order by id desc";
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
