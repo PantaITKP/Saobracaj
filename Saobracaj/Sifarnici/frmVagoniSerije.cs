@@ -118,7 +118,7 @@ namespace Saobracaj.Sifarnici
         }
         private void RefreshGV()
         {
-            var query = "Select * from LokomotiveSerije";
+            var query = "Select * from VagoniSerije";
             SqlConnection conn = new SqlConnection(connect);
             SqlDataAdapter da = new SqlDataAdapter(query, conn);
             DataSet ds = new DataSet();
