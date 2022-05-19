@@ -1,7 +1,7 @@
 ﻿
 namespace Saobracaj.Sifarnici
 {
-    partial class frmLokomotiveSerije
+    partial class frmVagoniSerije
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@ namespace Saobracaj.Sifarnici
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmLokomotiveSerije));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmVagoniSerije));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsNew = new System.Windows.Forms.ToolStripButton();
