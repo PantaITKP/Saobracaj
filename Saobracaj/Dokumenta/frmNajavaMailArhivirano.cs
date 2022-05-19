@@ -162,7 +162,7 @@ namespace Saobracaj.Dokumenta
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
                             body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            //body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
                             body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
                             if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked == false && cb_sPrimanje.Checked == false)
@@ -292,7 +292,7 @@ namespace Saobracaj.Dokumenta
                             body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
                             body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
                             body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            //body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
                             body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
                             if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked==false && cb_sPrimanje.Checked==false)

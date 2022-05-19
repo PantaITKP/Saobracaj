@@ -222,7 +222,7 @@ namespace Saobracaj.Dokumenta
             SqlParameter parameter28 = new SqlParameter();
             parameter28.ParameterName = "@Zadatak";
             parameter28.SqlDbType = SqlDbType.NVarChar;
-            parameter28.Size = 50;
+            parameter28.Size = 500;
             parameter28.Direction = ParameterDirection.Input;
             parameter28.Value = Zadatak;
             myCommand.Parameters.Add(parameter28);
@@ -767,7 +767,7 @@ namespace Saobracaj.Dokumenta
             SqlParameter parameter28 = new SqlParameter();
             parameter28.ParameterName = "@Zadatak";
             parameter28.SqlDbType = SqlDbType.NVarChar;
-            parameter28.Size = 50;
+            parameter28.Size = 500;
             parameter28.Direction = ParameterDirection.Input;
             parameter28.Value = Zadatak;
             myCommand.Parameters.Add(parameter28);
