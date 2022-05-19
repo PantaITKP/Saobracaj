@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmLokomotiveSerije : Form
+    public partial class frmVagoniSerije : Form
     {
         public static string code = "frmLokomotiveSerije";
         public bool Pravo;
@@ -25,7 +25,7 @@ namespace Saobracaj.Sifarnici
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = false;
         string niz = "";
-        public frmLokomotiveSerije()
+        public frmVagoniSerije()
         {
             InitializeComponent();
             txt_ID.Enabled = false;
@@ -118,7 +118,7 @@ namespace Saobracaj.Sifarnici
         }
         private void RefreshGV()
         {
-            var query = "Select * from LokomotiveSerije";
+            var query = "Select * from VagoniSerije";
             SqlConnection conn = new SqlConnection(connect);
             SqlDataAdapter da = new SqlDataAdapter(query, conn);
             DataSet ds = new DataSet();
@@ -157,24 +157,24 @@ namespace Saobracaj.Sifarnici
 
         private void tsSave_Click(object sender, EventArgs e)
         {
-            InsertLokomotiveSerije lok = new InsertLokomotiveSerije();
+            InsertVagoniSerije lok = new InsertVagoniSerije();
             if (status == true)
             {
-                lok.InsLokomotiveSerije(txt_Serija.Text.ToString().TrimEnd());
+                lok.InsVagoniSerije(txt_Serija.Text.ToString().TrimEnd());
                 status = false;
                 tsNew.Enabled = true;
             }
             else
             {
-                lok.UpdLokomotiveSerije(Convert.ToInt32(txt_ID.Text.ToString()), txt_Serija.Text.ToString().TrimEnd());
+                lok.UpdVagoniSerije(Convert.ToInt32(txt_ID.Text.ToString()), txt_Serija.Text.ToString().TrimEnd());
             }
             RefreshGV();
         }
 
         private void tsDelete_Click(object sender, EventArgs e)
         {
-            InsertLokomotiveSerije lok = new InsertLokomotiveSerije();
-            lok.DelLokomotiveSerije(Convert.ToInt32(txt_ID.Text));
+            InsertVagoniSerije lok = new InsertVagoniSerije();
+            lok.DelVagoniSerije(Convert.ToInt32(txt_ID.Text));
             RefreshGV();
         }
     }

@@ -10,14 +10,14 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    class InsertLokomotiveSerije
+    class InsertVagoniSerije
     {
-        public void InsLokomotiveSerije(string Serija)
+        public void InsVagoniSerije(string Serija)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             SqlCommand myCommand = myConnection.CreateCommand();
-            myCommand.CommandText = "InsertLokomotiveSerije";
+            myCommand.CommandText = "InsertVagoniSerije";
             myCommand.CommandType = CommandType.StoredProcedure;
 
             SqlParameter serija = new SqlParameter();
@@ -62,12 +62,12 @@ namespace Saobracaj.Sifarnici
                 }
             }
         }
-        public void UpdLokomotiveSerije(int ID,string Serija)
+        public void UpdVagoniSerije(int ID,string Serija)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             SqlCommand myCommand = myConnection.CreateCommand();
-            myCommand.CommandText = "UpdateLokomotiveSerije";
+            myCommand.CommandText = "UpdateVagoniSerije";
             myCommand.CommandType = CommandType.StoredProcedure;
 
             SqlParameter id = new SqlParameter();
@@ -119,12 +119,12 @@ namespace Saobracaj.Sifarnici
                 }
             }
         }
-        public void DelLokomotiveSerije(int ID)
+        public void DelVagoniSerije(int ID)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             SqlCommand myCommand = myConnection.CreateCommand();
-            myCommand.CommandText = "DeleteLokomotiveSerije";
+            myCommand.CommandText = "DeleteVagoniSerije";
             myCommand.CommandType = CommandType.StoredProcedure;
 
             SqlParameter id = new SqlParameter();

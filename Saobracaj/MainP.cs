@@ -872,7 +872,7 @@ namespace Saobracaj
 
         private void toolStripButton122_Click(object sender, EventArgs e)
         {
-            Sifarnici.frmLokomotiveSerije lok = new Sifarnici.frmLokomotiveSerije();
+            Sifarnici.frmVagoniSerije lok = new Sifarnici.frmVagoniSerije();
             PravoP = lok.Pravo;
             if (PravoP == true)
             {
