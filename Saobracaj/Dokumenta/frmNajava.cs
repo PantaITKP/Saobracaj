@@ -28,6 +28,7 @@ namespace Saobracaj.Dokumenta
         bool update;
         bool delete;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
+        bool filter = false;
 
         Boolean status = false;
         int PomRID = 0;
@@ -850,12 +851,12 @@ namespace Saobracaj.Dokumenta
                             return;
                         }
                     }
-                    else if (cboPosiljalac.Text =="" || cboPrimalac.Text=="" || cboPrevoznik.Text=="" || cboPrevoznikZa.Text=="" || cboOtpravna.Text == "" || 
+                    else if (cboPosiljalac.Text == "" || cboPrimalac.Text == "" || cboPrevoznik.Text == "" || cboPrevoznikZa.Text == "" || cboOtpravna.Text == "" ||
                         cboUputna.Text == "" || cboGranicna.Text == "" || cboTipPrevoza.Text == "Nije definisan"
-                        || txtNetoTezina.Value == 0 || txtNetoTezinaM.Value ==0|| txtBrojKola.Value==0 || txtDuzinaM.Value==0)
+                        || txtNetoTezina.Value == 0 || txtNetoTezinaM.Value == 0 || txtBrojKola.Value == 0 || txtDuzinaM.Value == 0)
                     {
                         MessageBox.Show("Moraju se popuniti sva obavezna polja:\n-Pošiljalac \n-Primalac \n-Otpravna \n-Uputna \n-Trenutna \n-Preuzima od \n-Predaje za" +
-                            "\n-Tip Prevoza \n-Bruto \n-Neto \n-Dužina \n-Broj Kola","Ispravnost unetih polja", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            "\n-Tip Prevoza \n-Bruto \n-Neto \n-Dužina \n-Broj Kola", "Ispravnost unetih polja", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
                 }
@@ -874,7 +875,15 @@ namespace Saobracaj.Dokumenta
                     PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text);
                 status = false;
                 txtSifra.Enabled = false;
-                RefreshDataGrid();
+                if (filter == true)
+                {
+                    FiltrirajPoPlatiocu();
+                }
+                else
+                {
+                    RefreshDataGrid();
+                }
+                
                 if (chkRID.Checked == true && txtUgovor.Text == "" && Convert.ToInt32(cboStatusPredaje.SelectedValue) == 7)
                 {
                     PosaljiMailOdjava("milica.p.s@kprevoz.co.rs");
@@ -2673,8 +2682,7 @@ namespace Saobracaj.Dokumenta
             frmNajavaLog log = new frmNajavaLog();
             log.Show();
         }
-
-        private void toolStripButton7_Click(object sender, EventArgs e)
+        private void FiltrirajPoPlatiocu()
         {
             var select = "SELECT najava.ID, stanice_4.opis as Granicna,Najava.BrojNajave, Najava.Voz, Partnerji_1.PaNaziv as Posiljalac,Partnerji.PaNaziv AS Prevoznik, " +
                 "Partnerji_2.PaNaziv AS Primalac,stanice.Opis AS Uputna, stanice_1.Opis AS Otpravna,Najava.PrevozniPut as Relacija, Najava.PredvidjenoPrimanje, " +
@@ -2808,9 +2816,16 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[23].Width = 80;
 
         }
+        private void toolStripButton7_Click(object sender, EventArgs e)
+        {
+            filter = true;
+            FiltrirajPoPlatiocu();
+           
+        }
 
         private void toolStripButton8_Click(object sender, EventArgs e)
         {
+            filter = false;
             RefreshDataGrid();
         }
 
