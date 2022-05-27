@@ -12,7 +12,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertNajava
     {
-        public void InsNaj(string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RidBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina)
+        public void InsNaj(string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RidBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -300,6 +300,14 @@ namespace Saobracaj.Dokumenta
             parameter38.Value = DodatnoPorudzbina;
             myCommand.Parameters.Add(parameter38);
 
+            SqlParameter parameter39 = new SqlParameter();
+            parameter39.ParameterName = "@SerijaVagona";
+            parameter39.SqlDbType = SqlDbType.NVarChar;
+            parameter39.Size = 50;
+            parameter39.Direction = ParameterDirection.Input;
+            parameter39.Value = SerijaVagona;
+            myCommand.Parameters.Add(parameter39);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -549,7 +557,7 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-        public void UpdNaj(int ID, string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RIDBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina)
+        public void UpdNaj(int ID, string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RIDBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -846,6 +854,14 @@ namespace Saobracaj.Dokumenta
             parameter38.Direction = ParameterDirection.Input;
             parameter38.Value = DodatnoPorudzbina;
             myCommand.Parameters.Add(parameter38);
+
+            SqlParameter parameter39 = new SqlParameter();
+            parameter39.ParameterName = "@SerijaVagona";
+            parameter39.SqlDbType = SqlDbType.NVarChar;
+            parameter39.Size = 50;
+            parameter39.Direction = ParameterDirection.Input;
+            parameter39.Value = SerijaVagona;
+            myCommand.Parameters.Add(parameter39);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
