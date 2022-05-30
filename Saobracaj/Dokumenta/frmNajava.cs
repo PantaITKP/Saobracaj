@@ -160,7 +160,7 @@ namespace Saobracaj.Dokumenta
             " Partnerji.PaNaziv AS Prevoznik, Partnerji_2.PaNaziv AS Primalac, " +
             " stanice.Opis AS Uputna, stanice_1.Opis AS Otpravna,  Najava.PrevozniPut as Relacija , " +
             "  Najava.PredvidjenoPrimanje, Najava.StvarnoPrimanje, " +
-            "  Najava.PredvidjenaPredaja, Najava.StvarnaPredaja, " +
+            "  Najava.PredvidjenaPredaja, Najava.StvarnaPredaja,Najava.SerijaVagona " +
      "   CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StatusN , " +
       "     Najava.ONBroj,  Najava.Status, Najava.Tezina, Najava.Duzina, " +
        "   Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv as PrevoznikZa, Najava.Faktura, Najava.Korisnik " +
@@ -632,6 +632,18 @@ namespace Saobracaj.Dokumenta
             cboNHM2.DisplayMember = "NHM";
             cboNHM2.ValueMember = "ID";
 
+            var select16 = "Select * from VagoniSerije";
+            var s_connection16 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection16 = new SqlConnection(s_connection16);
+            var c16 = new SqlConnection(s_connection16);
+            var dataAdapter16 = new SqlDataAdapter(select16, c16);
+
+            var commandBuilder16 = new SqlCommandBuilder(dataAdapter16);
+            var ds16 = new DataSet();
+            dataAdapter16.Fill(ds16);
+            combo_SerijaVagona.DataSource = ds16.Tables[0];
+            combo_SerijaVagona.DisplayMember = "Serija";
+            combo_SerijaVagona.ValueMember = "Serija";
 
             //Tehnologija
 
@@ -817,7 +829,7 @@ namespace Saobracaj.Dokumenta
 
 
 
-                ins.InsNaj(txtOpis.Text, Convert.ToInt32(cmbVoz.SelectedValue), Convert.ToInt32(cboPosiljalac.SelectedValue), Convert.ToInt32(cboPrevoznik.SelectedValue), Convert.ToInt32(cboOtpravna.SelectedValue), Convert.ToInt32(cboUputna.SelectedValue), Convert.ToInt32(cboPrimalac.SelectedValue), Convert.ToInt32(cboNHM.SelectedValue), txtRelacija.Text, Convert.ToDouble(txtNetoTezina.Text), Convert.ToDouble(txtDuzinaM.Text), Convert.ToInt32(txtBrojKola.Text), chkRID.Checked, Convert.ToDateTime(dtpPredvidjenoPrimanje.Value), Convert.ToDateTime(dtpStvarnoPrimanje.Value), Convert.ToDateTime(dtpPredvidjenaPredaja.Value), Convert.ToDateTime(dtpStvarnaPredaja.Value), Convert.ToInt32(cboStatusPredaje.SelectedValue), txtRID.Text.TrimEnd(), txtRIDBroj.Text.Trim(), txtKomentar.Text, Convert.ToInt32(cboVozP.SelectedValue), Convert.ToInt32(cboGranicna.SelectedValue), Convert.ToInt32(cboPlatilac.SelectedValue), chkAdHoc.Checked, Convert.ToInt32(cboPrevoznikZa.SelectedValue), txtUgovor.Text, txtZadatak.Text, chkCIM.Checked, KorisnikNajava, txtDispecerRID.Text, Convert.ToInt32(cboTipPrevoza.SelectedValue), Convert.ToDouble(txtNetoTezinaM.Value), Convert.ToInt32(multiColumnComboBox1.SelectedValue), PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text);
+                ins.InsNaj(txtOpis.Text, Convert.ToInt32(cmbVoz.SelectedValue), Convert.ToInt32(cboPosiljalac.SelectedValue), Convert.ToInt32(cboPrevoznik.SelectedValue), Convert.ToInt32(cboOtpravna.SelectedValue), Convert.ToInt32(cboUputna.SelectedValue), Convert.ToInt32(cboPrimalac.SelectedValue), Convert.ToInt32(cboNHM.SelectedValue), txtRelacija.Text, Convert.ToDouble(txtNetoTezina.Text), Convert.ToDouble(txtDuzinaM.Text), Convert.ToInt32(txtBrojKola.Text), chkRID.Checked, Convert.ToDateTime(dtpPredvidjenoPrimanje.Value), Convert.ToDateTime(dtpStvarnoPrimanje.Value), Convert.ToDateTime(dtpPredvidjenaPredaja.Value), Convert.ToDateTime(dtpStvarnaPredaja.Value), Convert.ToInt32(cboStatusPredaje.SelectedValue), txtRID.Text.TrimEnd(), txtRIDBroj.Text.Trim(), txtKomentar.Text, Convert.ToInt32(cboVozP.SelectedValue), Convert.ToInt32(cboGranicna.SelectedValue), Convert.ToInt32(cboPlatilac.SelectedValue), chkAdHoc.Checked, Convert.ToInt32(cboPrevoznikZa.SelectedValue), txtUgovor.Text, txtZadatak.Text, chkCIM.Checked, KorisnikNajava, txtDispecerRID.Text, Convert.ToInt32(cboTipPrevoza.SelectedValue), Convert.ToDouble(txtNetoTezinaM.Value), Convert.ToInt32(multiColumnComboBox1.SelectedValue), PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text,combo_SerijaVagona.SelectedValue.ToString());
 
 
                 if (chkRID.Checked == true && txtRIDBroj.Text.TrimEnd() == "")
@@ -872,7 +884,7 @@ namespace Saobracaj.Dokumenta
                     Convert.ToInt32(cboGranicna.SelectedValue), Convert.ToInt32(cboPlatilac.SelectedValue), chkAdHoc.Checked,
                     Convert.ToInt32(cboPrevoznikZa.SelectedValue), txtUgovor.Text, txtZadatak.Text, chkCIM.Checked, KorisnikNajava, txtDispecerRID.Text,
                     Convert.ToInt32(cboTipPrevoza.SelectedValue), Convert.ToDouble(txtNetoTezinaM.Value), Convert.ToInt32(multiColumnComboBox1.Text),
-                    PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text);
+                    PomImaPovrat, Convert.ToInt32(cboTehnologijaID.SelectedValue), Convert.ToInt32(cboNHM2.SelectedValue), txtPorDodatno.Text,combo_SerijaVagona.SelectedValue.ToString());
                 status = false;
                 txtSifra.Enabled = false;
                 if (filter == true)
@@ -1398,7 +1410,7 @@ namespace Saobracaj.Dokumenta
 
             SqlCommand cmd = new SqlCommand("SELECT [ID] ,[BrojNajave] ,[Voz] ,[Posiljalac] ,[Prevoznik],[Otpravna] ,[Uputna] ,[Primalac] ,[RobaNHM] ,[PrevozniPut] " +
             " ,[Tezina] ,[Duzina] ,[BrojKola] ,[RID] ,[PredvidjenoPrimanje] ,[StvarnoPrimanje] ,[PredvidjenaPredaja] ,[StvarnaPredaja] " +
-            " ,[Status] ,[OnBroj] ,[Verzija] ,[Razlog] ,[DatumUnosa] ,[RIDBroj] ,[Komentar], [VozP], [Granicna], Platilac, AdHoc, PrevoznikZa, Faktura, Zadatak, CIM, DispecerRID, TipPrevoza, NetoTezinaM, PorudzbinaID, ImaPovrat, TehnologijaID, RobaNHM2, DodatnoPorudznina FROM [Perftech_Beograd].[dbo].[Najava] where ID=" + txtSifra.Text, con);
+            " ,[Status] ,[OnBroj] ,[Verzija] ,[Razlog] ,[DatumUnosa] ,[RIDBroj] ,[Komentar], [VozP], [Granicna], Platilac, AdHoc, PrevoznikZa, Faktura, Zadatak, CIM, DispecerRID, TipPrevoza, NetoTezinaM, PorudzbinaID, ImaPovrat, TehnologijaID, RobaNHM2, DodatnoPorudznina,SerijaVagona FROM [Perftech_Beograd].[dbo].[Najava] where ID=" + txtSifra.Text, con);
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
@@ -1489,6 +1501,7 @@ namespace Saobracaj.Dokumenta
                 cboTehnologijaID.SelectedValue = Convert.ToInt32(dr["TehnologijaID"].ToString());
                 cboNHM2.SelectedValue = Convert.ToInt32(dr["RobaNHM2"].ToString());
                 txtPorDodatno.Text = dr["DodatnoPorudznina"].ToString();
+                combo_SerijaVagona.SelectedValue = dr["SerijaVagona"].ToString();
             }
 
             con.Close();

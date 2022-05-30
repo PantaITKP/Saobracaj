@@ -11,8 +11,8 @@ using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Net;
-using System.Net.Mail; 
-
+using System.Net.Mail;
+using Microsoft.Office.Interop.Word;
 using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
@@ -28,7 +28,7 @@ namespace Saobracaj.Dokumenta
         bool delete;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         string niz = "";
-        MailMessage mailMessage;
+        System.Net.Mail.MailMessage mailMessage;
         public frmRadniNalogPregled()
         {
             InitializeComponent();
@@ -380,7 +380,7 @@ namespace Saobracaj.Dokumenta
             {
                 string zadnjibroj = txtSifra.Text;
 
-                mailMessage = new MailMessage("disp@kprevoz.co.rs", "panta0307@yahoo.com");
+                mailMessage = new System.Net.Mail.MailMessage("disp@kprevoz.co.rs", "panta0307@yahoo.com");
 
                 mailMessage.Subject = "Najava infrastruktiri automatski generisan primer sve planirano";
 
@@ -470,6 +470,87 @@ namespace Saobracaj.Dokumenta
             }
 
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            var select = "select distinct RadniNalog.ID,RadniNalog.StatusRN,Trase.Voz,(RTrim(stanice.Opis) + ' - ' + RTrim(stanice1.Opis))as Relacija," +
+                "(SELECT STUFF((SELECT distinct  '/ ' + Cast(SmSifra as nvarchar(8)) " +
+                "FROM RadniNalogLokNaTrasi " +
+                "where RadniNalogLokNaTrasi.IDRadnogNaloga = RadniNalogTrase.IDRadnogNaloga and  RadniNalogLokNaTrasi.IdTrase = RadniNalogTrase.IDTrase " +
+                "FOR XML PATH('')), 1, 1, '') As Skupljen) as Lokomotiva, " +
+                "(Select Sum(BrojKola) as BK from RadniNalogVezaNajave where RadniNalog.ID = RadniNalogVezaNajave.IDRadnogNaloga) as [Broj kola] ,RadniNalogTrase.Napomena " +
+                "from RadniNalog " +
+                "inner join RadniNalogTrase on RadniNalog.ID = RadniNalogTrase.IDRadnogNaloga " +
+                "Inner join Trase on RadniNalogTrase.IDTrase = Trase.ID " +
+                "inner join stanice on RadniNalogTrase.StanicaOd = stanice.ID " +
+                "inner join stanice as stanice1 on RadniNalogTrase.StanicaDo = stanice1.ID " +
+                "inner join RadniNalogLokNaTrasi on RadniNalog.ID = RadniNalogLokNaTrasi.IDRadnogNaloga " +
+                "Where StatusRN = 'PL'";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+
+            try
+            {
+                Microsoft.Office.Interop.Word.Application word = new Microsoft.Office.Interop.Word.Application();
+                object missing = System.Reflection.Missing.Value;
+                Document doc = word.Documents.Add(ref missing, ref missing, ref missing, ref missing);  
+                Microsoft.Office.Interop.Word.Paragraph para1 = doc.Content.Paragraphs.Add(ref missing);
+                Table table = doc.Tables.Add(para1.Range, 50, 7, ref missing, ref missing);
+
+                table.Borders.Enable = 1;
+                int rb = 1;
+                int poz = 2;
+
+                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                {
+                    table.Rows[1].Cells[1].Range.Text = "Редни број";
+                    table.Rows[1].Cells[2].Range.Text = "Број воза";
+                    table.Rows[1].Cells[3].Range.Text = "Железнички превозник";
+                    table.Rows[1].Cells[4].Range.Text = "Релација од станице до станице";
+                    table.Rows[1].Cells[5].Range.Text = "Возна локомотива";
+                    table.Rows[1].Cells[6].Range.Text = "Састав воза";
+                    table.Rows[1].Cells[7].Range.Text = "Напомена";
+
+                    table.Rows[poz].Cells[1].Range.Text = rb.ToString() + "."; //redni broj
+                    table.Rows[poz].Cells[2].Range.Text = ds.Tables[0].Rows[i][2].ToString(); //voz
+                    table.Rows[poz].Cells[3].Range.Text = "KP"; //prevoznik
+                    table.Rows[poz].Cells[4].Range.Text = ds.Tables[0].Rows[i][3].ToString();  //relacija
+                    table.Rows[poz].Cells[5].Range.Text = ds.Tables[0].Rows[i][4].ToString(); //lokomotiva
+                    table.Rows[poz].Cells[6].Range.Text = ds.Tables[0].Rows[i][5].ToString(); //br kola
+                    table.Rows[poz].Cells[7].Range.Text = ds.Tables[0].Rows[i][6].ToString(); // napomena
+
+                    rb++;
+                    poz++;
+                }
+                //Save the document  
+                string date = DateTime.Now.ToString("dd-MM-yyyy");
+                string path = Environment.GetFolderPath(System.Environment.SpecialFolder.DesktopDirectory);
+                object filename = @"Tabela najave saobracaja prevoznika Kombinovani prevoz d.o.o. " + date+".docx";
+                doc.SaveAs2(ref filename);
+                doc.Close(ref missing, ref missing, ref missing);
+                doc = null;
+                word.Quit(ref missing, ref missing, ref missing);
+                word = null;
+                MessageBox.Show("Dokument je kreiran");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+
+
+
+
+
         }
+    }
     }
 
