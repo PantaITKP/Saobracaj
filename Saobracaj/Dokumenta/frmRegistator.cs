@@ -295,7 +295,7 @@ namespace Saobracaj.Dokumenta
             par[0] = new ReportParameter("ID", txtSifra.Text);
 
             reportViewer1.LocalReport.DataSources.Clear();
-            reportViewer1.LocalReport.ReportPath = "rptRegistrator.rdlc";
+            reportViewer1.LocalReport.ReportPath = "rptRegistrator2019.rdlc";
             reportViewer1.LocalReport.SetParameters(par);
             reportViewer1.LocalReport.DataSources.Add(rds);
             reportViewer1.RefreshReport();

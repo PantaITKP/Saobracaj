@@ -316,6 +316,7 @@
             this.button6.TabIndex = 298;
             this.button6.Text = "Arhiviranje smena u izradi";
             this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click_1);
             // 
             // txtPassword
             // 
@@ -347,9 +348,9 @@
             // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(546, 21);
+            this.button10.Location = new System.Drawing.Point(534, 21);
             this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(115, 24);
+            this.button10.Size = new System.Drawing.Size(127, 24);
             this.button10.TabIndex = 303;
             this.button10.Text = "Uključi prevoz";
             this.button10.UseVisualStyleBackColor = true;
