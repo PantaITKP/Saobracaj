@@ -474,18 +474,27 @@ namespace Saobracaj.Dokumenta
         private void button1_Click(object sender, EventArgs e)
         {
 
-            var select = "select distinct RadniNalog.ID,RadniNalog.StatusRN,Trase.Voz,(RTrim(stanice.Opis) + ' - ' + RTrim(stanice1.Opis))as Relacija," +
-                "(SELECT STUFF((SELECT distinct  '/ ' + Cast(SmSifra as nvarchar(8)) " +
-                "FROM RadniNalogLokNaTrasi " +
-                "where RadniNalogLokNaTrasi.IDRadnogNaloga = RadniNalogTrase.IDRadnogNaloga and  RadniNalogLokNaTrasi.IdTrase = RadniNalogTrase.IDTrase " +
-                "FOR XML PATH('')), 1, 1, '') As Skupljen) as Lokomotiva, " +
-                "(Select Sum(BrojKola) as BK from RadniNalogVezaNajave where RadniNalog.ID = RadniNalogVezaNajave.IDRadnogNaloga) as [Broj kola] ,RadniNalogTrase.Napomena " +
-                "from RadniNalog " +
-                "inner join RadniNalogTrase on RadniNalog.ID = RadniNalogTrase.IDRadnogNaloga " +
-                "Inner join Trase on RadniNalogTrase.IDTrase = Trase.ID " +
+            var select = "Select distinct RN.ID,RN.StatusRN,Trase.Voz,(RTrim(stanice.Opis)+' - '+RTrim(stanice1.Opis))as Relacija, " +
+                "(Select STUFF((Select distinct '/' + Cast(SmSifra as nvarchar(8)) From RadniNalogLokNaTrasi where RadniNalogLokNaTrasi.IDRadnogNaloga = RadniNalogTrase.IDRadnogNaloga " +
+                "and RadniNalogLokNaTrasi.IDTrase = RadniNalogTrase.IDTrase FOR XML PATH('')), 1, 1, '') as a)as Lokomotiva, " +
+                "CASE " +
+                "WHEN((Select Stuff((Select distinct '/' + (Select Cast(SUM(BrojKola) as nvarchar(8)) " +
+                "+ '  ' + Cast(SerijaVagona as nvarchar(8))from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) group by SerijaVagona " +
+                "FOR XML PATH('')),1,1,'')as a)) is null " +
+                "THEN Cast((Select SUM(BrojKola) as BK from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) as nvarchar(8)) " +
+                "ELSE(Select Stuff((Select distinct '/' + (Select Cast(SUM(BrojKola) as nvarchar(8)) " +
+                "+ '  ' + Cast(SerijaVagona as nvarchar(8))from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) group by SerijaVagona " +
+                "FOR XML PATH('')),1,1,'')as a) " +
+                "END, " +
+                "RadniNalogTrase.Napomena " +
+                "FROM RadniNalog RN " +
+                "inner join RadniNalogTrase on RN.ID = RadniNalogTrase.IDRadnogNaloga " +
+                "inner join Trase on RadniNalogTrase.IDTrase = Trase.ID " +
                 "inner join stanice on RadniNalogTrase.StanicaOd = stanice.ID " +
                 "inner join stanice as stanice1 on RadniNalogTrase.StanicaDo = stanice1.ID " +
-                "inner join RadniNalogLokNaTrasi on RadniNalog.ID = RadniNalogLokNaTrasi.IDRadnogNaloga " +
+                "inner join RadniNalogLokNaTrasi on RN.ID = RadniNalogLokNaTrasi.IDRadnogNaloga " +
+                "inner join RadniNalogVezaNajave on RN.ID = RadniNalogVezaNajave.IDRadnogNaloga " +
+                "inner join Najava on RadniNalogVezaNajave.IDNajave = Najava.ID " +
                 "Where StatusRN = 'PL'";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -510,6 +519,7 @@ namespace Saobracaj.Dokumenta
 
                 for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
                 {
+                    table.Rows[1].Range.Font.Bold = 1;
                     table.Rows[1].Cells[1].Range.Text = "Редни број";
                     table.Rows[1].Cells[2].Range.Text = "Број воза";
                     table.Rows[1].Cells[3].Range.Text = "Железнички превозник";
@@ -519,6 +529,7 @@ namespace Saobracaj.Dokumenta
                     table.Rows[1].Cells[7].Range.Text = "Напомена";
 
                     table.Rows[poz].Cells[1].Range.Text = rb.ToString() + "."; //redni broj
+                    table.Rows[poz].Cells[1].Range.Font.Bold = 1;
                     table.Rows[poz].Cells[2].Range.Text = ds.Tables[0].Rows[i][2].ToString(); //voz
                     table.Rows[poz].Cells[3].Range.Text = "KP"; //prevoznik
                     table.Rows[poz].Cells[4].Range.Text = ds.Tables[0].Rows[i][3].ToString();  //relacija
