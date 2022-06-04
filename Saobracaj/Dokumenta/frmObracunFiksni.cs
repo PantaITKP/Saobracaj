@@ -276,7 +276,7 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
 
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0) * 8) as UK from PrekovremeniRad where ZaposleniID = " + row.Cells[0].Value +
+                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where ZaposleniID = " + row.Cells[0].Value +
                         " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo.Text + "'", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
