@@ -271,8 +271,29 @@ namespace Saobracaj.Dokumenta
                             }
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
-                        body = body + "Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
-                        
+                        System.Text.StringBuilder sb = new StringBuilder();
+                        sb.Append("<style>");
+                        sb.Append("table { font-family:arial,sans-serif; font-size:14px; border-collapse:collapse; width:100%;}");
+                        sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
+                        sb.Append("</style>");
+                        sb.Append("<table>");
+                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("</table>");
+
+                        body = body + sb.ToString() + "<hr><br/><br/>";
+
+
+                        body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
+
                         mailMessage.Body = body;
                         mailMessage.IsBodyHtml = true;
                         SmtpClient smtpClient = new SmtpClient();
@@ -392,9 +413,31 @@ namespace Saobracaj.Dokumenta
                             {
                                 body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
+                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/>";
                             
                         }
+
+                        System.Text.StringBuilder sb = new StringBuilder();
+                        sb.Append("<style>");
+                        sb.Append("table { font-family:arial,sans-serif; font-size:14px; border-collapse:collapse; width:100%;}");
+                        sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
+                        sb.Append("</style>");
+                        sb.Append("<table>");
+                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("</table>");
+
+                        body = body + sb.ToString() + "<hr><br/><br/>";
+
+
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
                         
                         mailMessage.Body = body;
@@ -520,6 +563,27 @@ namespace Saobracaj.Dokumenta
                             body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><hr>";
                            
                         }
+                        System.Text.StringBuilder sb = new StringBuilder();
+                        sb.Append("<style>");
+                        sb.Append("table { font-family:arial,sans-serif; font-size:14px; border-collapse:collapse; width:100%;}");
+                        sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
+                        sb.Append("</style>");
+                        sb.Append("<table>");
+                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("</table>");
+
+                        body = body + sb.ToString() + "<hr><br/><br/>";
+
+
                         body = body + "<br/>Srdačan pozdrav, <br/>" + "Dispečerska služba, Kombinovani prevoz";
 
                         mailMessage.Body = body;
