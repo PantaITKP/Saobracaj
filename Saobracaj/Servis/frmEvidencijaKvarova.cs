@@ -160,8 +160,9 @@ namespace Saobracaj.Servis
                     row.DefaultCellStyle.BackColor = Color.OrangeRed;
                     row.DefaultCellStyle.SelectionBackColor = Color.OrangeRed;
                 }
-                dataGridView1.Refresh();
+                
             }
+            dataGridView1.Refresh();
 
         }
 
@@ -325,17 +326,17 @@ namespace Saobracaj.Servis
         private void metroButton2_Click(object sender, EventArgs e)
         {
             InsertKvarovi ins = new InsertKvarovi();
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            foreach (DataGridViewRow row in dataGridView1.SelectedRows)
             {
                 if (row.Selected)
                 {
                     ins.UpdEvidenciKvarovaPoID(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(cboStatusi.SelectedValue), Convert.ToInt32(cboZaposleni.SelectedValue));
-                    RefreshDataGrid();
+                    
                 }
             }
+            RefreshDataGrid();
 
-          
-           
+
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
