@@ -13,6 +13,7 @@ using System.Configuration;
 using System.Net;
 using System.Net.Mail; 
 using Microsoft.Reporting.WinForms;
+using Microsoft.Office.Interop.Excel;
 
 
 namespace Saobracaj.Dokumenta
@@ -2837,6 +2838,90 @@ namespace Saobracaj.Dokumenta
             filter = false;
             RefreshDataGrid();
         }
+
+        private void toolStripButton9_Click(object sender, EventArgs e)
+        {
+            var select = "Select Najava.ID,stanice.Opis as Granicna,partnerji.PaNaziv as Posiljalac,partnerji1.PaNaziv as Primalac,stanice1.Opis as Uputna," +
+                "stanice2.Opis as Otpravna,PredvidjenoPrimanje,StvarnoPrimanje,PredvidjenaPredaja,StvarnaPredaja,Status,NetoTezinaM,BrojKola,partnerji2.PaNaziv as Platilac," +
+                "(Select(Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 86400 as nvarchar) + ':' + " +
+                "Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 3600 % 24 as nvarchar) + ':' + " +
+                "Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 60 % 60 as nvarchar))) as [Kasnjenje(dani: sati:minuti)] " +
+                "From Najava " +
+                "inner join stanice on Najava.Granicna = Stanice.ID " +
+                "inner join stanice as stanice1 on Najava.Uputna = stanice1.ID " +
+                "inner join stanice as stanice2 on Najava.Otpravna = stanice2.ID " +
+                "inner join partnerji on Najava.Posiljalac = Partnerji.PaSifra " +
+                "inner join partnerji as partnerji1 on Najava.Primalac = partnerji1.PaSifra " +
+                "inner join partnerji as partnerji2 on Najava.Platilac = partnerji2.PaSifra " +
+                "Where(Status = 3 or status = 4) and StvarnoPrimanje<>'1900-01-01 00:00:00.000'";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            object missing = System.Reflection.Missing.Value;
+            Workbook wBook = excel.Workbooks.Add(missing);
+           
+            Worksheet wSheet = new Worksheet();
+            try
+            {
+                
+                wSheet = (Worksheet)wBook.Worksheets.get_Item(1);
+                for(int i = 0; i <= ds.Tables[0].Rows.Count - 1; i++)
+                {
+                    for(int j = 0; j <= ds.Tables[0].Columns.Count - 1; j++)
+                    {
+                        wSheet.Cells[1, 15].EntireRow.Font.Bold = true;
+                        wSheet.Range["A1:O1"].Interior.Color = System.Drawing.Color.Red;
+                        wSheet.Cells[1, "A"] = "Broj najave";
+                        wSheet.Cells[1, "B"] = "Trenutna";
+                        wSheet.Cells[1, "C"] = "Posiljalac";
+                        wSheet.Cells[1, "D"] = "Primalac";
+                        wSheet.Cells[1, "E"] = "Uputna";
+                        wSheet.Cells[1, "F"] = "Otpravna";
+                        wSheet.Cells[1, "G"] = "Predvidjeno Primanje";
+                        wSheet.Cells[1, "H"] = "Stvarno Primanje";
+                        wSheet.Cells[1, "I"] = "Predvidjena Predaja";
+                        wSheet.Cells[1, "J"] = "Stvarna Predaja";
+                        wSheet.Cells[1, "K"] = "Status";
+                        wSheet.Cells[1, "L"] = "Bruto";
+                        wSheet.Cells[1, "M"] = "Broj kola";
+
+                        wSheet.Cells[1, "N"] = "Platilac";
+                        wSheet.Cells[1, "O"] = "Kasnjenje (dani:sati:minuti)";
+                        wSheet.Cells[i + 2, j + 1] = ds.Tables[0].Rows[i].ItemArray[j].ToString();
+                        wSheet.Cells[i + 2, j + 1].EntireColumn.AutoFit();
+                        Borders border = wSheet.Cells[i + 2, j + 1].Borders;
+                        border.Weight = 2d;
+
+                    }
+                }
+               
+                string date = DateTime.Now.ToString("dd-MM-yyyy");
+                string path = Environment.GetFolderPath(System.Environment.SpecialFolder.DesktopDirectory);
+                object filename = @"Izvestaj o kasnjenju " + date + ".xlsx";
+                wBook.SaveAs(filename);
+                wBook.Close();
+                excel.Quit();
+                excel = null;
+                wBook = null;
+                wSheet = null;
+
+
+                MessageBox.Show("Dokument je kreiran");
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+            }
+            
+        }
+
 
         /*
         frmNajavaStavkePorudzbine nsp = new frmNajavaStavkePorudzbine(Convert.ToInt32(cboPlatilac.SelectedValue));
