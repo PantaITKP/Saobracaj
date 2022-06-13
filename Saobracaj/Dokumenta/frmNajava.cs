@@ -2842,7 +2842,7 @@ namespace Saobracaj.Dokumenta
         private void toolStripButton9_Click(object sender, EventArgs e)
         {
             var select = "Select Najava.ID,stanice.Opis as Granicna,partnerji.PaNaziv as Posiljalac,partnerji1.PaNaziv as Primalac,stanice1.Opis as Uputna," +
-                "stanice2.Opis as Otpravna,PredvidjenoPrimanje,StvarnoPrimanje,PredvidjenaPredaja,StvarnaPredaja,Status,NetoTezinaM,BrojKola,partnerji2.PaNaziv as Platilac," +
+                "stanice2.Opis as Otpravna,PredvidjenoPrimanje,StvarnoPrimanje,PredvidjenaPredaja,StvarnaPredaja,Status,Tezina,BrojKola,partnerji2.PaNaziv as Platilac," +
                 "(Select(Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 86400 as nvarchar) + ':' + " +
                 "Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 3600 % 24 as nvarchar) + ':' + " +
                 "Cast(datediff(SECOND, StvarnoPrimanje, GETDATE()) / 60 % 60 as nvarchar))) as [Kasnjenje(dani: sati:minuti)] " +
@@ -2891,7 +2891,6 @@ namespace Saobracaj.Dokumenta
                         wSheet.Cells[1, "K"] = "Status";
                         wSheet.Cells[1, "L"] = "Bruto";
                         wSheet.Cells[1, "M"] = "Broj kola";
-
                         wSheet.Cells[1, "N"] = "Platilac";
                         wSheet.Cells[1, "O"] = "Kasnjenje (dani:sati:minuti)";
                         wSheet.Cells[i + 2, j + 1] = ds.Tables[0].Rows[i].ItemArray[j].ToString();

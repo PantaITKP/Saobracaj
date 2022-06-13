@@ -81,10 +81,10 @@ namespace Saobracaj.Dokumenta
                 ",RadniNalogTrase.MasaVoza " +
                 ",RadniNalogTrase.BrutoMasa " +
                 ",RadniNalogTrase.Napomena " +
-                ",stanice_2.Opis AS RN_Pocetna " +
-                ",stanice_3.Opis AS RN_Krajnja " + 
-                 ",stanice.Opis AS Trasa_Pocetna " +
-                ",stanice_1.Opis AS Trasa_Krajnja " + 
+                ",RTrim(stanice_2.Opis) AS RN_Pocetna " +
+                ",RTrim(stanice_3.Opis) AS RN_Krajnja " + 
+                 ",RTrim(stanice.Opis) AS Trasa_Pocetna " +
+                ",RTrim(stanice_1.Opis) AS Trasa_Krajnja " + 
                 " FROM RadniNalogTrase INNER JOIN " +
                 " Trase ON RadniNalogTrase.IDTrase = Trase.ID INNER JOIN " + 
                 " stanice ON Trase.Pocetna = stanice.ID INNER JOIN " +
@@ -108,27 +108,30 @@ namespace Saobracaj.Dokumenta
 
              DataGridViewColumn column2 = dataGridView1.Columns[1];
              dataGridView1.Columns[1].HeaderText = "RB";
-             dataGridView1.Columns[1].Width = 20;
+             dataGridView1.Columns[1].Width = 30;
 
              DataGridViewColumn column3 = dataGridView1.Columns[2];
              dataGridView1.Columns[2].HeaderText = "ID Trasa";
-             dataGridView1.Columns[2].Width = 30;
+             dataGridView1.Columns[2].Width = 50;
 
              DataGridViewColumn column4 = dataGridView1.Columns[3];
              dataGridView1.Columns[3].HeaderText = "Trasa";
              dataGridView1.Columns[3].Width = 70;
 
              DataGridViewColumn column5 = dataGridView1.Columns[4];
-             dataGridView1.Columns[4].HeaderText = "Plan polaska";
-             dataGridView1.Columns[4].Width = 100;
+            dataGridView1.Columns[4].Visible = false;
+             //dataGridView1.Columns[4].HeaderText = "Plan polaska";
+             //dataGridView1.Columns[4].Width = 100;
 
              DataGridViewColumn column6 = dataGridView1.Columns[5];
-             dataGridView1.Columns[5].HeaderText = "Plan dolaska";
-             dataGridView1.Columns[5].Width = 100;
+            dataGridView1.Columns[5].Visible = false;
+             //dataGridView1.Columns[5].HeaderText = "Plan dolaska";
+             //dataGridView1.Columns[5].Width = 100;
 
              DataGridViewColumn column7 = dataGridView1.Columns[6];
-             dataGridView1.Columns[6].HeaderText = "Planirano vreme";
-             dataGridView1.Columns[6].Width = 50;
+            dataGridView1.Columns[6].Visible = false;
+            // dataGridView1.Columns[6].HeaderText = "Planirano vreme";
+             //dataGridView1.Columns[6].Width = 50;
 
              DataGridViewColumn column8 = dataGridView1.Columns[7];
              dataGridView1.Columns[7].HeaderText = "Realiz. polaska ";
@@ -144,20 +147,22 @@ namespace Saobracaj.Dokumenta
 
              DataGridViewColumn column11 = dataGridView1.Columns[10];
              dataGridView1.Columns[10].HeaderText = "Planirana masa";
-             dataGridView1.Columns[10].Width = 50;
+             dataGridView1.Columns[10].Width = 70;
 
              DataGridViewColumn column12 = dataGridView1.Columns[11];
              dataGridView1.Columns[11].HeaderText = "Masa lokomotive";
-             dataGridView1.Columns[11].Width = 50;
+             dataGridView1.Columns[11].Width = 70;
 
              DataGridViewColumn column13 = dataGridView1.Columns[12];
              dataGridView1.Columns[12].HeaderText = "Masa voza";
-             dataGridView1.Columns[12].Width = 50;
+             dataGridView1.Columns[12].Width = 70;
 
              DataGridViewColumn column14 = dataGridView1.Columns[13];
              dataGridView1.Columns[13].HeaderText = "Bruto masa";
-             dataGridView1.Columns[13].Width = 50;
+             dataGridView1.Columns[13].Width = 70;
 
+            dataGridView1.Columns[14].HeaderText = "Napomena";
+            dataGridView1.Columns[14].Width = 300;
      
 
  
@@ -166,7 +171,8 @@ namespace Saobracaj.Dokumenta
 
         private void VratiLokomotive(int IDTrase, string IDRadnogNaloga)
          {
-             var select = " SELECT IDRadnogNaloga, IDTrase, SmSifra,  CASE WHEN Vucna > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Vucna , Komentar, StanicaOd, s1.Opis as Od,  StanicaDo, s2.Opis as Do, Vreme " +
+             var select = " SELECT IDRadnogNaloga, IDTrase, SmSifra,  CASE WHEN Vucna > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Vucna , Komentar, StanicaOd, RTrim(s1.Opis) as Od," +
+                "  StanicaDo, RTrim(s2.Opis) as Do, Vreme " +
                 " FROM RadniNalogLokNaTrasi " +
                 " inner join stanice s1 on s1.ID = StanicaOd" +
                 " inner join stanice s2 on s2.ID = StanicaDo " +
@@ -193,36 +199,38 @@ namespace Saobracaj.Dokumenta
 
              DataGridViewColumn column3 = dataGridView2.Columns[2];
              dataGridView2.Columns[2].HeaderText = "Lokomotiva";
-             dataGridView2.Columns[2].Width = 60;
+             dataGridView2.Columns[2].Width = 70;
 
              DataGridViewColumn column4 = dataGridView2.Columns[3];
              dataGridView2.Columns[3].HeaderText = "Vučna";
-             dataGridView2.Columns[3].Width = 40;
+             dataGridView2.Columns[3].Width = 50;
 
              DataGridViewColumn column5 = dataGridView2.Columns[4];
              dataGridView2.Columns[4].HeaderText = "Napomena";
-             dataGridView2.Columns[4].Width = 260;
+             dataGridView2.Columns[4].Width = 200;
 
-            DataGridViewColumn column6 = dataGridView1.Columns[5];
-            dataGridView1.Columns[5].HeaderText = "St";
-            dataGridView1.Columns[5].Width = 20;
+            DataGridViewColumn column6 = dataGridView2.Columns[5];
+            dataGridView2.Columns[5].Visible = false;
+           // dataGridView1.Columns[5].HeaderText = "St";
+            //dataGridView1.Columns[5].Width = 20;
 
-            DataGridViewColumn column7 = dataGridView1.Columns[6];
-            dataGridView1.Columns[6].HeaderText = "Od";
-            dataGridView1.Columns[6].Width = 80;
+            DataGridViewColumn column7 = dataGridView2.Columns[6];
+            dataGridView2.Columns[6].HeaderText = "Od";
+            dataGridView2.Columns[6].Width = 110;
 
-            DataGridViewColumn column8 = dataGridView1.Columns[7];
-            dataGridView1.Columns[7].HeaderText = "St";
-            dataGridView1.Columns[7].Width = 20;
+            DataGridViewColumn column8 = dataGridView2.Columns[7];
+            dataGridView2.Columns[7].Visible = false;
+            //dataGridView1.Columns[7].HeaderText = "St";
+            //dataGridView1.Columns[7].Width = 20;
 
 
-            DataGridViewColumn column9 = dataGridView1.Columns[8];
-            dataGridView1.Columns[8].HeaderText = "Do";
-            dataGridView1.Columns[8].Width = 80;
+            DataGridViewColumn column9 = dataGridView2.Columns[8];
+            dataGridView2.Columns[8].HeaderText = "Do";
+            dataGridView2.Columns[8].Width = 110;
 
             DataGridViewColumn column10 = dataGridView1.Columns[9];
-            dataGridView1.Columns[9].HeaderText = "Vreme";
-            dataGridView1.Columns[9].Width = 80;
+            dataGridView2.Columns[9].HeaderText = "Vreme";
+            dataGridView2.Columns[9].Width = 80;
         }
 
         private void VratiTeretnice(string IDRadnogNaloga)
@@ -230,7 +238,7 @@ namespace Saobracaj.Dokumenta
             //var select = " SELECT IDRadnogNaloga, IDTrase, SmSifra, Komentar FROM RadniNalogLokNaTrasi where IDRadnogNaloga =" + IDRadnogNaloga + " and IDTrase = " + IDTrase;
            // var select = " Select * from RadniNalogTeretnice where IDRadnogNaloga =" + IDRadnogNaloga ;
 
-           var select =  " Select IDRadnogNaloga, IDTeretnice, st.opis ,prijemna, prevozna, predajna, COUNT(BrojKola) as BrojKola, SUM(Duzina) as Duzina, SUM(tara) as Tara, SUM(neto) as Neto, SUM(p) as P  from RadniNalogTeretnice " +
+           var select =  " Select IDRadnogNaloga, IDTeretnice, RTrim(st.opis) as [Stanica popisa] ,prijemna, prevozna, predajna, COUNT(BrojKola) as BrojKola, SUM(Duzina) as Duzina, SUM(tara) as Tara, SUM(neto) as Neto, SUM(p) as P  from RadniNalogTeretnice " +
             "inner join Teretnica on RadniNalogTeretnice.IDTeretnice = Teretnica.ID " +
             "inner join stanice as st on st.ID = Teretnica.StanicaPopisa " +
             "inner join TeretnicaStavke ts on ts.BrojTeretnice = Teretnica.ID " +
@@ -250,47 +258,47 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column = dataGridView4.Columns[0];
             dataGridView4.Columns[0].HeaderText = "RN";
-            dataGridView4.Columns[0].Width = 30;
+            dataGridView4.Columns[0].Width = 40;
 
             DataGridViewColumn column2 = dataGridView4.Columns[1];
             dataGridView4.Columns[1].HeaderText = "Teretnica";
-            dataGridView4.Columns[1].Width = 40;
+            dataGridView4.Columns[1].Width = 60;
 
             DataGridViewColumn column3 = dataGridView4.Columns[2];
             dataGridView4.Columns[2].HeaderText = "Stanica popisa";
-            dataGridView4.Columns[2].Width = 100;
+            dataGridView4.Columns[2].Width = 110;
 
             DataGridViewColumn column4 = dataGridView4.Columns[3];
             dataGridView4.Columns[3].HeaderText = "Prijemna";
-            dataGridView4.Columns[3].Width = 30;
+            dataGridView4.Columns[3].Width = 55;
 
             DataGridViewColumn column5 = dataGridView4.Columns[4];
             dataGridView4.Columns[4].HeaderText = "Prevozna";
-            dataGridView4.Columns[4].Width = 30;
+            dataGridView4.Columns[4].Width = 55;
 
             DataGridViewColumn column6 = dataGridView4.Columns[5];
             dataGridView4.Columns[5].HeaderText = "Predajna";
-            dataGridView4.Columns[5].Width = 30;
+            dataGridView4.Columns[5].Width = 55;
 
             DataGridViewColumn column7 = dataGridView4.Columns[6];
             dataGridView4.Columns[6].HeaderText = "Br kola";
-            dataGridView4.Columns[6].Width = 50;
+            dataGridView4.Columns[6].Width = 60;
 
             DataGridViewColumn column8 = dataGridView4.Columns[7];
             dataGridView4.Columns[7].HeaderText = "Duzina";
-            dataGridView4.Columns[7].Width = 50;
+            dataGridView4.Columns[7].Width = 70;
 
             DataGridViewColumn column9 = dataGridView4.Columns[8];
             dataGridView4.Columns[8].HeaderText = "Tara";
-            dataGridView4.Columns[8].Width = 50;
+            dataGridView4.Columns[8].Width = 70;
 
             DataGridViewColumn column10 = dataGridView4.Columns[9];
             dataGridView4.Columns[9].HeaderText = "Neto";
-            dataGridView4.Columns[9].Width = 50;
+            dataGridView4.Columns[9].Width = 70;
 
             DataGridViewColumn column11 = dataGridView4.Columns[10];
             dataGridView4.Columns[10].HeaderText = "P";
-            dataGridView4.Columns[10].Width = 40;
+            dataGridView4.Columns[10].Width = 70;
 
         }
 

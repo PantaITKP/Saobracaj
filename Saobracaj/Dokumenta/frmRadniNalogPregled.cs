@@ -128,11 +128,11 @@ namespace Saobracaj.Dokumenta
         {
             string pom = "'1'";
             var select = " SELECT  d1.IDRadnogNaloga, d1.RB, d1.IDTrase, " +
-" Trase.Voz, " +
+" RTrim(Trase.Voz) as Voz, " +
 " RN.StatusRN, " +
  "   CASE WHEN d1.Rezi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Rezi, " +
-" stanice_2.Opis as StanicaOd," +
-" stanice_3.Opis as StanicaDo," +
+" RTrim(stanice_2.Opis) as StanicaOd," +
+" RTrim(stanice_3.Opis) as StanicaDo," +
 " (Cast(Zaposleni.DeSifra as nvarchar(3)) + '--'  + Rtrim(Zaposleni.DeIme) + ' ' + Rtrim(Zaposleni.DePriimek)) as Planer, " +
 " ( " +
 " SELECT " +
@@ -155,7 +155,7 @@ namespace Saobracaj.Dokumenta
 " d1.DatumPolaska ,d1.DatumDolaska , " +
 " d1.Vreme ,d1.DatumPolaskaReal , " +
 " d1.DatumDolaskaReal ,d1.VremeReal , " +
-" stanice.Opis AS TRPocetna ,stanice_1.Opis AS TRKrajnja,  Trase.Relacija " +
+" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -233,39 +233,42 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column6 = dataGridView1.Columns[5];
             dataGridView1.Columns[5].HeaderText = "Rezi";
-            dataGridView1.Columns[5].Width = 30;
+            dataGridView1.Columns[5].Width = 40;
 
             DataGridViewColumn column7 = dataGridView1.Columns[6];
             dataGridView1.Columns[6].HeaderText = "Stanica od";
-            dataGridView1.Columns[6].Width = 90;
+            dataGridView1.Columns[6].Width = 110;
 
             DataGridViewColumn column8 = dataGridView1.Columns[7];
             dataGridView1.Columns[7].HeaderText = "Stanica do";
-            dataGridView1.Columns[7].Width = 90;
+            dataGridView1.Columns[7].Width = 110;
 
             DataGridViewColumn column9 = dataGridView1.Columns[8];
             dataGridView1.Columns[8].HeaderText = "Planer";
-            dataGridView1.Columns[8].Width = 80;
+            dataGridView1.Columns[8].Width = 130;
 
             DataGridViewColumn column10 = dataGridView1.Columns[9];
             dataGridView1.Columns[9].HeaderText = "Lokomotive";
-            dataGridView1.Columns[9].Width = 120;
+            dataGridView1.Columns[9].Width = 150;
 
             DataGridViewColumn column11 = dataGridView1.Columns[10];
             dataGridView1.Columns[10].HeaderText = "Osoblje";
             dataGridView1.Columns[10].Width = 220;
 
             DataGridViewColumn column12 = dataGridView1.Columns[11];
-            dataGridView1.Columns[11].HeaderText = "Pl polazak";
-            dataGridView1.Columns[11].Width = 90;
+            dataGridView1.Columns[11].Visible = false;
+           // dataGridView1.Columns[11].HeaderText = "Pl polazak";
+           // dataGridView1.Columns[11].Width = 90;
 
             DataGridViewColumn column13 = dataGridView1.Columns[12];
-            dataGridView1.Columns[12].HeaderText = "Pl Dolazak";
-            dataGridView1.Columns[12].Width = 90;
+            dataGridView1.Columns[12].Visible = false;
+            //dataGridView1.Columns[12].HeaderText = "Pl Dolazak";
+            //dataGridView1.Columns[12].Width = 90;
 
             DataGridViewColumn column14 = dataGridView1.Columns[13];
-            dataGridView1.Columns[13].HeaderText = "Pl vreme";
-            dataGridView1.Columns[13].Width = 40;
+            dataGridView1.Columns[13].Visible = false;
+            //dataGridView1.Columns[13].HeaderText = "Pl vreme";
+           // dataGridView1.Columns[13].Width = 40;
 
             DataGridViewColumn column15 = dataGridView1.Columns[14];
             dataGridView1.Columns[14].HeaderText = "Rel. polazak";
@@ -281,11 +284,11 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column18 = dataGridView1.Columns[17];
             dataGridView1.Columns[17].HeaderText = "Tr Stanica od";
-            dataGridView1.Columns[17].Width = 90;
+            dataGridView1.Columns[17].Width = 110;
 
             DataGridViewColumn column19 = dataGridView1.Columns[18];
             dataGridView1.Columns[18].HeaderText = "Tr Stanica do";
-            dataGridView1.Columns[18].Width = 90;
+            dataGridView1.Columns[18].Width = 110;
 
             DataGridViewColumn column20 = dataGridView1.Columns[19];
             dataGridView1.Columns[19].HeaderText = "Trasa relacija";
