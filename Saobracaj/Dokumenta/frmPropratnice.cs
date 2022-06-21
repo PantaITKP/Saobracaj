@@ -464,7 +464,7 @@ namespace Saobracaj.Dokumenta
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
                         mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
-                        //mailMessage.CC.Add(cuvaj);
+                        mailMessage.CC.Add("priprema@kprevoz.co.rs");
                         mailMessage.Subject = "Zaduženje";
                         string body = "";
                         body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: " + combo_Zaduzen.Text.ToString().TrimEnd() + "<br/>";
