@@ -30,13 +30,13 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmNajava));
-            Microsoft.Reporting.WinForms.ReportDataSource reportDataSource5 = new Microsoft.Reporting.WinForms.ReportDataSource();
+            Microsoft.Reporting.WinForms.ReportDataSource reportDataSource1 = new Microsoft.Reporting.WinForms.ReportDataSource();
+            Syncfusion.Windows.Forms.MetroColorTable metroColorTable1 = new Syncfusion.Windows.Forms.MetroColorTable();
             Syncfusion.Windows.Forms.MetroColorTable metroColorTable2 = new Syncfusion.Windows.Forms.MetroColorTable();
             Syncfusion.Windows.Forms.MetroColorTable metroColorTable3 = new Syncfusion.Windows.Forms.MetroColorTable();
             Syncfusion.Windows.Forms.MetroColorTable metroColorTable4 = new Syncfusion.Windows.Forms.MetroColorTable();
-            Syncfusion.Windows.Forms.MetroColorTable metroColorTable5 = new Syncfusion.Windows.Forms.MetroColorTable();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.nedraDataSetBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.nedraDataSet = new Saobracaj.NedraDataSet();
             this.txtSifra = new System.Windows.Forms.TextBox();
@@ -58,6 +58,7 @@
             this.toolStripButton4 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
             this.txtOpis = new System.Windows.Forms.TextBox();
             this.lblNaziv = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -174,7 +175,7 @@
             this.txtPorDodatno = new System.Windows.Forms.TextBox();
             this.label37 = new System.Windows.Forms.Label();
             this.combo_SerijaVagona = new System.Windows.Forms.ComboBox();
-            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
+            this.button13 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.nedraDataSetBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nedraDataSet)).BeginInit();
             this.toolStrip1.SuspendLayout();
@@ -404,6 +405,15 @@
             this.toolStripButton6.Size = new System.Drawing.Size(40, 24);
             this.toolStripButton6.Text = "LOG";
             this.toolStripButton6.Click += new System.EventHandler(this.toolStripButton6_Click);
+            // 
+            // toolStripButton9
+            // 
+            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
+            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton9.Name = "toolStripButton9";
+            this.toolStripButton9.Size = new System.Drawing.Size(132, 24);
+            this.toolStripButton9.Text = "Excel kašnjenja";
+            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
             // 
             // txtOpis
             // 
@@ -803,7 +813,7 @@
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4);
-            this.tabPage2.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage2.Size = new System.Drawing.Size(1560, 372);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Prevoznici";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -816,7 +826,7 @@
             this.dataGridView2.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.RowHeadersWidth = 51;
-            this.dataGridView2.Size = new System.Drawing.Size(1551, 320);
+            this.dataGridView2.Size = new System.Drawing.Size(1552, 364);
             this.dataGridView2.TabIndex = 1;
             this.dataGridView2.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView2_CellContentClick);
             // 
@@ -825,7 +835,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 25);
             this.tabPage3.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage3.Size = new System.Drawing.Size(1560, 372);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Verzije";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -836,7 +846,7 @@
             this.tabPage4.Location = new System.Drawing.Point(4, 25);
             this.tabPage4.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage4.Size = new System.Drawing.Size(1560, 372);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Vagoni";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -863,7 +873,7 @@
             this.tabPage5.Location = new System.Drawing.Point(4, 25);
             this.tabPage5.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage5.Size = new System.Drawing.Size(1560, 372);
             this.tabPage5.TabIndex = 5;
             this.tabPage5.Text = "Štampa";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -873,9 +883,9 @@
             this.reportViewer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            reportDataSource5.Name = "DataSet1";
-            reportDataSource5.Value = this.nedraDataSetBindingSource;
-            this.reportViewer1.LocalReport.DataSources.Add(reportDataSource5);
+            reportDataSource1.Name = "DataSet1";
+            reportDataSource1.Value = this.nedraDataSetBindingSource;
+            this.reportViewer1.LocalReport.DataSources.Add(reportDataSource1);
             this.reportViewer1.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Najava.rdlc";
             this.reportViewer1.Location = new System.Drawing.Point(7, 0);
             this.reportViewer1.Margin = new System.Windows.Forms.Padding(4);
@@ -890,7 +900,7 @@
             this.tabPage6.Location = new System.Drawing.Point(4, 25);
             this.tabPage6.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage6.Size = new System.Drawing.Size(1560, 372);
             this.tabPage6.TabIndex = 6;
             this.tabPage6.Text = "Komentar";
             // 
@@ -913,7 +923,7 @@
             this.tabPage7.Location = new System.Drawing.Point(4, 25);
             this.tabPage7.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage7.Name = "tabPage7";
-            this.tabPage7.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage7.Size = new System.Drawing.Size(1560, 372);
             this.tabPage7.TabIndex = 7;
             this.tabPage7.Text = "Dodatne usluge";
             this.tabPage7.UseVisualStyleBackColor = true;
@@ -954,7 +964,7 @@
             this.multiColumnComboBox2.Margin = new System.Windows.Forms.Padding(4);
             this.multiColumnComboBox2.MetroColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(165)))), ((int)(((byte)(220)))));
             this.multiColumnComboBox2.Name = "multiColumnComboBox2";
-            this.multiColumnComboBox2.ScrollMetroColorTable = metroColorTable2;
+            this.multiColumnComboBox2.ScrollMetroColorTable = metroColorTable1;
             this.multiColumnComboBox2.Size = new System.Drawing.Size(204, 24);
             this.multiColumnComboBox2.TabIndex = 159;
             this.multiColumnComboBox2.Click += new System.EventHandler(this.multiColumnComboBox2_Click);
@@ -984,7 +994,7 @@
             this.tabPage8.Location = new System.Drawing.Point(4, 25);
             this.tabPage8.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage8.Name = "tabPage8";
-            this.tabPage8.Size = new System.Drawing.Size(1559, 328);
+            this.tabPage8.Size = new System.Drawing.Size(1560, 372);
             this.tabPage8.TabIndex = 8;
             this.tabPage8.Text = "Deljenje voza";
             this.tabPage8.UseVisualStyleBackColor = true;
@@ -1095,7 +1105,7 @@
             this.multiColumnComboBox3.Margin = new System.Windows.Forms.Padding(4);
             this.multiColumnComboBox3.MetroColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(165)))), ((int)(((byte)(220)))));
             this.multiColumnComboBox3.Name = "multiColumnComboBox3";
-            this.multiColumnComboBox3.ScrollMetroColorTable = metroColorTable3;
+            this.multiColumnComboBox3.ScrollMetroColorTable = metroColorTable2;
             this.multiColumnComboBox3.Size = new System.Drawing.Size(204, 24);
             this.multiColumnComboBox3.TabIndex = 163;
             // 
@@ -1560,7 +1570,7 @@
             this.multiColumnComboBox1.Margin = new System.Windows.Forms.Padding(4);
             this.multiColumnComboBox1.MetroColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(165)))), ((int)(((byte)(220)))));
             this.multiColumnComboBox1.Name = "multiColumnComboBox1";
-            this.multiColumnComboBox1.ScrollMetroColorTable = metroColorTable4;
+            this.multiColumnComboBox1.ScrollMetroColorTable = metroColorTable3;
             this.multiColumnComboBox1.Size = new System.Drawing.Size(169, 24);
             this.multiColumnComboBox1.TabIndex = 157;
             this.multiColumnComboBox1.Click += new System.EventHandler(this.multiColumnComboBox1_Click);
@@ -1612,7 +1622,7 @@
             this.cboTehnologijaID.Margin = new System.Windows.Forms.Padding(4);
             this.cboTehnologijaID.MetroColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(165)))), ((int)(((byte)(220)))));
             this.cboTehnologijaID.Name = "cboTehnologijaID";
-            this.cboTehnologijaID.ScrollMetroColorTable = metroColorTable5;
+            this.cboTehnologijaID.ScrollMetroColorTable = metroColorTable4;
             this.cboTehnologijaID.Size = new System.Drawing.Size(265, 24);
             this.cboTehnologijaID.TabIndex = 162;
             // 
@@ -1632,25 +1642,25 @@
             this.dataGridView5.AllowUserToResizeRows = false;
             this.dataGridView5.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView5.ColumnHeadersVisible = false;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.25F);
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridView5.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.25F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dataGridView5.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridView5.Location = new System.Drawing.Point(4, 210);
             this.dataGridView5.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView5.Name = "dataGridView5";
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView5.RowHeadersDefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridView5.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridView5.RowHeadersWidth = 21;
             this.dataGridView5.Size = new System.Drawing.Size(616, 101);
             this.dataGridView5.TabIndex = 163;
@@ -1701,20 +1711,23 @@
             this.combo_SerijaVagona.Size = new System.Drawing.Size(64, 24);
             this.combo_SerijaVagona.TabIndex = 168;
             // 
-            // toolStripButton9
+            // button13
             // 
-            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
-            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton9.Name = "toolStripButton9";
-            this.toolStripButton9.Size = new System.Drawing.Size(132, 24);
-            this.toolStripButton9.Text = "Excel kašnjenja";
-            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
+            this.button13.Location = new System.Drawing.Point(1152, 250);
+            this.button13.Margin = new System.Windows.Forms.Padding(4);
+            this.button13.Name = "button13";
+            this.button13.Size = new System.Drawing.Size(13, 28);
+            this.button13.TabIndex = 169;
+            this.button13.Text = "?";
+            this.button13.UseVisualStyleBackColor = true;
+            this.button13.Click += new System.EventHandler(this.button13_Click);
             // 
             // frmNajava
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1588, 726);
+            this.Controls.Add(this.button13);
             this.Controls.Add(this.combo_SerijaVagona);
             this.Controls.Add(this.label37);
             this.Controls.Add(this.txtPorDodatno);
@@ -1989,5 +2002,6 @@
         private System.Windows.Forms.ToolStripButton toolStripButton8;
         private System.Windows.Forms.ComboBox combo_SerijaVagona;
         private System.Windows.Forms.ToolStripButton toolStripButton9;
+        private System.Windows.Forms.Button button13;
     }
 }

@@ -17,9 +17,9 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmIzracunZarada : Form
+    public partial class frmIzracunZaradaNovi : Form
     {
-        public frmIzracunZarada()
+        public frmIzracunZaradaNovi()
         {
             InitializeComponent();
             IdGrupe();
@@ -101,7 +101,7 @@ namespace Saobracaj.Dokumenta
                     insert = Convert.ToBoolean(reader["Upis"]);
                     if (insert == false)
                     {
-                       // tsNew.Enabled = false;
+                        // tsNew.Enabled = false;
                     }
                     update = Convert.ToBoolean(reader["Izmena"]);
                     if (update == false)
@@ -123,16 +123,16 @@ namespace Saobracaj.Dokumenta
 
         }
         public void StornirajCelePN(int Zaposleni, int PNCeli, int PNPola, int PNCeliBrisanje, int PNPolaBrisanje)
-        { 
+        {
 
-            
-             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection con = new SqlConnection(s_connection);
 
             con.Open();
 
             SqlCommand cmd = new SqlCommand("select top " + PNCeliBrisanje + "  PnStZapisa from PotNal " +
-" where PnDelavec = " + Zaposleni + " and PnZnesOrg = 2349 and PnStatus = 'OD' " + 
+" where PnDelavec = " + Zaposleni + " and PnZnesOrg = 2349 and PnStatus = 'OD' " +
 " Order By PnStZapisa desc ", con);
             SqlDataReader dr = cmd.ExecuteReader();
 
@@ -141,11 +141,11 @@ namespace Saobracaj.Dokumenta
 
                 InsertObracunSati ins = new InsertObracunSati();
                 ins.UpdPN(Convert.ToInt32(dr["PnZapisa"].ToString()));
-               
+
             }
 
             con.Close();
-        
+
         }
 
         private void PNZaBrisanje()
@@ -158,7 +158,7 @@ namespace Saobracaj.Dokumenta
                     SqlConnection con = new SqlConnection(s_connection);
 
                     con.Open();
-                  
+
                     string Top1 = Convert.ToInt32(row.Cells[16].Value).ToString();
                     string Top2 = Convert.ToInt32(row.Cells[14].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
@@ -178,7 +178,7 @@ namespace Saobracaj.Dokumenta
                     }
 
                     con.Close();
-                   // StornirajCelePN(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(row.Cells[14].Value.ToString()), Convert.ToInt32(row.Cells[15].Value.ToString()), Convert.ToInt32(row.Cells[16].Value.ToString()), Convert.ToInt32(row.Cells[17].Value.ToString()));
+                    // StornirajCelePN(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(row.Cells[14].Value.ToString()), Convert.ToInt32(row.Cells[15].Value.ToString()), Convert.ToInt32(row.Cells[16].Value.ToString()), Convert.ToInt32(row.Cells[17].Value.ToString()));
                 }
             }
             catch
@@ -238,8 +238,7 @@ namespace Saobracaj.Dokumenta
 " ObracunZaposleni.[Osnovna],[Kazna],[UkupnoDIN],PrimaMinimalac, KaznaMinimalac, KaznaUkupno,[PutniNalozi],[PutniNaloziBroj], PutniNaloziBrojPola, " +
 " PutniNaloziBrisanjeCeli,PutniNaloziBrisanjePola, Dodatak, [MinusPutni] , " +
 " [MinusPutniOsnovna], ObracunZaposleni.Prevoz, UkupnoSaPrevozom as IznosDIN,  " +
- " CenaSata, OsnovnaZarada1, OsnovnaZarada2 from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
-
+" CenaSata, OsnovnaZarada1, OsnovnaZarada2 from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 1  ";
             /*
        SELECT [ID]
       ,[VanLokomotive]
@@ -317,9 +316,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[11].HeaderText = "Mesto up naziv";
             dataGridView1.Columns[11].Width = 80;
         */
-        
-        
-        
+
+
+
         }
 
         private void btnIzracunaj_Click(object sender, EventArgs e)
@@ -327,37 +326,27 @@ namespace Saobracaj.Dokumenta
             InsertObracunSati ins = new InsertObracunSati();
 
             ins.DelObracun();
-            ins.InsObracun(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            ins.UpdLokomotiva(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            //ins.UpdMilsped(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            
-            //ins.UpdKragujevac(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+            ins.InsObracunFIKSNI(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToInt32(txtSatiMesec.Value));
+           // ins.UpdLokomotiva(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
            
-            //ins.UpdRemont(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            
-            // ins.UpdSmederevo(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            
-            ins.UpdINO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            
-            ins.UpdPutniNalozi(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            ins.UpdUkupno1(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+
+
+           // ins.UpdINO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+
+           // ins.UpdPutniNalozi(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+           // ins.UpdUkupno1(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
             // ins.UpdUkupnoMinimalac(Convert.ToDouble(txtMinimalac.Value));
             RefreshDataGrid();
-            PovuciRadPraznikom(); 
-            PovuciPrekovremeni();
-            PovuciBolovanje65();
-            PovuciBolovanje100();
-           
-            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-
-            ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value));
+            PovuciRadPraznikom(); PovuciPrekovremeni(); PovuciBolovanje65(); PovuciBolovanje100();
+            ins.UpdUkupnoFIKSNI(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value));
             RefreshDataGrid();
             MessageBox.Show("Gotovo, to ti je završeno");
-           
+
         }
+
         private void PovuciRadPraznikom()
-        {/*
+        {
             try
             {
                 InsertObracunSati ins = new InsertObracunSati();
@@ -385,45 +374,39 @@ namespace Saobracaj.Dokumenta
             {
                 MessageBox.Show("Nije uspelo povlacenje rada praznikom");
             }
-*/
-            InsertObracunSati ins = new InsertObracunSati();
-            ins.UpdMilspedPraznici(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+
         }
 
         private void PovuciPrekovremeni()
         {
-            /*  try
-              {
+            try
+            {
+                InsertObracunSati ins = new InsertObracunSati();
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                    SqlConnection con = new SqlConnection(s_connection);
 
-                  InsertObracunSati ins = new InsertObracunSati();
-                  foreach (DataGridViewRow row in dataGridView1.Rows)
-                  {
-                      var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-                      SqlConnection con = new SqlConnection(s_connection);
+                    con.Open();
 
-                      con.Open();
+                    SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0)) as integer) as UK from PrekovremeniRad where RadPraznikom = 0 and ZaposleniID = " + row.Cells[0].Value +
+                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo2.Text + "'", con);
+                    SqlDataReader dr = cmd.ExecuteReader();
 
-                      SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0)) as integer) as UK from PrekovremeniRad where RadPraznikom = 0 and ZaposleniID = " + row.Cells[0].Value +
-                          " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo2.Text + "'", con);
-                      SqlDataReader dr = cmd.ExecuteReader();
+                    while (dr.Read())
+                    {
+                        ins.UpdKragujevacPrekovremeni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
+                    }
+                    con.Close();
+                }
 
-                      while (dr.Read())
-                      {
-                          ins.UpdKragujevacPrekovremeni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
-                      }
-                      con.Close();
-                  }
-           
 
-              }
-              catch
-              {
-                  MessageBox.Show("Nije uspelo prekovremeni");
-              }
-                  */
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspelo prekovremeni");
+            }
 
-            InsertObracunSati ins = new InsertObracunSati();
-            ins.UpdKragujevacPrekovremeniVarijabilni(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToInt32(txtSatiMesec.Value));
         }
 
         private void PovuciBolovanje65()
@@ -491,6 +474,7 @@ namespace Saobracaj.Dokumenta
             }
 
         }
+
         private void button2_Click(object sender, EventArgs e)
         {
             try
@@ -552,10 +536,10 @@ namespace Saobracaj.Dokumenta
         {
             InsertObracunSati ins = new InsertObracunSati();
 
-           
+
             ins.UpdPutniNalozi(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
             ins.UpdPutniNaloziPola(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-           
+
             RefreshDataGrid();
             MessageBox.Show("Gotovo");
         }
@@ -568,8 +552,8 @@ namespace Saobracaj.Dokumenta
 
         private void button8_Click(object sender, EventArgs e)
         {
-           ///PPPP2
-            
+            ///PPPP2
+
             PNZaBrisanje();
             PNZaBrisanjePola();
             MessageBox.Show("Gotovo");
@@ -584,7 +568,7 @@ namespace Saobracaj.Dokumenta
             ins.SelectPNBrisanje3();
             ins.SelectPNBrisanje4();
             ins.SelectPNBrisanje5();
-           // ins.Select5();
+            // ins.Select5();
             RefreshDataGrid();
             MessageBox.Show("Gotovo");
         }
@@ -612,7 +596,7 @@ namespace Saobracaj.Dokumenta
         {
             InsertObracunSati ins = new InsertObracunSati();
             ins.UpdZakljucavanjeSmene(Convert.ToDateTime(dtpZakljucavanjeSmene.Value));
-            MessageBox.Show("Zaključano na zadati datum"); 
+            MessageBox.Show("Zaključano na zadati datum");
         }
 
         private void button9_Click_1(object sender, EventArgs e)
@@ -637,39 +621,53 @@ namespace Saobracaj.Dokumenta
 
         private void button11_Click(object sender, EventArgs e)
         {
-            frmIzracunZaradaNovi fno = new frmIzracunZaradaNovi();
-            fno.Show();
-        }
-
-        private void button12_Click(object sender, EventArgs e)
-        {
-            if (txtPassword.Text != "iv4321")
-            {
-                return;
-
-            }
-            var select = "";
-
-            select = " SELECT Zarada.Zaposleni, Rtrim(Delavci.DeIme) + ' ' + Rtrim(Delavci.DePriimek) as Zaposleni,Zarada.Minimalna, Zarada.Osnovna, Zarada.Prevoz, Zarada.Regres, Zarada.TopliObrok, (Osnovna - Regres - TopliObrok + Prevoz) as OsnovnaZarada2 FROM Zarada inner join Delavci on Delavci.DeSifra = Zarada.Zaposleni "+
-   " WHERE Zarada.Zaposleni NOT IN(SELECT ObracunZaposleni.ID FROM ObracunZaposleni) and Zarada.Fiksna = 0 and DeSifStat not in ('P') ";
-
-            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection = new SqlConnection(s_connection);
-            var c = new SqlConnection(s_connection);
-            var dataAdapter = new SqlDataAdapter(select, c);
-
-            var commandBuilder = new SqlCommandBuilder(dataAdapter);
-            var ds = new DataSet();
-            dataAdapter.Fill(ds);
-            dataGridView1.ReadOnly = true;
-            dataGridView1.DataSource = ds.Tables[0];
-        }
-
-        private void button13_Click(object sender, EventArgs e)
-        {
-         
            
-            MessageBox.Show("I ovo ti je zavrseno");
+                if (txtPassword.Text != "iv4321")
+                {
+                    return;
+
+                }
+                var select = "";
+
+            select = "  SELECT Zarada.ID, Delavci.DeIme + ' ' +Delavci.DePriimek as Zaposleni, Zarada.Osnovna, Zarada.Prevoz, Zarada.Regres, Zarada.TopliObrok FROM Zarada" +
+                "inner join Delavci on Delavci.DeSifra= ZaradaID " +
+           "   WHERE Zarada.Zaposleni NOT IN (SELECT ObracunZaposleni.ID FROM ObracunZaposleni) and Zarada.Fiksna = 0 ";
+
+
+            /*
+           SELECT [ID]
+          ,[VanLokomotive]
+          ,[Lokomotiva]
+          ,[Milsped]
+          ,[Zaposleni]
+          ,[PutniNalozi]
+          ,[PutniNaloziBroj]
+          ,[Ukupno1]
+          ,[Ciljna]
+          ,[Osnovna]
+           ,[Kazna]
+          ,[UkupnoDIN]
+          ,[MinusPutni]
+          ,[MinusPutniOsnovna]
+          FROM [Perftech_Beograd].[dbo].[ObracunZaposleni]
+                 */
+
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection = new SqlConnection(s_connection);
+                var c = new SqlConnection(s_connection);
+                var dataAdapter = new SqlDataAdapter(select, c);
+
+                var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                var ds = new DataSet();
+                dataAdapter.Fill(ds);
+                dataGridView1.ReadOnly = true;
+                dataGridView1.DataSource = ds.Tables[0];
+             
+
+
+
+          
         }
     }
 }
+

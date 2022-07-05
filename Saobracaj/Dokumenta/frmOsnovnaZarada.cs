@@ -124,6 +124,17 @@ namespace Saobracaj.Dokumenta
                 return;
             
             }
+
+            if (chkPregleFiksni.Checked == true)
+            {
+                RefreshDataGridFiksni();
+            }
+            else
+            {
+                RefreshDataGridNisuFiksni();
+            }
+
+            /*
             var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra order by Zarada.Zaposleni";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -185,6 +196,7 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].HeaderText = "Tip Radnika";
             dataGridView1.Columns[11].Width = 120;
+            */
 
         }
 
@@ -196,7 +208,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 1 " +
             " order by Zarada.Zaposleni";
@@ -260,6 +272,19 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[11].HeaderText = "Tip Radnika";
             dataGridView1.Columns[11].Width = 120;
 
+
+            DataGridViewColumn column13 = dataGridView1.Columns[12];
+            dataGridView1.Columns[12].HeaderText = "Prevoz";
+            dataGridView1.Columns[12].Width = 70;
+
+            DataGridViewColumn column14 = dataGridView1.Columns[13];
+            dataGridView1.Columns[13].HeaderText = "Regres";
+            dataGridView1.Columns[13].Width = 70;
+
+            DataGridViewColumn column15 = dataGridView1.Columns[14];
+            dataGridView1.Columns[14].HeaderText = "TopliObrok";
+            dataGridView1.Columns[14].Width = 70;
+
         }
 
         private void RefreshDataGridNisuFiksni()
@@ -269,7 +294,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 0 " +
             " order by Zarada.Zaposleni";
@@ -332,6 +357,18 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].HeaderText = "Tip Radnika";
             dataGridView1.Columns[11].Width = 120;
+
+            DataGridViewColumn column13 = dataGridView1.Columns[12];
+            dataGridView1.Columns[12].HeaderText = "Prevoz";
+            dataGridView1.Columns[12].Width = 50;
+
+            DataGridViewColumn column14 = dataGridView1.Columns[13];
+            dataGridView1.Columns[13].HeaderText = "Regres";
+            dataGridView1.Columns[13].Width = 70;
+
+            DataGridViewColumn column15 = dataGridView1.Columns[14];
+            dataGridView1.Columns[14].HeaderText = "TopliObrok";
+            dataGridView1.Columns[14].Width = 70;
 
         }
 
@@ -416,14 +453,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
-                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value));
+                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value));
                 RefreshDataGrid();
                 status = false;
             }
             else
             {
                 InsertOsnovnaZarada upd = new InsertOsnovnaZarada();
-                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value));
+                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value));
                 status = false;
                /// txtSifra.Enabled = false;
                 RefreshDataGrid();
@@ -463,6 +500,9 @@ namespace Saobracaj.Dokumenta
                         txtMinimalna.Value = Convert.ToDecimal(row.Cells[3].Value.ToString());
                          txtPrviDeo.Value = Convert.ToDecimal(row.Cells[7].Value.ToString());
                         txtDrugiDeo.Value = Convert.ToDecimal(row.Cells[8].Value.ToString());
+                       txtPrevoz.Value = Convert.ToDecimal(row.Cells[12].Value.ToString());
+                        txtRegres.Value = Convert.ToDecimal(row.Cells[13].Value.ToString());
+                        txtTopliObrok.Value = Convert.ToDecimal(row.Cells[14].Value.ToString());
                         if (Convert.ToInt32(row.Cells[9].Value.ToString()) == 1)
                         {
                             chkFiksna.Checked = true;
@@ -609,6 +649,12 @@ namespace Saobracaj.Dokumenta
         {
             frmLogDodatnihPrevoza fldp = new frmLogDodatnihPrevoza();
             fldp.Show();
+        }
+
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            frmPraznici praz = new frmPraznici();
+            praz.Show();
         }
     }
 }

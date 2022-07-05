@@ -380,7 +380,7 @@ namespace Saobracaj.Dokumenta
             }
             else
             {
-                System.Diagnostics.Process.Start(txt_putanjaZ.Text);
+                System.Diagnostics.Process.Start("\\"+ txt_putanjaZ.Text);
             }
         }
 
@@ -416,7 +416,7 @@ namespace Saobracaj.Dokumenta
             }
             else
             {
-                System.Diagnostics.Process.Start(txt_putanjaR.Text);
+                System.Diagnostics.Process.Start("\\" + txt_putanjaR.Text);
             }
         }
 
