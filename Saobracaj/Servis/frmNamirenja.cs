@@ -256,6 +256,7 @@ namespace Saobracaj.Servis
                     if (row.Selected)
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
+                        txtKolicina2.Text = row.Cells[5].Value.ToString();
                         // txtPutanja.Text = row.Cells[2].Value.ToString();
                     }
                 }
@@ -289,6 +290,17 @@ namespace Saobracaj.Servis
 
 
 
+        }
+
+        private void metroButton4_Click(object sender, EventArgs e)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("Update LokomotivaNamirenje Set Kolicina = " + Convert.ToDouble(txtKolicina2.Text.ToString()) + "Where ID= " + Convert.ToInt32(txtSifra.Text.ToString()),conn);
+            cmd.ExecuteNonQuery();
+            conn.Close();
+            RefreshDataGrid();
         }
     }
 }
