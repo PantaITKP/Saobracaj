@@ -513,6 +513,12 @@
     <Compile Include="Administracija\frmNotifikacije.Designer.cs">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaGOExcel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaGOExcel.Designer.cs">
+      <DependentUpon>frmEvidencijaGOExcel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmAutomobili.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1785,6 +1791,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmEvidencijaGodLOG.resx">
       <DependentUpon>frmEvidencijaGodLOG.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmEvidencijaGOExcel.resx">
+      <DependentUpon>frmEvidencijaGOExcel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmEvidencijaKvarova.resx">
       <DependentUpon>frmEvidencijaKvarova.cs</DependentUpon>

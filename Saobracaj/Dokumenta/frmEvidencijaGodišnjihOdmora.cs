@@ -916,5 +916,11 @@ order by RzStZapisa desc
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
         }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmEvidencijaGOExcel ex = new frmEvidencijaGOExcel();
+            ex.Show();
+        }
     }
 }
