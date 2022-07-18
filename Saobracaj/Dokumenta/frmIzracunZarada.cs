@@ -159,8 +159,8 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
                   
-                    string Top1 = Convert.ToInt32(row.Cells[16].Value).ToString();
-                    string Top2 = Convert.ToInt32(row.Cells[14].Value).ToString();
+                    string Top1 = Convert.ToInt32(row.Cells[19].Value).ToString();
+                    string Top2 = Convert.ToInt32(row.Cells[17].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     string sqlupit = " select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
  + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS Duration from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 2617 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
@@ -198,8 +198,8 @@ namespace Saobracaj.Dokumenta
                     SqlConnection con = new SqlConnection(s_connection);
 
                     con.Open();
-                    string Top1 = Convert.ToInt32(row.Cells[17].Value).ToString();
-                    string Top2 = Convert.ToInt32(row.Cells[15].Value).ToString();
+                    string Top1 = Convert.ToInt32(row.Cells[20].Value).ToString();
+                    string Top2 = Convert.ToInt32(row.Cells[18].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     SqlCommand cmd = new SqlCommand(" select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
 + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1308 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
@@ -238,7 +238,7 @@ namespace Saobracaj.Dokumenta
 " ObracunZaposleni.[Osnovna],[Kazna],[UkupnoDIN],PrimaMinimalac, KaznaMinimalac, KaznaUkupno,[PutniNalozi],[PutniNaloziBroj], PutniNaloziBrojPola, " +
 " PutniNaloziBrisanjeCeli,PutniNaloziBrisanjePola, Dodatak, [MinusPutni] , " +
 " [MinusPutniOsnovna], ObracunZaposleni.Prevoz, UkupnoSaPrevozom as IznosDIN,  " +
- " CenaSata, OsnovnaZarada1, OsnovnaZarada2 from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
+ " CenaSata, OsnovnaZarada1, OsnovnaZarada2, IznosPraznik, IznosPrekovremeno, IznosBolovanje65, IznosBolovanje100, ObracunZaposleni.Regres, ObracunZaposleni.TopliObrok, GoSati, GOIznos, RedovnoSati,RedovnoSatiIznos from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
 
             /*
        SELECT [ID]
@@ -350,8 +350,10 @@ namespace Saobracaj.Dokumenta
             PovuciBolovanje100();
            
             ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+            ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
             ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value));
+            //ins.UpdRedovnoSati(Convert.ToDouble(txtSatiMesec.Value));
             RefreshDataGrid();
             MessageBox.Show("Gotovo, to ti je završeno");
            
@@ -440,7 +442,7 @@ namespace Saobracaj.Dokumenta
 
 
                     SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0)) as integer) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo2.Text + "' and TipBolovanja = '65'", con);
+                        " and Convert(nvarchar(10), DatumOd, 126) >= '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) <= '" + dtpVremeDo2.Text + "' and TipBolovanja = '65'", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
@@ -473,7 +475,7 @@ namespace Saobracaj.Dokumenta
 
 
                     SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0) ) as integer) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo2.Text + "' and TipBolovanja = '100'", con);
+                        " and Convert(nvarchar(10), DatumOd, 126) >= '" + dtpVremeOd2.Text + "' and Convert(nvarchar(10), DatumDo, 126) <= '" + dtpVremeDo2.Text + "' and TipBolovanja = '100'", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())

@@ -888,6 +888,70 @@ namespace Saobracaj.Dokumenta
             }
         }
 
+        public void UpdGO(DateTime VremeOd, DateTime VremeDo)
+        {
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "UpdGOObracunZaposleni";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@DatumOd";
+            parameter1.SqlDbType = SqlDbType.DateTime;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = VremeOd;
+            myCommand.Parameters.Add(parameter1);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@DatumDo";
+            parameter2.SqlDbType = SqlDbType.DateTime;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = VremeDo;
+            myCommand.Parameters.Add(parameter2);
+
+
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešan upis obracuna u Bazu");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Nije uspeo ", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+
+
+            }
+        }
+
         public void UpdPutniNalozi(DateTime VremeOd, DateTime VremeDo)
         {
 
@@ -1290,6 +1354,61 @@ namespace Saobracaj.Dokumenta
             parameter1.Direction = ParameterDirection.Input;
             parameter1.Value = Kurs;
             myCommand.Parameters.Add(parameter1);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@MesecnoSati";
+            parameter2.SqlDbType = SqlDbType.Decimal;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = MesecnoSati;
+            myCommand.Parameters.Add(parameter2);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešan upis obracuna u Bazu");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Nije uspeo ", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+
+
+            }
+        }
+
+
+        public void UpdRedovnoSati(double MesecnoSati)
+        {
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "UpdateRedovnoSati";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
 
             SqlParameter parameter2 = new SqlParameter();
             parameter2.ParameterName = "@MesecnoSati";
