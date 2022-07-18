@@ -1421,7 +1421,7 @@ namespace Saobracaj.Dokumenta
                 cboUputna.SelectedValue = Convert.ToInt32(dr["Uputna"].ToString());
                 cboPrimalac.SelectedValue = Convert.ToInt32(dr["Primalac"].ToString());
                 //Obraditi checked
-                cboNHM.SelectedValue = Convert.ToInt32(dr["RobaNHM"].ToString());
+                
                 txtRelacija.Text = dr["PrevozniPut"].ToString();
                 txtNetoTezina.Value = Convert.ToDecimal(dr["Tezina"].ToString());
                 txtDuzinaM.Value = Convert.ToDecimal(dr["Duzina"].ToString());
@@ -1496,12 +1496,62 @@ namespace Saobracaj.Dokumenta
 
 
                 cboTehnologijaID.SelectedValue = Convert.ToInt32(dr["TehnologijaID"].ToString());
+
+                //Napuni nhm Iz baze
+                //Panta
+                NapuniNHM1IzBaze(Convert.ToInt32(dr["ID"].ToString()));
+                NapuniNHM2IzBaze(Convert.ToInt32(dr["ID"].ToString()));
+                cboNHM.SelectedValue = Convert.ToInt32(dr["RobaNHM"].ToString());
                 cboNHM2.SelectedValue = Convert.ToInt32(dr["RobaNHM2"].ToString());
                 txtPorDodatno.Text = dr["DodatnoPorudznina"].ToString();
                 combo_SerijaVagona.SelectedValue = dr["SerijaVagona"].ToString();
             }
 
             con.Close();
+        }
+
+        private void NapuniNHM1IzBaze(int BrojNajave)
+        {
+            //cboNHM.Items.Clear();
+           cboNHM.ResetText();
+            var select8 = " Select NHM.ID, RTrim(Broj) as NHM From NHM " +
+" inner join Najava on Najava.RobaNhm = NHM.ID " +
+ "where Najava.ID = " + BrojNajave;
+            var s_connection8 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection8 = new SqlConnection(s_connection8);
+            var c8 = new SqlConnection(s_connection8);
+            var dataAdapter8 = new SqlDataAdapter(select8, c8);
+
+            var commandBuilder8 = new SqlCommandBuilder(dataAdapter8);
+            var ds8 = new DataSet();
+            dataAdapter8.Fill(ds8);
+            cboNHM.DataSource = ds8.Tables[0];
+            cboNHM.DisplayMember = "NHM";
+            cboNHM.ValueMember = "ID";
+
+
+        }
+
+        private void NapuniNHM2IzBaze(int BrojNajave)
+        {
+          // cboNHM2.Items.Clear();
+            cboNHM2.ResetText();
+            var select8 = " Select NHM.ID, RTrim(Broj) as NHM From NHM " +
+" inner join Najava on Najava.RobaNhm2 = NHM.ID " +
+ "where Najava.ID = " + BrojNajave;
+            var s_connection8 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection8 = new SqlConnection(s_connection8);
+            var c8 = new SqlConnection(s_connection8);
+            var dataAdapter8 = new SqlDataAdapter(select8, c8);
+
+            var commandBuilder8 = new SqlCommandBuilder(dataAdapter8);
+            var ds8 = new DataSet();
+            dataAdapter8.Fill(ds8);
+            cboNHM2.DataSource = ds8.Tables[0];
+            cboNHM2.DisplayMember = "NHM";
+            cboNHM2.ValueMember = "ID";
+
+
         }
 
         private void VratiPodatke(string ID)
@@ -1791,6 +1841,7 @@ namespace Saobracaj.Dokumenta
 
         private void multiColumnComboBox1_Enter(object sender, EventArgs e)
         {
+            /*
             if (chkIzNajave.Checked == true)
             {
 
@@ -1849,6 +1900,7 @@ namespace Saobracaj.Dokumenta
                 //Vratiti NHM
 
             }
+            */
         }
         private void ProveriImaPovrat()
         {
@@ -2398,11 +2450,38 @@ namespace Saobracaj.Dokumenta
                // cboGranicna.SelectedValue = Convert.ToInt32(dr["Granicna"].ToString());
                // cboPrimalac.SelectedValue = Convert.ToInt32(dr["Primalac"].ToString());
                 cboPlatilac.SelectedValue = Convert.ToInt32(dr["Platilac"].ToString());
-               // cboPrevoznik.SelectedValue = Convert.ToInt32(dr["Prevoznik"].ToString());
-               // cboPosiljalac.SelectedValue = Convert.ToInt32(dr["Posiljalac"].ToString());
-               // cboUputna.SelectedValue = Convert.ToInt32(dr["Uputna"].ToString());
-               // cboOtpravna.SelectedValue = Convert.ToInt32(dr["Otpravna"].ToString());
+                // cboPrevoznik.SelectedValue = Convert.ToInt32(dr["Prevoznik"].ToString());
+                // cboPosiljalac.SelectedValue = Convert.ToInt32(dr["Posiljalac"].ToString());
+                // cboUputna.SelectedValue = Convert.ToInt32(dr["Uputna"].ToString());
+                // cboOtpravna.SelectedValue = Convert.ToInt32(dr["Otpravna"].ToString());
+                var select8 = " Select ID, RTrim(Broj) as NHM From NHM where ID =" + Convert.ToInt32(dr["RobaNhm"].ToString());
+                var s_connection8 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection8 = new SqlConnection(s_connection8);
+                var c8 = new SqlConnection(s_connection8);
+                var dataAdapter8 = new SqlDataAdapter(select8, c8);
+
+                var commandBuilder8 = new SqlCommandBuilder(dataAdapter8);
+                var ds8 = new DataSet();
+                dataAdapter8.Fill(ds8);
+                cboNHM2.DataSource = ds8.Tables[0];
+                cboNHM2.DisplayMember = "NHM";
+                cboNHM2.ValueMember = "ID";
+                //Panta
                 cboNHM2.SelectedValue = Convert.ToInt32(dr["RobaNhm"].ToString());
+
+                var select9 = " Select ID, RTrim(Broj) as NHM From NHM where ID =" + Convert.ToInt32(dr["RobaNhm2"].ToString());
+                var s_connection9 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection9 = new SqlConnection(s_connection9);
+                var c9 = new SqlConnection(s_connection9);
+                var dataAdapter9 = new SqlDataAdapter(select9, c9);
+
+                var commandBuilder9 = new SqlCommandBuilder(dataAdapter9);
+                var ds9 = new DataSet();
+                dataAdapter9.Fill(ds9);
+                cboNHM.DataSource = ds9.Tables[0];
+                cboNHM.DisplayMember = "NHM";
+                cboNHM.ValueMember = "ID";
+                
                 cboNHM.SelectedValue = Convert.ToInt32(dr["RobaNhm2"].ToString());
                 txtPorDodatno.Text = dr["DodatnoPorudznina"].ToString();
                 // txtNHMPorudzbina.Text = dr["NaPOpomba"].ToString();
@@ -2413,7 +2492,7 @@ namespace Saobracaj.Dokumenta
 
 
         }
-
+      
         private void VratiTMPNajavaSelect(int NajavaID)
         {
             
@@ -2919,6 +2998,64 @@ namespace Saobracaj.Dokumenta
                 MessageBox.Show(ex.Message.ToString());
             }
             
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            if (chkIzNajave.Checked == true)
+            {
+
+                var select = "   Select PorudzbinaID, ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, RobaNHM2 from Najava " +
+                "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Platilac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection = new SqlConnection(s_connection);
+                var c = new SqlConnection(s_connection);
+                var dataAdapter = new SqlDataAdapter(select, c);
+
+                var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                var ds = new DataSet();
+                dataAdapter.Fill(ds);
+
+                DataView view = new DataView(ds.Tables[0]);
+                //multiColumnComboBox1.ReadOnly = true;
+                multiColumnComboBox1.DataSource = view;
+                multiColumnComboBox1.DisplayMember = "NajavaID";
+                multiColumnComboBox1.ValueMember = "NajavaID";
+
+            }
+            else
+            {
+                //Selektovanje stavki u prvi kombo
+                var select = "  select NarociloPostav.NaPNarZap ,NaPstNar as Porudzbina,NaPartPlac as Partner, " +
+                 "NaDatNar as DatumNarudzbine, NaPNaziv as Naziv, NaPEM As JM, NaPem2 as JM2," +
+                 " NaPKolNar as Kolicina, NaPKolNar2 as KolicinaJM2, NaPOpomba as NHM, " +
+                 "NaPNote as Napomena   from Narocilo inner join NarociloPostav " +
+    " on Narocilo.NaStNar = NarociloPostav.NaPStNar " +
+    " inner join MaticniPodatki  on MaticniPodatki.MpSifra = NarociloPostav.NaPSifra " +
+    " where MpSifProdSkup in (1) and Narocilo.NaStNar > 542 and NaStatus = 'PO' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+                //Uslov porucbine
+
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection = new SqlConnection(s_connection);
+                var c = new SqlConnection(s_connection);
+                var dataAdapter = new SqlDataAdapter(select, c);
+
+                var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                var ds = new DataSet();
+                dataAdapter.Fill(ds);
+
+                DataView view = new DataView(ds.Tables[0]);
+                //multiColumnComboBox1.ReadOnly = true;
+                multiColumnComboBox1.DataSource = view;
+                multiColumnComboBox1.DisplayMember = "NaPNarZap";
+                multiColumnComboBox1.ValueMember = "NaPNarZap";
+
+
+                //Proveriti ImaPovrat
+
+                //Vratiti NHM
+
+            }
         }
 
 

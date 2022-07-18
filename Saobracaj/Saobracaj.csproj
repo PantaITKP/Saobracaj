@@ -663,6 +663,12 @@
     <Compile Include="Dokumenta\frmIzracunZarada.Designer.cs">
       <DependentUpon>frmIzracunZarada.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmIzracunZaradaNovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmIzracunZaradaNovi.Designer.cs">
+      <DependentUpon>frmIzracunZaradaNovi.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmKontrola.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -782,6 +788,12 @@
     </Compile>
     <Compile Include="Dokumenta\frmPravoAktivnostiViseRadnika.Designer.cs">
       <DependentUpon>frmPravoAktivnostiViseRadnika.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPraznici.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPraznici.Designer.cs">
+      <DependentUpon>frmPraznici.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\frmPredjenaKilometrazaLokomotiva.cs">
       <SubType>Form</SubType>
@@ -1093,6 +1105,7 @@
     <Compile Include="Dokumenta\InsertPotNal.cs" />
     <Compile Include="Dokumenta\InsertPPK.cs" />
     <Compile Include="Dokumenta\InsertPravoAktivnosti.cs" />
+    <Compile Include="Dokumenta\InsertPraznici.cs" />
     <Compile Include="Dokumenta\InsertPrekovremeniRad.cs" />
     <Compile Include="Dokumenta\InsertPrijemnica.cs" />
     <Compile Include="Dokumenta\InsertPropratnica.cs" />
@@ -1818,6 +1831,9 @@
     <EmbeddedResource Include="Dokumenta\frmIzracunZarada.resx">
       <DependentUpon>frmIzracunZarada.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmIzracunZaradaNovi.resx">
+      <DependentUpon>frmIzracunZaradaNovi.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmKontrola.resx">
       <DependentUpon>frmKontrola.cs</DependentUpon>
     </EmbeddedResource>
@@ -1877,6 +1893,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPravoAktivnostiViseRadnika.resx">
       <DependentUpon>frmPravoAktivnostiViseRadnika.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPraznici.resx">
+      <DependentUpon>frmPraznici.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPredjenaKilometrazaLokomotiva.resx">
       <DependentUpon>frmPredjenaKilometrazaLokomotiva.cs</DependentUpon>

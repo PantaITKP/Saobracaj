@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertOsnovnaZarada
     {
-        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz)
+        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres,  double TopliObrok)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -107,6 +107,20 @@ namespace Saobracaj.Dokumenta
             parameter12.Value = Prevoz;
             myCommand.Parameters.Add(parameter12);
 
+            SqlParameter parameter13 = new SqlParameter();
+            parameter13.ParameterName = "@Regres";
+            parameter13.SqlDbType = SqlDbType.Decimal;
+            parameter13.Direction = ParameterDirection.Input;
+            parameter13.Value = Regres;
+            myCommand.Parameters.Add(parameter13);
+
+            SqlParameter parameter14 = new SqlParameter();
+            parameter14.ParameterName = "@TopliObrok";
+            parameter14.SqlDbType = SqlDbType.Decimal;
+            parameter14.Direction = ParameterDirection.Input;
+            parameter14.Value = TopliObrok;
+            myCommand.Parameters.Add(parameter14);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -144,7 +158,7 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz)
+        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres, double TopliObrok)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -236,6 +250,20 @@ namespace Saobracaj.Dokumenta
             parameter12.Direction = ParameterDirection.Input;
             parameter12.Value = Prevoz;
             myCommand.Parameters.Add(parameter12);
+
+            SqlParameter parameter13 = new SqlParameter();
+            parameter13.ParameterName = "@Regres";
+            parameter13.SqlDbType = SqlDbType.Decimal;
+            parameter13.Direction = ParameterDirection.Input;
+            parameter13.Value = Regres;
+            myCommand.Parameters.Add(parameter13);
+
+            SqlParameter parameter14 = new SqlParameter();
+            parameter14.ParameterName = "@TopliObrok";
+            parameter14.SqlDbType = SqlDbType.Decimal;
+            parameter14.Direction = ParameterDirection.Input;
+            parameter14.Value = TopliObrok;
+            myCommand.Parameters.Add(parameter14);
 
 
             myConnection.Open();

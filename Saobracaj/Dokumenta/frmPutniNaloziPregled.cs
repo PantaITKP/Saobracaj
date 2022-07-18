@@ -235,14 +235,14 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 12)
                     {
                         Puna = 1;
-                        Cena = 2425;
+                        Cena = 2617;
                     }
                    
                     
                     else
                     {
                         Puna = 0;
-                        Cena = 1212.5;
+                        Cena = 1308;
                     }
                     PotNal.InsPotNal(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, txtMestoTroska.Text, Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()), Convert.ToInt32(1), Cena, "");
                     PotNal.InsPotNalRelacije(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, Convert.ToInt32(1), Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()));
@@ -672,6 +672,10 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[11].HeaderText = "Mesto up naziv";
             dataGridView1.Columns[11].Width = 80;
         }
-    
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
