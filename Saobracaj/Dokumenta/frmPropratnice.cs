@@ -356,9 +356,9 @@ namespace Saobracaj.Dokumenta
                 if (row.Selected)
                 {
                     TextBox pom = new TextBox();
-                    pom.Text = row.Cells[3].Value.ToString().TrimEnd();
+                    pom.Text = row.Cells[0].Value.ToString().TrimEnd();
 
-                    string query = "Select Slika from PropratniceZaduzivanjeSlike Where PropratnicaZaduzivanjeId=" + Convert.ToInt32(pom.Text);
+                    string query = "Select Slika from PropratniceZaduzivanjeSlike Where PropratnicaZaduzivanjeId=" + Convert.ToInt32(pom.Text.ToString());
                     var connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
                     SqlConnection conn = new SqlConnection(connect);
                     conn.Open();
@@ -366,7 +366,7 @@ namespace Saobracaj.Dokumenta
                     SqlDataReader dr = cmd.ExecuteReader();
                     while (dr.Read())
                     {
-                        txt_putanjaZ.Text = dr["Slika"].ToString();
+                        txt_putanjaZ.Text = "\\\\"+dr[@"Slika"].ToString();
                     }
                     conn.Close();
                 }
@@ -392,7 +392,7 @@ namespace Saobracaj.Dokumenta
                 if (row.Selected)
                 {
                     TextBox pom = new TextBox();
-                    pom.Text = row.Cells[3].Value.ToString().TrimEnd();
+                    pom.Text = row.Cells[0].Value.ToString().TrimEnd();
                     string query = "Select Slika from PropratniceRazduzivanjeSlike Where PropratnicaRazduzivanjeId=" + Convert.ToInt32(pom.Text);
                     var connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
                     SqlConnection conn = new SqlConnection(connect);
@@ -401,7 +401,7 @@ namespace Saobracaj.Dokumenta
                     SqlDataReader dr = cmd.ExecuteReader();
                     while (dr.Read())
                     {
-                       txt_putanjaR.Text = dr["Slika"].ToString().TrimEnd();
+                        txt_putanjaR.Text = "\\\\" + dr[@"Slika"].ToString();
                     }
                     conn.Close();
                 }
