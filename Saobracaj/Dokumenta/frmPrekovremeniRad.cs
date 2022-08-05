@@ -163,9 +163,9 @@ namespace Saobracaj.Dokumenta
 
             if (status == true)
             {
-               
+
                 InsertPrekovremeniRad ins = new InsertPrekovremeniRad();
-                ins.InsPrekovremeniRad(dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik,Kor.TrimEnd().ToString());
+                ins.InsPrekovremeniRad(dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), Convert.ToInt32(cboZaposleni.SelectedValue), txtNapomena.Text, Praznik, Kor.TrimEnd().ToString());
                 status = false;
                 RefreshDataGrid1();
 
@@ -192,13 +192,15 @@ namespace Saobracaj.Dokumenta
 
         private void RefreshDataGrid1()
         {
-            var select = " Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
- " from PrekovremeniRad inner join Delavci on " +
- " PrekovremeniRad.ZaposleniID = Delavci.DeSifra  where PrekovremeniRad.ZaposleniID = " + Convert.ToInt32(cboZaposleni.SelectedValue) + " order by id desc";
+            var select = "Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik," +
+                "RTrim(Kreirao) as Kreirao,RadPraznikom,zaposleniID " +
+                "from PrekovremeniRad " +
+                "inner join Delavci on PrekovremeniRad.ZaposleniID = Delavci.DeSifra " +
+                "where PrekovremeniRad.ZaposleniID = " + Convert.ToInt32(cboZaposleni.SelectedValue) + " order by id desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
-            var c = new SqlConnection(s_connection) ;
+            var c = new SqlConnection(s_connection);
             var dataAdapter = new SqlDataAdapter(select, c);
 
             var commandBuilder = new SqlCommandBuilder(dataAdapter);
@@ -233,13 +235,16 @@ namespace Saobracaj.Dokumenta
             dataGridView2.Columns[5].HeaderText = "Zaposleni";
             dataGridView2.Columns[5].Width = 120;
 
+            dataGridView2.Columns[8].Visible = false;
+
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var select = " Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik,RTrim(Kreirao) as Kreirao " +
-" from PrekovremeniRad inner join Delavci on " +
-" PrekovremeniRad.ZaposleniID = Delavci.DeSifra order by id desc";
+            var select = "Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik," +
+                "RTrim(Kreirao) as Kreirao,RadPraznikom,zaposleniID " +
+                "from PrekovremeniRad " +
+                "inner join Delavci on PrekovremeniRad.ZaposleniID = Delavci.DeSifra order by id desc";
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -278,6 +283,8 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column7 = dataGridView2.Columns[5];
             dataGridView2.Columns[5].HeaderText = "Zaposleni";
             dataGridView2.Columns[5].Width = 120;
+
+            dataGridView2.Columns[8].Visible = false;
         }
 
         private void dataGridView2_SelectionChanged(object sender, EventArgs e)
@@ -294,7 +301,13 @@ namespace Saobracaj.Dokumenta
                         dtpVremeDo.Value = Convert.ToDateTime(row.Cells[2].Value);
                         txtUkupno.Text = row.Cells[3].Value.ToString();
                         txtNapomena.Text = row.Cells[4].Value.ToString();
-                        RefreshDataGrid1();
+                        int pom = Convert.ToInt32(row.Cells[7].Value);
+                        if (pom == 1)
+                        { chkRadPraznikom.Checked = true; }
+                        if (pom == 0)
+                        { chkRadPraznikom.Checked = false; }
+                        cboZaposleni.SelectedValue = row.Cells[8].Value;
+
                         // txtOpis.Text = row.Cells[1].Value.ToString();
                     }
                 }
@@ -306,6 +319,150 @@ namespace Saobracaj.Dokumenta
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            var select = "Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik," +
+                "RTrim(Kreirao) as Kreirao,RadPraznikom,zaposleniID " +
+                "from PrekovremeniRad " +
+                "inner join Delavci on PrekovremeniRad.ZaposleniID = Delavci.DeSifra " +
+                "where RadPraznikom = 0 order by id desc";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView2.ReadOnly = true;
+            dataGridView2.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView2.Columns[0];
+            dataGridView2.Columns[0].HeaderText = "ID";
+            dataGridView2.Columns[0].Width = 40;
+
+
+
+            DataGridViewColumn column3 = dataGridView2.Columns[1];
+            dataGridView2.Columns[1].HeaderText = "Vreme Od";
+            dataGridView2.Columns[1].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView2.Columns[2];
+            dataGridView2.Columns[2].HeaderText = "Vreme Do";
+            dataGridView2.Columns[2].Width = 100;
+
+            DataGridViewColumn column5 = dataGridView2.Columns[3];
+            dataGridView2.Columns[3].HeaderText = "Ukupno";
+            dataGridView2.Columns[3].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView2.Columns[4];
+            dataGridView2.Columns[4].HeaderText = "Napomena";
+            dataGridView2.Columns[4].Width = 120;
+
+            DataGridViewColumn column7 = dataGridView2.Columns[5];
+            dataGridView2.Columns[5].HeaderText = "Zaposleni";
+            dataGridView2.Columns[5].Width = 120;
+
+            dataGridView2.Columns[8].Visible = false;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var select = "Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik," +
+                "RTrim(Kreirao) as Kreirao,RadPraznikom,zaposleniID " +
+                "from PrekovremeniRad " +
+                "inner join Delavci on PrekovremeniRad.ZaposleniID = Delavci.DeSifra " +
+                "where PrekovremeniRad.RadPraznikom=1 order by id desc";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView2.ReadOnly = true;
+            dataGridView2.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView2.Columns[0];
+            dataGridView2.Columns[0].HeaderText = "ID";
+            dataGridView2.Columns[0].Width = 40;
+
+
+
+            DataGridViewColumn column3 = dataGridView2.Columns[1];
+            dataGridView2.Columns[1].HeaderText = "Vreme Od";
+            dataGridView2.Columns[1].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView2.Columns[2];
+            dataGridView2.Columns[2].HeaderText = "Vreme Do";
+            dataGridView2.Columns[2].Width = 100;
+
+            DataGridViewColumn column5 = dataGridView2.Columns[3];
+            dataGridView2.Columns[3].HeaderText = "Ukupno";
+            dataGridView2.Columns[3].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView2.Columns[4];
+            dataGridView2.Columns[4].HeaderText = "Napomena";
+            dataGridView2.Columns[4].Width = 120;
+
+            DataGridViewColumn column7 = dataGridView2.Columns[5];
+            dataGridView2.Columns[5].HeaderText = "Zaposleni";
+            dataGridView2.Columns[5].Width = 120;
+
+            dataGridView2.Columns[8].Visible = false;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            var select = "Select PrekovremeniRad.ID,  DatumOd, DatumDo, Ukupno, Napomena,  (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Radnik," +
+                "RTrim(Kreirao) as Kreirao,RadPraznikom,zaposleniID " +
+                "from PrekovremeniRad " +
+                "inner join Delavci on PrekovremeniRad.ZaposleniID = Delavci.DeSifra " +
+                "where DatumOd between '"+dtpVremeOd.Value.ToString("MM-dd-yyyy hh:mm:ss")+"' and '"+ dtpVremeDo.Value.ToString("MM-dd-yyyy hh:mm:ss")+"' order by DatumOd desc";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView2.ReadOnly = true;
+            dataGridView2.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView2.Columns[0];
+            dataGridView2.Columns[0].HeaderText = "ID";
+            dataGridView2.Columns[0].Width = 40;
+
+
+
+            DataGridViewColumn column3 = dataGridView2.Columns[1];
+            dataGridView2.Columns[1].HeaderText = "Vreme Od";
+            dataGridView2.Columns[1].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView2.Columns[2];
+            dataGridView2.Columns[2].HeaderText = "Vreme Do";
+            dataGridView2.Columns[2].Width = 100;
+
+            DataGridViewColumn column5 = dataGridView2.Columns[3];
+            dataGridView2.Columns[3].HeaderText = "Ukupno";
+            dataGridView2.Columns[3].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView2.Columns[4];
+            dataGridView2.Columns[4].HeaderText = "Napomena";
+            dataGridView2.Columns[4].Width = 120;
+
+            DataGridViewColumn column7 = dataGridView2.Columns[5];
+            dataGridView2.Columns[5].HeaderText = "Zaposleni";
+            dataGridView2.Columns[5].Width = 120;
+
+            dataGridView2.Columns[8].Visible = false;
+        }
     }
-    }
+}
 

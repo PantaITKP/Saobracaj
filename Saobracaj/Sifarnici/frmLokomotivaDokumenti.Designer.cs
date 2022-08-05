@@ -1,7 +1,7 @@
 ﻿
-namespace Saobracaj.Dokumenta
+namespace Saobracaj.Sifarnici
 {
-    partial class frmAutomobiliDokumenta
+    partial class frmLokomotivaDokumenti
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@ namespace Saobracaj.Dokumenta
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmAutomobiliDokumenta));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmLokomotivaDokumenti));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsNew = new System.Windows.Forms.ToolStripButton();
             this.tsSave = new System.Windows.Forms.ToolStripButton();
@@ -40,14 +40,21 @@ namespace Saobracaj.Dokumenta
             this.tsNapred = new System.Windows.Forms.ToolStripButton();
             this.tsPoslednja = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
-            this.txtPutanja = new System.Windows.Forms.TextBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.txtSifra = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
-            this.txtSifraNajave = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.txt_ID = new System.Windows.Forms.TextBox();
+            this.txt_Lokomotiva = new System.Windows.Forms.TextBox();
+            this.txt_Opis = new System.Windows.Forms.TextBox();
+            this.txt_Kreirao = new System.Windows.Forms.TextBox();
+            this.txt_putanja = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txt_Mail = new System.Windows.Forms.TextBox();
+            this.btn_Posalji = new System.Windows.Forms.Button();
+            this.btn_Otvori = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.ofd1 = new System.Windows.Forms.OpenFileDialog();
             this.fbd1 = new System.Windows.Forms.FolderBrowserDialog();
             this.toolStrip1.SuspendLayout();
@@ -68,8 +75,8 @@ namespace Saobracaj.Dokumenta
             this.tsPoslednja});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1067, 27);
-            this.toolStrip1.TabIndex = 35;
+            this.toolStrip1.Size = new System.Drawing.Size(776, 27);
+            this.toolStrip1.TabIndex = 7;
             this.toolStrip1.Text = "toolStrip1";
             // 
             // tsNew
@@ -144,120 +151,179 @@ namespace Saobracaj.Dokumenta
             // 
             // dataGridView1
             // 
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(9, 111);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView1.Location = new System.Drawing.Point(12, 242);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1041, 428);
-            this.dataGridView1.TabIndex = 62;
+            this.dataGridView1.RowTemplate.Height = 24;
+            this.dataGridView1.Size = new System.Drawing.Size(732, 372);
+            this.dataGridView1.TabIndex = 8;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
-            // 
-            // button4
-            // 
-            this.button4.Location = new System.Drawing.Point(764, 78);
-            this.button4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(81, 25);
-            this.button4.TabIndex = 61;
-            this.button4.Text = "Sačuvaj";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(655, 79);
-            this.button2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(81, 25);
-            this.button2.TabIndex = 60;
-            this.button2.Text = "Otvori";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(5, 82);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(100, 56);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(72, 17);
-            this.label1.TabIndex = 59;
-            this.label1.Text = "Dokument";
+            this.label1.Size = new System.Drawing.Size(80, 17);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Lokomotiva";
             // 
-            // txtPutanja
+            // label2
             // 
-            this.txtPutanja.Location = new System.Drawing.Point(119, 79);
-            this.txtPutanja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtPutanja.Name = "txtPutanja";
-            this.txtPutanja.Size = new System.Drawing.Size(428, 22);
-            this.txtPutanja.TabIndex = 57;
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(12, 56);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(21, 17);
+            this.label2.TabIndex = 9;
+            this.label2.Text = "ID";
             // 
-            // button1
+            // label3
             // 
-            this.button1.Location = new System.Drawing.Point(556, 79);
-            this.button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(79, 25);
-            this.button1.TabIndex = 58;
-            this.button1.Text = "Pronađi";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // txtSifra
-            // 
-            this.txtSifra.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtSifra.Location = new System.Drawing.Point(9, 47);
-            this.txtSifra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtSifra.Name = "txtSifra";
-            this.txtSifra.Size = new System.Drawing.Size(73, 22);
-            this.txtSifra.TabIndex = 54;
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(265, 56);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(37, 17);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "Opis";
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(115, 50);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(636, 56);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(110, 17);
-            this.label4.TabIndex = 56;
-            this.label4.Text = "Šifra automobila";
+            this.label4.Size = new System.Drawing.Size(54, 17);
+            this.label4.TabIndex = 9;
+            this.label4.Text = "Kreirao";
             // 
-            // txtSifraNajave
+            // label5
             // 
-            this.txtSifraNajave.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtSifraNajave.Location = new System.Drawing.Point(232, 47);
-            this.txtSifraNajave.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtSifraNajave.Name = "txtSifraNajave";
-            this.txtSifraNajave.Size = new System.Drawing.Size(113, 22);
-            this.txtSifraNajave.TabIndex = 55;
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(9, 139);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(56, 17);
+            this.label5.TabIndex = 9;
+            this.label5.Text = "Putanja";
+            // 
+            // txt_ID
+            // 
+            this.txt_ID.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_ID.Enabled = false;
+            this.txt_ID.Location = new System.Drawing.Point(12, 76);
+            this.txt_ID.Name = "txt_ID";
+            this.txt_ID.Size = new System.Drawing.Size(51, 22);
+            this.txt_ID.TabIndex = 10;
+            // 
+            // txt_Lokomotiva
+            // 
+            this.txt_Lokomotiva.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_Lokomotiva.Enabled = false;
+            this.txt_Lokomotiva.Location = new System.Drawing.Point(103, 76);
+            this.txt_Lokomotiva.Name = "txt_Lokomotiva";
+            this.txt_Lokomotiva.Size = new System.Drawing.Size(105, 22);
+            this.txt_Lokomotiva.TabIndex = 10;
+            // 
+            // txt_Opis
+            // 
+            this.txt_Opis.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_Opis.Location = new System.Drawing.Point(268, 76);
+            this.txt_Opis.Name = "txt_Opis";
+            this.txt_Opis.Size = new System.Drawing.Size(311, 22);
+            this.txt_Opis.TabIndex = 10;
+            // 
+            // txt_Kreirao
+            // 
+            this.txt_Kreirao.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_Kreirao.Enabled = false;
+            this.txt_Kreirao.Location = new System.Drawing.Point(616, 76);
+            this.txt_Kreirao.Name = "txt_Kreirao";
+            this.txt_Kreirao.Size = new System.Drawing.Size(128, 22);
+            this.txt_Kreirao.TabIndex = 10;
+            // 
+            // txt_putanja
+            // 
+            this.txt_putanja.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_putanja.Location = new System.Drawing.Point(12, 163);
+            this.txt_putanja.Name = "txt_putanja";
+            this.txt_putanja.Size = new System.Drawing.Size(311, 22);
+            this.txt_putanja.TabIndex = 10;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(458, 124);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(78, 17);
+            this.label6.TabIndex = 9;
+            this.label6.Text = "Posalji mail";
+            // 
+            // txt_Mail
+            // 
+            this.txt_Mail.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_Mail.Location = new System.Drawing.Point(461, 144);
+            this.txt_Mail.Name = "txt_Mail";
+            this.txt_Mail.Size = new System.Drawing.Size(283, 22);
+            this.txt_Mail.TabIndex = 10;
+            // 
+            // btn_Posalji
+            // 
+            this.btn_Posalji.Location = new System.Drawing.Point(669, 172);
+            this.btn_Posalji.Name = "btn_Posalji";
+            this.btn_Posalji.Size = new System.Drawing.Size(75, 28);
+            this.btn_Posalji.TabIndex = 11;
+            this.btn_Posalji.Text = "Posalji";
+            this.btn_Posalji.UseVisualStyleBackColor = true;
+            this.btn_Posalji.Click += new System.EventHandler(this.btn_Posalji_Click);
+            // 
+            // btn_Otvori
+            // 
+            this.btn_Otvori.Location = new System.Drawing.Point(248, 191);
+            this.btn_Otvori.Name = "btn_Otvori";
+            this.btn_Otvori.Size = new System.Drawing.Size(75, 28);
+            this.btn_Otvori.TabIndex = 11;
+            this.btn_Otvori.Text = "Otvori";
+            this.btn_Otvori.UseVisualStyleBackColor = true;
+            this.btn_Otvori.Click += new System.EventHandler(this.btn_Otvori_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(133, 191);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 28);
+            this.button1.TabIndex = 11;
+            this.button1.Text = "Pronadji";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // ofd1
             // 
-            this.ofd1.FileName = "ofd1";
+            this.ofd1.FileName = "openFileDialog1";
             // 
-            // frmAutomobiliDokumenta
+            // frmLokomotivaDokumenti
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1067, 554);
-            this.Controls.Add(this.dataGridView1);
-            this.Controls.Add(this.button4);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.txtPutanja);
+            this.ClientSize = new System.Drawing.Size(776, 626);
+            this.Controls.Add(this.btn_Posalji);
+            this.Controls.Add(this.btn_Otvori);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.txtSifra);
+            this.Controls.Add(this.txt_putanja);
+            this.Controls.Add(this.txt_Opis);
+            this.Controls.Add(this.txt_Mail);
+            this.Controls.Add(this.txt_Kreirao);
+            this.Controls.Add(this.txt_Lokomotiva);
+            this.Controls.Add(this.txt_ID);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.txtSifraNajave);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.toolStrip1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.Name = "frmAutomobiliDokumenta";
-            this.Text = "Automobili dokumenta";
-            this.Click += new System.EventHandler(this.frmEvidencijaRadaDokumenti_Load);
+            this.Name = "frmLokomotivaDokumenti";
+            this.Text = "frmLokomotivaDokumenti";
+            this.Load += new System.EventHandler(this.frmLokomotivaDokumenti_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -278,14 +344,21 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.ToolStripButton tsNapred;
         private System.Windows.Forms.ToolStripButton tsPoslednja;
         private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox txtPutanja;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.TextBox txtSifra;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox txtSifraNajave;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox txt_ID;
+        private System.Windows.Forms.TextBox txt_Lokomotiva;
+        private System.Windows.Forms.TextBox txt_Opis;
+        private System.Windows.Forms.TextBox txt_Kreirao;
+        private System.Windows.Forms.TextBox txt_putanja;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox txt_Mail;
+        private System.Windows.Forms.Button btn_Posalji;
+        private System.Windows.Forms.Button btn_Otvori;
+        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.OpenFileDialog ofd1;
         private System.Windows.Forms.FolderBrowserDialog fbd1;
     }

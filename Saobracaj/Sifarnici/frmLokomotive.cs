@@ -27,7 +27,7 @@ namespace Saobracaj.Sifarnici
         bool delete;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         string niz = "";
-
+        string Lokomotiva;
 
         public frmLokomotive()
         {
@@ -240,6 +240,21 @@ namespace Saobracaj.Sifarnici
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
 
+        }
+
+        private void btn_Dokumenta_Click(object sender, EventArgs e)
+        {
+            Lokomotiva = txtLokomotiva.Text.ToString().TrimEnd();
+            Sifarnici.frmLokomotivaDokumenti lok = new frmLokomotivaDokumenti(Lokomotiva);
+            if (txtLokomotiva.Text.Equals(""))
+            {
+                MessageBox.Show("Mora se izabrati lokomotiva");
+            }
+            else
+            {
+                lok.Show();
+            }
+            
         }
     }
 }
