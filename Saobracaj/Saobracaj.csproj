@@ -1465,6 +1465,12 @@
     <Compile Include="Sifarnici\frmLogovanje.Designer.cs">
       <DependentUpon>frmLogovanje.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\frmLokomotivaDokumenti.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\frmLokomotivaDokumenti.Designer.cs">
+      <DependentUpon>frmLokomotivaDokumenti.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmLokomotive.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1615,6 +1621,7 @@
     <Compile Include="Sifarnici\InsertEvidencijaSatiPoRadniku.cs" />
     <Compile Include="Sifarnici\InsertKontrolneGreske.cs" />
     <Compile Include="Sifarnici\InsertKontrolneGreskeTipDokumenta.cs" />
+    <Compile Include="Sifarnici\InsertLokomotivaDokumenti.cs" />
     <Compile Include="Sifarnici\InsertLokomotivaSerija.cs" />
     <Compile Include="Sifarnici\InsertLokomotive.cs" />
     <Compile Include="Sifarnici\InsertVagoniSerije.cs" />
@@ -2183,6 +2190,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmLogovanje.resx">
       <DependentUpon>frmLogovanje.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\frmLokomotivaDokumenti.resx">
+      <DependentUpon>frmLokomotivaDokumenti.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmLokomotive.resx">
       <DependentUpon>frmLokomotive.cs</DependentUpon>

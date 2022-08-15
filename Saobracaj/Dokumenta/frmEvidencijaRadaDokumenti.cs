@@ -158,7 +158,7 @@ namespace Saobracaj.Dokumenta
                     if (row.Selected)
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
-                        txtPutanja.Text = row.Cells[2].Value.ToString();
+                        txtPutanja.Text = "\\\\"+row.Cells[2].Value.ToString();
 
                     }
                 }
