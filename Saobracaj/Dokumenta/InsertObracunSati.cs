@@ -1338,7 +1338,7 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-        public void UpdUkupno(double Kurs, double MesecnoSati)
+        public void UpdUkupno(double Kurs, double MesecnoSati, double PoreskaOlaksica)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -1361,6 +1361,13 @@ namespace Saobracaj.Dokumenta
             parameter2.Direction = ParameterDirection.Input;
             parameter2.Value = MesecnoSati;
             myCommand.Parameters.Add(parameter2);
+
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@PoreskaOlaksica";
+            parameter3.SqlDbType = SqlDbType.Decimal;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = PoreskaOlaksica;
+            myCommand.Parameters.Add(parameter3);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();

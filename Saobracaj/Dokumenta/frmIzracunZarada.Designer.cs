@@ -65,12 +65,15 @@
             this.label8 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.button12 = new System.Windows.Forms.Button();
+            this.txtPoreskoOslobodjenje = new System.Windows.Forms.NumericUpDown();
+            this.label11 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtZarada)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSmanjenje)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPoreskoOslobodjenje)).BeginInit();
             this.SuspendLayout();
             // 
             // dtpVremeDo
@@ -243,7 +246,7 @@
             // txtMinimalac
             // 
             this.txtMinimalac.DecimalPlaces = 2;
-            this.txtMinimalac.Location = new System.Drawing.Point(604, 149);
+            this.txtMinimalac.Location = new System.Drawing.Point(556, 151);
             this.txtMinimalac.Margin = new System.Windows.Forms.Padding(4);
             this.txtMinimalac.Maximum = new decimal(new int[] {
             1000000,
@@ -258,7 +261,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(520, 153);
+            this.label4.Location = new System.Drawing.Point(474, 151);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(74, 17);
@@ -501,11 +504,38 @@
             this.button12.UseVisualStyleBackColor = true;
             this.button12.Click += new System.EventHandler(this.button12_Click);
             // 
+            // txtPoreskoOslobodjenje
+            // 
+            this.txtPoreskoOslobodjenje.DecimalPlaces = 2;
+            this.txtPoreskoOslobodjenje.Location = new System.Drawing.Point(824, 151);
+            this.txtPoreskoOslobodjenje.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPoreskoOslobodjenje.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtPoreskoOslobodjenje.Name = "txtPoreskoOslobodjenje";
+            this.txtPoreskoOslobodjenje.Size = new System.Drawing.Size(92, 22);
+            this.txtPoreskoOslobodjenje.TabIndex = 342;
+            this.txtPoreskoOslobodjenje.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(668, 151);
+            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(148, 17);
+            this.label11.TabIndex = 341;
+            this.label11.Text = "Poresko oslobodjenje:";
+            // 
             // frmIzracunZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1524, 706);
+            this.Controls.Add(this.txtPoreskoOslobodjenje);
+            this.Controls.Add(this.label11);
             this.Controls.Add(this.button12);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.dtpVremeOd2);
@@ -553,6 +583,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.txtSmanjenje)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPoreskoOslobodjenje)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -597,5 +628,7 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.NumericUpDown txtPoreskoOslobodjenje;
+        private System.Windows.Forms.Label label11;
     }
 }

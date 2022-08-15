@@ -238,8 +238,10 @@ namespace Saobracaj.Dokumenta
 " ObracunZaposleni.[Osnovna],[Kazna],[UkupnoDIN],PrimaMinimalac, KaznaMinimalac, KaznaUkupno,[PutniNalozi],[PutniNaloziBroj], PutniNaloziBrojPola, " +
 " PutniNaloziBrisanjeCeli,PutniNaloziBrisanjePola, Dodatak, [MinusPutni] , " +
 " [MinusPutniOsnovna], ObracunZaposleni.Prevoz, UkupnoSaPrevozom as IznosDIN,  " +
- " CenaSata, OsnovnaZarada1, OsnovnaZarada2, IznosPraznik, IznosPrekovremeno, IznosBolovanje65, IznosBolovanje100, ObracunZaposleni.Regres, ObracunZaposleni.TopliObrok, GoSati, GOIznos, RedovnoSati,RedovnoSatiIznos from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
+ " CenaSata, OsnovnaZarada1, OsnovnaZarada2, IznosPraznik, IznosPrekovremeno, IznosBolovanje65, IznosBolovanje100, ObracunZaposleni.Regres, ObracunZaposleni.TopliObrok, GoSati, GOIznos, RedovnoSati,RedovnoSatiIznos, PoreskaOlaksica,BrutoZarada,BrutoCenaSata,PrekovremeniCenaSata, PrekovremeniBrutoIznos from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
 
+
+ 
             /*
        SELECT [ID]
       ,[VanLokomotive]
@@ -352,7 +354,7 @@ namespace Saobracaj.Dokumenta
             ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
-            ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value));
+            ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtPoreskoOslobodjenje.Value));
             //ins.UpdRedovnoSati(Convert.ToDouble(txtSatiMesec.Value));
             RefreshDataGrid();
             MessageBox.Show("Gotovo, to ti je završeno");
