@@ -71,8 +71,9 @@ namespace Saobracaj.Dokumenta
             // txtCenaSata
             // 
             this.txtCenaSata.DecimalPlaces = 2;
+            this.txtCenaSata.Enabled = false;
             this.txtCenaSata.Location = new System.Drawing.Point(398, 153);
-            this.txtCenaSata.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCenaSata.Margin = new System.Windows.Forms.Padding(4);
             this.txtCenaSata.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -86,6 +87,7 @@ namespace Saobracaj.Dokumenta
             // label1
             // 
             this.label1.AutoSize = true;
+            this.label1.Enabled = false;
             this.label1.Location = new System.Drawing.Point(313, 153);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
@@ -96,8 +98,9 @@ namespace Saobracaj.Dokumenta
             // txtBrojSati
             // 
             this.txtBrojSati.DecimalPlaces = 2;
+            this.txtBrojSati.Enabled = false;
             this.txtBrojSati.Location = new System.Drawing.Point(152, 153);
-            this.txtBrojSati.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtBrojSati.Margin = new System.Windows.Forms.Padding(4);
             this.txtBrojSati.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -111,6 +114,7 @@ namespace Saobracaj.Dokumenta
             // label2
             // 
             this.label2.AutoSize = true;
+            this.label2.Enabled = false;
             this.label2.Location = new System.Drawing.Point(17, 153);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
@@ -121,7 +125,7 @@ namespace Saobracaj.Dokumenta
             // btnPostaviPrviDeo
             // 
             this.btnPostaviPrviDeo.Location = new System.Drawing.Point(9, 201);
-            this.btnPostaviPrviDeo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnPostaviPrviDeo.Margin = new System.Windows.Forms.Padding(4);
             this.btnPostaviPrviDeo.Name = "btnPostaviPrviDeo";
             this.btnPostaviPrviDeo.Size = new System.Drawing.Size(212, 28);
             this.btnPostaviPrviDeo.TabIndex = 152;
@@ -137,7 +141,7 @@ namespace Saobracaj.Dokumenta
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(7, 248);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.Size = new System.Drawing.Size(1508, 397);
@@ -165,8 +169,9 @@ namespace Saobracaj.Dokumenta
             // 
             // metroButton2
             // 
+            this.metroButton2.Enabled = false;
             this.metroButton2.Location = new System.Drawing.Point(317, 201);
-            this.metroButton2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.metroButton2.Margin = new System.Windows.Forms.Padding(4);
             this.metroButton2.Name = "metroButton2";
             this.metroButton2.Size = new System.Drawing.Size(212, 28);
             this.metroButton2.TabIndex = 210;
@@ -179,7 +184,7 @@ namespace Saobracaj.Dokumenta
             this.dtpVremeOd.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeOd.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpVremeOd.Location = new System.Drawing.Point(606, 153);
-            this.dtpVremeOd.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dtpVremeOd.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeOd.Name = "dtpVremeOd";
             this.dtpVremeOd.ShowUpDown = true;
             this.dtpVremeOd.Size = new System.Drawing.Size(145, 22);
@@ -191,7 +196,7 @@ namespace Saobracaj.Dokumenta
             this.dtpVremeDo.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeDo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpVremeDo.Location = new System.Drawing.Point(840, 153);
-            this.dtpVremeDo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dtpVremeDo.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeDo.Name = "dtpVremeDo";
             this.dtpVremeDo.ShowUpDown = true;
             this.dtpVremeDo.Size = new System.Drawing.Size(145, 22);
@@ -257,7 +262,7 @@ namespace Saobracaj.Dokumenta
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(1266, 23);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(189, 21);
+            this.label9.Size = new System.Drawing.Size(151, 17);
             this.label9.TabIndex = 216;
             this.label9.Text = "Minimalna neto zarada";
             // 
@@ -266,7 +271,7 @@ namespace Saobracaj.Dokumenta
             this.label10.AutoSize = true;
             this.label10.Location = new System.Drawing.Point(17, 99);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(176, 21);
+            this.label10.Size = new System.Drawing.Size(141, 17);
             this.label10.TabIndex = 216;
             this.label10.Text = "Poresko oslobođenje";
             // 
@@ -416,7 +421,7 @@ namespace Saobracaj.Dokumenta
             this.Controls.Add(this.label1);
             this.Controls.Add(this.txtBrojSati);
             this.Controls.Add(this.label2);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmObracunFiksni";
             this.Text = "Obračun zarade";
             ((System.ComponentModel.ISupportInitialize)(this.txtCenaSata)).EndInit();

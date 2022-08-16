@@ -121,14 +121,36 @@ namespace Saobracaj.Dokumenta
         }
         private void btnPostaviPrviDeo_Click(object sender, EventArgs e)
         {
-            var select = " select Zaposleni, (Rtrim(DePriimek) + ' ' + Rtrim(DeIme)) as Radnik , Osnovna, Parametar1 as Nocni," +
-                " Benificirani, TipRadnika, '0' as SatiNocni, '0' as SatiPraznik, '0' as OdmorSati, '0' as BolovanjeSati65," +
-                " '0' as BolovanjeSati100, " +
-                " '0' as SatiRedovan, Smena as Smenski, Parametar2 as TerenskiRad, '0' as IznosBolovanje, " +
-                " '0' as IznosRedovan, '1000' as Regres, '2200' as TopliObrok, '0' as NocniIznos, '0' as RadniPraznikomIznos, " +
-                "'0' as SmenskiRadIznos,  '0' as TerenskiRadIznos, '0' as Stimulacija " +
-                "  from Zarada " + 
-           " inner join Delavci on DeSifra = Zarada.Zaposleni where Fiksna = 1";
+
+           
+            InsertObracunSati ins = new InsertObracunSati();
+
+            ins.DelObracunfiksni();
+            ins.InsObracunFiksni(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Text), Convert.ToDouble(txtFondCasova.Text), Convert.ToDouble(txtPraznicniCasovi.Text), Convert.ToDouble(txtMinimalnaCenaNeto.Text), Convert.ToDouble(txtMinimalnaZaradaNeto.Text), Convert.ToDouble(txtPoreskoOslobodjenje.Text), Convert.ToDouble(txtMinimalnaBrutoZarada.Text));
+        
+        
+            RefreshDataGrid();
+            MessageBox.Show("Gotovo, to ti je završeno");
+           
+
+
+
+          
+
+        }
+
+        private void RefreshDataGrid()
+        {
+            var select = " SELECT [ID]       ,[Zaposleni]      ,[BrutoMinimalna] "+
+            " ,[Osnovna]      ,[BrutoZarada]      ,[BrutoCenaSata]      ,[Koeficijent] "+
+            " ,[MesecniFond]      ,[MesecniFondPraznicnih]      ,[RedovanRadSati]      ,[PoUcinkuSati] " +
+            " ,[RedovanRadIznos]      ,[GodisnjiOdmorSati]      ,[GodisnjiOdmorIznos]      ,[Bolovanje100Sati] " +
+            " ,[Bolovanje100Iznos]      ,[Bolovanje65Sati]      ,[Bolovanje65Iznos]      ,[PrekovremeniSati] " +
+            " ,[PrekovremeniCenaSata]      ,[PrekovremeniIznos]      ,[RadPrazniko1mSati]      ,[RadPrazniko1CenaSata] " +
+            " ,[RadPrazniko1Iznos]      ,[RadPrazniko2mSati]      ,[RadPrazniko2CenaSata]      ,[RadPrazniko2Iznos] " +
+            " ,[RegresNeto]      ,[TopliObrokNeto]      ,[RegresBruto]      ,[TopliObrokBruto]      ,[PrevozNeto] " +
+            " FROM [Perftech_Beograd].[dbo].[ObracunZaposleniFiksni] ";
+            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -139,100 +161,6 @@ namespace Saobracaj.Dokumenta
             dataAdapter.Fill(ds);
             dataGridView1.ReadOnly = false;
             dataGridView1.DataSource = ds.Tables[0];
-
-            //string value = dataGridView3.Rows[0].Cells[0].Value.ToString();
-            DataGridViewColumn column = dataGridView1.Columns[0];
-            dataGridView1.Columns[0].HeaderText = "Zaposleni ID";
-            dataGridView1.Columns[0].Width = 50;
-
-            DataGridViewColumn column2 = dataGridView1.Columns[1];
-            dataGridView1.Columns[1].HeaderText = "Zaposleni";
-            dataGridView1.Columns[1].Width = 150;
-
-            DataGridViewColumn column3 = dataGridView1.Columns[2];
-            dataGridView1.Columns[2].HeaderText = "Osnovna";
-            dataGridView1.Columns[2].Width = 80;
-
-            DataGridViewColumn column4 = dataGridView1.Columns[3];
-            dataGridView1.Columns[3].HeaderText = "Nocni";
-            dataGridView1.Columns[3].Width = 30;
-
-            DataGridViewColumn column5 = dataGridView1.Columns[4];
-            dataGridView1.Columns[4].HeaderText = "Benificirani";
-            dataGridView1.Columns[4].Width = 30;
-
-            DataGridViewColumn column6 = dataGridView1.Columns[5];
-            dataGridView1.Columns[5].HeaderText = "Tip radnika";
-            dataGridView1.Columns[5].Width = 50;
-
-            DataGridViewColumn column7 = dataGridView1.Columns[6];
-            dataGridView1.Columns[6].HeaderText = "Sati noćni";
-            dataGridView1.Columns[6].Width = 40;
-
-            DataGridViewColumn column8 = dataGridView1.Columns[7];
-            dataGridView1.Columns[7].HeaderText = "Sati praznik";
-            dataGridView1.Columns[7].Width = 40;
-
-            DataGridViewColumn column9 = dataGridView1.Columns[8];
-            dataGridView1.Columns[8].HeaderText = "Sati GO";
-            dataGridView1.Columns[8].Width = 40;
-
-            DataGridViewColumn column10 = dataGridView1.Columns[9];
-            dataGridView1.Columns[9].HeaderText = "Sati Bol65";
-            dataGridView1.Columns[9].Width = 40;
-
-            DataGridViewColumn column11 = dataGridView1.Columns[10];
-            dataGridView1.Columns[10].HeaderText = "Sati Bol100";
-            dataGridView1.Columns[10].Width = 40;
-
-            DataGridViewColumn column12 = dataGridView1.Columns[11];
-            dataGridView1.Columns[11].HeaderText = "Sati Redovan";
-            dataGridView1.Columns[11].Width = 40;
-
-            DataGridViewColumn column13 = dataGridView1.Columns[12];
-            dataGridView1.Columns[12].HeaderText = "Smenski";
-            dataGridView1.Columns[12].Width = 40;
-
-            DataGridViewColumn column14 = dataGridView1.Columns[13];
-            dataGridView1.Columns[13].HeaderText = "Terenski";
-            dataGridView1.Columns[13].Width = 40;
-
-            DataGridViewColumn column15 = dataGridView1.Columns[14];
-            dataGridView1.Columns[14].HeaderText = "Bolovanje";
-            dataGridView1.Columns[14].Width = 60;
-
-            DataGridViewColumn column16 = dataGridView1.Columns[15];
-            dataGridView1.Columns[15].HeaderText = "Redovan";
-            dataGridView1.Columns[15].Width = 60;
-
-            DataGridViewColumn column17 = dataGridView1.Columns[16];
-            dataGridView1.Columns[16].HeaderText = "Regres";
-            dataGridView1.Columns[16].Width = 60;
-
-            DataGridViewColumn column18 = dataGridView1.Columns[17];
-            dataGridView1.Columns[17].HeaderText = "Topli obrok";
-            dataGridView1.Columns[17].Width = 60;
-
-            DataGridViewColumn column19 = dataGridView1.Columns[18];
-            dataGridView1.Columns[18].HeaderText = "Noćni";
-            dataGridView1.Columns[18].Width = 60;
-
-            DataGridViewColumn column20 = dataGridView1.Columns[19];
-            dataGridView1.Columns[19].HeaderText = "Praznik";
-            dataGridView1.Columns[19].Width = 60;
-
-            DataGridViewColumn column21 = dataGridView1.Columns[20];
-            dataGridView1.Columns[20].HeaderText = "Smenski dodatak";
-            dataGridView1.Columns[20].Width = 60;
-
-            DataGridViewColumn column22 = dataGridView1.Columns[21];
-            dataGridView1.Columns[21].HeaderText = "Terenski dodatak";
-            dataGridView1.Columns[21].Width = 60;
-
-
-            DataGridViewColumn column23 = dataGridView1.Columns[22];
-            dataGridView1.Columns[22].HeaderText = "Stimulacija";
-            dataGridView1.Columns[22].Width = 100;
 
 
 
