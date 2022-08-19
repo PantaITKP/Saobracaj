@@ -49,6 +49,7 @@ namespace Saobracaj.Administracija
             this.txt_ID = new System.Windows.Forms.TextBox();
             this.combo_RadnoMesto = new System.Windows.Forms.ComboBox();
             this.button1 = new System.Windows.Forms.Button();
+            this.btnOsvezi = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -229,11 +230,22 @@ namespace Saobracaj.Administracija
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // btnOsvezi
+            // 
+            this.btnOsvezi.Location = new System.Drawing.Point(512, 251);
+            this.btnOsvezi.Name = "btnOsvezi";
+            this.btnOsvezi.Size = new System.Drawing.Size(87, 27);
+            this.btnOsvezi.TabIndex = 155;
+            this.btnOsvezi.Text = "Refresh";
+            this.btnOsvezi.UseVisualStyleBackColor = true;
+            this.btnOsvezi.Click += new System.EventHandler(this.btnOsvezi_Click);
+            // 
             // frmNotifikacije
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1641, 716);
+            this.Controls.Add(this.btnOsvezi);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.combo_RadnoMesto);
             this.Controls.Add(this.dt_Citanje);
@@ -281,5 +293,6 @@ namespace Saobracaj.Administracija
         private System.Windows.Forms.TextBox txt_ID;
         private System.Windows.Forms.ComboBox combo_RadnoMesto;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnOsvezi;
     }
 }

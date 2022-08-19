@@ -234,42 +234,42 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE: <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
-                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
-                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
-                            body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
-                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj / Train designation in Kombinovani Prevoz: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "IZ / Departure station of train: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
+                            body = body + "DO / Arrival station of train: " + myRow["UputnaStanica"].ToString() + "<br/>";
+                            body = body + "Status / Status of train: " + myRow["Status"].ToString() + "<br/>";
+                            body = body + "Trenutna stanica / Current position of train: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            body = body + "Broj kola / Number of wagons: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
                             if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPrimanje.Checked==false && cb_sPredaja.Checked==false)
                             {
                                 if (status == 1 || status == 2)
                                 {
-                                    body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                    body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                                 }
                                 else
                                 {
-                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
-                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                    body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                                 }
                             }
                             if (cb_Eta.Checked == true)
                             {
-                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_pPrimanje.Checked == true)
                             {
-                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                             }
                             if (cb_sPredaja.Checked == true)
                             {
-                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                                body = body + "Stvarna predaja / Actual time of handed over train: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_sPrimanje.Checked == true)
                             {
-                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
+                            body = body + "Zadatak(Dodatne informacije o vozu) / Additional information of train: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
                         System.Text.StringBuilder sb = new StringBuilder();
                         sb.Append("<style>");
@@ -277,16 +277,16 @@ namespace Saobracaj.Dokumenta
                         sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
                         sb.Append("</style>");
                         sb.Append("<table>");
-                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
-                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
-                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><th>LEGENDA / LEGEND</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA / ANNOUNCEMENT FROM CLIENT</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA / ANNOUNCEMENT FROM RAILWAY UNDERTAKING</td></tr>");
                         sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
-                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO / PARKED</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU / ON THE ROAD</td></tr>");
                         sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
-                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
-                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO / HANDED OVER</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO / CANCELED</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT / WAITING FOR RETURN</td></tr>");
                         sb.Append("</table>");
 
                         body = body + sb.ToString() + "<hr><br/><br/>";
@@ -378,61 +378,59 @@ namespace Saobracaj.Dokumenta
                         body = body + "STATUS NAJAVE <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
-                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
-                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
-                            body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
-                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj / Train designation in Kombinovani Prevoz: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "IZ / Departure station of train: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
+                            body = body + "DO / Arrival station of train: " + myRow["UputnaStanica"].ToString() + "<br/>";
+                            body = body + "Status / Status of train: " + myRow["Status"].ToString() + "<br/>";
+                            body = body + "Trenutna stanica / Current position of train: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            body = body + "Broj kola / Number of wagons: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
-                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked==false && cb_sPrimanje.Checked==false)
+                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPrimanje.Checked == false && cb_sPredaja.Checked == false)
                             {
                                 if (status == 1 || status == 2)
                                 {
-                                    body = body + "Predvidjeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                    body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                                 }
                                 else
                                 {
-                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
-                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                                 }
                             }
                             if (cb_Eta.Checked == true)
                             {
-                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_pPrimanje.Checked == true)
                             {
-                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
-                            }
-                            if (cb_sPrimanje.Checked == true)
-                            {
-                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                             }
                             if (cb_sPredaja.Checked == true)
                             {
-                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                                body = body + "Stvarna predaja / Actual time of handed over train: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<hr><br/>";
-                            
+                            if (cb_sPrimanje.Checked == true)
+                            {
+                                body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                            }
+                            body = body + "Zadatak(Dodatne informacije o vozu) / Additional information of train: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
-
                         System.Text.StringBuilder sb = new StringBuilder();
                         sb.Append("<style>");
                         sb.Append("table { font-family:arial,sans-serif; font-size:14px; border-collapse:collapse; width:100%;}");
                         sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
                         sb.Append("</style>");
                         sb.Append("<table>");
-                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
-                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
-                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><th>LEGENDA / LEGEND</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA / ANNOUNCEMENT FROM CLIENT</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA / ANNOUNCEMENT FROM RAILWAY UNDERTAKING</td></tr>");
                         sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
-                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO / PARKED</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU / ON THE ROAD</td></tr>");
                         sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
-                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
-                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO / HANDED OVER</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO / CANCELED</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT / WAITING FOR RETURN</td></tr>");
                         sb.Append("</table>");
 
                         body = body + sb.ToString() + "<hr><br/><br/>";
@@ -525,43 +523,42 @@ namespace Saobracaj.Dokumenta
                         body = body + "                             STATUS NAJAVE <br/><br/>";
                         foreach (DataRow myRow in ds.Tables[0].Rows)
                         {
-                            body = body + "<hr>Najava broj: " + myRow["Najava"].ToString() + "<br/>";
-                            body = body + "IZ: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
-                            body = body + "DO: " + myRow["UputnaStanica"].ToString() + "<br/>";
-                            body = body + "Status: " + myRow["Status"].ToString() + "<br/>";
-                            body = body + "Trenutna stanica: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
-                            body = body + "Broj kola: " + myRow["BrojKola"].ToString() + "<br/>";
+                            body = body + "<hr>Najava broj / Train designation in Kombinovani Prevoz: " + myRow["Najava"].ToString() + "<br/>";
+                            body = body + "IZ / Departure station of train: " + myRow["OtpravnaStanica"].ToString() + "<br/>";
+                            body = body + "DO / Arrival station of train: " + myRow["UputnaStanica"].ToString() + "<br/>";
+                            body = body + "Status / Status of train: " + myRow["Status"].ToString() + "<br/>";
+                            body = body + "Trenutna stanica / Current position of train: " + myRow["TrenutnaStanica"].ToString() + "<br/>";
+                            body = body + "Broj kola / Number of wagons: " + myRow["BrojKola"].ToString() + "<br/>";
                             int status = Convert.ToInt32(myRow["Status"]);
-                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPredaja.Checked==false && cb_sPrimanje.Checked==false)
+                            if (cb_Eta.Checked == false && cb_pPrimanje.Checked == false && cb_sPrimanje.Checked == false && cb_sPredaja.Checked == false)
                             {
                                 if (status == 1 || status == 2)
                                 {
-                                    body = body + "Predvidjeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                    body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                                 }
                                 else
                                 {
-                                    body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
-                                    body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                    body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                                 }
                             }
                             if (cb_Eta.Checked == true)
                             {
-                                body = body + "ETA: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
+                                body = body + "ETA / Estimated time of hand over train: " + myRow["PredvidjenaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_pPrimanje.Checked == true)
                             {
-                                body = body + "Predviđeno primanje: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
+                                body = body + "Predviđeno primanje / Estimated time of arrival of train: " + myRow["PredvidjenoPrimanje"].ToString() + "<br/>";
                             }
                             if (cb_sPredaja.Checked == true)
                             {
-                                body = body + "Stvarna predaja: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
+                                body = body + "Stvarna predaja / Actual time of handed over train: " + myRow["StvarnaPredaja"].ToString() + "<br/>";
                             }
                             if (cb_sPrimanje.Checked == true)
                             {
-                                body = body + "Stvarno primanje: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
+                                body = body + "Stvarno primanje / Actual time of taked over train: " + myRow["StvarnoPrimanje"].ToString() + "<br/>";
                             }
-                            body = body + "Zadatak: " + myRow["Zadatak"].ToString() + "<br/><hr>";
-                           
+                            body = body + "Zadatak(Dodatne informacije o vozu) / Additional information of train: " + myRow["Zadatak"].ToString() + "<hr><br/><br/>";
                         }
                         System.Text.StringBuilder sb = new StringBuilder();
                         sb.Append("<style>");
@@ -569,16 +566,16 @@ namespace Saobracaj.Dokumenta
                         sb.Append("td,th { border:1px solid #dddddd; text-align:left; padding:5px;}");
                         sb.Append("</style>");
                         sb.Append("<table>");
-                        sb.Append("<tr><th>LEGENDA</th><th></th></tr>");
-                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA</td></tr>");
-                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA</td></tr>");
+                        sb.Append("<tr><th>LEGENDA / LEGEND</th><th></th></tr>");
+                        sb.Append("<tr><td>STATUS 1</td><td>NAJAVA OD KLIJENTA / ANNOUNCEMENT FROM CLIENT</td></tr>");
+                        sb.Append("<tr><td>STATUS 2</td><td>NAJAVA OD PREVOZNIKA / ANNOUNCEMENT FROM RAILWAY UNDERTAKING</td></tr>");
                         sb.Append("<tr><td>STATUS 3</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO</td></tr>");
-                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU</td></tr>");
+                        sb.Append("<tr><td>STATUS 4</td><td>NIJE POKRENUTO / RASPUŠTENO / PARKED</td></tr>");
+                        sb.Append("<tr><td>STATUS 5</td><td>U PUTU / ON THE ROAD</td></tr>");
                         sb.Append("<tr><td>STATUS 6</td><td></td></tr>");
-                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO</td></tr>");
-                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO</td></tr>");
-                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT</td></tr>");
+                        sb.Append("<tr><td>STATUS 7</td><td>PREDATO / HANDED OVER</td></tr>");
+                        sb.Append("<tr><td>STATUS 8</td><td>OTKAZANO / CANCELED</td></tr>");
+                        sb.Append("<tr><td>STATUS 9</td><td>ČEKA POVRAT / WAITING FOR RETURN</td></tr>");
                         sb.Append("</table>");
 
                         body = body + sb.ToString() + "<hr><br/><br/>";

@@ -293,5 +293,10 @@ namespace Saobracaj.Administracija
             cbList_Korisnici.DisplayMember = "Korisnik";
             cbList_Korisnici.ValueMember = "DeSifra";
         }
+
+        private void btnOsvezi_Click(object sender, EventArgs e)
+        {
+            FillGV();
+        }
     }
 }

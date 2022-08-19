@@ -74,7 +74,27 @@ namespace Saobracaj.Dokumenta
 
         private void tsNew_Click(object sender, EventArgs e)
         {
-           
+            
+            
+            chkRezi.Checked = false;
+            chkPoslato.Checked = false;
+            txtPlaniranaMasa.Value=0;
+            txtDuzinaVoza.Value = 0;
+            txtMasaVoza.Value = 0;
+            txtBrutoVoza.Value = 0;
+            txtNapomena.Text = "";
+            dtpVremeDo.Value = Convert.ToDateTime("1.1.1900.".ToString());
+            dtpVremeOdReal.Value = Convert.ToDateTime("1.1.1900.".ToString());
+            dtpVremeOd.Value = Convert.ToDateTime("1.1.1900.".ToString());
+            dtpVremeDoReal.Value = Convert.ToDateTime("1.1.1900.".ToString());
+            txtMasaLokomotive.Value = 0;
+            cboTrase.Text = "";
+            cboStanicaDo.Text = "";
+            cboStanicaOd.Text = "";
+            txtRB.Text = "";
+            txtVreme.Text = "";
+            txtVremeReal.Text = "";
+
         }
 
         private void frmRadniNalogTraseLok_Load(object sender, EventArgs e)
@@ -261,7 +281,7 @@ namespace Saobracaj.Dokumenta
                 ",stanice_2.Opis AS RN_Pocetna " +
                 ",stanice_3.Opis AS RN_Krajnja " + 
                 ",stanice.Opis AS Trasa_Pocetna " +
-                ",stanice_1.Opis AS Trasa_Krajnja " + 
+                ",stanice_1.Opis AS Trasa_Krajnja,stanice_2.ID as PocetnaID,stanice_3.ID as KrajnjaID " + 
                 " FROM RadniNalogTrase INNER JOIN " +
                 " Trase ON RadniNalogTrase.IDTrase = Trase.ID INNER JOIN " + 
                 " stanice ON Trase.Pocetna = stanice.ID INNER JOIN " +
@@ -343,6 +363,9 @@ namespace Saobracaj.Dokumenta
              DataGridViewColumn column16 = dataGridView1.Columns[15];
              dataGridView1.Columns[15].HeaderText = "Bruto masa";
              dataGridView1.Columns[15].Width = 50;
+
+            //dataGridView1.Columns[21].Visible = false;
+            //dataGridView1.Columns[22].Visible = false;
         }
 
         private void dtpVremeDo_Leave(object sender, EventArgs e)
@@ -415,6 +438,9 @@ namespace Saobracaj.Dokumenta
                         RB = Convert.ToInt32(row.Cells[1].Value.ToString());
                         txtRB.Text = row.Cells[1].Value.ToString();
                         VratiPodatkeTrasa(Trasa, RB);
+                        cboStanicaOd.SelectedValue = row.Cells[21].Value.ToString();
+                        cboStanicaDo.SelectedValue = row.Cells[22].Value.ToString();
+                        
                     }
                 }
             }

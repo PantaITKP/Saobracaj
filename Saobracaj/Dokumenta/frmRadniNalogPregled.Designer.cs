@@ -43,6 +43,8 @@
             this.chkST = new System.Windows.Forms.CheckBox();
             this.chkZA = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
+            this.txtNajava = new System.Windows.Forms.TextBox();
+            this.button2 = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -202,7 +204,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(728, 30);
+            this.button1.Location = new System.Drawing.Point(692, 30);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(177, 27);
             this.button1.TabIndex = 128;
@@ -210,11 +212,30 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // txtNajava
+            // 
+            this.txtNajava.Location = new System.Drawing.Point(918, 31);
+            this.txtNajava.Name = "txtNajava";
+            this.txtNajava.Size = new System.Drawing.Size(91, 22);
+            this.txtNajava.TabIndex = 129;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(1015, 26);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(141, 33);
+            this.button2.TabIndex = 130;
+            this.button2.Text = "Pretrazi po najavi";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // frmRadniNalogPregled
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1172, 458);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.txtNajava);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.chkZA);
             this.Controls.Add(this.chkST);
@@ -256,5 +277,7 @@
         private System.Windows.Forms.CheckBox chkZA;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox txtNajava;
+        private System.Windows.Forms.Button button2;
     }
 }
