@@ -1441,6 +1441,12 @@
       <DependentUpon>frmEvidencijaKvarovaAnaliza.cs</DependentUpon>
     </Compile>
     <Compile Include="Settings.cs" />
+    <Compile Include="Sifarnici\CIT.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\CIT.Designer.cs">
+      <DependentUpon>CIT.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmCenaPoRadniku.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1618,6 +1624,8 @@
     <Compile Include="Sifarnici\frmVrsteAktivnosti.Designer.cs">
       <DependentUpon>frmVrsteAktivnosti.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\InsertCIT.cs" />
+    <Compile Include="Sifarnici\InsertCitStavke.cs" />
     <Compile Include="Sifarnici\InsertEvidencijaSatiPoRadniku.cs" />
     <Compile Include="Sifarnici\InsertKontrolneGreske.cs" />
     <Compile Include="Sifarnici\InsertKontrolneGreskeTipDokumenta.cs" />
@@ -2178,6 +2186,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Servis\frmVrstePopisa.resx">
       <DependentUpon>frmVrstePopisa.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\CIT.resx">
+      <DependentUpon>CIT.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmCenaPoRadniku.resx">
       <DependentUpon>frmCenaPoRadniku.cs</DependentUpon>
