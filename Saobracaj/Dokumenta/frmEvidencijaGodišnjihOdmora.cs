@@ -263,6 +263,7 @@ namespace Saobracaj.Dokumenta
 
             if (IzMobilneObrade == 1)
             {
+                //Panta
                 cboZaposleni.SelectedValue = ZaposleniM ;
                 dtpVremeOd.Value =  VremeOdM ;
                 dtpVremeDo.Value = VremeDoM;
@@ -898,7 +899,8 @@ order by RzStZapisa desc
                     if (row.Selected)
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
-                        cboZaposleni.Text = row.Cells[2].Value.ToString();
+                        //Panta
+                        cboZaposleni.SelectedValue = row.Cells[1].Value.ToString();
                         dtpVremeOd.Value = Convert.ToDateTime(row.Cells[4].Value.ToString());
                         dtpVremeDo.Value = Convert.ToDateTime(row.Cells[5].Value.ToString());
                         txtNapomena.Text = row.Cells[7].Value.ToString();

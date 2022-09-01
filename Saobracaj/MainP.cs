@@ -783,7 +783,8 @@ namespace Saobracaj
 
         private void toolStripButton32_Click(object sender, EventArgs e)
         {
-
+            frmPravljenjeVoza pv = new frmPravljenjeVoza();
+            pv.Show();
         }
 
         private void toolStripButton64_Click(object sender, EventArgs e)
