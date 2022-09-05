@@ -1738,6 +1738,41 @@
     <Compile Include="Testiranje\TestiranjeStampa.Designer.cs">
       <DependentUpon>TestiranjeStampa.cs</DependentUpon>
     </Compile>
+    <Compile Include="Uvoz\Brodovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uvoz\Brodovi.Designer.cs">
+      <DependentUpon>Brodovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Uvoz\Carinarnice.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uvoz\Carinarnice.Designer.cs">
+      <DependentUpon>Carinarnice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Uvoz\InsertBrodovi.cs" />
+    <Compile Include="Uvoz\InsertCarinarnice.cs" />
+    <Compile Include="Uvoz\InsertNalogodavci.cs" />
+    <Compile Include="Uvoz\InsertUvoz.cs" />
+    <Compile Include="Uvoz\InsertUvozKonacna.cs" />
+    <Compile Include="Uvoz\Nalogodavci.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uvoz\Nalogodavci.Designer.cs">
+      <DependentUpon>Nalogodavci.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Uvoz\Uvoz.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uvoz\Uvoz.Designer.cs">
+      <DependentUpon>Uvoz.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Uvoz\UvozKonacna.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Uvoz\UvozKonacna.Designer.cs">
+      <DependentUpon>UvozKonacna.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Administracija\frmDodeliGrupu.resx">
       <DependentUpon>frmDodeliGrupu.cs</DependentUpon>
     </EmbeddedResource>
@@ -2331,6 +2366,21 @@
     <EmbeddedResource Include="Testiranje\rptZ8.rdlc" />
     <EmbeddedResource Include="Testiranje\TestiranjeStampa.resx">
       <DependentUpon>TestiranjeStampa.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uvoz\Brodovi.resx">
+      <DependentUpon>Brodovi.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uvoz\Carinarnice.resx">
+      <DependentUpon>Carinarnice.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uvoz\Nalogodavci.resx">
+      <DependentUpon>Nalogodavci.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uvoz\Uvoz.resx">
+      <DependentUpon>Uvoz.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Uvoz\UvozKonacna.resx">
+      <DependentUpon>UvozKonacna.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="NedraDataSet.xsc">
       <DependentUpon>NedraDataSet.xsd</DependentUpon>
