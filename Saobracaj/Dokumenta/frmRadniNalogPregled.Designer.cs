@@ -45,6 +45,12 @@
             this.button1 = new System.Windows.Forms.Button();
             this.txtNajava = new System.Windows.Forms.TextBox();
             this.button2 = new System.Windows.Forms.Button();
+            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
+            this.button3 = new System.Windows.Forms.Button();
+            this.dtpVremeOd2 = new System.Windows.Forms.DateTimePicker();
+            this.dtpVremeDo2 = new System.Windows.Forms.DateTimePicker();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -55,10 +61,11 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton1,
             this.toolStripButton2,
-            this.toolStripButton3});
+            this.toolStripButton3,
+            this.toolStripButton5});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1172, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(1382, 27);
             this.toolStrip1.TabIndex = 9;
             this.toolStrip1.Text = "Pošalji mail infrastrukturi";
             this.toolStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStrip1_ItemClicked);
@@ -97,11 +104,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(16, 66);
+            this.dataGridView1.Location = new System.Drawing.Point(16, 108);
             this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1140, 388);
+            this.dataGridView1.Size = new System.Drawing.Size(1333, 346);
             this.dataGridView1.TabIndex = 10;
             this.dataGridView1.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
@@ -214,14 +221,14 @@
             // 
             // txtNajava
             // 
-            this.txtNajava.Location = new System.Drawing.Point(918, 31);
+            this.txtNajava.Location = new System.Drawing.Point(886, 30);
             this.txtNajava.Name = "txtNajava";
             this.txtNajava.Size = new System.Drawing.Size(91, 22);
             this.txtNajava.TabIndex = 129;
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(1015, 26);
+            this.button2.Location = new System.Drawing.Point(983, 25);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(141, 33);
             this.button2.TabIndex = 130;
@@ -229,11 +236,82 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // toolStripButton5
+            // 
+            this.toolStripButton5.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
+            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton5.Name = "toolStripButton5";
+            this.toolStripButton5.Size = new System.Drawing.Size(132, 24);
+            this.toolStripButton5.Text = "Izvoz z ExceL - ZA";
+            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(1204, 59);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(145, 32);
+            this.button3.TabIndex = 131;
+            this.button3.Text = "Pretraži";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // dtpVremeOd2
+            // 
+            this.dtpVremeOd2.CustomFormat = "yyyy-MM-dd HH:mm";
+            this.dtpVremeOd2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpVremeOd2.Location = new System.Drawing.Point(772, 65);
+            this.dtpVremeOd2.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeOd2.Name = "dtpVremeOd2";
+            this.dtpVremeOd2.ShowUpDown = true;
+            this.dtpVremeOd2.Size = new System.Drawing.Size(145, 22);
+            this.dtpVremeOd2.TabIndex = 318;
+            this.dtpVremeOd2.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
+            // 
+            // dtpVremeDo2
+            // 
+            this.dtpVremeDo2.CustomFormat = "yyyy-MM-dd HH:mm";
+            this.dtpVremeDo2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpVremeDo2.Location = new System.Drawing.Point(1045, 65);
+            this.dtpVremeDo2.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeDo2.Name = "dtpVremeDo2";
+            this.dtpVremeDo2.ShowUpDown = true;
+            this.dtpVremeDo2.Size = new System.Drawing.Size(152, 22);
+            this.dtpVremeDo2.TabIndex = 317;
+            this.dtpVremeDo2.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.ForeColor = System.Drawing.Color.Red;
+            this.label7.Location = new System.Drawing.Point(964, 67);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(73, 17);
+            this.label7.TabIndex = 316;
+            this.label7.Text = "Period do:";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.ForeColor = System.Drawing.Color.Red;
+            this.label8.Location = new System.Drawing.Point(691, 67);
+            this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(73, 17);
+            this.label8.TabIndex = 315;
+            this.label8.Text = "Period od:";
+            // 
             // frmRadniNalogPregled
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1172, 458);
+            this.ClientSize = new System.Drawing.Size(1382, 458);
+            this.Controls.Add(this.dtpVremeOd2);
+            this.Controls.Add(this.dtpVremeDo2);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.txtNajava);
             this.Controls.Add(this.button1);
@@ -279,5 +357,11 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox txtNajava;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.ToolStripButton toolStripButton5;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.DateTimePicker dtpVremeOd2;
+        private System.Windows.Forms.DateTimePicker dtpVremeDo2;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
     }
 }
