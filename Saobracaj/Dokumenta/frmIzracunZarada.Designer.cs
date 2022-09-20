@@ -67,6 +67,10 @@
             this.button12 = new System.Windows.Forms.Button();
             this.txtPoreskoOslobodjenje = new System.Windows.Forms.NumericUpDown();
             this.label11 = new System.Windows.Forms.Label();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.dataGridView2 = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtZarada)).BeginInit();
@@ -74,6 +78,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtPoreskoOslobodjenje)).BeginInit();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.SuspendLayout();
             // 
             // dtpVremeDo
@@ -139,11 +147,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(16, 262);
+            this.dataGridView1.Location = new System.Drawing.Point(7, 7);
             this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1492, 405);
+            this.dataGridView1.Size = new System.Drawing.Size(1479, 392);
             this.dataGridView1.TabIndex = 277;
             // 
             // label1
@@ -529,11 +537,61 @@
             this.label11.TabIndex = 341;
             this.label11.Text = "Poresko oslobodjenje:";
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(17, 270);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(1501, 435);
+            this.tabControl1.TabIndex = 343;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.dataGridView1);
+            this.tabPage1.Location = new System.Drawing.Point(4, 25);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(1493, 406);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Stari obračun";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.dataGridView2);
+            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(1493, 406);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Nataša";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // dataGridView2
+            // 
+            this.dataGridView2.AllowUserToAddRows = false;
+            this.dataGridView2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView2.Location = new System.Drawing.Point(7, 7);
+            this.dataGridView2.Margin = new System.Windows.Forms.Padding(4);
+            this.dataGridView2.Name = "dataGridView2";
+            this.dataGridView2.RowHeadersWidth = 51;
+            this.dataGridView2.Size = new System.Drawing.Size(1479, 392);
+            this.dataGridView2.TabIndex = 278;
+            // 
             // frmIzracunZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1524, 706);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.txtPoreskoOslobodjenje);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.button12);
@@ -567,7 +625,6 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtKurs);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnIzracunaj);
             this.Controls.Add(this.dtpVremeDo);
             this.Controls.Add(this.label15);
@@ -584,6 +641,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtPoreskoOslobodjenje)).EndInit();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -630,5 +691,9 @@
         private System.Windows.Forms.Button button12;
         private System.Windows.Forms.NumericUpDown txtPoreskoOslobodjenje;
         private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.DataGridView dataGridView2;
     }
 }

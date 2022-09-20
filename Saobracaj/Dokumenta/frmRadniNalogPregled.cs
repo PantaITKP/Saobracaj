@@ -890,12 +890,13 @@ namespace Saobracaj.Dokumenta
         private void toolStripButton5_Click(object sender, EventArgs e)
         {
             string pom = "'1'";
-            var select = " SELECT  d1.IDRadnogNaloga, d1.RB, d1.IDTrase, " +
+            var select = " SELECT   " +
+               "  d1.DatumPolaskaReal , " +
 " RTrim(Trase.Voz) as Voz, " +
- "   CASE WHEN d1.Rezi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Rezi, " +
 " RTrim(stanice_2.Opis) as StanicaOd," +
 " RTrim(stanice_3.Opis) as StanicaDo," +
-" (Cast(Zaposleni.DeSifra as nvarchar(3)) + '--'  + Rtrim(Zaposleni.DeIme) + ' ' + Rtrim(Zaposleni.DePriimek)) as Planer, " +
+" d1.DatumPolaskaReal , " +
+" d1.DatumDolaskaReal, " +
 " ( " +
 " SELECT " +
 " STUFF( " +
@@ -906,18 +907,7 @@ namespace Saobracaj.Dokumenta
 " where RadniNalogLokNaTrasi.IDRadnogNaloga = d1.IDRadnogNaloga and  RadniNalogLokNaTrasi.IdTrase = d1.IDTrase " +
 "  FOR XML PATH('') " +
 "  ), 1, 1, '' " +
-" ) As Skupljen) as Lokom, " +
-"(  SELECT  STUFF(  (  SELECT distinct   '/' + (Cast(del.DeSifra as nvarchar(3)) + '--'  + Rtrim(del.DeIme) + ' ' + Rtrim(del.DePriimek))  " +
-"   from RadniNalogTraseLokZap  " +
-"   inner Join Delavci del on (RadniNalogTraseLokZap.DeSifra = del.DeSifra) " +
-"   where RadniNalogTraseLokZap.IDRadnogNaloga = d1.IDRadnogNaloga " +
-"   and  RadniNalogTraseLokZap.IdTrase = d1.IDTrase " +
-"   FOR XML PATH('')   ), 1, 1, ''  ) As Skupljen2) " +
-"   as Zaposleni2, " +
-" d1.DatumPolaska ,d1.DatumDolaska , " +
-" d1.Vreme ,d1.DatumPolaskaReal , " +
-" d1.DatumDolaskaReal ,d1.VremeReal , " +
-" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
+" ) As Skupljen) as Lokom " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -925,8 +915,7 @@ namespace Saobracaj.Dokumenta
 " INNER JOIN  stanice AS stanice_3 ON d1.StanicaDo = stanice_3.ID " +
 " INNER JOIN  stanice AS stanice_1 ON Trase.Krajnja = stanice_1.ID " +
 " inner Join RadniNalog as RN ON d1.IDRadnogNaloga = RN.ID " +
-" inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra " +
-" inner join RadniNalogVezaNajave on d1.IdRadnogNaloga=RadniNalogVezaNajave.IDRadnogNaloga ";
+" inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra ";
 
 
 
@@ -956,27 +945,16 @@ namespace Saobracaj.Dokumenta
                     for (int j = 0; j <= ds.Tables[0].Columns.Count - 1; j++)
                     {
                         wSheet.Cells[1, 15].EntireRow.Font.Bold = true;
-                        wSheet.Range["A1:S1"].Interior.Color = System.Drawing.Color.Red;
+                        wSheet.Range["A1:G1"].Interior.Color = System.Drawing.Color.Red;
                    
-                        wSheet.Cells[1, "A"] = "RN";
-                        wSheet.Cells[1, "B"] = "RB";
-                        wSheet.Cells[1, "C"] = "Trase";
-                        wSheet.Cells[1, "D"] = "Voz";
-                        wSheet.Cells[1, "E"] = "Rezi";
-                        wSheet.Cells[1, "F"] = "Stanica Od";
-                        wSheet.Cells[1, "G"] = "Stanica do";
-                        wSheet.Cells[1, "H"] = "Planer";
-                        wSheet.Cells[1, "I"] = "Lokomotive";
-                        wSheet.Cells[1, "J"] = "Osoblje";
-                        wSheet.Cells[1, "K"] = "Datum polaska";
-                        wSheet.Cells[1, "L"] = "Datum dolaska";
-                        wSheet.Cells[1, "M"] = "Vreme";
-                        wSheet.Cells[1, "N"] = "Datum polaska real";
-                        wSheet.Cells[1, "O"] = "Datum dolaska real";
-                        wSheet.Cells[1, "P"] = "Vreme real";
-                        wSheet.Cells[1, "Q"] = "Tr pocetna";
-                        wSheet.Cells[1, "R"] = "Tr kranja";
-                        wSheet.Cells[1, "S"] = "Realacija";
+                        wSheet.Cells[1, "A"] = "Datum polaska";
+                        wSheet.Cells[1, "B"] = "VOZ";
+                        wSheet.Cells[1, "C"] = "Stanica od";
+                        wSheet.Cells[1, "D"] = "Stanica do";
+                        wSheet.Cells[1, "E"] = "Vreme polaska od";
+                        wSheet.Cells[1, "F"] = "Vreme dolaska do";
+                        wSheet.Cells[1, "G"] = "Lokomotive";
+                      
                         wSheet.Cells[i + 2, j + 1] = ds.Tables[0].Rows[i].ItemArray[j].ToString();
                         wSheet.Cells[i + 2, j + 1].EntireColumn.AutoFit();
                         Microsoft.Office.Interop.Excel.Borders border = wSheet.Cells[i + 2, j + 1].Borders;
