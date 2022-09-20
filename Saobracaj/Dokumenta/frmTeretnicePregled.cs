@@ -127,8 +127,7 @@ namespace Saobracaj.Dokumenta
             IdForme();
             PravoPristupa();
         }
-
-        private void frmTeretnicePregled_Load(object sender, EventArgs e)
+        private void RefreshGV()
         {
             var select = " SELECT  top 3000 d1.ID, d1.BrojTeretnice, stanice.Opis AS StanicaOd, " +
 " stanice_1.Opis AS StanicaDo, stanice_2.Opis AS StanicaPopisa, d1.VremeOd, " +
@@ -197,8 +196,10 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column10 = dataGridView1.Columns[9];
             dataGridView1.Columns[9].HeaderText = "Korisnik";
             dataGridView1.Columns[9].Width = 150;
-
-           
+        }
+        private void frmTeretnicePregled_Load(object sender, EventArgs e)
+        {
+            RefreshGV();  
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
@@ -210,6 +211,7 @@ namespace Saobracaj.Dokumenta
                     if (row.Selected)
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
+                       
                        
                     }
                 }
@@ -303,6 +305,90 @@ namespace Saobracaj.Dokumenta
         private void tsDelete_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void tsNew_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            var select = "Select * from Teretnica Where ID=" + Convert.ToInt32(txtSifra.Text.ToString());
+            SqlConnection conn = new SqlConnection(s_connection);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(select, conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            int StanicaOD, StanicaDO, StanicaPopisa, Prijemna, Predajna, Prevozna, RN;
+            int id = 0;
+            string brTeretnice, brLista;
+            DateTime VremeOD, VremeDO;
+            while (dr.Read())
+            {
+                id = Convert.ToInt32(dr["ID"].ToString());
+                brTeretnice = dr["BrojTeretnice"].ToString();
+                StanicaOD = Convert.ToInt32(dr["StanicaOd"].ToString());
+                StanicaDO = Convert.ToInt32(dr["StanicaDo"].ToString());
+                StanicaPopisa = Convert.ToInt32(dr["StanicaPopisa"].ToString());
+                VremeOD = Convert.ToDateTime(dr["VremeOd"].ToString());
+                VremeDO = Convert.ToDateTime(dr["VremeDo"].ToString());
+                brLista = dr["BrojLista"].ToString();
+                Prijemna = Convert.ToInt32(dr["Prijemna"].ToString());
+                Predajna = Convert.ToInt32(dr["Predajna"].ToString());
+                Prevozna = Convert.ToInt32(dr["Prevozna"].ToString());
+                RN = Convert.ToInt32(dr["RN"].ToString());
+
+                InsertTeretnica ins = new InsertTeretnica();
+                ins.InsTeretnica(brTeretnice, StanicaDO, StanicaOD, StanicaPopisa, VremeOD, VremeDO, brLista, Predajna, Prijemna, Korisnik, Prevozna, RN);
+            }
+            conn.Close();
+
+            var select2 = "Select Max(ID) From Teretnica";
+            conn.Open();
+            SqlCommand cmd2 = new SqlCommand(select2, conn);
+            SqlDataReader dr2 = cmd2.ExecuteReader();
+            int IdPom = 0;
+            while (dr2.Read())
+            {
+                IdPom = Convert.ToInt32(dr2[0].ToString());
+            }
+            conn.Close();
+
+            var query = "Select * from TeretnicaStavke Where BrojTeretnice=" + id;
+            conn.Open();
+            SqlCommand cm = new SqlCommand(query, conn);
+            SqlDataReader reader = cm.ExecuteReader();
+            if (reader.HasRows == true)
+            {
+                while (reader.Read())
+                {
+                    int IDNajave, Uvrstena, Otkacena, Otpravna, Uputna, Uvozna, Izvozna;
+                    string BrojKola, Serija, VRNP;
+                    double BrojOsovina, Duzina, Tara, RucKoc;
+
+                    IDNajave = Convert.ToInt32(reader["IDNajave"].ToString());
+                    Uvrstena = Convert.ToInt32(reader["Uvrstena"].ToString());
+                    Otkacena = Convert.ToInt32(reader["Otkacena"].ToString());
+                    BrojKola = reader["BrojKola"].ToString();
+                    Serija = reader["Serija"].ToString();
+                    Otpravna = Convert.ToInt32(reader["Otpravna"].ToString());
+                    Uputna = Convert.ToInt32(reader["Uputna"].ToString());
+                    Uvozna = Convert.ToInt32(reader["Uvozna"].ToString());
+                    Izvozna = Convert.ToInt32(reader["Izvozna"].ToString());
+                    VRNP = reader["VRNP"].ToString();
+                    BrojOsovina = Convert.ToDouble(reader["BrojOsovina"].ToString());
+                    Duzina = Convert.ToDouble(reader["Duzina"].ToString());
+                    Tara = Convert.ToDouble(reader["Tara"].ToString());
+                    RucKoc = Convert.ToDouble(reader["RucKoc"].ToString());
+
+                    InsertTeretnicaStavke ins = new InsertTeretnicaStavke();
+                    ins.InsTeretnicaStavke(IdPom, IDNajave, Uvrstena, Otkacena, BrojKola, Serija, BrojOsovina, Duzina, Tara, 0, 0, 0, 0, 0, VRNP, Uputna, Otpravna, "","",
+                        RucKoc, Izvozna, Uvozna, "", "");
+                }
+            }
+            conn.Close();
+            RefreshGV();
         }
     }
 }
