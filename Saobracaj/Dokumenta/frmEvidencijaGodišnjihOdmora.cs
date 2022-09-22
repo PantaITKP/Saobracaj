@@ -247,19 +247,31 @@ namespace Saobracaj.Dokumenta
             cboGodina.DisplayMember = "Godina";
             cboGodina.ValueMember = "Godina";
 
+            string query = "Select DeSifra from Korisnici where Rtrim(Korisnik)=" + "'" + Kor + "'";
+            var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection10);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(query, conn);
+            int DeSifra = 0;
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                DeSifra = Convert.ToInt32(dr[0].ToString());
+            }
+            conn.Close();
 
-            var select5 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifStat <> 'P' order by opis";
-            var s_connection5 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection5 = new SqlConnection(s_connection5);
-            var c5 = new SqlConnection(s_connection5);
-            var dataAdapter5 = new SqlDataAdapter(select5, c5);
+                        var select5 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifra="+DeSifra+" and DeSifStat <> 'P' order by opis";
+                        var s_connection5 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                        SqlConnection myConnection5 = new SqlConnection(s_connection5);
+                        var c5 = new SqlConnection(s_connection5);
+                        var dataAdapter5 = new SqlDataAdapter(select5, c5);
 
-            var commandBuilder5 = new SqlCommandBuilder(dataAdapter5);
-            var ds5 = new DataSet();
-            dataAdapter5.Fill(ds5);
-            cboOdobrio.DataSource = ds5.Tables[0];
-            cboOdobrio.DisplayMember = "Opis";
-            cboOdobrio.ValueMember = "ID";
+                        var commandBuilder5 = new SqlCommandBuilder(dataAdapter5);
+                        var ds5 = new DataSet();
+                        dataAdapter5.Fill(ds5);
+                        cboOdobrio.DataSource = ds5.Tables[0];
+                        cboOdobrio.DisplayMember = "Opis";
+                        cboOdobrio.ValueMember = "ID";
 
             if (IzMobilneObrade == 1)
             {
@@ -921,6 +933,12 @@ order by RzStZapisa desc
         {
             Dokumenta.frmEvidencijaGOExcel ex = new frmEvidencijaGOExcel();
             ex.Show();
+        }
+
+        private void toolStripButton4_Click(object sender, EventArgs e)
+        {
+            frmEvidencijaGOSvi svi = new frmEvidencijaGOSvi();
+            svi.Show();
         }
     }
 }
