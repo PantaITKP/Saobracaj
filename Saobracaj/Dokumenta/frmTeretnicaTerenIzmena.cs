@@ -35,8 +35,8 @@ namespace Saobracaj.Dokumenta
             var select = "Select distinct RedniBroj,IdPopisaneStavkeTeretnice,BrojPopisaneTeretnice,RTrim(BrojKola) as BrojKola," +
                 "Duzina,Tara,P,RucKoc,PopisTeretnica.ZaposleniId,RTrim(Korisnici.Korisnik) as Zaposleni " +
                 "From PopisTeretnicaStavke,PopisTeretnica,Korisnici " +
-                "Where PopisTeretnicaStavke.BrojPopisaneTeretnice=PopisTeretnica.TeretnicaId and Korisnici.DeSifra=PopisTeretnica.ZaposleniId " +
-                "and BrojPopisaneTeretnice= "+Teretnica+"order by RedniBroj";
+                "Where PopisTeretnicaStavke.BrojPopisaneTeretnice=PopisTeretnica.Id and Korisnici.DeSifra=PopisTeretnica.ZaposleniId " +
+                "and TeretnicaID= "+Teretnica+"order by RedniBroj";
             SqlConnection conn = new SqlConnection(connect);
             var da = new SqlDataAdapter(select, conn);
             var ds = new DataSet();

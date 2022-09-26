@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertOsnovnaZarada
     {
-        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres,  double TopliObrok)
+        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres,  double TopliObrok, double ProsecnaCena, double ProsecnaCena100)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -121,6 +121,20 @@ namespace Saobracaj.Dokumenta
             parameter14.Value = TopliObrok;
             myCommand.Parameters.Add(parameter14);
 
+            SqlParameter parameter15 = new SqlParameter();
+            parameter15.ParameterName = "@ProsecnaCena";
+            parameter15.SqlDbType = SqlDbType.Decimal;
+            parameter15.Direction = ParameterDirection.Input;
+            parameter15.Value = ProsecnaCena;
+            myCommand.Parameters.Add(parameter15);
+
+            SqlParameter parameter16 = new SqlParameter();
+            parameter16.ParameterName = "@ProsecnaCena100";
+            parameter16.SqlDbType = SqlDbType.Decimal;
+            parameter16.Direction = ParameterDirection.Input;
+            parameter16.Value = ProsecnaCena100;
+            myCommand.Parameters.Add(parameter16);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -158,7 +172,7 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres, double TopliObrok)
+        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres, double TopliObrok,  double ProsecnaCena, double ProsecnaCena100)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -264,6 +278,20 @@ namespace Saobracaj.Dokumenta
             parameter14.Direction = ParameterDirection.Input;
             parameter14.Value = TopliObrok;
             myCommand.Parameters.Add(parameter14);
+
+            SqlParameter parameter15 = new SqlParameter();
+            parameter15.ParameterName = "@ProsecnaCena";
+            parameter15.SqlDbType = SqlDbType.Decimal;
+            parameter15.Direction = ParameterDirection.Input;
+            parameter15.Value = ProsecnaCena;
+            myCommand.Parameters.Add(parameter15);
+
+            SqlParameter parameter16 = new SqlParameter();
+            parameter16.ParameterName = "@ProsecnaCena100";
+            parameter16.SqlDbType = SqlDbType.Decimal;
+            parameter16.Direction = ParameterDirection.Input;
+            parameter16.Value = ProsecnaCena100;
+            myCommand.Parameters.Add(parameter16);
 
 
             myConnection.Open();
@@ -640,6 +668,114 @@ namespace Saobracaj.Dokumenta
             myCommand.CommandType = System.Data.CommandType.StoredProcedure;
 
 
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Promena izvrsena");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Update Zarade uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+
+        public void UpdateMesecniFondSatiSvi(double MesecniFond)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "UpdateMesecniFondSatiSvi";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@MesecniFond";
+            parameter.SqlDbType = SqlDbType.Decimal;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = MesecniFond;
+            myCommand.Parameters.Add(parameter);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Promena izvrsena");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Update Zarade uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+        public void UpdateMesecniFondSatiRadnik(int Zaposleni, double MesecniFond)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "UpdateMesecniFondSatiRadnik";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter0 = new SqlParameter();
+            parameter0.ParameterName = "@ID";
+            parameter0.SqlDbType = SqlDbType.Int;
+            parameter0.Direction = ParameterDirection.Input;
+            parameter0.Value = Zaposleni;
+            myCommand.Parameters.Add(parameter0);
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@MesecniFond";
+            parameter.SqlDbType = SqlDbType.Decimal;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = MesecniFond;
+            myCommand.Parameters.Add(parameter);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();

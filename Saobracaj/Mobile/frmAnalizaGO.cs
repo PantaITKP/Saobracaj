@@ -120,12 +120,13 @@ namespace Saobracaj.Mobile
         }
         private void frmAnalizaGO_Load(object sender, EventArgs e)
         {
-            var select = "  Select DopustStavke.ID as StavkaID, DoLeto as Godina, DoSifDe as SifraRadnik, (Rtrim(Delavci.DeIme) + ' ' + RTrim(Delavci.DePriimek)) as Radnik, VremeOd, VremeDo, Ukupno, Napomena, Razlog,  " +
-            " StatusGodmora,Odobrio as SifraOdobrio, (Rtrim(Delavci.DeIme) + ' ' + RTrim(Delavci.DePriimek)) as Odobrio from DopustStavke " +
-            " inner join Dopust on Dopust.DoStZapisa = DopustStavke.IdNadredjena " +
-            " inner  join Delavci on Delavci.DeSifra = DoSifDe " +
-            " inner" +
-            " join Delavci o on o.DeSifra = DoSifDe ";
+            var select = " Select DopustStavke.ID as StavkaID, DoLeto as Godina, DoSifDe as SifraRadnik, (Rtrim(i.DeIme) + ' ' + RTrim(i.DePriimek)) as Radnik, " +
+" VremeOd, VremeDo, Ukupno, Napomena, Razlog,   StatusGodmora,Odobrio as SifraOdobrio, (Rtrim(o.DeIme) + ' ' + RTrim(o.DePriimek)) as Odobrio, DatumZahteva, DatumPovratka " +
+" from DopustStavke inner join Dopust on Dopust.DoStZapisa = DopustStavke.IdNadredjena " +
+" inner " +
+" join Delavci i on i.DeSifra = DoSifDe " +
+" inner " +
+" join Delavci o on o.DeSifra = Odobrio";
 
             var s_connection = ConfigurationManager.ConnectionStrings["Saobracaj.Properties.Settings.Perftech_BeogradConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);

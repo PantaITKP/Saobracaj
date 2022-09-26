@@ -208,7 +208,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena,, Zarada.ProsecnaCena100 from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 1 " +
             " order by Zarada.Zaposleni";
@@ -285,6 +285,18 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[14].HeaderText = "TopliObrok";
             dataGridView1.Columns[14].Width = 70;
 
+            DataGridViewColumn column16 = dataGridView1.Columns[15];
+            dataGridView1.Columns[15].HeaderText = "Mesecno sati";
+            dataGridView1.Columns[15].Width = 70;
+
+            DataGridViewColumn column17 = dataGridView1.Columns[16];
+            dataGridView1.Columns[16].HeaderText = "Prosecna Cena";
+            dataGridView1.Columns[16].Width = 70;
+
+            DataGridViewColumn column18 = dataGridView1.Columns[17];
+            dataGridView1.Columns[17].HeaderText = "Prosecna Cena 100";
+            dataGridView1.Columns[17].Width = 70;
+
         }
 
         private void RefreshDataGridNisuFiksni()
@@ -294,7 +306,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100 from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 0 " +
             " order by Zarada.Zaposleni";
@@ -369,6 +381,19 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column15 = dataGridView1.Columns[14];
             dataGridView1.Columns[14].HeaderText = "TopliObrok";
             dataGridView1.Columns[14].Width = 70;
+
+            DataGridViewColumn column16 = dataGridView1.Columns[15];
+            dataGridView1.Columns[15].HeaderText = "Mesecno sati";
+            dataGridView1.Columns[15].Width = 70;
+
+            DataGridViewColumn column17 = dataGridView1.Columns[16];
+            dataGridView1.Columns[16].HeaderText = "Prosecna Cena";
+            dataGridView1.Columns[16].Width = 70;
+
+
+            DataGridViewColumn column18 = dataGridView1.Columns[17];
+            dataGridView1.Columns[17].HeaderText = "Prosecna Cena 100";
+            dataGridView1.Columns[17].Width = 70;
 
         }
 
@@ -453,14 +478,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
-                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value));
+                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value),  Convert.ToDouble(txtProsecnaCena.Value),  Convert.ToDouble(txtProsecnaCena100.Value));
                 RefreshDataGrid();
                 status = false;
             }
             else
             {
                 InsertOsnovnaZarada upd = new InsertOsnovnaZarada();
-                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value));
+                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value), Convert.ToDouble(txtProsecnaCena.Value), Convert.ToDouble(txtProsecnaCena100.Value));
                 status = false;
                /// txtSifra.Enabled = false;
                 RefreshDataGrid();
@@ -655,6 +680,22 @@ namespace Saobracaj.Dokumenta
         {
             frmPraznici praz = new frmPraznici();
             praz.Show();
+        }
+
+        private void metroButton5_Click_1(object sender, EventArgs e)
+        {
+            InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
+            ins.UpdateMesecniFondSatiSvi( Convert.ToDouble(nmMesecniFS.Value));
+            RefreshDataGrid();
+            status = false;
+        }
+
+        private void metroButton6_Click(object sender, EventArgs e)
+        {
+            InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
+            ins.UpdateMesecniFondSatiRadnik(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(nmRadnikFS.Value));
+            RefreshDataGrid();
+            status = false;
         }
     }
 }

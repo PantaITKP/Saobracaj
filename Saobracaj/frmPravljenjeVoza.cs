@@ -199,7 +199,7 @@ namespace Saobracaj
 
             refreshGroup();
 
-            var select7 = " Select ID  from RadniNalog where StatusRN in ('PL','OD', 'LA') ";
+            var select7 = " Select ID  from RadniNalog where StatusRN in ('PL','OD', 'LA', 'ZA')  order by ID";
             var s_connection7 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection7 = new SqlConnection(s_connection7);
             var c7 = new SqlConnection(s_connection7);
