@@ -24,6 +24,7 @@ namespace Saobracaj.Dokumenta
         int ZaposleniM;
         DateTime VremeOdM;
         DateTime VremeDoM;
+        public DateTime vOd, vDo;
         int OdobrioM;
         string NapomenaM;
         int SlobodanDanM;
@@ -32,6 +33,9 @@ namespace Saobracaj.Dokumenta
         int poslatMail = 0;
         int poslatoResenje = 0;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
+        bool prenosMesec = false;
+        int mesec = 0;
+        int Ukupno = 0;
 
         public frmEvidencijaGodišnjihOdmora()
         {
@@ -247,19 +251,31 @@ namespace Saobracaj.Dokumenta
             cboGodina.DisplayMember = "Godina";
             cboGodina.ValueMember = "Godina";
 
+            string query = "Select DeSifra from Korisnici where Rtrim(Korisnik)=" + "'" + Kor + "'";
+            var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection10);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(query, conn);
+            int DeSifra = 0;
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                DeSifra = Convert.ToInt32(dr[0].ToString());
+            }
+            conn.Close();
 
-            var select5 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifStat <> 'P' order by opis";
-            var s_connection5 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection5 = new SqlConnection(s_connection5);
-            var c5 = new SqlConnection(s_connection5);
-            var dataAdapter5 = new SqlDataAdapter(select5, c5);
+                        var select5 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifra="+DeSifra+" and DeSifStat <> 'P' order by opis";
+                        var s_connection5 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                        SqlConnection myConnection5 = new SqlConnection(s_connection5);
+                        var c5 = new SqlConnection(s_connection5);
+                        var dataAdapter5 = new SqlDataAdapter(select5, c5);
 
-            var commandBuilder5 = new SqlCommandBuilder(dataAdapter5);
-            var ds5 = new DataSet();
-            dataAdapter5.Fill(ds5);
-            cboOdobrio.DataSource = ds5.Tables[0];
-            cboOdobrio.DisplayMember = "Opis";
-            cboOdobrio.ValueMember = "ID";
+                        var commandBuilder5 = new SqlCommandBuilder(dataAdapter5);
+                        var ds5 = new DataSet();
+                        dataAdapter5.Fill(ds5);
+                        cboOdobrio.DataSource = ds5.Tables[0];
+                        cboOdobrio.DisplayMember = "Opis";
+                        cboOdobrio.ValueMember = "ID";
 
             if (IzMobilneObrade == 1)
             {
@@ -299,11 +315,11 @@ namespace Saobracaj.Dokumenta
 
         private void tsSave_Click(object sender, EventArgs e)
         {
-           // 
+            // 
             if (status == true)
             {
                 InsertEvidencijaGodisnjihOdmora ins = new InsertEvidencijaGodisnjihOdmora();
-                ins.InsEvidGodisnjihOdmora(Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), 3, Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value),poslatMail,poslatoResenje);
+                ins.InsEvidGodisnjihOdmora(Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), 3, Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value), poslatMail, poslatoResenje,0);
                 status = false;
                 RefreshDataGrid1();
                 InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
@@ -313,10 +329,10 @@ namespace Saobracaj.Dokumenta
             else
             {
                 InsertEvidencijaGodisnjihOdmora upd = new InsertEvidencijaGodisnjihOdmora();
-                upd.UpdEvidGodisnjihOdmora(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), Convert.ToInt32(cbostatusGOdmora.SelectedValue),  Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value),poslatMail,poslatoResenje);
+                upd.UpdEvidGodisnjihOdmora(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), Convert.ToInt32(cbostatusGOdmora.SelectedValue), Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value), poslatMail, poslatoResenje, 0);
                 RefreshDataGrid1();
                 InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
-                GoLog.InsertGoLOG(Kor, DateTime.Now, "Promena zapisa: "+ txtSifra.Text);
+                GoLog.InsertGoLOG(Kor, DateTime.Now, "Promena zapisa: " + txtSifra.Text);
             }
             VratiSlobodneDane();
         }
@@ -411,7 +427,7 @@ namespace Saobracaj.Dokumenta
         {
             if (cboGodina.Text != "")
             { 
-            var select = " Select ID, IDNadredjena, VremeOd, VremeDo, Ukupno, Napomena, Razlog, (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Odobrio , StatusGodmora, DatumZahteva, DatumPovratka,PoslatMail, PoslatoResenje from DopustStavke " +
+            var select = " Select ID, IDNadredjena, VremeOd, VremeDo, Ukupno, Napomena, Razlog, (Rtrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Odobrio , StatusGodmora, DatumZahteva, DatumPovratka,PoslatMail, PoslatoResenje,DvaMeseca from DopustStavke " +
             " inner join Dopust on Dopust.DoStZapisa = DopustStavke.IdNadredjena " +
              " inner join Delavci on DopustStavke.Odobrio = Delavci.DeSifra " +
             " where  + "  + " Dopust.DoLeto = " + Convert.ToInt32(cboGodina.Text) + " And Dopust.DoSifDe = " + Convert.ToInt32(cboZaposleni.SelectedValue) ;
@@ -576,8 +592,11 @@ namespace Saobracaj.Dokumenta
                         dtpDatumPovratka.Value = Convert.ToDateTime(row.Cells[10].Value.ToString());
                         poslatMail = Convert.ToInt32(row.Cells[11].Value.ToString());
                         poslatoResenje = Convert.ToInt32(row.Cells[12].Value.ToString());
+                        mesec = Convert.ToInt32(row.Cells[13].Value.ToString());
                         if (poslatMail == 1) { cbMail.Checked = true; } else { poslatMail = 0; cbMail.Checked = false; }
                         if (poslatoResenje == 1) { cbResenje.Checked = true; } else { poslatoResenje = 0; cbResenje.Checked = false; }
+                        if (mesec == 1) { cb_DvaMeseca.Checked = true; } else { mesec = 0;cb_DvaMeseca.Checked = false; }
+                        
 
                         RefreshDataGrid1();
                         // txtOpis.Text = row.Cells[1].Value.ToString();
@@ -726,11 +745,27 @@ order by RzStZapisa desc
         {
             txtEmail.Text = VratiEmailAdresu();
             Insert1ReportGO ingo = new Insert1ReportGO();
+
+            string query = "select Sum(Ukupno) as 'Ukupno',Min(VremeOd) as vOd,Max(VremeDo) as vDo from DopustStavke Where ID=" + Convert.ToInt32(txtSifra.Text);
+            var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection10);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(query, conn);
+
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                Ukupno = Convert.ToInt32(dr[0].ToString());
+                vOd = Convert.ToDateTime(dr[1].ToString());
+                vDo = Convert.ToDateTime(dr[2].ToString());
+            }
+            conn.Close();
+
             string Prebivaliste = VratiPrebivaliste();
             string JMBG = VratiJMBG();
             string RadnoMesto = VratiRadnoMesto();
-            string DatumOD = dtpVremeOd.Value.ToString("dd.MMM.yyyy HH:mm");
-            string DatumDo = dtpVremeDo.Value.ToString("dd.MMM.yyyy HH:mm");
+            string DatumOD = vOd.ToString("dd.MMM.yyyy HH:mm");
+            string DatumDo = vDo.ToString("dd.MMM.yyyy HH:mm");
             string DatumPovratka = dtpDatumPovratka.Value.ToString("dd.MMM.yyyy HH:mm");
             string DatumZahteva = dtpDatumZahteva.Value.ToString("dd.MMM.yyyy HH:mm");
 
@@ -743,7 +778,7 @@ order by RzStZapisa desc
             {
                 Korisceno = "je iskoristio " + txtSumKorisceno.Text + " dana godišnjeg odmora za " + cboGodina.Text + " godinu ";
             }
-            ingo.InsReportGO(cboZaposleni.Text,Prebivaliste, "", JMBG, RadnoMesto, cboGodina.Text, txtUkupno.Text,DatumOD,DatumDo,DatumPovratka, txtSUMUkupno.Text, Korisceno, DatumZahteva);
+            ingo.InsReportGO(cboZaposleni.Text, Prebivaliste, "", JMBG, RadnoMesto, cboGodina.Text, Ukupno.ToString(), DatumOD, DatumDo, DatumPovratka, txtSUMUkupno.Text, Korisceno, DatumZahteva) ;
             Perftech_BeogradDataSet14TableAdapters._1ReportGOTableAdapter ta = new Perftech_BeogradDataSet14TableAdapters._1ReportGOTableAdapter();
             Perftech_BeogradDataSet14._1ReportGODataTable dt = new Perftech_BeogradDataSet14._1ReportGODataTable();
          
@@ -815,7 +850,7 @@ order by RzStZapisa desc
                     body = body + "određeno za korišćenje godišnjeg odmora ako to zahtevaju potrebe posla, najkasnije pet radnih dana " + "<br />";
                     body = body + "pre dana određenog za korišćenje godišnjeg odmora.<br />";
                     body = body + "Zaposleni je dana "  + myRow["DatumZahteva"].ToString()  + " godine dostavio poslodavcu zahtev za korišćenje godišnjeg  <br />";
-                    body = body + "odmora u trajanju od radnih " + myRow["Dana"].ToString() + "dana, od " + myRow["DatumOd"].ToString()  +" do "  + myRow["DatumDo"].ToString() + " godine. <br />";
+                    body = body + "odmora u trajanju od radnih " + myRow["Dana"].ToString() + "dana, od " + myRow["DatumOd"].ToString() + " do "  + myRow["DatumDo"].ToString() + " godine. <br />";
                     body = body + "Poslodavac se utvrdio da se zaposlenom može odobriti korišćenje godišnjeg odmora u navedenom " + "<br />";
                     body = body + "periodu i da je vreme korišćenja godišnjeg odmora zaposlenog u skladu sa Planom (rasporedom)  " + "<br />";
                     body = body + "korišćenja godišnjih odmora kod poslodavca." + "<br /> <br /> <br />";
@@ -923,6 +958,38 @@ order by RzStZapisa desc
         {
             Dokumenta.frmEvidencijaGOExcel ex = new frmEvidencijaGOExcel();
             ex.Show();
+        }
+
+        private void toolStripButton4_Click(object sender, EventArgs e)
+        {
+            frmEvidencijaGOSvi svi = new frmEvidencijaGOSvi();
+            svi.Show();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (cb_DvaMeseca.Checked)
+            {
+                prenosMesec = true;
+            }
+            if (prenosMesec == true)
+            {
+                InsertEvidencijaGodisnjihOdmora ins = new InsertEvidencijaGodisnjihOdmora();
+                ins.InsEvidGodisnjihOdmoraPrenos(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), Convert.ToInt32(cbostatusGOdmora.SelectedValue), Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value), poslatMail, poslatoResenje, 1);
+                RefreshDataGrid1();
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (cb_DvaMeseca.Checked)
+            {
+                int pom = 1;
+                InsertEvidencijaGodisnjihOdmora ev = new InsertEvidencijaGodisnjihOdmora();
+                ev.UpdEvidGodisnjihOdmoraPrenos(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), Convert.ToInt32(cbostatusGOdmora.SelectedValue), Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value), poslatMail, poslatoResenje, pom);
+                RefreshDataGrid1();
+            }
+                
         }
     }
 }

@@ -199,7 +199,7 @@ namespace Saobracaj.Mobile
 
         private void frmSlobodniDani_Load(object sender, EventArgs e)
         {
-            
+            /*
             var select3 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifStat <> 'P' order by opis";
             var s_connection3 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection3 = new SqlConnection(s_connection3);
@@ -212,7 +212,33 @@ namespace Saobracaj.Mobile
             cboZaposleni.DataSource = ds3.Tables[0];
             cboZaposleni.DisplayMember = "Opis";
             cboZaposleni.ValueMember = "ID";
+            */
 
+            string query = "Select DeSifra from Korisnici where Rtrim(Korisnik)=" + "'" + Kor + "'";
+            var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection10);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(query, conn);
+            int DeSifra = 0;
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                DeSifra = Convert.ToInt32(dr[0].ToString());
+            }
+            conn.Close();
+
+            var select5 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci where DeSifra=" + DeSifra + " and DeSifStat <> 'P' order by opis";
+            var s_connection5 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection5 = new SqlConnection(s_connection5);
+            var c5 = new SqlConnection(s_connection5);
+            var dataAdapter5 = new SqlDataAdapter(select5, c5);
+
+            var commandBuilder5 = new SqlCommandBuilder(dataAdapter5);
+            var ds5 = new DataSet();
+            dataAdapter5.Fill(ds5);
+            cboZaposleni.DataSource = ds5.Tables[0];
+            cboZaposleni.DisplayMember = "Opis";
+            cboZaposleni.ValueMember = "ID";
             RefreshDataGrid();
         }
 
@@ -259,6 +285,19 @@ namespace Saobracaj.Mobile
                 DateTime DatumZahteva = DateTime.Now;
                 int SlobodanDan = 1;
                 
+                string query = "Select DeSifra from Korisnici where Rtrim(Korisnik)=" + "'" + Kor + "'";
+                var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection conn = new SqlConnection(s_connection10);
+                conn.Open();
+                SqlCommand cmd = new SqlCommand(query, conn);
+                int DeSifra = 0;
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    DeSifra = Convert.ToInt32(dr[0].ToString());
+                }
+                conn.Close();
+                
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
 
@@ -267,7 +306,7 @@ namespace Saobracaj.Mobile
                         ZaposleniID = Convert.ToInt32(row.Cells[1].Value.ToString());
                         DatumOd = Convert.ToDateTime(row.Cells[4].Value.ToString());
                         DatumDo = Convert.ToDateTime(row.Cells[5].Value.ToString());
-                        Odobrio = Convert.ToInt32(row.Cells[8].Value.ToString());
+                        Odobrio = DeSifra ;
                         Napomena = row.Cells[7].Value.ToString();
                         DatumZahteva = Convert.ToDateTime(row.Cells[10].Value.ToString());
                         SlobodanDan = 1;

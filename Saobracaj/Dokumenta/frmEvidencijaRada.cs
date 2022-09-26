@@ -926,8 +926,9 @@ namespace Saobracaj.Dokumenta
                   
                 }
                 InsertLogAktivnosti insL = new InsertLogAktivnosti();
+                insL.InsLog(Convert.ToInt32(txtSifra.Text), "Ubacivanje stavke po Vagonu", Korisnik, DateTime.Now, 0, 0, 0);
                 //insL.InsLog(Convert.ToInt32(txtSifra.Text), "Ubacivanje stavke po Vagonu", Korisnik);
-                    // ins.UpdateOstaleStavke(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(row.Cells[1].Value.ToString()), row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(), Convert.ToDouble(row.Cells[7].Value.ToString()), Convert.ToDouble(row.Cells[8].Value.ToString()), Convert.ToDouble(row.Cells[9].Value.ToString()), Convert.ToDouble(row.Cells[10].Value.ToString()), Convert.ToDouble(row.Cells[11].Value.ToString()), Convert.ToDouble(row.Cells[12].Value.ToString()), Convert.ToDouble(row.Cells[13].Value.ToString()), Convert.ToDouble(row.Cells[14].Value.ToString()), row.Cells[15].Value.ToString(), row.Cells[18].Value.ToString(), row.Cells[19].Value.ToString(), Convert.ToDouble(row.Cells[20].Value.ToString()), row.Cells[23].Value.ToString(), row.Cells[24].Value.ToString());
+                // ins.UpdateOstaleStavke(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(row.Cells[1].Value.ToString()), row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(), Convert.ToDouble(row.Cells[7].Value.ToString()), Convert.ToDouble(row.Cells[8].Value.ToString()), Convert.ToDouble(row.Cells[9].Value.ToString()), Convert.ToDouble(row.Cells[10].Value.ToString()), Convert.ToDouble(row.Cells[11].Value.ToString()), Convert.ToDouble(row.Cells[12].Value.ToString()), Convert.ToDouble(row.Cells[13].Value.ToString()), Convert.ToDouble(row.Cells[14].Value.ToString()), row.Cells[15].Value.ToString(), row.Cells[18].Value.ToString(), row.Cells[19].Value.ToString(), Convert.ToDouble(row.Cells[20].Value.ToString()), row.Cells[23].Value.ToString(), row.Cells[24].Value.ToString());
             }
 
             
@@ -1072,7 +1073,8 @@ namespace Saobracaj.Dokumenta
                 }
 
             InsertLogAktivnosti insL = new InsertLogAktivnosti();
-          //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Ubacivanje stavke po Satu", Korisnik);
+            insL.InsLog(Convert.ToInt32(txtSifra.Text), "Ubacivanje stavke po Satu", Korisnik, DateTime.Now, 0, 0, 0);
+            //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Ubacivanje stavke po Satu", Korisnik);
 
             RefreshDataGridPoAktivnostima();     
         
@@ -1625,7 +1627,8 @@ namespace Saobracaj.Dokumenta
                 chkPoslatMail.Checked = true;
 
                 InsertLogAktivnosti insL = new InsertLogAktivnosti();
-               // insL.InsLog(Convert.ToInt32(txtSifra.Text), "Brisanje stavke", Korisnik);
+                insL.InsLog(Convert.ToInt32(txtSifra.Text), "Poslat mail", Korisnik, DateTime.Now, 0, 0, 0);
+                // insL.InsLog(Convert.ToInt32(txtSifra.Text), "Brisanje stavke", Korisnik);
             }
             catch (Exception ex)
             {
@@ -1989,6 +1992,7 @@ namespace Saobracaj.Dokumenta
                     }
                 }
                 InsertLogAktivnosti insL = new InsertLogAktivnosti();
+                insL.InsLog(Convert.ToInt32(txtSifra.Text), "Brisanje stavke", Korisnik, DateTime.Now, 0, 0, 0);
                 //insL.InsLog(Convert.ToInt32(txtSifra.Text), "Brisanje stavke", Korisnik);
             }
             catch
@@ -2004,7 +2008,8 @@ namespace Saobracaj.Dokumenta
             InsertAktivnosti insA = new InsertAktivnosti();
             insA.UpdAktivnostiZarada(Convert.ToInt32(txtSifra.Text), Convert.ToDouble(txtIzracun.Text), Convert.ToDouble(txtRazlika.Text), Convert.ToDouble(txtZarada.Text));
             InsertLogAktivnosti insL = new InsertLogAktivnosti();
-          //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik);
+            insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik, DateTime.Now, 0, 0, 0);
+            //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik);
             RefreshDataGridPoAktivnostima();
         
 
@@ -2153,7 +2158,9 @@ namespace Saobracaj.Dokumenta
                 // ins.UpdateOstaleStavke(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(row.Cells[1].Value.ToString()), row.Cells[5].Value.ToString(), row.Cells[6].Value.ToString(), Convert.ToDouble(row.Cells[7].Value.ToString()), Convert.ToDouble(row.Cells[8].Value.ToString()), Convert.ToDouble(row.Cells[9].Value.ToString()), Convert.ToDouble(row.Cells[10].Value.ToString()), Convert.ToDouble(row.Cells[11].Value.ToString()), Convert.ToDouble(row.Cells[12].Value.ToString()), Convert.ToDouble(row.Cells[13].Value.ToString()), Convert.ToDouble(row.Cells[14].Value.ToString()), row.Cells[15].Value.ToString(), row.Cells[18].Value.ToString(), row.Cells[19].Value.ToString(), Convert.ToDouble(row.Cells[20].Value.ToString()), row.Cells[23].Value.ToString(), row.Cells[24].Value.ToString());
             }
             RefreshDataGridPoAktivnostima();
-           
+            InsertLogAktivnosti insL = new InsertLogAktivnosti();
+            insL.InsLog(Convert.ToInt32(txtSifra.Text), "Snimi selektovane", Korisnik, DateTime.Now, 0, 0, 0);
+
         }
 
         private void toolStripButton4_Click(object sender, EventArgs e)
