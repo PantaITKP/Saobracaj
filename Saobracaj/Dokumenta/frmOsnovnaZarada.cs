@@ -208,7 +208,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena,, Zarada.ProsecnaCena100 from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100 from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 1 " +
             " order by Zarada.Zaposleni";
@@ -694,6 +694,14 @@ namespace Saobracaj.Dokumenta
         {
             InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
             ins.UpdateMesecniFondSatiRadnik(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(nmRadnikFS.Value));
+            RefreshDataGrid();
+            status = false;
+        }
+
+        private void metroButton7_Click(object sender, EventArgs e)
+        {
+            InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
+            ins.UpdateProsekePlata(Convert.ToInt32(nmUkupno12.Value), Convert.ToInt32(nmProsla.Value));
             RefreshDataGrid();
             status = false;
         }

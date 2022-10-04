@@ -508,7 +508,7 @@ namespace Saobracaj.Dokumenta
             var select = "";
 
             select = " SELECT ObracunZaposleni.[ID] ,ObracunZaposleni.[Zaposleni], ObracunZaposleni.MesecnoSati, GoSati, Remont as Bol65, Smederevo as Bol100, Milsped as Praznik, ABS(Ukupno1 * 118 / CenaSata) as Provera, BrojSati, Kragujevac as Prekovremeni, RadPoVremenu, RadPoUcinku, CenaSata, " +
-                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, (CenaSata * Milsped * 1.1) as Praznik110, (CenaSata * Milsped )  as Praznik100, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada" +
+                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, (CenaSata * Milsped * 1.1) as Praznik110, (CenaSata * Milsped )  as Praznik100, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada, GodinaStaza, MinuliRadIznos" +
                 " from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
 
             //PoreskaOlaksica,BrutoZarada,BrutoCenaSata,PrekovremeniCenaSata, PrekovremeniBrutoIznos
@@ -823,11 +823,12 @@ namespace Saobracaj.Dokumenta
            
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
-            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            
+            //ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")), Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")));
+           /// dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00")
 
-            ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtPoreskoOslobodjenje.Value));
-            ins.DodatnaObrada(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtSatiMesec.Value));
+            ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtPoreskoOslobodjenje.Value), Convert.ToDouble(txtMinimalac.Value));
+            ins.DodatnaObrada(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtMinimalac.Value));
             
             //ins.UpdRedovnoSati(Convert.ToDouble(txtSatiMesec.Value));
             RefreshDataGrid();
@@ -1068,6 +1069,7 @@ namespace Saobracaj.Dokumenta
             ins.SelectPNBrisanje3();
             ins.SelectPNBrisanje4();
             ins.SelectPNBrisanje5();
+            ins.UpdObracunSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Text), Convert.ToDouble(txtMinimalac.Value));
            // ins.Select5();
             RefreshDataGrid();
             MessageBox.Show("Gotovo");

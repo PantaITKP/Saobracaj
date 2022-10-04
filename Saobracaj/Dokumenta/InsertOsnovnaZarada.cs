@@ -811,6 +811,63 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
+
+        public void UpdateProsekePlata(int UkupnoSati12, int Prosla)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "InsertProsekPlata";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter0 = new SqlParameter();
+            parameter0.ParameterName = "@Prosla";
+            parameter0.SqlDbType = SqlDbType.Int;
+            parameter0.Direction = ParameterDirection.Input;
+            parameter0.Value = Prosla;
+            myCommand.Parameters.Add(parameter0);
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@UkupnoSati";
+            parameter.SqlDbType = SqlDbType.Decimal;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = UkupnoSati12;
+            myCommand.Parameters.Add(parameter);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Promena izvrsena");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Update Zarade uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
     }
 }
 

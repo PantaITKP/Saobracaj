@@ -90,6 +90,11 @@
             this.label13 = new System.Windows.Forms.Label();
             this.txtProsecnaCena100 = new System.Windows.Forms.NumericUpDown();
             this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.nmUkupno12 = new System.Windows.Forms.NumericUpDown();
+            this.label16 = new System.Windows.Forms.Label();
+            this.nmProsla = new System.Windows.Forms.NumericUpDown();
+            this.metroButton7 = new MetroFramework.Controls.MetroButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalna)).BeginInit();
@@ -105,6 +110,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmRadnikFS)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena100)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmUkupno12)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmProsla)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -126,7 +133,7 @@
             this.toolStripButton5});
             this.toolStrip1.Location = new System.Drawing.Point(27, 74);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1242, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(1242, 31);
             this.toolStrip1.TabIndex = 6;
             this.toolStrip1.Text = "Štampaj izveštaj";
             // 
@@ -136,7 +143,7 @@
             this.tsNew.Image = ((System.Drawing.Image)(resources.GetObject("tsNew.Image")));
             this.tsNew.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNew.Name = "tsNew";
-            this.tsNew.Size = new System.Drawing.Size(29, 24);
+            this.tsNew.Size = new System.Drawing.Size(29, 28);
             this.tsNew.Text = "Novi";
             this.tsNew.Click += new System.EventHandler(this.tsNew_Click);
             // 
@@ -146,7 +153,7 @@
             this.tsSave.Image = ((System.Drawing.Image)(resources.GetObject("tsSave.Image")));
             this.tsSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsSave.Name = "tsSave";
-            this.tsSave.Size = new System.Drawing.Size(29, 24);
+            this.tsSave.Size = new System.Drawing.Size(29, 28);
             this.tsSave.Text = "tsSave";
             this.tsSave.Click += new System.EventHandler(this.tsSave_Click);
             // 
@@ -156,14 +163,14 @@
             this.tsDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsDelete.Image")));
             this.tsDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsDelete.Name = "tsDelete";
-            this.tsDelete.Size = new System.Drawing.Size(29, 24);
+            this.tsDelete.Size = new System.Drawing.Size(29, 28);
             this.tsDelete.Text = "toolStripButton1";
             this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 31);
             // 
             // tsPrvi
             // 
@@ -171,7 +178,7 @@
             this.tsPrvi.Image = ((System.Drawing.Image)(resources.GetObject("tsPrvi.Image")));
             this.tsPrvi.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPrvi.Name = "tsPrvi";
-            this.tsPrvi.Size = new System.Drawing.Size(29, 24);
+            this.tsPrvi.Size = new System.Drawing.Size(29, 28);
             this.tsPrvi.Text = "toolStripButton1";
             // 
             // tsNazad
@@ -180,7 +187,7 @@
             this.tsNazad.Image = ((System.Drawing.Image)(resources.GetObject("tsNazad.Image")));
             this.tsNazad.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNazad.Name = "tsNazad";
-            this.tsNazad.Size = new System.Drawing.Size(29, 24);
+            this.tsNazad.Size = new System.Drawing.Size(29, 28);
             this.tsNazad.Text = "toolStripButton1";
             // 
             // tsNapred
@@ -189,7 +196,7 @@
             this.tsNapred.Image = ((System.Drawing.Image)(resources.GetObject("tsNapred.Image")));
             this.tsNapred.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNapred.Name = "tsNapred";
-            this.tsNapred.Size = new System.Drawing.Size(29, 24);
+            this.tsNapred.Size = new System.Drawing.Size(29, 28);
             this.tsNapred.Text = "toolStripButton1";
             // 
             // tsPoslednja
@@ -198,7 +205,7 @@
             this.tsPoslednja.Image = ((System.Drawing.Image)(resources.GetObject("tsPoslednja.Image")));
             this.tsPoslednja.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPoslednja.Name = "tsPoslednja";
-            this.tsPoslednja.Size = new System.Drawing.Size(29, 24);
+            this.tsPoslednja.Size = new System.Drawing.Size(29, 28);
             this.tsPoslednja.Text = "toolStripButton1";
             // 
             // toolStripButton1
@@ -206,7 +213,7 @@
             this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(128, 24);
+            this.toolStripButton1.Size = new System.Drawing.Size(128, 28);
             this.toolStripButton1.Text = "Povuci iz plata";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
@@ -216,7 +223,7 @@
             this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
             this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(138, 24);
+            this.toolStripButton2.Size = new System.Drawing.Size(138, 28);
             this.toolStripButton2.Text = "Prikaži samo fiksne";
             this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
@@ -226,7 +233,7 @@
             this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
             this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(181, 24);
+            this.toolStripButton3.Size = new System.Drawing.Size(181, 28);
             this.toolStripButton3.Text = "Prikaži one koji nisu fiksni";
             this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
             // 
@@ -236,7 +243,7 @@
             this.toolStripButton4.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton4.Image")));
             this.toolStripButton4.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton4.Name = "toolStripButton4";
-            this.toolStripButton4.Size = new System.Drawing.Size(207, 24);
+            this.toolStripButton4.Size = new System.Drawing.Size(207, 28);
             this.toolStripButton4.Text = "Prikaži Log Dodatnih Prevoza";
             this.toolStripButton4.Click += new System.EventHandler(this.toolStripButton4_Click);
             // 
@@ -246,7 +253,7 @@
             this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
             this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton5.Name = "toolStripButton5";
-            this.toolStripButton5.Size = new System.Drawing.Size(64, 24);
+            this.toolStripButton5.Size = new System.Drawing.Size(64, 28);
             this.toolStripButton5.Text = "Praznici";
             this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
             // 
@@ -693,7 +700,6 @@
             // 
             // nmMesecniFS
             // 
-            this.nmMesecniFS.DecimalPlaces = 2;
             this.nmMesecniFS.Location = new System.Drawing.Point(127, 27);
             this.nmMesecniFS.Margin = new System.Windows.Forms.Padding(4);
             this.nmMesecniFS.Maximum = new decimal(new int[] {
@@ -727,7 +733,7 @@
             this.groupBox1.Controls.Add(this.nmMesecniFS);
             this.groupBox1.Location = new System.Drawing.Point(816, 214);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(475, 166);
+            this.groupBox1.Size = new System.Drawing.Size(475, 113);
             this.groupBox1.TabIndex = 172;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Fond sati";
@@ -756,7 +762,6 @@
             // 
             // nmRadnikFS
             // 
-            this.nmRadnikFS.DecimalPlaces = 2;
             this.nmRadnikFS.Location = new System.Drawing.Point(127, 62);
             this.nmRadnikFS.Margin = new System.Windows.Forms.Padding(4);
             this.nmRadnikFS.Maximum = new decimal(new int[] {
@@ -832,11 +837,77 @@
             this.label14.TabIndex = 175;
             this.label14.Text = "Prosečna cena 100:";
             // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.ForeColor = System.Drawing.Color.Navy;
+            this.label15.Location = new System.Drawing.Point(822, 335);
+            this.label15.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(155, 17);
+            this.label15.TabIndex = 177;
+            this.label15.Text = "Ukupno sati 12 meseci:";
+            // 
+            // nmUkupno12
+            // 
+            this.nmUkupno12.Location = new System.Drawing.Point(985, 333);
+            this.nmUkupno12.Margin = new System.Windows.Forms.Padding(4);
+            this.nmUkupno12.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.nmUkupno12.Name = "nmUkupno12";
+            this.nmUkupno12.Size = new System.Drawing.Size(113, 22);
+            this.nmUkupno12.TabIndex = 178;
+            this.nmUkupno12.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.ForeColor = System.Drawing.Color.Navy;
+            this.label16.Location = new System.Drawing.Point(805, 363);
+            this.label16.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(175, 17);
+            this.label16.TabIndex = 179;
+            this.label16.Text = "Broj meseci prosla godina:";
+            // 
+            // nmProsla
+            // 
+            this.nmProsla.Location = new System.Drawing.Point(985, 363);
+            this.nmProsla.Margin = new System.Windows.Forms.Padding(4);
+            this.nmProsla.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.nmProsla.Name = "nmProsla";
+            this.nmProsla.Size = new System.Drawing.Size(113, 22);
+            this.nmProsla.TabIndex = 180;
+            this.nmProsla.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // metroButton7
+            // 
+            this.metroButton7.Location = new System.Drawing.Point(1106, 357);
+            this.metroButton7.Margin = new System.Windows.Forms.Padding(4);
+            this.metroButton7.Name = "metroButton7";
+            this.metroButton7.Size = new System.Drawing.Size(164, 28);
+            this.metroButton7.TabIndex = 181;
+            this.metroButton7.Text = "Obračunaj proseke";
+            this.metroButton7.UseSelectable = true;
+            this.metroButton7.Click += new System.EventHandler(this.metroButton7_Click);
+            // 
             // frmOsnovnaZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1296, 519);
+            this.Controls.Add(this.metroButton7);
+            this.Controls.Add(this.label16);
+            this.Controls.Add(this.nmProsla);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.nmUkupno12);
             this.Controls.Add(this.txtProsecnaCena100);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.txtProsecnaCena);
@@ -901,6 +972,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmRadnikFS)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena100)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmUkupno12)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmProsla)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -969,5 +1042,10 @@
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.NumericUpDown txtProsecnaCena100;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.NumericUpDown nmUkupno12;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.NumericUpDown nmProsla;
+        private MetroFramework.Controls.MetroButton metroButton7;
     }
 }
