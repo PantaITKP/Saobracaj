@@ -208,7 +208,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100 from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 1 " +
             " order by Zarada.Zaposleni";
@@ -297,6 +297,10 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[17].HeaderText = "Prosecna Cena 100";
             dataGridView1.Columns[17].Width = 70;
 
+            DataGridViewColumn column19 = dataGridView1.Columns[18];
+            dataGridView1.Columns[18].HeaderText = "Staz ranije";
+            dataGridView1.Columns[18].Width = 70;
+
         }
 
         private void RefreshDataGridNisuFiksni()
@@ -306,7 +310,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100 from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 0 " +
             " order by Zarada.Zaposleni";
@@ -395,6 +399,10 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[17].HeaderText = "Prosecna Cena 100";
             dataGridView1.Columns[17].Width = 70;
 
+            DataGridViewColumn column19 = dataGridView1.Columns[18];
+            dataGridView1.Columns[18].HeaderText = "Staz ranije";
+            dataGridView1.Columns[18].Width = 70;
+
         }
 
         private void frmOsnovnaZarada_Load(object sender, EventArgs e)
@@ -478,14 +486,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
-                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value),  Convert.ToDouble(txtProsecnaCena.Value),  Convert.ToDouble(txtProsecnaCena100.Value));
+                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value),  Convert.ToDouble(txtProsecnaCena.Value),  Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value));
                 RefreshDataGrid();
                 status = false;
             }
             else
             {
                 InsertOsnovnaZarada upd = new InsertOsnovnaZarada();
-                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value), Convert.ToDouble(txtProsecnaCena.Value), Convert.ToDouble(txtProsecnaCena100.Value));
+                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value), Convert.ToDouble(txtProsecnaCena.Value), Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value));
                 status = false;
                /// txtSifra.Enabled = false;
                 RefreshDataGrid();
@@ -520,7 +528,6 @@ namespace Saobracaj.Dokumenta
                     if (row.Selected)
                     {
                         cboZaposleni.SelectedValue = Convert.ToInt32(row.Cells[0].Value.ToString());
-                
                         txtCiljna.Value = Convert.ToDecimal(row.Cells[2].Value.ToString());
                         txtMinimalna.Value = Convert.ToDecimal(row.Cells[3].Value.ToString());
                          txtPrviDeo.Value = Convert.ToDecimal(row.Cells[7].Value.ToString());
@@ -528,6 +535,10 @@ namespace Saobracaj.Dokumenta
                        txtPrevoz.Value = Convert.ToDecimal(row.Cells[12].Value.ToString());
                         txtRegres.Value = Convert.ToDecimal(row.Cells[13].Value.ToString());
                         txtTopliObrok.Value = Convert.ToDecimal(row.Cells[14].Value.ToString());
+                        txtProsecnaCena.Value = Convert.ToDecimal(row.Cells[16].Value.ToString());
+                        txtProsecnaCena100.Value = Convert.ToDecimal(row.Cells[17].Value.ToString());
+                        nmRadnikFS.Value = Convert.ToDecimal(row.Cells[15].Value.ToString());
+                        nmStazRanije.Value = Convert.ToDecimal(row.Cells[18].Value.ToString());
                         if (Convert.ToInt32(row.Cells[9].Value.ToString()) == 1)
                         {
                             chkFiksna.Checked = true;
