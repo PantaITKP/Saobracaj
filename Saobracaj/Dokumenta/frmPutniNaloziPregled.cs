@@ -227,7 +227,7 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 18)
                     {
                         Puna = 1;
-                        Cena = 3637.5;
+                        Cena = 3925.5;
                       
                     }
                     
@@ -242,7 +242,7 @@ namespace Saobracaj.Dokumenta
                     else
                     {
                         Puna = 0;
-                        Cena = 1308;
+                        Cena = 1308.5;
                     }
                     PotNal.InsPotNal(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, txtMestoTroska.Text, Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()), Convert.ToInt32(1), Cena, "");
                     PotNal.InsPotNalRelacije(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, Convert.ToInt32(1), Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()));

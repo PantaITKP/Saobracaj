@@ -202,7 +202,7 @@ namespace Saobracaj.Dokumenta
                     string Top2 = Convert.ToInt32(row.Cells[18].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     SqlCommand cmd = new SqlCommand(" select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
-+ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1308 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
++ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1308.5 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
 + "order by t1.Duration asc ", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
@@ -824,7 +824,7 @@ namespace Saobracaj.Dokumenta
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
             //ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")), Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")));
+            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")), Convert.ToDateTime(dtpVremeDo.Value.ToString("yyyy-MM-dd 00:00")));
            /// dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00")
 
             ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtPoreskoOslobodjenje.Value), Convert.ToDouble(txtMinimalac.Value));
@@ -1069,7 +1069,7 @@ namespace Saobracaj.Dokumenta
             ins.SelectPNBrisanje3();
             ins.SelectPNBrisanje4();
             ins.SelectPNBrisanje5();
-            ins.UpdObracunSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Text), Convert.ToDouble(txtMinimalac.Value));
+           // ins.UpdObracunSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Text), Convert.ToDouble(txtMinimalac.Value));
            // ins.Select5();
             RefreshDataGrid();
             MessageBox.Show("Gotovo");

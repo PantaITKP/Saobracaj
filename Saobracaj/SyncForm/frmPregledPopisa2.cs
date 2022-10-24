@@ -121,13 +121,14 @@ namespace Saobracaj.SyncForm
             " LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
             " VrstaPopisa.Naziv as VrstaPopisa  from(select LokomotivaPrijava.ID as IDLokomotivaPrijava," +
             "  LokomotivaPrijava.Lokomotiva  from LokomotivaPrijava" +
+             "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +
            " where LokomotivaPrijava.Smer = 0 " +
                                         "     ) t1 " +
-                                         "   inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
-           " inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
-           " inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
-           " inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.VrstaPopisaID = LokomotivaPopis.VrstaPopisaID " +
-           " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.ID" +
+                                         "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+       "    inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava  " +
+      "    inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+      "     inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+   " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID" +
            " order by  t1.IDLokomotivaPrijava desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["Saobracaj.Properties.Settings.Perftech_BeogradConnectionString"].ConnectionString;
