@@ -46,6 +46,8 @@ namespace Saobracaj.Dokumenta
 
             ins.InsAktivnostiStavkeArh(Convert.ToInt32(txtPrvi.Text), Convert.ToInt32(txt_Poslednji.Text));
             ins.InsAktivnostiArh(Convert.ToInt32(txtPrvi.Text), Convert.ToInt32(txt_Poslednji.Text));
+
+            MessageBox.Show("Arhivirano");
         }
 
         private void frmArhivirajZapise_Load(object sender, EventArgs e)
