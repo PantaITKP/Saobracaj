@@ -37,6 +37,7 @@ namespace Saobracaj.Dokumenta
             IdGrupe();
             IdForme();
             PravoPristupa();
+            toolStripButton6.Text = "Arhiviraj";
         }
         public static string code = "frmEvidencijaRada";
         public bool Pravo;
@@ -2201,6 +2202,20 @@ namespace Saobracaj.Dokumenta
         {
             frmPPKGlavna ppkg = new frmPPKGlavna();
             ppkg.Show();
+        }
+
+        private void toolStripButton6_Click(object sender, EventArgs e)
+        {
+            if (Korisnik == "admin")
+            {
+                Dokumenta.frmArhivirajZapise arh = new frmArhivirajZapise();
+                arh.Show();
+            }
+            else
+            {
+                MessageBox.Show("Nemate prava za pristup ovoj formi");
+            }
+            
         }
     }
 

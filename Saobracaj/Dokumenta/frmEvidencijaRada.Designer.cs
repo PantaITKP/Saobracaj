@@ -44,6 +44,7 @@
             this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton4 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.label3 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.cboRadniNalog = new System.Windows.Forms.ComboBox();
@@ -121,7 +122,7 @@
             this.cboNadlezni = new System.Windows.Forms.ComboBox();
             this.label30 = new System.Windows.Forms.Label();
             this.button6 = new System.Windows.Forms.Button();
-            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -132,7 +133,7 @@
             // txtSifra
             // 
             this.txtSifra.Location = new System.Drawing.Point(105, 50);
-            this.txtSifra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtSifra.Margin = new System.Windows.Forms.Padding(4);
             this.txtSifra.Name = "txtSifra";
             this.txtSifra.Size = new System.Drawing.Size(68, 22);
             this.txtSifra.TabIndex = 72;
@@ -163,7 +164,8 @@
             this.toolStripButton3,
             this.toolStripButton2,
             this.toolStripButton4,
-            this.toolStripButton5});
+            this.toolStripButton5,
+            this.toolStripButton6});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1821, 27);
@@ -278,6 +280,15 @@
             this.toolStripButton4.Text = "Log file";
             this.toolStripButton4.Click += new System.EventHandler(this.toolStripButton4_Click);
             // 
+            // toolStripButton5
+            // 
+            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
+            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton5.Name = "toolStripButton5";
+            this.toolStripButton5.Size = new System.Drawing.Size(58, 24);
+            this.toolStripButton5.Text = "PPK";
+            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -304,7 +315,7 @@
             this.cboRadniNalog.Enabled = false;
             this.cboRadniNalog.FormattingEnabled = true;
             this.cboRadniNalog.Location = new System.Drawing.Point(232, 159);
-            this.cboRadniNalog.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboRadniNalog.Margin = new System.Windows.Forms.Padding(4);
             this.cboRadniNalog.Name = "cboRadniNalog";
             this.cboRadniNalog.Size = new System.Drawing.Size(60, 24);
             this.cboRadniNalog.TabIndex = 149;
@@ -322,7 +333,7 @@
             // txtTrosak
             // 
             this.txtTrosak.Location = new System.Drawing.Point(125, 116);
-            this.txtTrosak.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTrosak.Margin = new System.Windows.Forms.Padding(4);
             this.txtTrosak.Name = "txtTrosak";
             this.txtTrosak.Size = new System.Drawing.Size(63, 22);
             this.txtTrosak.TabIndex = 156;
@@ -342,7 +353,7 @@
             // txtKomentar
             // 
             this.txtKomentar.Location = new System.Drawing.Point(988, 53);
-            this.txtKomentar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtKomentar.Margin = new System.Windows.Forms.Padding(4);
             this.txtKomentar.Multiline = true;
             this.txtKomentar.Name = "txtKomentar";
             this.txtKomentar.Size = new System.Drawing.Size(407, 91);
@@ -351,7 +362,7 @@
             // btnUbaciAktivnost
             // 
             this.btnUbaciAktivnost.Location = new System.Drawing.Point(596, 313);
-            this.btnUbaciAktivnost.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnUbaciAktivnost.Margin = new System.Windows.Forms.Padding(4);
             this.btnUbaciAktivnost.Name = "btnUbaciAktivnost";
             this.btnUbaciAktivnost.Size = new System.Drawing.Size(176, 30);
             this.btnUbaciAktivnost.TabIndex = 159;
@@ -363,7 +374,7 @@
             // 
             this.cboAktivnost.FormattingEnabled = true;
             this.cboAktivnost.Location = new System.Drawing.Point(96, 214);
-            this.cboAktivnost.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboAktivnost.Margin = new System.Windows.Forms.Padding(4);
             this.cboAktivnost.Name = "cboAktivnost";
             this.cboAktivnost.Size = new System.Drawing.Size(435, 24);
             this.cboAktivnost.TabIndex = 161;
@@ -374,7 +385,7 @@
             // 
             this.txtVreme.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.txtVreme.Location = new System.Drawing.Point(664, 79);
-            this.txtVreme.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtVreme.Margin = new System.Windows.Forms.Padding(4);
             this.txtVreme.Name = "txtVreme";
             this.txtVreme.Size = new System.Drawing.Size(56, 22);
             this.txtVreme.TabIndex = 167;
@@ -396,7 +407,7 @@
             this.dtpVremeDo.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpVremeDo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpVremeDo.Location = new System.Drawing.Point(811, 47);
-            this.dtpVremeDo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dtpVremeDo.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeDo.Name = "dtpVremeDo";
             this.dtpVremeDo.ShowUpDown = true;
             this.dtpVremeDo.Size = new System.Drawing.Size(152, 22);
@@ -419,7 +430,7 @@
             this.dtpVremeOd.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpVremeOd.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpVremeOd.Location = new System.Drawing.Point(577, 48);
-            this.dtpVremeOd.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dtpVremeOd.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeOd.Name = "dtpVremeOd";
             this.dtpVremeOd.ShowUpDown = true;
             this.dtpVremeOd.Size = new System.Drawing.Size(143, 22);
@@ -440,7 +451,7 @@
             // 
             this.txtKoeficijent.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.txtKoeficijent.Location = new System.Drawing.Point(780, 209);
-            this.txtKoeficijent.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtKoeficijent.Margin = new System.Windows.Forms.Padding(4);
             this.txtKoeficijent.Name = "txtKoeficijent";
             this.txtKoeficijent.Size = new System.Drawing.Size(56, 22);
             this.txtKoeficijent.TabIndex = 168;
@@ -460,7 +471,7 @@
             // txtDodatnaNapomena
             // 
             this.txtDodatnaNapomena.Location = new System.Drawing.Point(853, 212);
-            this.txtDodatnaNapomena.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDodatnaNapomena.Margin = new System.Windows.Forms.Padding(4);
             this.txtDodatnaNapomena.Name = "txtDodatnaNapomena";
             this.txtDodatnaNapomena.Size = new System.Drawing.Size(264, 22);
             this.txtDodatnaNapomena.TabIndex = 170;
@@ -483,7 +494,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(591, 345);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.Size = new System.Drawing.Size(1218, 368);
@@ -496,7 +507,7 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView2.Location = new System.Drawing.Point(16, 256);
-            this.dataGridView2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView2.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.RowHeadersWidth = 51;
             this.dataGridView2.Size = new System.Drawing.Size(516, 456);
@@ -516,7 +527,7 @@
             // btnUnesi
             // 
             this.btnUnesi.Location = new System.Drawing.Point(540, 214);
-            this.btnUnesi.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnUnesi.Margin = new System.Windows.Forms.Padding(4);
             this.btnUnesi.Name = "btnUnesi";
             this.btnUnesi.Size = new System.Drawing.Size(43, 498);
             this.btnUnesi.TabIndex = 175;
@@ -528,7 +539,7 @@
             // 
             this.txtBrojVagona.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.txtBrojVagona.Location = new System.Drawing.Point(685, 244);
-            this.txtBrojVagona.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtBrojVagona.Margin = new System.Windows.Forms.Padding(4);
             this.txtBrojVagona.Name = "txtBrojVagona";
             this.txtBrojVagona.Size = new System.Drawing.Size(76, 22);
             this.txtBrojVagona.TabIndex = 176;
@@ -548,7 +559,7 @@
             // txtRazlog
             // 
             this.txtRazlog.Location = new System.Drawing.Point(1148, 212);
-            this.txtRazlog.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRazlog.Margin = new System.Windows.Forms.Padding(4);
             this.txtRazlog.Name = "txtRazlog";
             this.txtRazlog.Size = new System.Drawing.Size(233, 22);
             this.txtRazlog.TabIndex = 178;
@@ -568,7 +579,7 @@
             // 
             this.cboNalogodavac.FormattingEnabled = true;
             this.cboNalogodavac.Location = new System.Drawing.Point(853, 276);
-            this.cboNalogodavac.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboNalogodavac.Margin = new System.Windows.Forms.Padding(4);
             this.cboNalogodavac.Name = "cboNalogodavac";
             this.cboNalogodavac.Size = new System.Drawing.Size(247, 24);
             this.cboNalogodavac.TabIndex = 181;
@@ -603,7 +614,7 @@
             "501 L  GD",
             "Caddy"});
             this.cboVozilo.Location = new System.Drawing.Point(853, 244);
-            this.cboVozilo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboVozilo.Margin = new System.Windows.Forms.Padding(4);
             this.cboVozilo.Name = "cboVozilo";
             this.cboVozilo.Size = new System.Drawing.Size(211, 24);
             this.cboVozilo.TabIndex = 183;
@@ -622,7 +633,7 @@
             // 
             this.txtUkupnoMašinovođa.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.txtUkupnoMašinovođa.Location = new System.Drawing.Point(907, 80);
-            this.txtUkupnoMašinovođa.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtUkupnoMašinovođa.Margin = new System.Windows.Forms.Padding(4);
             this.txtUkupnoMašinovođa.Name = "txtUkupnoMašinovođa";
             this.txtUkupnoMašinovođa.Size = new System.Drawing.Size(56, 22);
             this.txtUkupnoMašinovođa.TabIndex = 185;
@@ -644,7 +655,7 @@
             this.chkUnosMasinovođa.AutoSize = true;
             this.chkUnosMasinovođa.Enabled = false;
             this.chkUnosMasinovođa.Location = new System.Drawing.Point(7, 192);
-            this.chkUnosMasinovođa.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkUnosMasinovođa.Margin = new System.Windows.Forms.Padding(4);
             this.chkUnosMasinovođa.Name = "chkUnosMasinovođa";
             this.chkUnosMasinovođa.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkUnosMasinovođa.Size = new System.Drawing.Size(162, 21);
@@ -657,7 +668,7 @@
             // 
             this.txtOznaka.Enabled = false;
             this.txtOznaka.Location = new System.Drawing.Point(79, 160);
-            this.txtOznaka.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtOznaka.Margin = new System.Windows.Forms.Padding(4);
             this.txtOznaka.Name = "txtOznaka";
             this.txtOznaka.Size = new System.Drawing.Size(47, 22);
             this.txtOznaka.TabIndex = 187;
@@ -676,7 +687,7 @@
             // btnPosaljiMail
             // 
             this.btnPosaljiMail.Location = new System.Drawing.Point(1301, 273);
-            this.btnPosaljiMail.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnPosaljiMail.Margin = new System.Windows.Forms.Padding(4);
             this.btnPosaljiMail.Name = "btnPosaljiMail";
             this.btnPosaljiMail.Size = new System.Drawing.Size(109, 30);
             this.btnPosaljiMail.TabIndex = 189;
@@ -687,7 +698,7 @@
             // txtEmail
             // 
             this.txtEmail.Location = new System.Drawing.Point(1148, 245);
-            this.txtEmail.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtEmail.Margin = new System.Windows.Forms.Padding(4);
             this.txtEmail.Name = "txtEmail";
             this.txtEmail.Size = new System.Drawing.Size(267, 22);
             this.txtEmail.TabIndex = 190;
@@ -716,7 +727,7 @@
             // 
             this.cboZaposleni.FormattingEnabled = true;
             this.cboZaposleni.Location = new System.Drawing.Point(269, 49);
-            this.cboZaposleni.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboZaposleni.Margin = new System.Windows.Forms.Padding(4);
             this.cboZaposleni.Name = "cboZaposleni";
             this.cboZaposleni.Size = new System.Drawing.Size(211, 24);
             this.cboZaposleni.TabIndex = 140;
@@ -726,7 +737,7 @@
             // 
             this.chkPoslatMail.AutoSize = true;
             this.chkPoslatMail.Location = new System.Drawing.Point(567, 113);
-            this.chkPoslatMail.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkPoslatMail.Margin = new System.Windows.Forms.Padding(4);
             this.chkPoslatMail.Name = "chkPoslatMail";
             this.chkPoslatMail.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkPoslatMail.Size = new System.Drawing.Size(107, 21);
@@ -739,7 +750,7 @@
             this.chkPlaceno.AutoSize = true;
             this.chkPlaceno.Enabled = false;
             this.chkPlaceno.Location = new System.Drawing.Point(716, 113);
-            this.chkPlaceno.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkPlaceno.Margin = new System.Windows.Forms.Padding(4);
             this.chkPlaceno.Name = "chkPlaceno";
             this.chkPlaceno.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkPlaceno.Size = new System.Drawing.Size(81, 21);
@@ -760,7 +771,7 @@
             // txtRacun
             // 
             this.txtRacun.Location = new System.Drawing.Point(319, 116);
-            this.txtRacun.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRacun.Margin = new System.Windows.Forms.Padding(4);
             this.txtRacun.Name = "txtRacun";
             this.txtRacun.Size = new System.Drawing.Size(63, 22);
             this.txtRacun.TabIndex = 195;
@@ -780,7 +791,7 @@
             // txtKartica
             // 
             this.txtKartica.Location = new System.Drawing.Point(476, 118);
-            this.txtKartica.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtKartica.Margin = new System.Windows.Forms.Padding(4);
             this.txtKartica.Name = "txtKartica";
             this.txtKartica.Size = new System.Drawing.Size(63, 22);
             this.txtKartica.TabIndex = 197;
@@ -801,7 +812,7 @@
             // 
             this.txtMesto.Enabled = false;
             this.txtMesto.Location = new System.Drawing.Point(389, 158);
-            this.txtMesto.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtMesto.Margin = new System.Windows.Forms.Padding(4);
             this.txtMesto.Name = "txtMesto";
             this.txtMesto.Size = new System.Drawing.Size(83, 22);
             this.txtMesto.TabIndex = 199;
@@ -811,7 +822,7 @@
             // 
             this.txtRad.DecimalPlaces = 2;
             this.txtRad.Location = new System.Drawing.Point(685, 210);
-            this.txtRad.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRad.Margin = new System.Windows.Forms.Padding(4);
             this.txtRad.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -827,7 +838,7 @@
             this.chkMilsped.AutoSize = true;
             this.chkMilsped.Enabled = false;
             this.chkMilsped.Location = new System.Drawing.Point(377, 190);
-            this.chkMilsped.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkMilsped.Margin = new System.Windows.Forms.Padding(4);
             this.chkMilsped.Name = "chkMilsped";
             this.chkMilsped.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkMilsped.Size = new System.Drawing.Size(124, 21);
@@ -841,7 +852,7 @@
             this.chkUnetaAktivnost.AutoSize = true;
             this.chkUnetaAktivnost.Enabled = false;
             this.chkUnetaAktivnost.Location = new System.Drawing.Point(215, 187);
-            this.chkUnetaAktivnost.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkUnetaAktivnost.Margin = new System.Windows.Forms.Padding(4);
             this.chkUnetaAktivnost.Name = "chkUnetaAktivnost";
             this.chkUnetaAktivnost.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkUnetaAktivnost.Size = new System.Drawing.Size(128, 21);
@@ -858,7 +869,7 @@
             "2-Van lok",
             "3-Milšped"});
             this.cboTIpRada.Location = new System.Drawing.Point(389, 82);
-            this.cboTIpRada.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboTIpRada.Margin = new System.Windows.Forms.Padding(4);
             this.cboTIpRada.Name = "cboTIpRada";
             this.cboTIpRada.Size = new System.Drawing.Size(179, 24);
             this.cboTIpRada.TabIndex = 204;
@@ -888,7 +899,7 @@
             // 
             this.cboMestoUpucenja.FormattingEnabled = true;
             this.cboMestoUpucenja.Location = new System.Drawing.Point(139, 82);
-            this.cboMestoUpucenja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboMestoUpucenja.Margin = new System.Windows.Forms.Padding(4);
             this.cboMestoUpucenja.Name = "cboMestoUpucenja";
             this.cboMestoUpucenja.Size = new System.Drawing.Size(167, 24);
             this.cboMestoUpucenja.TabIndex = 206;
@@ -897,7 +908,7 @@
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(781, 313);
-            this.button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button1.Margin = new System.Windows.Forms.Padding(4);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(144, 30);
             this.button1.TabIndex = 207;
@@ -909,7 +920,7 @@
             // 
             this.txtIzracun.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txtIzracun.Location = new System.Drawing.Point(659, 156);
-            this.txtIzracun.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtIzracun.Margin = new System.Windows.Forms.Padding(4);
             this.txtIzracun.Name = "txtIzracun";
             this.txtIzracun.Size = new System.Drawing.Size(71, 22);
             this.txtIzracun.TabIndex = 208;
@@ -920,7 +931,7 @@
             // 
             this.txtRazlika.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txtRazlika.Location = new System.Drawing.Point(812, 156);
-            this.txtRazlika.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRazlika.Margin = new System.Windows.Forms.Padding(4);
             this.txtRazlika.Name = "txtRazlika";
             this.txtRazlika.Size = new System.Drawing.Size(81, 22);
             this.txtRazlika.TabIndex = 209;
@@ -961,7 +972,7 @@
             // 
             this.txtZarada.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
             this.txtZarada.Location = new System.Drawing.Point(969, 156);
-            this.txtZarada.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtZarada.Margin = new System.Windows.Forms.Padding(4);
             this.txtZarada.Name = "txtZarada";
             this.txtZarada.Size = new System.Drawing.Size(81, 22);
             this.txtZarada.TabIndex = 213;
@@ -971,7 +982,7 @@
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(937, 313);
-            this.button2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(153, 30);
             this.button2.TabIndex = 214;
@@ -984,7 +995,7 @@
             this.chkPravoDnevnice.AutoSize = true;
             this.chkPravoDnevnice.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
             this.chkPravoDnevnice.Location = new System.Drawing.Point(829, 112);
-            this.chkPravoDnevnice.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkPravoDnevnice.Margin = new System.Windows.Forms.Padding(4);
             this.chkPravoDnevnice.Name = "chkPravoDnevnice";
             this.chkPravoDnevnice.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkPravoDnevnice.Size = new System.Drawing.Size(128, 21);
@@ -1005,7 +1016,7 @@
             // txtPosao
             // 
             this.txtPosao.Location = new System.Drawing.Point(1189, 276);
-            this.txtPosao.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPosao.Margin = new System.Windows.Forms.Padding(4);
             this.txtPosao.Name = "txtPosao";
             this.txtPosao.Size = new System.Drawing.Size(103, 22);
             this.txtPosao.TabIndex = 217;
@@ -1015,7 +1026,7 @@
             this.dtpStavke.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpStavke.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpStavke.Location = new System.Drawing.Point(1240, 313);
-            this.dtpStavke.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dtpStavke.Margin = new System.Windows.Forms.Padding(4);
             this.dtpStavke.Name = "dtpStavke";
             this.dtpStavke.ShowUpDown = true;
             this.dtpStavke.Size = new System.Drawing.Size(165, 22);
@@ -1035,7 +1046,7 @@
             // button3
             // 
             this.button3.Location = new System.Drawing.Point(1060, 155);
-            this.button3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button3.Margin = new System.Windows.Forms.Padding(4);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(80, 30);
             this.button3.TabIndex = 220;
@@ -1046,7 +1057,7 @@
             // button4
             // 
             this.button4.Location = new System.Drawing.Point(596, 186);
-            this.button4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button4.Margin = new System.Windows.Forms.Padding(4);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(36, 22);
             this.button4.TabIndex = 221;
@@ -1062,7 +1073,7 @@
             this.dataGridView3.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.dataGridView3.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView3.Location = new System.Drawing.Point(1419, 64);
-            this.dataGridView3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView3.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView3.Name = "dataGridView3";
             this.dataGridView3.RowHeadersWidth = 51;
             this.dataGridView3.Size = new System.Drawing.Size(393, 273);
@@ -1071,7 +1082,7 @@
             // button12
             // 
             this.button12.Location = new System.Drawing.Point(1421, 31);
-            this.button12.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button12.Margin = new System.Windows.Forms.Padding(4);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(160, 28);
             this.button12.TabIndex = 224;
@@ -1082,7 +1093,7 @@
             // button5
             // 
             this.button5.Location = new System.Drawing.Point(1651, 32);
-            this.button5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button5.Margin = new System.Windows.Forms.Padding(4);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(160, 28);
             this.button5.TabIndex = 226;
@@ -1094,7 +1105,7 @@
             // 
             this.cboNadlezni.FormattingEnabled = true;
             this.cboNadlezni.Location = new System.Drawing.Point(1148, 169);
-            this.cboNadlezni.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboNadlezni.Margin = new System.Windows.Forms.Padding(4);
             this.cboNadlezni.Name = "cboNadlezni";
             this.cboNadlezni.Size = new System.Drawing.Size(247, 24);
             this.cboNadlezni.TabIndex = 223;
@@ -1112,7 +1123,7 @@
             // button6
             // 
             this.button6.Location = new System.Drawing.Point(640, 186);
-            this.button6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button6.Margin = new System.Windows.Forms.Padding(4);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(36, 22);
             this.button6.TabIndex = 227;
@@ -1120,14 +1131,15 @@
             this.button6.UseVisualStyleBackColor = true;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
-            // toolStripButton5
+            // toolStripButton6
             // 
-            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
-            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton5.Name = "toolStripButton5";
-            this.toolStripButton5.Size = new System.Drawing.Size(58, 24);
-            this.toolStripButton5.Text = "PPK";
-            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
+            this.toolStripButton6.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton6.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton6.Image")));
+            this.toolStripButton6.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton6.Name = "toolStripButton6";
+            this.toolStripButton6.Size = new System.Drawing.Size(123, 24);
+            this.toolStripButton6.Text = "toolStripButton6";
+            this.toolStripButton6.Click += new System.EventHandler(this.toolStripButton6_Click);
             // 
             // frmEvidencijaRada
             // 
@@ -1214,7 +1226,7 @@
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txtSifra);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmEvidencijaRada";
             this.Text = "Unos rada radnika";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
@@ -1325,5 +1337,6 @@
         private System.Windows.Forms.Label label30;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.ToolStripButton toolStripButton5;
+        private System.Windows.Forms.ToolStripButton toolStripButton6;
     }
 }

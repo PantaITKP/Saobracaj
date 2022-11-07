@@ -153,6 +153,7 @@ namespace Saobracaj.Dokumenta
             SlobodanDanM = SlobodanDan;
             DatumZahtevaM = DatumZahteva;
             cboGodina.SelectedValue = "2022";
+            tsDelete.Visible = false;
         }
 
         private void cboZaposleni_SelectedIndexChanged(object sender, EventArgs e)
@@ -296,7 +297,7 @@ namespace Saobracaj.Dokumenta
                 // SlobodanDanM = SlobodanDan; Funkcionalnost
 
                 //Ovede postavljam vrdnosti
-
+                tsDelete.Visible = false;
             }
         }
 
@@ -323,7 +324,7 @@ namespace Saobracaj.Dokumenta
                 status = false;
                 RefreshDataGrid1();
                 InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
-                GoLog.InsertGoLOG(Kor, DateTime.Now, "Uspesno sacuvan zapis");
+                GoLog.InsertGoLOG(Kor, DateTime.Now, "Uspesno sacuvan zapis "+txtSifra.Text.ToString().TrimEnd());
 
             }
             else
@@ -792,8 +793,10 @@ order by RzStZapisa desc
           
             reportViewer1.LocalReport.DataSources.Add(rds);
             reportViewer1.RefreshReport();
-            poslatoResenje = 1;
-            cbResenje.Checked = true;
+            //poslatoResenje = 1;
+            //cbResenje.Checked = true;
+            InsertEvidencijaGOLog ins = new InsertEvidencijaGOLog();
+            ins.InsertGoLOG(Kor, DateTime.Now, "Pripremljen za stampu");
         }
 
         private void PosaljiMailResenjeGO(string Kome)
@@ -903,6 +906,8 @@ order by RzStZapisa desc
         private void btnPosaljiMail_Click(object sender, EventArgs e)
         {
             PosaljiMailResenjeGO(txtEmail.Text);
+            InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
+            GoLog.InsertGoLOG(Kor, DateTime.Now, "Poslat mail");
             cbMail.Checked = true;
             poslatMail = 1;
         }
@@ -915,14 +920,14 @@ order by RzStZapisa desc
 
         private void cbMail_CheckedChanged(object sender, EventArgs e)
         {
-            InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
-            GoLog.InsertGoLOG(Kor, DateTime.Now, "Poslat mail");
+            //InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
+            //GoLog.InsertGoLOG(Kor, DateTime.Now, "Cekirano slanje mail-a");
         }
 
         private void cbResenje_CheckedChanged(object sender, EventArgs e)
         {
             InsertEvidencijaGOLog GoLog = new InsertEvidencijaGOLog();
-            GoLog.InsertGoLOG(Kor, DateTime.Now, "Poslato resenje");
+            GoLog.InsertGoLOG(Kor, DateTime.Now, "Cekirano slanje resenja");
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)

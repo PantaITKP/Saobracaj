@@ -133,7 +133,8 @@
     <Reference Include="Microsoft.IdentityModel.Tokens, Version=6.16.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.IdentityModel.Tokens.6.16.0\lib\net461\Microsoft.IdentityModel.Tokens.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1001\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Microsoft.Office.Interop.Word, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
@@ -511,6 +512,12 @@
     </Compile>
     <Compile Include="Administracija\frmNotifikacije.Designer.cs">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmArhivirajZapise.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmArhivirajZapise.Designer.cs">
+      <DependentUpon>frmArhivirajZapise.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\frmEvidencijaGOExcel.cs">
       <SubType>Form</SubType>
@@ -1083,6 +1090,7 @@
       <DependentUpon>frmZarade.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\Insert1ReportGO.cs" />
+    <Compile Include="Dokumenta\InsertAktivnostiArhiva.cs" />
     <Compile Include="Dokumenta\InsertAutomobiliDokumenta.cs" />
     <Compile Include="Dokumenta\InsertAutomobiliPregledPrijava.cs" />
     <Compile Include="Dokumenta\InsertAutomobiliRegistracija.cs" />
@@ -1810,6 +1818,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Administracija\frmNotifikacije.resx">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmArhivirajZapise.resx">
+      <DependentUpon>frmArhivirajZapise.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmAutomobili.resx">
       <DependentUpon>frmAutomobili.cs</DependentUpon>

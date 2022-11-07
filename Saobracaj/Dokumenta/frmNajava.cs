@@ -2932,7 +2932,7 @@ namespace Saobracaj.Dokumenta
                 "inner join partnerji on Najava.Posiljalac = Partnerji.PaSifra " +
                 "inner join partnerji as partnerji1 on Najava.Primalac = partnerji1.PaSifra " +
                 "inner join partnerji as partnerji2 on Najava.Platilac = partnerji2.PaSifra " +
-                "Where(Status = 3 or status = 4) and StvarnoPrimanje<>'1900-01-01 00:00:00.000'";
+                "Where(Status=2 or Status = 3 or status = 4 or status=5) and StvarnoPrimanje<>'1900-01-01 00:00:00.000'";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
