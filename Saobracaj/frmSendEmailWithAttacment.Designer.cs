@@ -48,7 +48,7 @@
             this.txtFrom.Name = "txtFrom";
             this.txtFrom.Size = new System.Drawing.Size(325, 22);
             this.txtFrom.TabIndex = 5;
-            this.txtFrom.Text = "pantelija.petrovic@kprevoz.co.rs";
+            this.txtFrom.Text = "disp@kprevoz.co.rs";
             // 
             // label1
             // 
