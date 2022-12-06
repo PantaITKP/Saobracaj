@@ -37,9 +37,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtBody = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.txtAttacment = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.SuspendLayout();
@@ -118,35 +115,6 @@
             this.label4.TabIndex = 11;
             this.label4.Text = "Tekst:";
             // 
-            // txtAttacment
-            // 
-            this.txtAttacment.Location = new System.Drawing.Point(95, 289);
-            this.txtAttacment.Margin = new System.Windows.Forms.Padding(4);
-            this.txtAttacment.Name = "txtAttacment";
-            this.txtAttacment.Size = new System.Drawing.Size(325, 22);
-            this.txtAttacment.TabIndex = 13;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(16, 289);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(48, 17);
-            this.label5.TabIndex = 12;
-            this.label5.Text = "Prilog:";
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(444, 289);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(100, 28);
-            this.button1.TabIndex = 14;
-            this.button1.Text = "Dodaj";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(95, 335);
@@ -174,9 +142,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1063, 524);
             this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.txtAttacment);
-            this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txtBody);
             this.Controls.Add(this.txtTema);
@@ -206,9 +171,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtBody;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox txtAttacment;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label6;
     }

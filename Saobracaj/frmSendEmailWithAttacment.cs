@@ -37,20 +37,7 @@ namespace Saobracaj
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OpenFileDialog ofdlg = new OpenFileDialog();
 
-            if (ofdlg.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-
-                    txtAttacment.Text = ofdlg.FileName;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Error");
-                }
-            }
         }
 
         private void button2_Click(object sender, EventArgs e)
