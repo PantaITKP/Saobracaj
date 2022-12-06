@@ -73,9 +73,7 @@ namespace Saobracaj.Dokumenta
         }
 
         private void tsNew_Click(object sender, EventArgs e)
-        {
-            
-            
+        {   
             chkRezi.Checked = false;
             chkPoslato.Checked = false;
             txtPlaniranaMasa.Value=0;
@@ -83,10 +81,10 @@ namespace Saobracaj.Dokumenta
             txtMasaVoza.Value = 0;
             txtBrutoVoza.Value = 0;
             txtNapomena.Text = "";
-            dtpVremeDo.Value = Convert.ToDateTime("1.1.1900.".ToString());
-            dtpVremeOdReal.Value = Convert.ToDateTime("1.1.1900.".ToString());
-            dtpVremeOd.Value = Convert.ToDateTime("1.1.1900.".ToString());
-            dtpVremeDoReal.Value = Convert.ToDateTime("1.1.1900.".ToString());
+            dtpVremeDo.Value = Convert.ToDateTime("01.01.1900.".ToString());
+            dtpVremeOdReal.Value = Convert.ToDateTime("01.01.1900.".ToString());
+            dtpVremeOd.Value = Convert.ToDateTime("01.01.1900.".ToString());
+            dtpVremeDoReal.Value = Convert.ToDateTime("01.01.1900.".ToString());
             txtMasaLokomotive.Value = 0;
             cboTrase.Text = "";
             cboStanicaDo.Text = "";
