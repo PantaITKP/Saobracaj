@@ -111,7 +111,7 @@ namespace Saobracaj.Dokumenta
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
                         txtNaziv.Text = row.Cells[1].Value.ToString();
-                    dtpVremeOd.Value = Convert.ToDateTime(row.Cells[2].Value.ToString());
+                        dtpVremeOd.Value = Convert.ToDateTime(row.Cells[2].Value.ToString());
                         dtpVremeDo.Value = Convert.ToDateTime(row.Cells[3].Value.ToString());
                         if (row.Cells[4].Value.ToString() == "1")
                         {

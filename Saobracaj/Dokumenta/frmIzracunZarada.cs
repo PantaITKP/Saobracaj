@@ -824,7 +824,7 @@ namespace Saobracaj.Dokumenta
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
 
             //ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd.Value.ToString("yyyy-MM-dd 00:00")), Convert.ToDateTime(dtpVremeDo.Value.ToString("yyyy-MM-dd 00:00")));
+            ins.UpdKragujevacPrekovremeniVarijabilniGodisnjiOdmor(Convert.ToDateTime(dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00")), Convert.ToDateTime(dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59")));
            /// dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00")
 
             ins.UpdUkupno(Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtPoreskoOslobodjenje.Value), Convert.ToDouble(txtMinimalac.Value));

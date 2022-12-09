@@ -232,6 +232,7 @@ namespace Saobracaj.Dokumenta
         {
             try
             {
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
                     var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -239,13 +240,16 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
 
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo.Text + "'", con);
+                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where RadPraznikom = 1 and ZaposleniID = " + row.Cells[0].Value +
+                        " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "'", con);
+
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
                     {
-                        row.Cells[7].Value = dr["UK"].ToString();
+                        ins.UpdPraznikSatiFiksni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
+
+                       // row.Cells[7].Value = dr["UK"].ToString();
                     }
                     con.Close();
                 }
@@ -416,6 +420,7 @@ namespace Saobracaj.Dokumenta
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
             RefreshDataGrid();
             PovuciBolovanje65();
+            PovuciRadPraznikom();
             PovuciBolovanje100();
             PovuciPrekovremeni();
             ins.UpdObracunFiksniSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtMinimalac.Value));
