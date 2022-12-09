@@ -20,6 +20,7 @@ namespace Saobracaj.Dokumenta
 {
     public partial class frmNajava : Form
     {
+        public int mailPom;
         string niz = "";
         public static string code = "frmNajava";
         public bool Pravo;
@@ -1356,7 +1357,8 @@ namespace Saobracaj.Dokumenta
 
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
-            frmSendEmailWithAttacment frmWAtt = new frmSendEmailWithAttacment();
+            mailPom = Convert.ToInt32(txtSifra.Text);
+            frmSendEmailWithAttacment frmWAtt = new frmSendEmailWithAttacment(mailPom);
             frmWAtt.Show();
         }
 

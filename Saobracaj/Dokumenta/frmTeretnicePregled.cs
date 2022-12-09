@@ -383,7 +383,7 @@ namespace Saobracaj.Dokumenta
                     RucKoc = Convert.ToDouble(reader["RucKoc"].ToString());
 
                     InsertTeretnicaStavke ins = new InsertTeretnicaStavke();
-                    ins.InsTeretnicaStavke(IdPom, IDNajave, Uvrstena, Otkacena, BrojKola, Serija, BrojOsovina, Duzina, Tara, 0, 0, 0, 0, 0, VRNP, Uputna, Otpravna, "","",
+                    ins.InsTeretnicaStavke(IdPom, IDNajave, Uvrstena, Otkacena, BrojKola, Serija, BrojOsovina, Duzina, Tara, 0, 0, 0, 0, 0, "", Uputna, Otpravna, "","",
                         RucKoc, Izvozna, Uvozna, "", "");
                 }
             }

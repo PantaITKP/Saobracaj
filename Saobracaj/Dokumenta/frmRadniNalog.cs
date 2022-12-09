@@ -393,7 +393,9 @@ namespace Saobracaj.Dokumenta
             cboStatusRN.DisplayMember = "StatusRN";
             cboStatusRN.ValueMember = "SDnSifra";
 
-            var select3 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci";
+            var select3 = "select DeSifra as ID,(RTrim(DePriimek)+' '+RTrim(DeIme)) as Opis " +
+                "From Delavci " +
+                "Where (DeSifDelMes=23 or DeSifDelMes=44 or DeSifDelMes = 51 or DeSifDelMes = 68) order by DePriimek";
             var s_connection3 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection3 = new SqlConnection(s_connection3);
             var c3 = new SqlConnection(s_connection3);
