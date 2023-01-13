@@ -39,21 +39,22 @@
             this.label4 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // txtFrom
             // 
-            this.txtFrom.Location = new System.Drawing.Point(95, 15);
+            this.txtFrom.Location = new System.Drawing.Point(68, 57);
             this.txtFrom.Margin = new System.Windows.Forms.Padding(4);
             this.txtFrom.Name = "txtFrom";
-            this.txtFrom.Size = new System.Drawing.Size(325, 22);
+            this.txtFrom.Size = new System.Drawing.Size(399, 22);
             this.txtFrom.TabIndex = 5;
             this.txtFrom.Text = "disp@kprevoz.co.rs";
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 15);
+            this.label1.Location = new System.Drawing.Point(13, 60);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(31, 17);
@@ -62,16 +63,17 @@
             // 
             // txtTo
             // 
-            this.txtTo.Location = new System.Drawing.Point(95, 47);
+            this.txtTo.Location = new System.Drawing.Point(68, 97);
             this.txtTo.Margin = new System.Windows.Forms.Padding(4);
+            this.txtTo.Multiline = true;
             this.txtTo.Name = "txtTo";
-            this.txtTo.Size = new System.Drawing.Size(325, 22);
+            this.txtTo.Size = new System.Drawing.Size(399, 42);
             this.txtTo.TabIndex = 7;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(16, 47);
+            this.label2.Location = new System.Drawing.Point(13, 97);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(29, 17);
@@ -80,16 +82,16 @@
             // 
             // txtTema
             // 
-            this.txtTema.Location = new System.Drawing.Point(95, 79);
+            this.txtTema.Location = new System.Drawing.Point(68, 156);
             this.txtTema.Margin = new System.Windows.Forms.Padding(4);
             this.txtTema.Name = "txtTema";
-            this.txtTema.Size = new System.Drawing.Size(325, 22);
+            this.txtTema.Size = new System.Drawing.Size(399, 22);
             this.txtTema.TabIndex = 9;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(16, 79);
+            this.label3.Location = new System.Drawing.Point(13, 156);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(48, 17);
@@ -98,17 +100,17 @@
             // 
             // txtBody
             // 
-            this.txtBody.Location = new System.Drawing.Point(95, 111);
+            this.txtBody.Location = new System.Drawing.Point(68, 210);
             this.txtBody.Margin = new System.Windows.Forms.Padding(4);
             this.txtBody.Multiline = true;
             this.txtBody.Name = "txtBody";
-            this.txtBody.Size = new System.Drawing.Size(325, 170);
+            this.txtBody.Size = new System.Drawing.Size(399, 170);
             this.txtBody.TabIndex = 10;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(16, 114);
+            this.label4.Location = new System.Drawing.Point(13, 210);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(47, 17);
@@ -117,10 +119,10 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(95, 335);
+            this.button2.Location = new System.Drawing.Point(159, 401);
             this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(100, 28);
+            this.button2.Size = new System.Drawing.Size(148, 39);
             this.button2.TabIndex = 15;
             this.button2.Text = "Pošalji";
             this.button2.UseVisualStyleBackColor = true;
@@ -129,18 +131,28 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(490, 18);
+            this.label6.Location = new System.Drawing.Point(118, 23);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(31, 17);
+            this.label6.Size = new System.Drawing.Size(97, 17);
             this.label6.TabIndex = 4;
-            this.label6.Text = "Od:";
+            this.label6.Text = "Najava BROJ:";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(13, 23);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(97, 17);
+            this.label5.TabIndex = 4;
+            this.label5.Text = "Najava BROJ:";
             // 
             // frmSendEmailWithAttacment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1063, 524);
+            this.ClientSize = new System.Drawing.Size(525, 471);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txtBody);
@@ -149,6 +161,7 @@
             this.Controls.Add(this.txtTo);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtFrom);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -173,5 +186,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label5;
     }
 }

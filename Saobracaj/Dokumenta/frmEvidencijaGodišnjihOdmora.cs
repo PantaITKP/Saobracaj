@@ -843,7 +843,7 @@ order by RzStZapisa desc
                     body = body + "'                               O b r a z l o ž e n j e: <br /><br />";
                     body = body + "U svakoj kalendarskoj godini zaposleni ima pravo na godišnji odmor u trajanju utvrđenom Pravilnikom  " + "<br />";
                     body = body + "o radu poslodavca i ugovorom o radu, a najmanje 20 radnih dana. " + "<br />";
-                    body = body + "Zaposleni je u 2021. godini , ostvario pravo na " + myRow["DanaGodisnjeg"].ToString() + " dana godišnjeg odmora. " + "<br />";
+                    body = body + "Zaposleni je u "+ myRow["Godina"].ToString()+" godini , ostvario pravo na " + myRow["DanaGodisnjeg"].ToString() + " dana godišnjeg odmora. " + "<br />";
                     body = body + "Do dana donošenja ovog rešenja zaposleni " + myRow["DanaIskoristio"].ToString() +  " <br /> ";
                     body = body + "Pri utvrđivanju dužine godišnjeg odmora radna nedelja računata je kao pet radnih dana." + "<br />";
                     body = body + "Praznici koji su neradni dani u skladu sa zakonom, odsustvo sa rada uz naknadu zarade i privremena " + "<br />";
@@ -983,6 +983,12 @@ order by RzStZapisa desc
                 ins.InsEvidGodisnjihOdmoraPrenos(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtNadredjeni.Text), dtpVremeOd.Value, dtpVremeDo.Value, Convert.ToInt32(txtUkupno.Text), txtNapomena.Text, txtRazlog.Text, Convert.ToInt32(cboOdobrio.SelectedValue), Convert.ToInt32(cbostatusGOdmora.SelectedValue), Convert.ToDateTime(dtpDatumZahteva.Value), Convert.ToDateTime(dtpDatumPovratka.Value), poslatMail, poslatoResenje, 1);
                 RefreshDataGrid1();
             }
+        }
+
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            frmPreostaliOdmor frm = new frmPreostaliOdmor();
+            frm.Show();
         }
 
         private void button3_Click(object sender, EventArgs e)

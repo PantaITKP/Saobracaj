@@ -915,6 +915,12 @@
     <Compile Include="Dokumenta\frmPrekovremeniRad.Designer.cs">
       <DependentUpon>frmPrekovremeniRad.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmPreostaliOdmor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPreostaliOdmor.Designer.cs">
+      <DependentUpon>frmPreostaliOdmor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmPrijavaOdjava.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2019,6 +2025,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPrekovremeniRad.resx">
       <DependentUpon>frmPrekovremeniRad.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPreostaliOdmor.resx">
+      <DependentUpon>frmPreostaliOdmor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPrijavaOdjava.resx">
       <DependentUpon>frmPrijavaOdjava.cs</DependentUpon>
