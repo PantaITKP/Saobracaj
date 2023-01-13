@@ -78,6 +78,14 @@ namespace Saobracaj.Dokumenta
             cbo_RM.DisplayMember = "DmNaziv";
             cbo_RM.ValueMember = "DmSifra";
 
+            var query4 = "Select distinct Delavci.DeOdobrava,(Rtrim(i.DeIme) + ' ' + RTrim(i.DePriimek)) as Radnik " +
+                "From Delavci inner join Delavci as i on Delavci.DeOdobrava=i.DeSifra";
+            SqlDataAdapter da4 = new SqlDataAdapter(query4, conn);
+            DataSet ds4 = new DataSet();
+            da4.Fill(ds4);
+            cbo_Nadredjeni.DataSource = ds4.Tables[0];
+            cbo_Nadredjeni.DisplayMember = "Radnik";
+            cbo_Nadredjeni.ValueMember = "Delavci.DeOdobrava";
         }
 
         private void btn_rm_Click(object sender, EventArgs e)
@@ -176,6 +184,62 @@ namespace Saobracaj.Dokumenta
 "inner join Delavci i on i.DeSifra = DoSifDe " +
 "inner join Delavci o on o.DeSifra = Odobrio " +
 "inner join DelovnaMesta on i.DeSifDelMes = DelovnaMesta.DmSifra Where DoLeto=" + Convert.ToInt32(cbo_Godina.SelectedValue.ToString()) + " and DmSifra="+ Convert.ToInt32(cbo_RM.SelectedValue.ToString())+") as A " +
+"group by A.Godina  , A.Radnik";
+
+            SqlConnection conn = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, conn);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            dataGridView1.Columns[0].Width = 60;
+            dataGridView1.Columns[1].Width = 60;
+            dataGridView1.Columns[2].Width = 60;
+            dataGridView1.Columns[3].Width = 60;
+            dataGridView1.Columns[4].Width = 170;
+        }
+
+        private void btn_odobrava_Click(object sender, EventArgs e)
+        {
+            var select = "select Min(DoSkupaj) as Ukupno,Sum(Ukupno) as Iskoristio,Min(DoSkupaj)-Sum(Ukupno) as Preostalo, A.Godina, A.Radnik " +
+"from( " +
+"Select DopustStavke.ID as StavkaID, Doskupaj, DoLeto as Godina, DoSifDe as SifraRadnik, (Rtrim(i.DeIme) + ' ' + RTrim(i.DePriimek)) as Radnik, " +
+"VremeOd, VremeDo, Ukupno, Napomena, Razlog, StatusGodmora, Odobrio as SifraOdobrio, " +
+"(Rtrim(o.DeIme) + ' ' + RTrim(o.DePriimek)) as Odobrio, DatumZahteva, DatumPovratka, DmSifra, DmNaziv as RadnoMest " +
+"from DopustStavke " +
+"inner join Dopust on Dopust.DoStZapisa = DopustStavke.IdNadredjena " +
+"inner join Delavci i on i.DeSifra = DoSifDe " +
+"inner join Delavci o on o.DeSifra = Odobrio " +
+"inner join DelovnaMesta on i.DeSifDelMes = DelovnaMesta.DmSifra Where i.DeOdobrava=" + Convert.ToInt32(cbo_Nadredjeni.SelectedValue.ToString()) + ") as A " +
+"group by A.Godina  , A.Radnik";
+
+            SqlConnection conn = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, conn);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            dataGridView1.Columns[0].Width = 60;
+            dataGridView1.Columns[1].Width = 60;
+            dataGridView1.Columns[2].Width = 60;
+            dataGridView1.Columns[3].Width = 60;
+            dataGridView1.Columns[4].Width = 170;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var select = "select Min(DoSkupaj) as Ukupno,Sum(Ukupno) as Iskoristio,Min(DoSkupaj)-Sum(Ukupno) as Preostalo, A.Godina, A.Radnik " +
+"from( " +
+"Select DopustStavke.ID as StavkaID, Doskupaj, DoLeto as Godina, DoSifDe as SifraRadnik, (Rtrim(i.DeIme) + ' ' + RTrim(i.DePriimek)) as Radnik, " +
+"VremeOd, VremeDo, Ukupno, Napomena, Razlog, StatusGodmora, Odobrio as SifraOdobrio, " +
+"(Rtrim(o.DeIme) + ' ' + RTrim(o.DePriimek)) as Odobrio, DatumZahteva, DatumPovratka, DmSifra, DmNaziv as RadnoMest " +
+"from DopustStavke " +
+"inner join Dopust on Dopust.DoStZapisa = DopustStavke.IdNadredjena " +
+"inner join Delavci i on i.DeSifra = DoSifDe " +
+"inner join Delavci o on o.DeSifra = Odobrio " +
+"inner join DelovnaMesta on i.DeSifDelMes = DelovnaMesta.DmSifra Where DoLeto=" + Convert.ToInt32(cbo_Godina.SelectedValue.ToString()) + " and i.DeOdobrava=" + Convert.ToInt32(cbo_Nadredjeni.SelectedValue.ToString()) + ") as A " +
 "group by A.Godina  , A.Radnik";
 
             SqlConnection conn = new SqlConnection(s_connection);
