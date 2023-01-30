@@ -40,6 +40,8 @@
             this.button2 = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.txt_CC = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // txtFrom
@@ -82,7 +84,7 @@
             // 
             // txtTema
             // 
-            this.txtTema.Location = new System.Drawing.Point(68, 156);
+            this.txtTema.Location = new System.Drawing.Point(68, 217);
             this.txtTema.Margin = new System.Windows.Forms.Padding(4);
             this.txtTema.Name = "txtTema";
             this.txtTema.Size = new System.Drawing.Size(399, 22);
@@ -91,7 +93,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(13, 156);
+            this.label3.Location = new System.Drawing.Point(13, 217);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(48, 17);
@@ -100,7 +102,7 @@
             // 
             // txtBody
             // 
-            this.txtBody.Location = new System.Drawing.Point(68, 210);
+            this.txtBody.Location = new System.Drawing.Point(68, 271);
             this.txtBody.Margin = new System.Windows.Forms.Padding(4);
             this.txtBody.Multiline = true;
             this.txtBody.Name = "txtBody";
@@ -110,7 +112,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(13, 210);
+            this.label4.Location = new System.Drawing.Point(13, 271);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(47, 17);
@@ -119,7 +121,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(159, 401);
+            this.button2.Location = new System.Drawing.Point(159, 462);
             this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(148, 39);
@@ -148,16 +150,37 @@
             this.label5.TabIndex = 4;
             this.label5.Text = "Najava BROJ:";
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(13, 157);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(38, 21);
+            this.label7.TabIndex = 6;
+            this.label7.Text = "CC:";
+            // 
+            // txt_CC
+            // 
+            this.txt_CC.Location = new System.Drawing.Point(68, 157);
+            this.txt_CC.Margin = new System.Windows.Forms.Padding(4);
+            this.txt_CC.Multiline = true;
+            this.txt_CC.Name = "txt_CC";
+            this.txt_CC.Size = new System.Drawing.Size(399, 42);
+            this.txt_CC.TabIndex = 7;
+            // 
             // frmSendEmailWithAttacment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(525, 471);
+            this.ClientSize = new System.Drawing.Size(525, 544);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txtBody);
             this.Controls.Add(this.txtTema);
             this.Controls.Add(this.label3);
+            this.Controls.Add(this.txt_CC);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.txtTo);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtFrom);
@@ -187,5 +210,7 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox txt_CC;
     }
 }
