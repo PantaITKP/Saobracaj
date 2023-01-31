@@ -35,6 +35,7 @@ namespace Saobracaj
         private void MailPrimaoca()
         {
             string mail = "";
+            string mailZa = "";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             string query = "select ID,Platilac,Partnerji.PaEMail From Najava inner join Partnerji on Najava.Platilac=Partnerji.PaSifra Where ID="+ID;
             SqlConnection conn = new SqlConnection(s_connection);
@@ -50,6 +51,18 @@ namespace Saobracaj
             }
             txtTo.Text = mail;
             conn.Close();
+            string query2 = "Select ID,Platilac,Partnerji.PaEmail From Najava inner join Partnerji on Najava.PrevoznikZa=Partnerji.PaSifra Where ID=" + ID;
+            conn.Open();
+            SqlCommand cmd2 = new SqlCommand(query2, conn);
+            SqlDataReader dr2 = cmd2.ExecuteReader();
+            while (dr2.Read())
+            {
+                mailZa = dr2[2].ToString().TrimEnd();
+                mailZa.Replace(";", ",");
+            }
+            txt_CC.Text = mailZa;
+            conn.Close();
+
         }
         private void frmSendEmailWithAttacment_Load(object sender, EventArgs e)
         {
@@ -79,6 +92,7 @@ namespace Saobracaj
                     string[] file = dialog.FileNames;
                     string cuvaj = "disp@kprevoz.co.rs";
                     mailMessage = new MailMessage(txtFrom.Text.ToString(), txtTo.Text.ToString());
+                    mailMessage.CC.Add(txt_CC.Text.ToString().TrimEnd());
                     mailMessage.Subject = txtTema.Text;
 
                     var select = "SELECT Najava.ID as ID, Trase.Voz as Voz, Najava.Posiljalac as Posiljalac, Najava.Prevoznik as Prevoznik, Najava.Otpravna as Otpravna, " +
@@ -185,6 +199,7 @@ namespace Saobracaj
                 //string[] file = dialog.FileNames;
                 string cuvaj = "disp@kprevoz.co.rs";
                 mailMessage = new MailMessage(txtFrom.Text.ToString(), txtTo.Text.ToString());
+                mailMessage.CC.Add(txt_CC.Text.ToString().TrimEnd());
                 mailMessage.Subject = txtTema.Text;
 
                 var select = "SELECT Najava.ID as ID, Trase.Voz as Voz, Najava.Posiljalac as Posiljalac, Najava.Prevoznik as Prevoznik, Najava.Otpravna as Otpravna, " +
