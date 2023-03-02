@@ -1897,6 +1897,7 @@ namespace Saobracaj
             this.toolStripButton106,
             this.toolStripButton107});
             this.toolStripEx31.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
+
             this.toolStripEx31.Location = new System.Drawing.Point(128, 1);
             this.toolStripEx31.Name = "toolStripEx31";
             this.toolStripEx31.Office12Mode = false;
@@ -2065,6 +2066,7 @@ namespace Saobracaj
             this.toolStripEx12.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx12.Image = null;
             this.toolStripEx12.ImageScalingSize = new System.Drawing.Size(20, 20);
+
             this.toolStripEx12.Location = new System.Drawing.Point(107, 1);
             this.toolStripEx12.Name = "toolStripEx12";
             this.toolStripEx12.Office12Mode = false;
@@ -2082,6 +2084,7 @@ namespace Saobracaj
             this.toolStripEx13.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx13.Image = null;
             this.toolStripEx13.ImageScalingSize = new System.Drawing.Size(20, 20);
+
             this.toolStripEx13.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton37,
             this.toolStripButton38});
@@ -2122,6 +2125,7 @@ namespace Saobracaj
             this.toolStripEx33.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx33.Image = null;
             this.toolStripEx33.ImageScalingSize = new System.Drawing.Size(20, 20);
+
             this.toolStripEx33.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton117,
             this.toolStripButton118});
