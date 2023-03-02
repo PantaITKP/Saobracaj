@@ -174,6 +174,56 @@ namespace Saobracaj.Sifarnici
 
         }
 
+        private void RefreshDataGridSva()
+        {
+            var select = "";
+            select = "select  SmSifra, SmNaziv, SmOpis, Password, StatusLokomotive, Dizel, SmPogDela, Lokomotiva, Vozilo from Mesta   ";
+
+            //  "  where  Aktivnosti.Masinovodja = 1 and Zaposleni = " + Convert.ToInt32(cboZaposleni.SelectedValue) + " order by Aktivnosti.ID desc";
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView2.ReadOnly = true;
+            dataGridView2.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView2.Columns[0];
+            dataGridView2.Columns[0].HeaderText = "Lok";
+            dataGridView2.Columns[0].Width = 80;
+
+            DataGridViewColumn column1 = dataGridView2.Columns[1];
+            dataGridView2.Columns[1].HeaderText = "Lok naz";
+            dataGridView2.Columns[1].Width = 100;
+
+            DataGridViewColumn column2 = dataGridView2.Columns[2];
+            dataGridView2.Columns[2].HeaderText = "Lok opis";
+            dataGridView2.Columns[2].Width = 150;
+
+            DataGridViewColumn column3 = dataGridView2.Columns[3];
+            dataGridView2.Columns[3].HeaderText = "Lozinka";
+            dataGridView2.Columns[3].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView2.Columns[4];
+            dataGridView2.Columns[4].HeaderText = "Aktivna";
+            dataGridView2.Columns[4].Width = 60;
+
+            DataGridViewColumn column5 = dataGridView2.Columns[5];
+            dataGridView2.Columns[5].HeaderText = "Dizel";
+            dataGridView2.Columns[5].Width = 80;
+
+            DataGridViewColumn column6 = dataGridView2.Columns[6];
+            dataGridView2.Columns[6].HeaderText = "Masa";
+            dataGridView2.Columns[6].Width = 80;
+
+
+        }
+
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
         {
             try
@@ -255,6 +305,121 @@ namespace Saobracaj.Sifarnici
                 lok.Show();
             }
             
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            RefreshDataGridSva();
+        }
+
+        private void dataGridView2_SelectionChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                foreach (DataGridViewRow row in dataGridView2.Rows)
+                {
+                    if (row.Selected)
+                    {
+                        txtLokomotiva.Text = row.Cells[0].Value.ToString();
+                        txtPassword.Text = row.Cells[3].Value.ToString();
+                        if (row.Cells[4].Value.ToString() == "1")
+                        {
+                            chkAktivna.Checked = true;
+                        }
+                        else
+                        {
+                            chkAktivna.Checked = false;
+                        }
+                        if (row.Cells[5].Value.ToString() == "1")
+                        {
+                            chkDizel.Checked = true;
+                        }
+                        else
+                        {
+                            chkDizel.Checked = false;
+                        }
+                        if (row.Cells[7].Value.ToString() == "1")
+                        {
+                            cboLokomotiva.Checked = true;
+                        }
+                        else
+                        {
+                            cboLokomotiva.Checked = false;
+                        }
+
+                        if (row.Cells[7].Value.ToString() == "1")
+                        {
+                            cboVozilo.Checked = true;
+                        }
+                        else
+                        {
+                            cboVozilo.Checked = false;
+                        }
+                        txtMasa.Value = Convert.ToDecimal(row.Cells[5].Value.ToString());
+
+
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspela selekcija stavki");
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            int Aktivna = 0;
+            int Dizel = 0;
+            int Lokomotiva = 0;
+            int Auto = 0;
+            if (chkAktivna.Checked == true)
+            {
+                Aktivna = 1;
+            }
+
+            if (cboLokomotiva.Checked == true)
+            {
+                Lokomotiva= 1;
+            }
+
+            if (chkDizel.Checked == true)
+            {
+                Dizel = 1;
+            }
+            if (cboVozilo.Checked == true)
+            {
+                Auto = 1;
+            }
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            try
+            {
+                
+             
+                SqlCommand cmd;
+                cmd = new SqlCommand("update Mesta set Lokomotiva=@a,Password=@b, Dizel =@c,Vozilo =@d  where SmSifra= '" + txtLokomotiva.Text +"'" , c);
+                cmd.Parameters.AddWithValue("@a", Lokomotiva);
+                cmd.Parameters.AddWithValue("@b", txtPassword.Text);
+                cmd.Parameters.AddWithValue("@c", Dizel);
+                cmd.Parameters.AddWithValue("@d", Auto);
+                c.Open();
+                int a = cmd.ExecuteNonQuery();
+                if (a > 0)
+                {
+                    MessageBox.Show("Podaci promenjeni");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                c.Close();
+                RefreshDataGridSva();
+            }
         }
     }
 }

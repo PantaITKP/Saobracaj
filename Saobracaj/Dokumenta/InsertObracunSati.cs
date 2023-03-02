@@ -1490,7 +1490,7 @@ Minimalna bruto zarada
             }
         }
 
-        public void UpdUkupno(double Kurs, double MesecnoSati, double PoreskaOlaksica)
+        public void UpdUkupno(double Kurs, double MesecnoSati, double PoreskaOlaksica, double Minimalac)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -1520,6 +1520,13 @@ Minimalna bruto zarada
             parameter3.Direction = ParameterDirection.Input;
             parameter3.Value = PoreskaOlaksica;
             myCommand.Parameters.Add(parameter3);
+
+            SqlParameter parameter4 = new SqlParameter();
+            parameter4.ParameterName = "@Minimalac";
+            parameter4.SqlDbType = SqlDbType.Decimal;
+            parameter4.Direction = ParameterDirection.Input;
+            parameter4.Value = Minimalac;
+            myCommand.Parameters.Add(parameter4);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
@@ -1730,7 +1737,7 @@ Minimalna bruto zarada
         }
 
 
-        public void DodatnaObrada(DateTime VremeOd, DateTime VremeDo, double MesecnoSati)
+        public void DodatnaObrada(DateTime VremeOd, DateTime VremeDo, double MesecnoSati, double Minimalac)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -1760,6 +1767,13 @@ Minimalna bruto zarada
             parameter3.Direction = ParameterDirection.Input;
             parameter3.Value = MesecnoSati;
             myCommand.Parameters.Add(parameter3);
+
+            SqlParameter parameter4 = new SqlParameter();
+            parameter4.ParameterName = "@Minimalac";
+            parameter4.SqlDbType = SqlDbType.Decimal;
+            parameter4.Direction = ParameterDirection.Input;
+            parameter4.Value = Minimalac;
+            myCommand.Parameters.Add(parameter4);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
@@ -2368,6 +2382,95 @@ Minimalna bruto zarada
             catch (SqlException)
             {
                 throw new Exception("Neuspešan brisanje obracuna u Bazu");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Nije uspeo ", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+
+
+            }
+        }
+
+
+        public void UpdObracunSve(DateTime VremeOd, DateTime VremeDo, double kurs, double FondSati, double Minimalac)
+        {
+
+
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "UpdateObracunSve";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@DatumOd";
+            parameter1.SqlDbType = SqlDbType.DateTime;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = VremeOd;
+            myCommand.Parameters.Add(parameter1);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@DatumDo";
+            parameter2.SqlDbType = SqlDbType.DateTime;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = VremeDo;
+            myCommand.Parameters.Add(parameter2);
+
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@kurs";
+            parameter3.SqlDbType = SqlDbType.Decimal;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = kurs;
+            myCommand.Parameters.Add(parameter3);
+
+
+            SqlParameter parameter4 = new SqlParameter();
+            parameter4.ParameterName = "@FondSati";
+            parameter4.SqlDbType = SqlDbType.Decimal;
+            parameter4.Direction = ParameterDirection.Input;
+            parameter4.Value = FondSati;
+            myCommand.Parameters.Add(parameter4);
+
+            SqlParameter parameter5 = new SqlParameter();
+            parameter5.ParameterName = "@Minimalac";
+            parameter5.SqlDbType = SqlDbType.Decimal;
+            parameter5.Direction = ParameterDirection.Input;
+            parameter5.Value = Minimalac;
+            myCommand.Parameters.Add(parameter5);
+
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešan upis obracuna u Bazu");
             }
 
             finally

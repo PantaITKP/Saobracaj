@@ -90,6 +90,14 @@
             this.label13 = new System.Windows.Forms.Label();
             this.txtProsecnaCena100 = new System.Windows.Forms.NumericUpDown();
             this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.nmUkupno12 = new System.Windows.Forms.NumericUpDown();
+            this.label16 = new System.Windows.Forms.Label();
+            this.nmProsla = new System.Windows.Forms.NumericUpDown();
+            this.metroButton7 = new MetroFramework.Controls.MetroButton();
+            this.nmStazRanije = new System.Windows.Forms.NumericUpDown();
+            this.label17 = new System.Windows.Forms.Label();
+            this.label19 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalna)).BeginInit();
@@ -105,6 +113,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmRadnikFS)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena100)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmUkupno12)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmProsla)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmStazRanije)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -693,7 +704,6 @@
             // 
             // nmMesecniFS
             // 
-            this.nmMesecniFS.DecimalPlaces = 2;
             this.nmMesecniFS.Location = new System.Drawing.Point(127, 27);
             this.nmMesecniFS.Margin = new System.Windows.Forms.Padding(4);
             this.nmMesecniFS.Maximum = new decimal(new int[] {
@@ -727,7 +737,7 @@
             this.groupBox1.Controls.Add(this.nmMesecniFS);
             this.groupBox1.Location = new System.Drawing.Point(816, 214);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(475, 166);
+            this.groupBox1.Size = new System.Drawing.Size(475, 113);
             this.groupBox1.TabIndex = 172;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Fond sati";
@@ -756,7 +766,6 @@
             // 
             // nmRadnikFS
             // 
-            this.nmRadnikFS.DecimalPlaces = 2;
             this.nmRadnikFS.Location = new System.Drawing.Point(127, 62);
             this.nmRadnikFS.Margin = new System.Windows.Forms.Padding(4);
             this.nmRadnikFS.Maximum = new decimal(new int[] {
@@ -832,11 +841,117 @@
             this.label14.TabIndex = 175;
             this.label14.Text = "Prosečna cena 100:";
             // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.ForeColor = System.Drawing.Color.Navy;
+            this.label15.Location = new System.Drawing.Point(822, 335);
+            this.label15.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(155, 17);
+            this.label15.TabIndex = 177;
+            this.label15.Text = "Ukupno sati 12 meseci:";
+            // 
+            // nmUkupno12
+            // 
+            this.nmUkupno12.Location = new System.Drawing.Point(985, 333);
+            this.nmUkupno12.Margin = new System.Windows.Forms.Padding(4);
+            this.nmUkupno12.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.nmUkupno12.Name = "nmUkupno12";
+            this.nmUkupno12.Size = new System.Drawing.Size(113, 22);
+            this.nmUkupno12.TabIndex = 178;
+            this.nmUkupno12.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.ForeColor = System.Drawing.Color.Navy;
+            this.label16.Location = new System.Drawing.Point(805, 363);
+            this.label16.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(175, 17);
+            this.label16.TabIndex = 179;
+            this.label16.Text = "Broj meseci prosla godina:";
+            // 
+            // nmProsla
+            // 
+            this.nmProsla.Location = new System.Drawing.Point(985, 363);
+            this.nmProsla.Margin = new System.Windows.Forms.Padding(4);
+            this.nmProsla.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.nmProsla.Name = "nmProsla";
+            this.nmProsla.Size = new System.Drawing.Size(113, 22);
+            this.nmProsla.TabIndex = 180;
+            this.nmProsla.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // metroButton7
+            // 
+            this.metroButton7.Location = new System.Drawing.Point(1106, 357);
+            this.metroButton7.Margin = new System.Windows.Forms.Padding(4);
+            this.metroButton7.Name = "metroButton7";
+            this.metroButton7.Size = new System.Drawing.Size(164, 28);
+            this.metroButton7.TabIndex = 181;
+            this.metroButton7.Text = "Obračunaj proseke";
+            this.metroButton7.UseSelectable = true;
+            this.metroButton7.Click += new System.EventHandler(this.metroButton7_Click);
+            // 
+            // nmStazRanije
+            // 
+            this.nmStazRanije.DecimalPlaces = 2;
+            this.nmStazRanije.Location = new System.Drawing.Point(489, 370);
+            this.nmStazRanije.Margin = new System.Windows.Forms.Padding(4);
+            this.nmStazRanije.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.nmStazRanije.Name = "nmStazRanije";
+            this.nmStazRanije.Size = new System.Drawing.Size(133, 22);
+            this.nmStazRanije.TabIndex = 183;
+            this.nmStazRanije.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.ForeColor = System.Drawing.Color.Red;
+            this.label17.Location = new System.Drawing.Point(353, 370);
+            this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(114, 17);
+            this.label17.TabIndex = 182;
+            this.label17.Text = "Radni staž ranije";
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.ForeColor = System.Drawing.Color.Red;
+            this.label19.Location = new System.Drawing.Point(630, 372);
+            this.label19.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(51, 17);
+            this.label19.TabIndex = 184;
+            this.label19.Text = "godina";
+            // 
             // frmOsnovnaZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1296, 519);
+            this.Controls.Add(this.label19);
+            this.Controls.Add(this.nmStazRanije);
+            this.Controls.Add(this.label17);
+            this.Controls.Add(this.metroButton7);
+            this.Controls.Add(this.label16);
+            this.Controls.Add(this.nmProsla);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.nmUkupno12);
             this.Controls.Add(this.txtProsecnaCena100);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.txtProsecnaCena);
@@ -901,6 +1016,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmRadnikFS)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtProsecnaCena100)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmUkupno12)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmProsla)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmStazRanije)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -969,5 +1087,13 @@
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.NumericUpDown txtProsecnaCena100;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.NumericUpDown nmUkupno12;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.NumericUpDown nmProsla;
+        private MetroFramework.Controls.MetroButton metroButton7;
+        private System.Windows.Forms.NumericUpDown nmStazRanije;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Label label19;
     }
 }

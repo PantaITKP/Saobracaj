@@ -158,7 +158,7 @@ namespace Saobracaj.Dokumenta
             DateTime DO = dtpVremeDo.Value;
             TimeSpan span = DO.Subtract(OD);
 
-            int ukupno = Convert.ToInt32(span.Hours);
+            int ukupno = Convert.ToInt32(span.TotalHours);
             txtUkupno.Text = ukupno.ToString();
 
             if (status == true)

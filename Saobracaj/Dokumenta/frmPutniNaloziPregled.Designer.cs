@@ -51,7 +51,7 @@
             // btnPretrazi
             // 
             this.btnPretrazi.Location = new System.Drawing.Point(16, 15);
-            this.btnPretrazi.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnPretrazi.Margin = new System.Windows.Forms.Padding(4);
             this.btnPretrazi.Name = "btnPretrazi";
             this.btnPretrazi.Size = new System.Drawing.Size(189, 28);
             this.btnPretrazi.TabIndex = 205;
@@ -68,7 +68,7 @@
             this.dataGridView1.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(15, 176);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
             this.dataGridView1.Size = new System.Drawing.Size(1180, 289);
@@ -77,7 +77,7 @@
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(867, 58);
-            this.button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button1.Margin = new System.Windows.Forms.Padding(4);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(259, 28);
             this.button1.TabIndex = 213;
@@ -89,7 +89,7 @@
             // 
             this.chkLokomotiva.AutoSize = true;
             this.chkLokomotiva.Location = new System.Drawing.Point(227, 20);
-            this.chkLokomotiva.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkLokomotiva.Margin = new System.Windows.Forms.Padding(4);
             this.chkLokomotiva.Name = "chkLokomotiva";
             this.chkLokomotiva.Size = new System.Drawing.Size(102, 21);
             this.chkLokomotiva.TabIndex = 214;
@@ -109,7 +109,7 @@
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(15, 58);
-            this.button2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(189, 28);
             this.button2.TabIndex = 217;
@@ -120,7 +120,7 @@
             // button3
             // 
             this.button3.Location = new System.Drawing.Point(227, 58);
-            this.button3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button3.Margin = new System.Windows.Forms.Padding(4);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(189, 28);
             this.button3.TabIndex = 218;
@@ -131,7 +131,7 @@
             // button4
             // 
             this.button4.Location = new System.Drawing.Point(439, 58);
-            this.button4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button4.Margin = new System.Windows.Forms.Padding(4);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(189, 28);
             this.button4.TabIndex = 219;
@@ -142,7 +142,7 @@
             // button5
             // 
             this.button5.Location = new System.Drawing.Point(636, 58);
-            this.button5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button5.Margin = new System.Windows.Forms.Padding(4);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(189, 28);
             this.button5.TabIndex = 220;
@@ -153,7 +153,7 @@
             // txtMestoTroska
             // 
             this.txtMestoTroska.Location = new System.Drawing.Point(551, 15);
-            this.txtMestoTroska.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtMestoTroska.Margin = new System.Windows.Forms.Padding(4);
             this.txtMestoTroska.Name = "txtMestoTroska";
             this.txtMestoTroska.Size = new System.Drawing.Size(164, 22);
             this.txtMestoTroska.TabIndex = 221;
@@ -182,7 +182,7 @@
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(835, 15);
-            this.textBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(4);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(60, 22);
             this.textBox1.TabIndex = 223;
@@ -201,17 +201,17 @@
             // textBox2
             // 
             this.textBox2.Location = new System.Drawing.Point(1004, 15);
-            this.textBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox2.Margin = new System.Windows.Forms.Padding(4);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(60, 22);
             this.textBox2.TabIndex = 225;
-            this.textBox2.Text = "1308";
+            this.textBox2.Text = "1308.5";
             this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
             // button6
             // 
             this.button6.Location = new System.Drawing.Point(867, 94);
-            this.button6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button6.Margin = new System.Windows.Forms.Padding(4);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(259, 28);
             this.button6.TabIndex = 227;
@@ -222,7 +222,7 @@
             // button7
             // 
             this.button7.Location = new System.Drawing.Point(15, 94);
-            this.button7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button7.Margin = new System.Windows.Forms.Padding(4);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(189, 28);
             this.button7.TabIndex = 228;
@@ -252,7 +252,7 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnPretrazi);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmPutniNaloziPregled";
             this.Text = "Prenesi u Putni Nalog - Ne kreirani ";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();

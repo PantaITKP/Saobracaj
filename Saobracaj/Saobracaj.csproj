@@ -1119,6 +1119,7 @@
     <Compile Include="Dokumenta\InsertNajavaLog.cs" />
     <Compile Include="Dokumenta\InsertNajavaPrevoznik.cs" />
     <Compile Include="Dokumenta\InsertObracunSati.cs" />
+    <Compile Include="Dokumenta\InsertObracunSatiFiksni.cs" />
     <Compile Include="Dokumenta\InsertOsnovnaZarada.cs" />
     <Compile Include="Dokumenta\InsertOsobljeLok.cs" />
     <Compile Include="Dokumenta\InsertPotNal.cs" />

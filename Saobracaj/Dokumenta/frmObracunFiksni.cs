@@ -122,15 +122,7 @@ namespace Saobracaj.Dokumenta
         private void btnPostaviPrviDeo_Click(object sender, EventArgs e)
         {
 
-           
-            InsertObracunSati ins = new InsertObracunSati();
-
-            ins.DelObracunfiksni();
-            ins.InsObracunFiksni(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Text), Convert.ToDouble(txtFondCasova.Text), Convert.ToDouble(txtPraznicniCasovi.Text), Convert.ToDouble(txtMinimalnaCenaNeto.Text), Convert.ToDouble(txtMinimalnaZaradaNeto.Text), Convert.ToDouble(txtPoreskoOslobodjenje.Text), Convert.ToDouble(txtMinimalnaBrutoZarada.Text));
-        
-        
-            RefreshDataGrid();
-            MessageBox.Show("Gotovo, to ti je završeno");
+ 
            
 
 
@@ -141,15 +133,19 @@ namespace Saobracaj.Dokumenta
 
         private void RefreshDataGrid()
         {
-            var select = " SELECT [ID]       ,[Zaposleni]      ,[BrutoMinimalna] "+
-            " ,[Osnovna]      ,[BrutoZarada]      ,[BrutoCenaSata]      ,[Koeficijent] "+
-            " ,[MesecniFond]      ,[MesecniFondPraznicnih]      ,[RedovanRadSati]      ,[PoUcinkuSati] " +
-            " ,[RedovanRadIznos]      ,[GodisnjiOdmorSati]      ,[GodisnjiOdmorIznos]      ,[Bolovanje100Sati] " +
-            " ,[Bolovanje100Iznos]      ,[Bolovanje65Sati]      ,[Bolovanje65Iznos]      ,[PrekovremeniSati] " +
-            " ,[PrekovremeniCenaSata]      ,[PrekovremeniIznos]      ,[RadPrazniko1mSati]      ,[RadPrazniko1CenaSata] " +
-            " ,[RadPrazniko1Iznos]      ,[RadPrazniko2mSati]      ,[RadPrazniko2CenaSata]      ,[RadPrazniko2Iznos] " +
-            " ,[RegresNeto]      ,[TopliObrokNeto]      ,[RegresBruto]      ,[TopliObrokBruto]      ,[PrevozNeto] " +
-            " FROM [Perftech_Beograd].[dbo].[ObracunZaposleniFiksni] ";
+            var select = " SELECT [ID]       ,PrezimeIme, [MesecniFondSati] " +
+     " ,[GoSati]      ,[Bol65Sati] " +
+     "  ,[Bol100Sati]      ,[FondPraznik] " +
+     "  ,[PraznikSati]      ,[PrekovremenoSati] " +
+     "  ,[NaknadaPraznik]      ,[RedovanRadSati] " +
+     "  ,[RadPoUcinku]      ,[CenaRada] " +
+     "  ,ObracunZaposleniFiksni.[Osnovna]      ,ObracunZaposleniFiksni.[ProsecnaCena] " +
+     "  ,[GOIznos]      ,[Bol65Iznos] " +
+     "  ,[Bol100Iznos]      ,[Praznik110Iznos] " +
+     "  ,[Praznik100Iznos],( PrekovremenoSati * 0.26 * CenaRada) as PrekovremeniIznos     ,[RedovanRadIznos] " +
+     "  ,[RadPoUcinkuIznos]      ,[GodinaStaza] " +
+     "  ,[MinuliRadIznos], Prevoz  FROM [ObracunZaposleniFiksni]" +
+     "inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID";
             
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -166,25 +162,64 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        private void SatiNocni()
+        private void RefreshDataGridSamoFiksni()
         {
-            try
-            {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
-                {
-                    if (row.Cells[3].Value.ToString() == "1")
-                    {
-                        row.Cells[6].Value = ((Convert.ToInt32(txtBrojSati.Value) / 2)).ToString();
-                        // txtOpis.Text = row.Cells[1].Value.ToString();
-                    }
-                }
+            var select = " SELECT [ID]       ,PrezimeIme, [MesecniFondSati] " +
+     " ,[GoSati]      ,[Bol65Sati] " +
+     "  ,[Bol100Sati]      ,[FondPraznik] " +
+     "  ,[PraznikSati]      ,[PrekovremenoSati] " +
+     "  ,[NaknadaPraznik]      ,[RedovanRadSati] " +
+     "  ,[RadPoUcinku]      ,[CenaRada] " +
+     "  ,ObracunZaposleniFiksni.[Osnovna]      ,ObracunZaposleniFiksni.[ProsecnaCena] " +
+     "  ,[GOIznos]      ,[Bol65Iznos] " +
+     "  ,[Bol100Iznos]      ,[Praznik110Iznos] " +
+     "  ,[Praznik100Iznos],( PrekovremenoSati * 0.26 * CenaRada) as PrekovremeniIznos     ,[RedovanRadIznos] " +
+     "  ,[RadPoUcinkuIznos]      ,[GodinaStaza] " +
+     "  ,[MinuliRadIznos], Prevoz  FROM [ObracunZaposleniFiksni]" +
+     "inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID Where Zarada.Fiksna = 1";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = false;
+            dataGridView1.DataSource = ds.Tables[0];
 
 
-            }
-            catch
-            {
-                MessageBox.Show("Nije uspela selekcija stavki");
-            }
+
+        }
+
+        private void RefreshDataGridSamoVarijabilni()
+        {
+            var select = " SELECT [ID]       ,PrezimeIme, [MesecniFondSati] " +
+     " ,[GoSati]      ,[Bol65Sati] " +
+     "  ,[Bol100Sati]      ,[FondPraznik] " +
+     "  ,[PraznikSati]      ,[PrekovremenoSati] " +
+     "  ,[NaknadaPraznik]      ,[RedovanRadSati] " +
+     "  ,[RadPoUcinku]      ,[CenaRada] " +
+     "  ,ObracunZaposleniFiksni.[Osnovna]      ,ObracunZaposleniFiksni.[ProsecnaCena] " +
+     "  ,[GOIznos]      ,[Bol65Iznos] " +
+     "  ,[Bol100Iznos]      ,[Praznik110Iznos] " +
+     "  ,[Praznik100Iznos],( PrekovremenoSati * 0.26 * CenaRada) as PrekovremeniIznos     ,[RedovanRadIznos] " +
+     "  ,[RadPoUcinkuIznos]      ,[GodinaStaza] " +
+     "  ,[MinuliRadIznos], Prevoz  FROM [ObracunZaposleniFiksni]" +
+     "inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID Where Zarada.Fiksna = 0";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = false;
+            dataGridView1.DataSource = ds.Tables[0];
+
 
 
         }
@@ -197,6 +232,7 @@ namespace Saobracaj.Dokumenta
         {
             try
             {
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
                     var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -204,13 +240,16 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
 
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo.Text + "'", con);
+                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where RadPraznikom = 1 and ZaposleniID = " + row.Cells[0].Value +
+                        " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "'", con);
+
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
                     {
-                        row.Cells[7].Value = dr["UK"].ToString();
+                        ins.UpdPraznikSatiFiksni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
+
+                       // row.Cells[7].Value = dr["UK"].ToString();
                     }
                     con.Close();
                 }
@@ -259,6 +298,7 @@ namespace Saobracaj.Dokumenta
         {
             try
             {
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
                     var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -266,14 +306,14 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
 
-                   
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo.Text + "' and TipBolovanja = '65'", con);
+
+                    SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno) ,0) ) as integer) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
+                        " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "' and RTRIM(TipBolovanja) = '65'", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
                     {
-                        row.Cells[9].Value = dr["UK"].ToString();
+                        ins.UpdBolovanje65Fiksni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
                     }
                     con.Close();
                 }
@@ -291,6 +331,7 @@ namespace Saobracaj.Dokumenta
         {
             try
             {
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
                     var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -299,13 +340,13 @@ namespace Saobracaj.Dokumenta
                     con.Open();
 
 
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0) ) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
-                        " and Convert(nvarchar(10), DatumOd, 126) > '" + dtpVremeOd.Text + "' and Convert(nvarchar(10), DatumDo, 126) < '" + dtpVremeDo.Text + "' and TipBolovanja = '100'", con);
+                    SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0)) as integer) as UK from Bolovanje where ZaposleniID = " + row.Cells[0].Value +
+                          " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "' and RTRIM(TipBolovanja) = '100'", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
                     {
-                        row.Cells[10].Value = dr["UK"].ToString();
+                        ins.UpdBolovanje100Fiksni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
                     }
                     con.Close();
                 }
@@ -319,103 +360,98 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        private void RedovanRadSati()
-        {
-            //row.Cells[6].Value
-
-            try
-            {
-                foreach (DataGridViewRow row in dataGridView1.Rows)
-                {
-                    //input = input.Remove(input.IndexOf("/") + 1);
-                    int UKSati = Convert.ToInt32(txtBrojSati.Value);
-                    int OD1 = Convert.ToInt32(row.Cells[6].Value.ToString());
-                    string s2 = row.Cells[7].Value.ToString();
-                    s2 = s2.Remove(s2.IndexOf(","));
-                    int OD2 = Convert.ToInt32(s2);
-
-                    string s3 = row.Cells[8].Value.ToString();
-                    //s3 = s3.Remove(s3.IndexOf(","));
-                    int OD3 = Convert.ToInt32(s3);
-
-                    string s4 = row.Cells[9].Value.ToString();
-                    s4 = s4.Remove(s4.IndexOf(","));
-                    int OD4 = Convert.ToInt32(s4);
-
-                    string s5 = row.Cells[10].Value.ToString();
-                    s5 = s5.Remove(s5.IndexOf(","));
-                    int OD5 = Convert.ToInt32(s5);
-
-                    //int Oduzeti = Convert.ToInt32(row.Cells[6].Value.ToString()) + Convert.ToInt32(row.Cells[7].Value.ToString()) + Convert.ToInt32(row.Cells[8].Value.ToString()) + Convert.ToInt32(row.Cells[9].Value.ToString()) + Convert.ToInt32(row.Cells[10].Value.ToString());
-                    row.Cells[11].Value = (UKSati - (OD1 + OD2 + OD3+ OD4+OD5)).ToString();
-                    // Iyracun sati
-                    double Bol1 = OD5 * Convert.ToDouble(txtCenaSata.Value);
-                    double Bol2 = OD4 * Convert.ToDouble(txtCenaSata.Value) * 65 / 100;
-                    row.Cells[14].Value = (Bol1 + Bol2).ToString();
-                    row.Cells[15].Value = ((UKSati - (OD1 + OD2 + OD3 + OD4 + OD5)) * txtCenaSata.Value).ToString();
-
-                    double Noc = OD1 * Convert.ToDouble(txtCenaSata.Value) * 126 / 100;
-                    row.Cells[18].Value = Noc.ToString();//Iyracun iznosa
-
-                    double Praznik = OD2 * Convert.ToDouble(txtCenaSata.Value) * 110 / 100;
-                    row.Cells[19].Value = Praznik.ToString();//Iyracun iznosa
-
-                    //Smenski
-                    string s6 = row.Cells[15].Value.ToString();
-                    s6 = s6.Remove(s6.IndexOf(","));
-                    int OD6 = Convert.ToInt32(s6);
-                    double Smen = 0;
-                    if (row.Cells[12].Value.ToString() == "1")
-                    {
-                        Smen = Convert.ToDouble(row.Cells[15].Value.ToString()) * 26 / 100;
-                        row.Cells[20].Value = Smen.ToString();
-                    }
-                       
-                   
-                    
-                    //Terenski
-                    string s7 = row.Cells[12].Value.ToString();
-                   // s7 = s7.Remove(s7.IndexOf(","));
-                    int OD7 = Convert.ToInt32(s7);
-                    double Ter = 0;
-                    if (row.Cells[13].Value.ToString() == "1")
-                    {
-                        Ter = Convert.ToDouble(row.Cells[15].Value.ToString()) * 5 / 100;
-                        row.Cells[21].Value = Ter.ToString();
-                    }
-                  
-                    //Obracun stimulacije
-                    
-                    double Osnovna = Convert.ToDouble(row.Cells[2].Value); //osnovna
-                    double St1 = Convert.ToDouble(row.Cells[20].Value);
-                    double St2 = Convert.ToDouble(row.Cells[19].Value);
-                    double St3 = Convert.ToDouble(row.Cells[18].Value);
-                    double St4 = Convert.ToDouble(row.Cells[17].Value);
-                    double St5 = Convert.ToDouble(row.Cells[16].Value);
-                    double St6 = Convert.ToDouble(row.Cells[15].Value);
-                    double St7 = Convert.ToDouble(row.Cells[14].Value);
-                    double St8 = Convert.ToDouble(row.Cells[20].Value);
-                    double St9 = Convert.ToDouble(row.Cells[21].Value);
-                    double Stimulacija = Osnovna - (St1 + St2 + St3 + St4 + St5 + St6 + St7 + St8 + St9);
-                    row.Cells[22].Value = Stimulacija.ToString();
-                }
-
-            }
-            catch
-            {
-                MessageBox.Show("Nije uspelo iyracun Redovnog rada");
-            }
-
-        }
+     
         private void metroButton2_Click(object sender, EventArgs e)
         {
-        SatiNocni();
+    
         PovuciRadPraznikom();
         PovuciSateGodisnjiOdmor();
         PovuciBolovanje65();
         PovuciBolovanje100();
-        RedovanRadSati();
+      
         }
-            
+
+        private void PovuciPrekovremeni()
+        {
+            try
+            {
+              
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                    SqlConnection con = new SqlConnection(s_connection);
+
+                    con.Open();
+
+                    SqlCommand cmd = new SqlCommand("Select Cast((isnull(Sum(Ukupno),0)) as Int) as UK from PrekovremeniRad where ZaposleniID = " + row.Cells[0].Value +
+                        " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "' and RadPraznikom = 0", con);
+
+
+                    
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    while (dr.Read())
+                    {
+                        ins.UpdPrekovremeniFiksni(Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(dr["UK"].ToString()));
+                    }
+                    con.Close();
+                }
+
+
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspelo povlacenje rada praznikom");
+            }
+
+
+        }
+
+        private void btnIzracunaj_Click(object sender, EventArgs e)
+        {
+            if (txtPassword.Text != "iv4321")
+            {
+                return;
+
+            }
+            InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
+            ins.InsObracunFiksni();
+            ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+            RefreshDataGrid();
+            PovuciBolovanje65();
+            PovuciRadPraznikom();
+            PovuciBolovanje100();
+            PovuciPrekovremeni();
+            ins.UpdObracunFiksniSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtMinimalac.Value));
+            RefreshDataGrid();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            RefreshDataGrid();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (txtPassword.Text != "iv4321")
+            {
+                return;
+
+            }
+
+            RefreshDataGridSamoFiksni();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (txtPassword.Text != "iv4321")
+            {
+                return;
+
+            }
+
+            RefreshDataGridSamoVarijabilni();
+        }
     }
 }

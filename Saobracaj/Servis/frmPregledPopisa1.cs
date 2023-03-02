@@ -139,13 +139,15 @@ namespace Saobracaj.Servis
             " LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
             " VrstaPopisa.Naziv as VrstaPopisa  from(select MAX(LokomotivaPrijava.ID) as IDLokomotivaPrijava," +
             "  LokomotivaPrijava.Lokomotiva  from LokomotivaPrijava" +
-           " where LokomotivaPrijava.Smer = 0 " +
+            "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +
+           " where LokomotivaPrijava.Smer = 0 and Lokomotiva = '" + cboLokomotiva.SelectedValue + "'" + 
                                         "    group by LokomotivaPrijava.Lokomotiva) t1 " +
-                                         "   inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
-           " inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
-           " inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
-           " inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.VrstaPopisaID = LokomotivaPopis.VrstaPopisaID " +
-           " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.ID ";
+                                         "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+       "    inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava  " +
+      "    inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+      "     inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+   " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID ";
+          // "where T1.Lokomotiva = '" + cboLokomotiva.SelectedValue.ToString().Trim() + "' and LokomotiveVrstePopisa.Lokomotiva = '" + cboLokomotiva.SelectedValue.ToString().Trim() + "'";
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -204,9 +206,20 @@ namespace Saobracaj.Servis
 
         private void RefreshDataGrid500PoLokomotivi()
         {
-           
+            var select = " Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, " +
+ " LokomotivaPopis.Kolicina,  LokomotiveVrstePopisa.ReferentnaKolicina, LokomotivaPopis.Vreme,  LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
+ "   VrstaPopisa.Naziv as VrstaPopisa  from " +
+ "   (select LokomotivaPrijava.ID as IDLokomotivaPrijava, LokomotivaPrijava.Lokomotiva " +
+  "   from LokomotivaPrijava " +
+   "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +
+  "where LokomotivaPrijava.Smer = 0 group by LokomotivaPrijava.Lokomotiva, LokomotivaPrijava.ID) t1 " +
+ "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+  "       inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
+  "         inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+  "           inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+ " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID ";
 
-
+/*
             var select = "   Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, LokomotivaPopis.Kolicina, " +
             " LokomotiveVrstePopisa.ReferentnaKolicina, LokomotivaPopis.Vreme, " +
             " LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
@@ -214,14 +227,14 @@ namespace Saobracaj.Servis
             "  LokomotivaPrijava.Lokomotiva  from LokomotivaPrijava" +
            " where LokomotivaPrijava.Smer = 0 and Lokomotiva = '" + cboLokomotiva.SelectedValue + "'" +
                                         "     ) t1 " +
-                                         "   inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
-           " inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
-           " inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
-           " inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.VrstaPopisaID = LokomotivaPopis.VrstaPopisaID " +
-           " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID" +
-           " order by  t1.IDLokomotivaPrijava desc";
+                                        "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+       "    inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava  " +
+      "    inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+      "     inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+   " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID " +
+            " order by  t1.IDLokomotivaPrijava desc";
 
-
+*/
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -280,20 +293,35 @@ namespace Saobracaj.Servis
 
         private void RefreshDataGrid100NeslaganjaPoLokomotivi()
         {
+            /*
             var select = "  Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, LokomotivaPopis.Kolicina, " +
             " LokomotiveVrstePopisa.ReferentnaKolicina, LokomotivaPopis.Vreme, " +
             " LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
             " VrstaPopisa.Naziv as VrstaPopisa  from(select MAX(LokomotivaPrijava.ID) as IDLokomotivaPrijava," +
-            "  LokomotivaPrijava.Lokomotiva  from LokomotivaPrijava" +
+            "  LokomotivaPrijava.Lokomotiva  from LokomotivaPrijava 
+             "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +" +
            " where LokomotivaPrijava.Smer = 0 " +
                                         "    group by LokomotivaPrijava.Lokomotiva) t1 " +
-                                         "   inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
-           " inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
-           " inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
-           " inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.VrstaPopisaID = LokomotivaPopis.VrstaPopisaID " +
-           " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID " +
-                        " where LokomotivaPopis.Kolicina <> LokomotiveVrstePopisa.ReferentnaKolicina";
-
+                                         "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+       "    inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava  " +
+      "    inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+      "     inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+   " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID " +
+            " where LokomotivaPopis.Kolicina <> LokomotiveVrstePopisa.ReferentnaKolicina";
+            */
+            var select = " Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, " +
+  " LokomotivaPopis.Kolicina,  LokomotiveVrstePopisa.ReferentnaKolicina, LokomotivaPopis.Vreme,  LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
+  "   VrstaPopisa.Naziv as VrstaPopisa  from " +
+  "   (select LokomotivaPrijava.ID as IDLokomotivaPrijava, LokomotivaPrijava.Lokomotiva " +
+   "   from LokomotivaPrijava " +
+    "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +
+   " where LokomotivaPrijava.Smer = 0 group by LokomotivaPrijava.Lokomotiva, LokomotivaPrijava.ID) t1 " +
+  "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
+   "       inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
+   "         inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
+   "           inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
+  " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID " +
+  " where LokomotivaPopis.Kolicina <> LokomotiveVrstePopisa.ReferentnaKolicina ";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
