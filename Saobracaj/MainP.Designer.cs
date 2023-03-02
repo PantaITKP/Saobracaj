@@ -1897,8 +1897,15 @@ namespace Saobracaj
             this.toolStripButton106,
             this.toolStripButton107});
             this.toolStripEx31.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+>>>>>>> Test
             this.toolStripEx31.Location = new System.Drawing.Point(128, 1);
+=======
+            this.toolStripEx31.Location = new System.Drawing.Point(84, 1);
+>>>>>>> Test
             this.toolStripEx31.Name = "toolStripEx31";
             this.toolStripEx31.Office12Mode = false;
             this.toolStripEx31.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
@@ -2066,8 +2073,15 @@ namespace Saobracaj
             this.toolStripEx12.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx12.Image = null;
             this.toolStripEx12.ImageScalingSize = new System.Drawing.Size(20, 20);
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+>>>>>>> Test
             this.toolStripEx12.Location = new System.Drawing.Point(107, 1);
+=======
+            this.toolStripEx12.Location = new System.Drawing.Point(108, 1);
+>>>>>>> Test
             this.toolStripEx12.Name = "toolStripEx12";
             this.toolStripEx12.Office12Mode = false;
             this.toolStripEx12.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
@@ -2084,12 +2098,19 @@ namespace Saobracaj
             this.toolStripEx13.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx13.Image = null;
             this.toolStripEx13.ImageScalingSize = new System.Drawing.Size(20, 20);
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+>>>>>>> Test
             this.toolStripEx13.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton37,
             this.toolStripButton38});
             this.toolStripEx13.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Table;
             this.toolStripEx13.Location = new System.Drawing.Point(215, 1);
+=======
+            this.toolStripEx13.Location = new System.Drawing.Point(216, 1);
+>>>>>>> Test
             this.toolStripEx13.Name = "toolStripEx13";
             this.toolStripEx13.Office12Mode = false;
             this.toolStripEx13.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
@@ -2125,12 +2146,19 @@ namespace Saobracaj
             this.toolStripEx33.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStripEx33.Image = null;
             this.toolStripEx33.ImageScalingSize = new System.Drawing.Size(20, 20);
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+>>>>>>> Test
             this.toolStripEx33.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton117,
             this.toolStripButton118});
             this.toolStripEx33.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Table;
             this.toolStripEx33.Location = new System.Drawing.Point(335, 1);
+=======
+            this.toolStripEx33.Location = new System.Drawing.Point(324, 1);
+>>>>>>> Test
             this.toolStripEx33.Name = "toolStripEx33";
             this.toolStripEx33.Office12Mode = false;
             this.toolStripEx33.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
