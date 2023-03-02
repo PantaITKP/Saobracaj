@@ -619,7 +619,6 @@ namespace Saobracaj.Dokumenta
                     }
                     else
                     {
-                    
                     frmEvidencijaRada er = new frmEvidencijaRada(Convert.ToInt32(row.Cells[0].Value.ToString()), TekuciKorisnik);
                     er.Show();
                     }

@@ -43,10 +43,10 @@ namespace Saobracaj.Dokumenta
             IdGrupe();
             IdForme();
             PravoPristupa();
-
-            tsDelete.Enabled = false;
-            tsDelete.Visible = false;
+            //tsDelete.Enabled = false;
+            //tsDelete.Visible = false;
             cboGodina.SelectedValue = "2021";
+            ProveriKorisnika();
         }
         string niz = "";
         public static string code = "frmEvidencijaGodišnjihOdmora";
@@ -142,6 +142,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaGodišnjihOdmora(int Zaposleni, DateTime VremeOd, DateTime VremeDo, int Odobrio, string Napomena, int SlobodanDan, DateTime DatumZahteva)
         {
             InitializeComponent();
+            
             status = true;
             IzMobilneObrade = 1;
            
@@ -153,7 +154,21 @@ namespace Saobracaj.Dokumenta
             SlobodanDanM = SlobodanDan;
             DatumZahtevaM = DatumZahteva;
             cboGodina.SelectedValue = "2022";
-            tsDelete.Visible = false;
+            //tsDelete.Visible = false;
+            ProveriKorisnika();
+        }
+       private void ProveriKorisnika()
+        {
+            if (Kor.TrimEnd() == "admin")
+            {
+                tsDelete.Enabled = true;
+                tsDelete.Visible = true;
+            }
+            else
+            {
+                tsDelete.Enabled = false;
+                tsDelete.Visible = false;
+            }
         }
 
         private void cboZaposleni_SelectedIndexChanged(object sender, EventArgs e)
@@ -294,10 +309,12 @@ namespace Saobracaj.Dokumenta
                 VratiPodatkeUkupnoDana();
                 VratiPodatkeUkupnoKorisceno();
                 VratiSlobodneDane();
+                
                 // SlobodanDanM = SlobodanDan; Funkcionalnost
 
                 //Ovede postavljam vrdnosti
-                tsDelete.Visible = false;
+                //tsDelete.Visible = false;
+                ProveriKorisnika();
             }
         }
 
@@ -989,6 +1006,11 @@ order by RzStZapisa desc
         {
             frmPreostaliOdmor frm = new frmPreostaliOdmor();
             frm.Show();
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
 
         private void button3_Click(object sender, EventArgs e)
