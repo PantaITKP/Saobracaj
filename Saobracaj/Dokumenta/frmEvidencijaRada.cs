@@ -293,7 +293,7 @@ namespace Saobracaj.Dokumenta
 
         private void tsNew_Click(object sender, EventArgs e)
         {
-            /*
+           /*
             if (prvinovi == true)
             {
                 chkUnetaAktivnost.Checked = false;
@@ -307,7 +307,6 @@ namespace Saobracaj.Dokumenta
                 return;
             }
             */
-            EnableTextBoxes(this.Controls);
             status = true;
             txtSifra.Text = "";
             txtSifra.Enabled = false;
@@ -319,7 +318,6 @@ namespace Saobracaj.Dokumenta
             txtZarada.Text = "0";
             txtIzracun.Text = "0";
         }
-        int pomOutside;
 
         private void frmEvidencijaRada_Load(object sender, EventArgs e)
         {
@@ -425,32 +423,6 @@ namespace Saobracaj.Dokumenta
                     MessageBox.Show("Postoji zapis za koji je početak i kraj unutar zadatok datuma početka");
 
                 }
-                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-                SqlConnection con = new SqlConnection(s_connection);
-
-                con.Open();
-
-                SqlCommand cmd = new SqlCommand("select PoslatEmail from Aktivnosti Where ID="+txtSifra.Text, con);
-                SqlDataReader dr = cmd.ExecuteReader();
-                
-                while (dr.Read())
-                {
-                    pomOutside = Convert.ToInt32(dr[0].ToString());
-                }
-
-                con.Close();
-                con.Open();
-                SqlCommand cmd2 = new SqlCommand("Select PoslatEmail From AktivnostiArhiva Where ID=" + txtSifra.Text, con);
-                SqlDataReader dr2 = cmd2.ExecuteReader();
-                while (dr2.Read())
-                {
-                    pomOutside = Convert.ToInt32(dr[0].ToString());
-                }
-                con.Close();
-                if (pomOutside == 1)
-                {
-                    DisableTextBoxes(this.Controls);
-                }
             }
         }
 
@@ -488,43 +460,6 @@ namespace Saobracaj.Dokumenta
             }
 
             con.Close();
-        }
-        public void DisableTextBoxes(Control.ControlCollection ctrlCollection)
-        {
-            foreach(Control ctrl in ctrlCollection)
-            {
-                if(ctrl is TextBoxBase)
-                {
-                    ctrl.Enabled = false;
-                }
-                else
-                {
-                    DisableTextBoxes(ctrl.Controls);
-                    btnUbaciAktivnost.Enabled = false;
-                    btnUnesi.Enabled = false;
-                    button1.Enabled = false;
-                    button2.Enabled = false;
-                    chkPoslatMail.Enabled = false;
-                }
-            }
-        }
-        public void EnableTextBoxes(Control.ControlCollection ctrlCollection)
-        {
-            foreach (Control ctrl in ctrlCollection)
-            {
-                if (ctrl is TextBoxBase)
-                {
-                    ctrl.Enabled = true;
-                }
-                else
-                {
-                    EnableTextBoxes(ctrl.Controls);
-                    btnUbaciAktivnost.Enabled = true;
-                    btnUnesi.Enabled = true;
-                    button1.Enabled = true;
-                    button2.Enabled = true;
-                }
-            }
         }
 
         private void tsSave_Click(object sender, EventArgs e)
@@ -1074,31 +1009,31 @@ namespace Saobracaj.Dokumenta
             double pom = Convert.ToDouble(txtIzracun.Text);
             pom = pom + vrd;
             txtIzracun.Text = pom.ToString();
-            if ((pom < 21) & (Smena == 1))
+            if ((pom < 23.5) & (Smena == 1))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom < 21) & (Smena == 2))
+            else if ((pom < 23.5) & (Smena == 2))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom > 21) & (Smena == 1))
+            else if ((pom > 23.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 42) & (Smena == 2))
+            else if ((pom < 47) & (Smena == 2))
             {
-                double Razlika = 42 - pom;
+                double Razlika = 47 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "42";
+                txtZarada.Text = "47";
             }
-            else if ((pom > 42) & (Smena == 2))
+            else if ((pom > 47) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1238,31 +1173,31 @@ namespace Saobracaj.Dokumenta
                 RefreshDataGridPoAktivnostima();
 
             }
-            if ((pom < 21) & (Smena == 1))
+            if ((pom < 23.5) & (Smena == 1))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom < 21) & (Smena == 2))
+            else if ((pom < 23.5) & (Smena == 2))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom > 21) & (Smena == 1))
+            else if ((pom > 23.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 42) & (Smena == 2))
+            else if ((pom < 47) & (Smena == 2))
             {
-                double Razlika = 42 - pom;
+                double Razlika = 47 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "42";
+                txtZarada.Text = "47";
             }
-            else if ((pom > 42) & (Smena == 2))
+            else if ((pom > 47) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1348,31 +1283,31 @@ namespace Saobracaj.Dokumenta
             pom = pom + vrd;
             txtIzracun.Text = pom.ToString();
            
-            if ((pom < 21) & (Smena == 1))
+            if ((pom < 23.5) & (Smena == 1))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom < 21) & (Smena == 2))
+            else if ((pom < 23.5) & (Smena == 2))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom > 21) & (Smena == 1))
+            else if ((pom > 23.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 42) & (Smena == 2))
+            else if ((pom < 47) & (Smena == 2))
             {
-                double Razlika = 42 - pom;
+                double Razlika = 47 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "42";
+                txtZarada.Text = "47";
             }
-            else if ((pom > 42) & (Smena == 2))
+            else if ((pom > 47) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1432,31 +1367,31 @@ namespace Saobracaj.Dokumenta
                 RefreshDataGridPoAktivnostima();
 
             }
-            if ((pom < 21) & (Smena == 1))
+            if ((pom < 23.5) & (Smena == 1))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom < 21) & (Smena == 2))
+            else if ((pom < 23.5) & (Smena == 2))
             {
-                double Razlika = 21 - pom;
+                double Razlika = 23.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "21";
+                txtZarada.Text = "23.5";
             }
-            else if ((pom > 21) & (Smena == 1))
+            else if ((pom > 23.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 42) & (Smena == 2))
+            else if ((pom < 47) & (Smena == 2))
             {
-                double Razlika = 42 - pom;
+                double Razlika = 47 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "42";
+                txtZarada.Text = "47";
             }
-            else if ((pom > 42) & (Smena == 2))
+            else if ((pom > 47) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1739,24 +1674,13 @@ namespace Saobracaj.Dokumenta
            // ins.UpdateAktivnostiPlaceno(Convert.ToInt32(txtSifra.Text));
             chkPlaceno.Checked = true;
         }
-        int kontrolisano = 0;
+
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
-            
             InsertAktivnosti ins = new InsertAktivnosti();
             ins.UpdateAktivnostiKontrolisanoSpoljno(Convert.ToInt32(txtSifra.Text));
 
             InsertLogAktivnosti insL = new InsertLogAktivnosti();
-            kontrolisano = 1;
-           
-            if (Kor.TrimEnd() != "admin" && kontrolisano==1)
-            {
-                DisableTextBoxes(this.Controls);
-            }
-            else
-            {
-                kontrolisano = 0;
-            }
            // insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kontrolisano outside", Korisnik);
             // chkPlaceno.Checked = true;
             /*
@@ -1885,31 +1809,31 @@ namespace Saobracaj.Dokumenta
                 double pom = Convert.ToDouble(txtIzracun.Text);
                 pom = pom + vrd;
                 txtIzracun.Text = pom.ToString();
-                if ((pom < 21) & (Smena == 1))
+                if ((pom < 23.5) & (Smena == 1))
                 {
-                    double Razlika = 21 - pom;
+                    double Razlika = 23.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "21";
+                    txtZarada.Text = "23.5";
                 }
-                else if ((pom < 21) & (Smena == 2))
+                else if ((pom < 23.5) & (Smena == 2))
                 {
-                    double Razlika = 21 - pom;
+                    double Razlika = 23.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "21";
+                    txtZarada.Text = "23.5";
                 }
-                else if ((pom > 21) & (Smena == 1))
+                else if ((pom > 23.5) & (Smena == 1))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
                     txtZarada.Text = txtIzracun.Text;
                 }
-                else if ((pom < 42) & (Smena == 2))
+                else if ((pom < 47) & (Smena == 2))
                 {
-                    double Razlika = 42 - pom;
+                    double Razlika = 47 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "42";
+                    txtZarada.Text = "47";
                 }
-                else if ((pom > 42) & (Smena == 2))
+                else if ((pom > 47) & (Smena == 2))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
@@ -1923,31 +1847,31 @@ namespace Saobracaj.Dokumenta
                 double pom = Convert.ToDouble(txtIzracun.Text);
                 pom = pom + vrd;
                 txtIzracun.Text = pom.ToString();
-                if ((pom < 21) & (Smena == 1))
+                if ((pom < 23.5) & (Smena == 1))
                 {
-                    double Razlika = 21 - pom;
+                    double Razlika = 23.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "21";
+                    txtZarada.Text = "23.5";
                 }
-                else if ((pom < 21) & (Smena == 2))
+                else if ((pom < 23.5) & (Smena == 2))
                 {
-                    double Razlika = 21 - pom;
+                    double Razlika = 23.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "21";
+                    txtZarada.Text = "23.5";
                 }
-                else if ((pom > 21) & (Smena == 1))
+                else if ((pom > 23.5) & (Smena == 1))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
                     txtZarada.Text = txtIzracun.Text;
                 }
-                else if ((pom < 42) & (Smena == 2))
+                else if ((pom < 47) & (Smena == 2))
                 {
-                    double Razlika = 42 - pom;
+                    double Razlika = 47 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "42";
+                    txtZarada.Text = "47";
                 }
-                else if ((pom > 42) & (Smena == 2))
+                else if ((pom > 47) & (Smena == 2))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();

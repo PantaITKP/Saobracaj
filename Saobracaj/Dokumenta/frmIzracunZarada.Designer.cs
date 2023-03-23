@@ -71,6 +71,8 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
+            this.txtPrazniciFond = new System.Windows.Forms.NumericUpDown();
+            this.label12 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtZarada)).BeginInit();
@@ -82,6 +84,7 @@
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrazniciFond)).BeginInit();
             this.SuspendLayout();
             // 
             // dtpVremeDo
@@ -367,7 +370,7 @@
             // txtPassword
             // 
             this.txtPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtPassword.Location = new System.Drawing.Point(57, 201);
+            this.txtPassword.Location = new System.Drawing.Point(65, 226);
             this.txtPassword.Margin = new System.Windows.Forms.Padding(4);
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.Size = new System.Drawing.Size(132, 22);
@@ -377,7 +380,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(12, 201);
+            this.label6.Location = new System.Drawing.Point(20, 226);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(37, 17);
@@ -386,7 +389,7 @@
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(205, 198);
+            this.button9.Location = new System.Drawing.Point(205, 226);
             this.button9.Margin = new System.Windows.Forms.Padding(4);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(175, 28);
@@ -409,7 +412,7 @@
             // button11
             // 
             this.button11.ForeColor = System.Drawing.Color.Red;
-            this.button11.Location = new System.Drawing.Point(388, 198);
+            this.button11.Location = new System.Drawing.Point(388, 226);
             this.button11.Margin = new System.Windows.Forms.Padding(4);
             this.button11.Name = "button11";
             this.button11.Size = new System.Drawing.Size(236, 28);
@@ -586,11 +589,37 @@
             this.dataGridView2.Size = new System.Drawing.Size(1479, 392);
             this.dataGridView2.TabIndex = 278;
             // 
+            // txtPrazniciFond
+            // 
+            this.txtPrazniciFond.Location = new System.Drawing.Point(1049, 205);
+            this.txtPrazniciFond.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPrazniciFond.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtPrazniciFond.Name = "txtPrazniciFond";
+            this.txtPrazniciFond.Size = new System.Drawing.Size(92, 22);
+            this.txtPrazniciFond.TabIndex = 376;
+            this.txtPrazniciFond.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(947, 207);
+            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(94, 17);
+            this.label12.TabIndex = 375;
+            this.label12.Text = "Praznici fond:";
+            // 
             // frmIzracunZarada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1524, 706);
+            this.Controls.Add(this.txtPrazniciFond);
+            this.Controls.Add(this.label12);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.txtPoreskoOslobodjenje);
             this.Controls.Add(this.label11);
@@ -645,6 +674,7 @@
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrazniciFond)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -695,5 +725,7 @@
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.DataGridView dataGridView2;
+        private System.Windows.Forms.NumericUpDown txtPrazniciFond;
+        private System.Windows.Forms.Label label12;
     }
 }

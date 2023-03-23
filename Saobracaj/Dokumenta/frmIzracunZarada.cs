@@ -163,7 +163,7 @@ namespace Saobracaj.Dokumenta
                     string Top2 = Convert.ToInt32(row.Cells[17].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     string sqlupit = " select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
- + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS Duration from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 2617 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
+ + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS Duration from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 3012 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
  + "order by t1.Duration asc ";
 
                     SqlCommand cmd = new SqlCommand(sqlupit, con);
@@ -202,7 +202,7 @@ namespace Saobracaj.Dokumenta
                     string Top2 = Convert.ToInt32(row.Cells[18].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     SqlCommand cmd = new SqlCommand(" select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
-+ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1308.5 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
++ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1506 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
 + "order by t1.Duration asc ", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 
@@ -507,8 +507,8 @@ namespace Saobracaj.Dokumenta
             }
             var select = "";
 
-            select = " SELECT ObracunZaposleni.[ID] ,ObracunZaposleni.[Zaposleni], ObracunZaposleni.MesecnoSati, GoSati, Remont as Bol65, Smederevo as Bol100, Milsped as Praznik, ABS(Ukupno1 * 118 / CenaSata) as Provera, BrojSati, Kragujevac as Prekovremeni, RadPoVremenu, RadPoUcinku, CenaSata, " +
-                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, (CenaSata * Milsped * 1.1) as Praznik110, (CenaSata * Milsped )  as Praznik100, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada, GodinaStaza, MinuliRadIznos" +
+            select = " SELECT ObracunZaposleni.[ID] ,ObracunZaposleni.[Zaposleni], ObracunZaposleni.MesecnoSati, GoSati, Remont as Bol65, Smederevo as Bol100, Milsped as Praznik, NaknadaPraznik as FondPraznik, ABS(Ukupno1 * 118 / CenaSata) as Provera, BrojSati, Kragujevac as Prekovremeni, RadPoVremenu, RadPoUcinku, CenaSata, " +
+                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, Praznik100Iznos, Praznik110Iznos, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada, GodinaStaza, MinuliRadIznos" +
                 " from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
 
             //PoreskaOlaksica,BrutoZarada,BrutoCenaSata,PrekovremeniCenaSata, PrekovremeniBrutoIznos
@@ -867,7 +867,7 @@ namespace Saobracaj.Dokumenta
             }
 */
             InsertObracunSati ins = new InsertObracunSati();
-            ins.UpdMilspedPraznici(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
+            ins.UpdMilspedPraznici(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToInt32(txtPrazniciFond.Value));
         }
 
         private void PovuciPrekovremeni()

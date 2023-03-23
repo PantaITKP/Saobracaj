@@ -240,7 +240,7 @@ namespace Saobracaj.Dokumenta
 
                     con.Open();
 
-                    SqlCommand cmd = new SqlCommand("Select (isnull(Sum(Ukupno),0)) as UK from PrekovremeniRad where RadPraznikom = 1 and ZaposleniID = " + row.Cells[0].Value +
+                    SqlCommand cmd = new SqlCommand("Select (isnull(Cast(Sum(Ukupno) as Int),0)) as UK from PrekovremeniRad where RadPraznikom = 1 and ZaposleniID = " + row.Cells[0].Value +
                         " and DatumOd >= '" + dtpVremeOd2.Value.ToString("yyyy-MM-dd 00:00") + "' and  DatumDo <= '" + dtpVremeDo2.Value.ToString("yyyy-MM-dd 23:59") + "'", con);
 
                     SqlDataReader dr = cmd.ExecuteReader();
@@ -253,7 +253,7 @@ namespace Saobracaj.Dokumenta
                     }
                     con.Close();
                 }
-
+                UpucajFondSati(Convert.ToInt32(txtPrazniciFond.Value));
 
             }
             catch
@@ -262,7 +262,32 @@ namespace Saobracaj.Dokumenta
             }
 
     }
+        private void UpucajFondSati(int FondSati)
+        {
 
+            try
+            {
+                InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                    SqlConnection con = new SqlConnection(s_connection);
+
+                    con.Open();
+                    ins.UpdUkupanFondSatiPraznik(FondSati, Convert.ToInt32(txtSatiMesec.Value));
+                   
+                    con.Close();
+                }
+
+
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspelo povlacenje rada praznikom");
+            }
+
+
+        }
         private void PovuciSateGodisnjiOdmor()
         {
             try
@@ -418,9 +443,10 @@ namespace Saobracaj.Dokumenta
             InsertObracunSatiFiksni ins = new InsertObracunSatiFiksni();
             ins.InsObracunFiksni();
             ins.UpdGO(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value));
-            RefreshDataGrid();
+            
             PovuciBolovanje65();
             PovuciRadPraznikom();
+            RefreshDataGrid();
             PovuciBolovanje100();
             PovuciPrekovremeni();
             ins.UpdObracunFiksniSve(Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeDo.Value), Convert.ToDouble(txtKurs.Value), Convert.ToDouble(txtSatiMesec.Value), Convert.ToDouble(txtMinimalac.Value));

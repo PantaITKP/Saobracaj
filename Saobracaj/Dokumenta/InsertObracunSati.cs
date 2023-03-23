@@ -1424,7 +1424,7 @@ Minimalna bruto zarada
             }
         }
 
-        public void UpdMilspedPraznici(DateTime VremeOd, DateTime VremeDo)
+        public void UpdMilspedPraznici(DateTime VremeOd, DateTime VremeDo, int FondPraznici)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -1449,7 +1449,12 @@ Minimalna bruto zarada
             parameter2.Value = VremeDo;
             myCommand.Parameters.Add(parameter2);
 
-            
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@FondPraznici";
+            parameter3.SqlDbType = SqlDbType.Int;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = FondPraznici;
+            myCommand.Parameters.Add(parameter3);
 
 
 

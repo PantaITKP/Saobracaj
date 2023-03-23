@@ -275,7 +275,7 @@ namespace Saobracaj.Dokumenta
                             " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
                                   " from Aktivnosti  " +
                            " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
-                            "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun) > 0 and Zaposleni = " + Convert.ToInt32(cboZaposleni.SelectedValue) +
+                            "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0  > 0 and Zaposleni = " + Convert.ToInt32(cboZaposleni.SelectedValue) +
                              " And  Convert(nvarchar(10),VremeDo,126) <  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
            
 

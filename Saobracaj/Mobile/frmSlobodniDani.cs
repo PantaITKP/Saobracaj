@@ -269,8 +269,55 @@ namespace Saobracaj.Mobile
             RefreshDataGrid();
         }
 
+        int ProveriNadredjenog(int RegistrovaniKorisnik)
+        {
+            int ZaposleniID = 0;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+
+                if (row.Selected)
+                {
+                    ZaposleniID = Convert.ToInt32(row.Cells[1].Value.ToString());
+                  
+                }
+            }
+
+            string query = "Select DeOdobrava from Delavci where DeSifra="  + ZaposleniID;
+            var s_connection10 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection10);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(query, conn);
+            int DeSifra = 0;
+            SqlDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+            {
+                DeSifra = Convert.ToInt32(dr[0].ToString());
+            }
+            conn.Close();
+            if (DeSifra == RegistrovaniKorisnik)
+            { return 1; }
+                
+            else
+            {
+                return 0;
+            }
+        }
+
         private void metroButton2_Click(object sender, EventArgs e)
         {
+            int RegistrovaniKorisnik = Convert.ToInt32(cboZaposleni.SelectedValue);
+
+            //Vratiti nadredjenog
+            int DobarNadredjeni = ProveriNadredjenog(RegistrovaniKorisnik);
+            //
+
+            if (DobarNadredjeni == 0)
+            {
+                MessageBox.Show("Niste nadredjeni i ne možete odobriti odmor");
+                return;
+            
+            }
+
             InsertSlobodniDani ins = new InsertSlobodniDani();
             ins.UpdSlobodniDani(Convert.ToInt32(txtID.Text), txtNapomena.Text, Convert.ToInt32(cboZaposleni.SelectedValue), 2);
 
@@ -314,19 +361,26 @@ namespace Saobracaj.Mobile
                         fego.Show();
                     }
                 }
-
-
-               
             }
-           
-            
-        
-        
         }
 
         private void metroButton3_Click(object sender, EventArgs e)
         {
             InsertSlobodniDani ins = new InsertSlobodniDani();
+
+
+            int RegistrovaniKorisnik = Convert.ToInt32(cboZaposleni.SelectedValue);
+
+            //Vratiti nadredjenog
+            int DobarNadredjeni = ProveriNadredjenog(RegistrovaniKorisnik);
+            //
+
+            if (DobarNadredjeni == 0)
+            {
+                MessageBox.Show("Niste nadredjeni i ne možete odbiti odmor");
+                return;
+
+            }
             ins.UpdSlobodniDani(Convert.ToInt32(txtID.Text), txtNapomena.Text, Convert.ToInt32(cboZaposleni.SelectedValue), 1);
         }
     }

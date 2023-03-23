@@ -51,10 +51,13 @@ namespace Saobracaj.Dokumenta
             this.label21 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
+            this.txtPrazniciFond = new System.Windows.Forms.NumericUpDown();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrazniciFond)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridView1
@@ -86,7 +89,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.dtpVremeOd2.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeOd2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeOd2.Location = new System.Drawing.Point(105, 95);
+            this.dtpVremeOd2.Location = new System.Drawing.Point(105, 89);
             this.dtpVremeOd2.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeOd2.Name = "dtpVremeOd2";
             this.dtpVremeOd2.ShowUpDown = true;
@@ -98,7 +101,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.dtpVremeDo2.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeDo2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeDo2.Location = new System.Drawing.Point(344, 95);
+            this.dtpVremeDo2.Location = new System.Drawing.Point(344, 89);
             this.dtpVremeDo2.Margin = new System.Windows.Forms.Padding(4);
             this.dtpVremeDo2.Name = "dtpVremeDo2";
             this.dtpVremeDo2.ShowUpDown = true;
@@ -110,7 +113,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.label7.AutoSize = true;
             this.label7.ForeColor = System.Drawing.Color.Red;
-            this.label7.Location = new System.Drawing.Point(258, 95);
+            this.label7.Location = new System.Drawing.Point(258, 89);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(73, 17);
@@ -121,7 +124,7 @@ namespace Saobracaj.Dokumenta
             // 
             this.label8.AutoSize = true;
             this.label8.ForeColor = System.Drawing.Color.Red;
-            this.label8.Location = new System.Drawing.Point(24, 95);
+            this.label8.Location = new System.Drawing.Point(24, 89);
             this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(73, 17);
@@ -292,7 +295,7 @@ namespace Saobracaj.Dokumenta
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(756, 119);
+            this.button1.Location = new System.Drawing.Point(832, 124);
             this.button1.Margin = new System.Windows.Forms.Padding(4);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(175, 28);
@@ -303,7 +306,7 @@ namespace Saobracaj.Dokumenta
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(955, 119);
+            this.button2.Location = new System.Drawing.Point(1015, 124);
             this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(175, 28);
@@ -312,11 +315,37 @@ namespace Saobracaj.Dokumenta
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // txtPrazniciFond
+            // 
+            this.txtPrazniciFond.Location = new System.Drawing.Point(712, 128);
+            this.txtPrazniciFond.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPrazniciFond.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtPrazniciFond.Name = "txtPrazniciFond";
+            this.txtPrazniciFond.Size = new System.Drawing.Size(92, 22);
+            this.txtPrazniciFond.TabIndex = 374;
+            this.txtPrazniciFond.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(611, 130);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(94, 17);
+            this.label2.TabIndex = 373;
+            this.label2.Text = "Praznici fond:";
+            // 
             // frmObracunFiksni
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1531, 649);
+            this.Controls.Add(this.txtPrazniciFond);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label10);
@@ -346,6 +375,7 @@ namespace Saobracaj.Dokumenta
             ((System.ComponentModel.ISupportInitialize)(this.txtSatiMesec)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMinimalac)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txtPrazniciFond)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -374,5 +404,7 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.NumericUpDown txtPrazniciFond;
+        private System.Windows.Forms.Label label2;
     }
 }

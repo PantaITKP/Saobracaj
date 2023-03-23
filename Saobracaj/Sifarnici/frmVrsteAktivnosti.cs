@@ -395,5 +395,17 @@ namespace Saobracaj.Sifarnici
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
         }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            frmCenovniciVrsteAktivnosti cva = new frmCenovniciVrsteAktivnosti();
+            cva.Show();
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            frmVrstaAktivnostiArhiv fvaa = new frmVrstaAktivnostiArhiv();
+            fvaa.Show();
+        }
     }
 }
