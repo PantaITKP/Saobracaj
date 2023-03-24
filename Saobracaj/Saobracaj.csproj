@@ -81,7 +81,7 @@
       <HintPath>..\packages\AjaxMin.5.14.5506.26202\lib\net40\AjaxMin.dll</HintPath>
     </Reference>
     <Reference Include="Bunifu_UI_v1.52">
-      <HintPath>..\..\..\..\..\Desktop\Bunifu\Bunifu_UI_v1.52.dll</HintPath>
+      <HintPath>D:\1-Razvoj\Saobracaj-Neradi230324\Saobracaj\Saobracaj\Bunifu_UI_v1.52.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -1473,6 +1473,12 @@
     <Compile Include="Sifarnici\frmCenaPoRadniku.Designer.cs">
       <DependentUpon>frmCenaPoRadniku.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\frmCenovniciVrsteAktivnosti.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\frmCenovniciVrsteAktivnosti.Designer.cs">
+      <DependentUpon>frmCenovniciVrsteAktivnosti.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmDodelaLokomotive.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1638,12 +1644,19 @@
     <Compile Include="Sifarnici\frmVozila.Designer.cs">
       <DependentUpon>frmVozila.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\frmVrstaAktivnostiArhiv.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\frmVrstaAktivnostiArhiv.Designer.cs">
+      <DependentUpon>frmVrstaAktivnostiArhiv.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmVrsteAktivnosti.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Sifarnici\frmVrsteAktivnosti.Designer.cs">
       <DependentUpon>frmVrsteAktivnosti.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\InsertCenovnikVrstaAktivnosti.cs" />
     <Compile Include="Sifarnici\InsertCIT.cs" />
     <Compile Include="Sifarnici\InsertCitStavke.cs" />
     <Compile Include="Sifarnici\InsertEvidencijaSatiPoRadniku.cs" />
@@ -2257,6 +2270,9 @@
     <EmbeddedResource Include="Sifarnici\frmCenaPoRadniku.resx">
       <DependentUpon>frmCenaPoRadniku.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\frmCenovniciVrsteAktivnosti.resx">
+      <DependentUpon>frmCenovniciVrsteAktivnosti.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmDodelaLokomotive.resx">
       <DependentUpon>frmDodelaLokomotive.cs</DependentUpon>
     </EmbeddedResource>
@@ -2340,6 +2356,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmVozila.resx">
       <DependentUpon>frmVozila.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\frmVrstaAktivnostiArhiv.resx">
+      <DependentUpon>frmVrstaAktivnostiArhiv.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmVrsteAktivnosti.resx">
       <DependentUpon>frmVrsteAktivnosti.cs</DependentUpon>
