@@ -23,7 +23,7 @@ namespace Saobracaj.Dokumenta
         }
         private void FillGV()
         {
-            var select = "Select * from NajavaLog order by LogID desc";
+            var select = "Select Top 100 * from NajavaLog order by LogID desc";
             var conn = new SqlConnection(connect);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
@@ -33,7 +33,7 @@ namespace Saobracaj.Dokumenta
         }
         private void FillCombo()
         {
-            var select = "Select Distinct ID,PrevozniPut from NajavaLog order by ID desc";
+            var select = "Select Distinct ID,PrevozniPut from NajavaLog Where PrevozniPut<>'' order by ID desc";
             var conn = new SqlConnection(connect);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
