@@ -55,7 +55,7 @@ namespace Saobracaj.Dokumenta
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             //Sifarnici.frmLogovanje frm = new Sifarnici.frmLogovanje();         
-            string query = "Select IdGrupe from KorisnikGrupa Where Korisnik = " + "'" + Kor.TrimEnd() + "'";
+            string query = "Select IdGrupe from KorisnikGrupa Where Korisnik = '" + Kor.TrimEnd() + "'";
             SqlConnection conn = new SqlConnection(s_connection);
             conn.Open();
             SqlCommand cmd = new SqlCommand(query, conn);
@@ -158,25 +158,32 @@ namespace Saobracaj.Dokumenta
         private void RefreshDataGrid()
         {
             var select = "SELECT najava.ID, stanice_4.opis as Granicna, Najava.BrojNajave, Najava.Voz, Partnerji_1.PaNaziv as Posiljalac, Partnerji.PaNaziv AS Prevoznik, " +
-                "Partnerji_2.PaNaziv AS Primalac,stanice.Opis AS Uputna, stanice_1.Opis AS Otpravna,  Najava.PrevozniPut as Relacija,Najava.PredvidjenoPrimanje, " +
+                "Partnerji_2.PaNaziv AS Primalac,stanice.Opis AS Uputna, stanice_1.Opis AS Otpravna,  Najava.PrevozniPut as Relacija,Najava.PredvidjenoPrimanje," +
                 "Najava.StvarnoPrimanje,Najava.PredvidjenaPredaja, Najava.StvarnaPredaja, " +
-                "CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StatusN, " +
+                "CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StatusN," +
                 "Najava.ONBroj,  Najava.Status, Najava.Tezina, Najava.Duzina, " +
-                "Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv as PrevoznikZa, Najava.Faktura, Najava.Korisnik,Najava.SerijaVagona " +
-                "FROM  Najava INNER JOIN Partnerji AS Partnerji_1 ON Najava.Posiljalac = Partnerji_1.PaSifra " +
+                "Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv as PrevoznikZa, Najava.Faktura, Najava.Korisnik,Najava.SerijaVagona,Min(NajavaLog.Datum) as [DatumUnosa] " +
+                "FROM Najava INNER JOIN Partnerji AS Partnerji_1 ON Najava.Posiljalac = Partnerji_1.PaSifra " +
                 "INNER JOIN Partnerji ON Najava.Prevoznik = Partnerji.PaSifra " +
                 "INNER JOIN Partnerji AS Partnerji_2 ON Najava.Primalac = Partnerji_2.PaSifra " +
                 "INNER JOIN  stanice ON Najava.Uputna = stanice.ID " +
                 "INNER JOIN  stanice AS stanice_1 ON Najava.Otpravna = stanice_1.ID " +
                 "inner JOIN  stanice AS stanice_4 ON Najava.Granicna = stanice_4.ID " +
-                "INNER JOIN Partnerji as Partnerji_3 ON Najava.PrevoznikZa = Partnerji_3.PaSifra";
+                "INNER JOIN Partnerji as Partnerji_3 ON Najava.PrevoznikZa = Partnerji_3.PaSifra " +
+                "inner join NajavaLog on Najava.ID = NajavaLog.ID";
             if (Arhiv == 0)
             {
-                select = select + " WHERE (Status <> 7 ) or (Status = 7 and Faktura ='') order by Najava.ID desc";
+                select = select + " WHERE (Najava.Status <> 7 ) or (Najava.Status = 7 and Najava.Faktura ='') group BY najava.ID, stanice_4.opis, Najava.BrojNajave, Najava.Voz, Partnerji_1.PaNaziv, " +
+                    "Partnerji.PaNaziv,Partnerji_2.PaNaziv ,stanice.Opis, stanice_1.Opis,  Najava.PrevozniPut,Najava.PredvidjenoPrimanje,Najava.StvarnoPrimanje,Najava.PredvidjenaPredaja, " +
+                    "Najava.StvarnaPredaja, CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END ,Najava.ONBroj,  Najava.Status, Najava.Tezina, Najava.Duzina, " +
+                    "Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv , Najava.Faktura, Najava.Korisnik,Najava.SerijaVagona order by Najava.ID desc";
             }
             else
             {
-                select = select + " WHERE (Status = 7 ) or Status = 8 order by Najava.ID desc";
+                select = select + " WHERE (Najava.Status = 7 ) or Najava.Status = 8 group BY najava.ID, stanice_4.opis, Najava.BrojNajave, Najava.Voz, Partnerji_1.PaNaziv, Partnerji.PaNaziv," +
+                    "Partnerji_2.PaNaziv ,stanice.Opis, stanice_1.Opis,  Najava.PrevozniPut,Najava.PredvidjenoPrimanje,Najava.StvarnoPrimanje,Najava.PredvidjenaPredaja, " +
+                    "Najava.StvarnaPredaja, CASE WHEN Najava.RID > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END ,Najava.ONBroj,  Najava.Status, Najava.Tezina, Najava.Duzina, " +
+                    "Najava.BrojKola, Najava.NetoTezinaM, Najava.DatumUnosa, Partnerji_3.PaNaziv , Najava.Faktura, Najava.Korisnik,Najava.SerijaVagona order by Najava.ID desc";
             }
           
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
