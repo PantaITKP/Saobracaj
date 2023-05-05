@@ -887,5 +887,17 @@ namespace Saobracaj
             Dokumenta.frmPraznici pra = new Dokumenta.frmPraznici();
             pra.Show();
         }
+
+        private void toolStripButton124_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmPrimljeniVozovi pv = new Dokumenta.frmPrimljeniVozovi();
+            pv.Show();
+        }
+
+        private void toolStripButton125_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmPredatiVozovi predv = new Dokumenta.frmPredatiVozovi();
+            predv.Show();
+        }
     }
 }
