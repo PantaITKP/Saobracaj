@@ -40,7 +40,7 @@ namespace Saobracaj.Dokumenta
             // 
             // dateTimePicker1
             // 
-            this.dateTimePicker1.CustomFormat = "dd.MM.yyyy HH:mm:ss";
+            this.dateTimePicker1.CustomFormat = "dd-MM-yyyy";
             this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker1.Location = new System.Drawing.Point(109, 30);
             this.dateTimePicker1.Name = "dateTimePicker1";
@@ -58,7 +58,7 @@ namespace Saobracaj.Dokumenta
             // 
             // dateTimePicker2
             // 
-            this.dateTimePicker2.CustomFormat = "dd.MM.yyyy HH:mm:ss";
+            this.dateTimePicker2.CustomFormat = "dd-MM-yyyy";
             this.dateTimePicker2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker2.Location = new System.Drawing.Point(109, 61);
             this.dateTimePicker2.Name = "dateTimePicker2";
@@ -97,7 +97,7 @@ namespace Saobracaj.Dokumenta
             this.dataGridView1.Size = new System.Drawing.Size(1252, 636);
             this.dataGridView1.TabIndex = 3;
             // 
-            // PrimljeniVozovi
+            // frmPrimljeniVozovi
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -108,7 +108,7 @@ namespace Saobracaj.Dokumenta
             this.Controls.Add(this.dateTimePicker2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dateTimePicker1);
-            this.Name = "PrimljeniVozovi";
+            this.Name = "frmPrimljeniVozovi";
             this.Text = "PrimljeniVozovi";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);

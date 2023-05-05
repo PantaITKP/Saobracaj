@@ -21,11 +21,14 @@ namespace Saobracaj.Dokumenta
 
         private void button1_Click(object sender, EventArgs e)
         {
+            string DatumOD = dateTimePicker1.Value.ToString("yyyy-MM-dd");
+            string DatumDo = dateTimePicker2.Value.ToString("yyyy-MM-dd");
+
             var select = "Select Najava.ID,stanice1.Opis as [Uputna],stanice2.Opis as [Otpravna],StvarnoPrimanje,StvarnaPredaja,Tezina,BrojKola " +
                 "From Najava " +
                 "inner join stanice as stanice1 on Najava.Uputna = stanice1.ID " +
                 "inner join stanice as stanice2 on Najava.Otpravna = stanice2.ID " +
-                "Where(StvarnaPredaja between '" + Convert.ToDateTime(dateTimePicker1.Value.ToString()) + "' and '" + Convert.ToDateTime(dateTimePicker2.Value.ToString()) + "') and(status = 4 or status = 5 or status = 7 or status = 9)";
+                "Where(StvarnaPredaja between '" +DatumOD + "' and '" + DatumDo + "') and(status = 4 or status = 5 or status = 7 or status = 9)";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
