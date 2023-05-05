@@ -330,9 +330,6 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column4 = dataGridView1.Columns[3];
             dataGridView1.Columns[3].HeaderText = "Usluga";
             dataGridView1.Columns[3].Width = 150;
-
-           
-
         }
 
 
@@ -2972,7 +2969,7 @@ namespace Saobracaj.Dokumenta
                 "inner join partnerji on Najava.Posiljalac = Partnerji.PaSifra " +
                 "inner join partnerji as partnerji1 on Najava.Primalac = partnerji1.PaSifra " +
                 "inner join partnerji as partnerji2 on Najava.Platilac = partnerji2.PaSifra " +
-                "Where(status = 3) and StvarnoPrimanje<>'1900-01-01 00:00:00.000' " +
+                "Where status = 3 " +
                 "Union " +
                 "Select Najava.ID,stanice.Opis as Granicna,partnerji.PaNaziv as Posiljalac,partnerji1.PaNaziv as Primalac,stanice1.Opis as Uputna, " +
                 "stanice2.Opis as Otpravna,PredvidjenoPrimanje,StvarnoPrimanje,PredvidjenaPredaja,StvarnaPredaja,Status,Tezina,BrojKola,partnerji2.PaNaziv as Platilac, " +

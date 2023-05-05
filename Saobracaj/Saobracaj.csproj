@@ -933,6 +933,12 @@
     <Compile Include="Dokumenta\frmPrijemnica.Designer.cs">
       <DependentUpon>frmPrijemnica.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmPredatiVozovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPredatiVozovi.Designer.cs">
+      <DependentUpon>frmPredatiVozovi.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmPronadjiVagon.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1148,6 +1154,12 @@
     </Compile>
     <Compile Include="Dokumenta\frmTeretnicaTerenIzmena.Designer.cs">
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPrimljeniVozovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPrimljeniVozovi.Designer.cs">
+      <DependentUpon>frmPrimljeniVozovi.cs</DependentUpon>
     </Compile>
     <Compile Include="Dokumenta\WebMapa.cs">
       <SubType>Form</SubType>
@@ -2049,6 +2061,9 @@
     <EmbeddedResource Include="Dokumenta\frmPrijemnica.resx">
       <DependentUpon>frmPrijemnica.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPredatiVozovi.resx">
+      <DependentUpon>frmPredatiVozovi.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPronadjiVagon.resx">
       <DependentUpon>frmPronadjiVagon.cs</DependentUpon>
     </EmbeddedResource>
@@ -2135,6 +2150,9 @@
       <DependentUpon>frmZarade.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmZaradeMasinovodje.rdlc" />
+    <EmbeddedResource Include="Dokumenta\frmPrimljeniVozovi.resx">
+      <DependentUpon>frmPrimljeniVozovi.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\rptGodisnjiOdmor.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoNeplaceno.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoTrue.rdlc" />
