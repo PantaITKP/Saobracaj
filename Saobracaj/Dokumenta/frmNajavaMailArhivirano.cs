@@ -217,7 +217,7 @@ namespace Saobracaj.Dokumenta
 
                         smtpClient.Port = 25;
                         smtpClient.UseDefaultCredentials = true;
-                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "pele1122.disp");
+                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "D1$p.pele1616");
 
                         smtpClient.EnableSsl = true;
                         smtpClient.Send(mailMessage);
@@ -368,7 +368,7 @@ namespace Saobracaj.Dokumenta
 
                         smtpClient.Port = 25;
                         smtpClient.UseDefaultCredentials = true;
-                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "pele1122.disp");
+                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "D1$p.pele1616");
 
                         smtpClient.EnableSsl = true;
                         smtpClient.Send(mailMessage);
