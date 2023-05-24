@@ -26,12 +26,24 @@ namespace Saobracaj.Dokumenta
         bool delete;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         string niz = "";
+        int RNpom = 0;
+        int IzRN = 0;
         public frmRaspustiVagone()
         {
             InitializeComponent();
             IdGrupe();
             IdForme();
             PravoPristupa();
+        }
+
+        public frmRaspustiVagone(int RN)
+        {
+            InitializeComponent();
+            IdGrupe();
+            IdForme();
+            PravoPristupa();
+            RNpom = RN;
+            IzRN = 1;
         }
         public string IdGrupe()
         {
@@ -170,6 +182,11 @@ namespace Saobracaj.Dokumenta
             cboStanicaDo.DataSource = ds9.Tables[0];
             cboStanicaDo.DisplayMember = "Stanica";
             cboStanicaDo.ValueMember = "ID";
+
+            if (IzRN == 1)
+            {
+                cboRadniNalog.SelectedValue = RNpom;
+            }
 
 
         }

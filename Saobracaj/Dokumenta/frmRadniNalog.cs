@@ -903,5 +903,18 @@ namespace Saobracaj.Dokumenta
 
 
         }
+
+        private void toolStripButton8_Click(object sender, EventArgs e)
+        {
+
+            frmPravljenjeVoza pv = new frmPravljenjeVoza(Convert.ToInt32(txtSifra.Text));
+            pv.Show();
+        }
+
+        private void toolStripButton9_Click(object sender, EventArgs e)
+        {
+            frmRaspustiVagone rv = new frmRaspustiVagone(Convert.ToInt32(txtSifra.Text));
+            rv.Show();
+        }
     }
 }

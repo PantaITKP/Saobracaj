@@ -40,6 +40,7 @@
             this.tsPoslednja = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.label4 = new System.Windows.Forms.Label();
             this.cboStanicaDo = new System.Windows.Forms.ComboBox();
@@ -49,7 +50,9 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.cboPosiljalac = new System.Windows.Forms.ComboBox();
-            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton4 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -68,10 +71,13 @@
             this.tsPoslednja,
             this.toolStripButton1,
             this.toolStripButton2,
-            this.toolStripButton3});
+            this.toolStripButton3,
+            this.toolStripButton4,
+            this.toolStripButton5,
+            this.toolStripButton6});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1283, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(1225, 27);
             this.toolStrip1.TabIndex = 8;
             this.toolStrip1.Text = "Unos lokomotiva";
             // 
@@ -81,7 +87,7 @@
             this.tsNew.Image = ((System.Drawing.Image)(resources.GetObject("tsNew.Image")));
             this.tsNew.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNew.Name = "tsNew";
-            this.tsNew.Size = new System.Drawing.Size(29, 24);
+            this.tsNew.Size = new System.Drawing.Size(24, 24);
             this.tsNew.Text = "Novi";
             this.tsNew.Click += new System.EventHandler(this.tsNew_Click);
             // 
@@ -91,7 +97,7 @@
             this.tsSave.Image = ((System.Drawing.Image)(resources.GetObject("tsSave.Image")));
             this.tsSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsSave.Name = "tsSave";
-            this.tsSave.Size = new System.Drawing.Size(29, 24);
+            this.tsSave.Size = new System.Drawing.Size(24, 24);
             this.tsSave.Text = "tsSave";
             // 
             // tsDelete
@@ -100,7 +106,7 @@
             this.tsDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsDelete.Image")));
             this.tsDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsDelete.Name = "tsDelete";
-            this.tsDelete.Size = new System.Drawing.Size(29, 24);
+            this.tsDelete.Size = new System.Drawing.Size(24, 24);
             this.tsDelete.Text = "toolStripButton1";
             this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
             // 
@@ -115,7 +121,7 @@
             this.tsPrvi.Image = ((System.Drawing.Image)(resources.GetObject("tsPrvi.Image")));
             this.tsPrvi.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPrvi.Name = "tsPrvi";
-            this.tsPrvi.Size = new System.Drawing.Size(29, 24);
+            this.tsPrvi.Size = new System.Drawing.Size(24, 24);
             this.tsPrvi.Text = "toolStripButton1";
             // 
             // tsNazad
@@ -124,7 +130,7 @@
             this.tsNazad.Image = ((System.Drawing.Image)(resources.GetObject("tsNazad.Image")));
             this.tsNazad.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNazad.Name = "tsNazad";
-            this.tsNazad.Size = new System.Drawing.Size(29, 24);
+            this.tsNazad.Size = new System.Drawing.Size(24, 24);
             this.tsNazad.Text = "toolStripButton1";
             // 
             // tsNapred
@@ -133,7 +139,7 @@
             this.tsNapred.Image = ((System.Drawing.Image)(resources.GetObject("tsNapred.Image")));
             this.tsNapred.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNapred.Name = "tsNapred";
-            this.tsNapred.Size = new System.Drawing.Size(29, 24);
+            this.tsNapred.Size = new System.Drawing.Size(24, 24);
             this.tsNapred.Text = "toolStripButton1";
             // 
             // tsPoslednja
@@ -142,7 +148,7 @@
             this.tsPoslednja.Image = ((System.Drawing.Image)(resources.GetObject("tsPoslednja.Image")));
             this.tsPoslednja.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPoslednja.Name = "tsPoslednja";
-            this.tsPoslednja.Size = new System.Drawing.Size(29, 24);
+            this.tsPoslednja.Size = new System.Drawing.Size(24, 24);
             this.tsPoslednja.Text = "toolStripButton1";
             // 
             // toolStripButton1
@@ -150,7 +156,7 @@
             this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(136, 24);
+            this.toolStripButton1.Size = new System.Drawing.Size(114, 24);
             this.toolStripButton1.Text = "Otvori teretnicu";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
@@ -159,9 +165,18 @@
             this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
             this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(82, 24);
+            this.toolStripButton2.Size = new System.Drawing.Size(70, 24);
             this.toolStripButton2.Text = "Refresh";
             this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
+            // 
+            // toolStripButton3
+            // 
+            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
+            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton3.Name = "toolStripButton3";
+            this.toolStripButton3.Size = new System.Drawing.Size(124, 24);
+            this.toolStripButton3.Text = "Preslikaj teretnicu";
+            this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
             // 
             // dataGridView1
             // 
@@ -169,103 +184,112 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(16, 105);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dataGridView1.Location = new System.Drawing.Point(12, 85);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1251, 359);
+            this.dataGridView1.Size = new System.Drawing.Size(1201, 467);
             this.dataGridView1.TabIndex = 9;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(981, 31);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(1037, 27);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(79, 17);
+            this.label4.Size = new System.Drawing.Size(61, 13);
             this.label4.TabIndex = 123;
             this.label4.Text = "Stanica do:";
             // 
             // cboStanicaDo
             // 
             this.cboStanicaDo.FormattingEnabled = true;
-            this.cboStanicaDo.Location = new System.Drawing.Point(985, 53);
-            this.cboStanicaDo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboStanicaDo.Location = new System.Drawing.Point(1040, 45);
             this.cboStanicaDo.Name = "cboStanicaDo";
-            this.cboStanicaDo.Size = new System.Drawing.Size(188, 24);
+            this.cboStanicaDo.Size = new System.Drawing.Size(142, 21);
             this.cboStanicaDo.TabIndex = 121;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(768, 30);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(877, 26);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(79, 17);
+            this.label5.Size = new System.Drawing.Size(61, 13);
             this.label5.TabIndex = 122;
             this.label5.Text = "Stanica od:";
             // 
             // cboStanicaOd
             // 
             this.cboStanicaOd.FormattingEnabled = true;
-            this.cboStanicaOd.Location = new System.Drawing.Point(772, 53);
-            this.cboStanicaOd.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboStanicaOd.Location = new System.Drawing.Point(880, 45);
             this.cboStanicaOd.Name = "cboStanicaOd";
-            this.cboStanicaOd.Size = new System.Drawing.Size(187, 24);
+            this.cboStanicaOd.Size = new System.Drawing.Size(141, 21);
             this.cboStanicaOd.TabIndex = 120;
             // 
             // txtSifra
             // 
-            this.txtSifra.Location = new System.Drawing.Point(19, 54);
-            this.txtSifra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtSifra.Location = new System.Drawing.Point(14, 44);
             this.txtSifra.Name = "txtSifra";
-            this.txtSifra.Size = new System.Drawing.Size(68, 22);
+            this.txtSifra.Size = new System.Drawing.Size(52, 20);
             this.txtSifra.TabIndex = 118;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 33);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(12, 27);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(41, 17);
+            this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 119;
             this.label1.Text = "Šifra:";
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(272, 30);
-            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label12.Location = new System.Drawing.Point(204, 24);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(71, 17);
+            this.label12.Size = new System.Drawing.Size(54, 13);
             this.label12.TabIndex = 131;
             this.label12.Text = "Pošiljalac:";
             // 
             // cboPosiljalac
             // 
             this.cboPosiljalac.FormattingEnabled = true;
-            this.cboPosiljalac.Location = new System.Drawing.Point(276, 53);
-            this.cboPosiljalac.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboPosiljalac.Location = new System.Drawing.Point(207, 43);
             this.cboPosiljalac.Name = "cboPosiljalac";
-            this.cboPosiljalac.Size = new System.Drawing.Size(168, 24);
+            this.cboPosiljalac.Size = new System.Drawing.Size(127, 21);
             this.cboPosiljalac.TabIndex = 130;
             // 
-            // toolStripButton3
+            // toolStripButton4
             // 
-            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
-            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(149, 24);
-            this.toolStripButton3.Text = "Preslikaj teretnicu";
-            this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
+            this.toolStripButton4.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton4.Image")));
+            this.toolStripButton4.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton4.Name = "toolStripButton4";
+            this.toolStripButton4.Size = new System.Drawing.Size(78, 24);
+            this.toolStripButton4.Text = "Prijemne";
+            this.toolStripButton4.Click += new System.EventHandler(this.toolStripButton4_Click);
+            // 
+            // toolStripButton5
+            // 
+            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
+            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton5.Name = "toolStripButton5";
+            this.toolStripButton5.Size = new System.Drawing.Size(79, 24);
+            this.toolStripButton5.Text = "Prevozne";
+            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
+            // 
+            // toolStripButton6
+            // 
+            this.toolStripButton6.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton6.Image")));
+            this.toolStripButton6.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton6.Name = "toolStripButton6";
+            this.toolStripButton6.Size = new System.Drawing.Size(77, 24);
+            this.toolStripButton6.Text = "Predajne";
+            this.toolStripButton6.Click += new System.EventHandler(this.toolStripButton6_Click);
             // 
             // frmTeretnicePregled
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1283, 479);
+            this.ClientSize = new System.Drawing.Size(1225, 564);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.cboPosiljalac);
             this.Controls.Add(this.label4);
@@ -277,7 +301,6 @@
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "frmTeretnicePregled";
             this.Text = "Pregled teretnica";
             this.Load += new System.EventHandler(this.frmTeretnicePregled_Load);
@@ -312,5 +335,8 @@
         private System.Windows.Forms.ComboBox cboPosiljalac;
         private System.Windows.Forms.ToolStripButton toolStripButton2;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
+        private System.Windows.Forms.ToolStripButton toolStripButton4;
+        private System.Windows.Forms.ToolStripButton toolStripButton5;
+        private System.Windows.Forms.ToolStripButton toolStripButton6;
     }
 }

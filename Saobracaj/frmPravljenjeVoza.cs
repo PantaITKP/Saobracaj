@@ -18,6 +18,8 @@ namespace Saobracaj
     public partial class frmPravljenjeVoza : Form
     {
         int tmpStanicaPopisa = 0;
+        int IzRN = 0;
+        int tmpRN = 0;
         public frmPravljenjeVoza()
         {
             InitializeComponent();
@@ -56,7 +58,9 @@ namespace Saobracaj
         public frmPravljenjeVoza(int RN)
         {
             InitializeComponent();
-            cboRadniNalog.SelectedValue = RN;
+            IzRN = 1;
+            tmpRN = RN;
+           // cboRadniNalog.SelectedValue = RN;
 
             var select8 = " Select ID, RTrim(Opis) as Stanica From Stanice order by opis";
             var s_connection8 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -217,8 +221,11 @@ namespace Saobracaj
                 cboStanicaIsklj.SelectedValue = tmpStanicaPopisa;
                 PovuciVagone(tmpStanicaPopisa);
             }
-            
 
+            if (IzRN == 1)
+            {
+                cboRadniNalog.SelectedValue = tmpRN;
+            }
         }
 
         private void button3_Click(object sender, EventArgs e)
