@@ -981,6 +981,12 @@
     <Compile Include="Dokumenta\frmRAdniNalogPregledPoLokomotivama.Designer.cs">
       <DependentUpon>frmRAdniNalogPregledPoLokomotivama.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmRAdniNalogPregledServisneUluge.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmRAdniNalogPregledServisneUluge.Designer.cs">
+      <DependentUpon>frmRAdniNalogPregledServisneUluge.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmRadniNalogTraseLok.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2085,6 +2091,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmRAdniNalogPregledPoLokomotivama.resx">
       <DependentUpon>frmRAdniNalogPregledPoLokomotivama.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmRAdniNalogPregledServisneUluge.resx">
+      <DependentUpon>frmRAdniNalogPregledServisneUluge.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmRadniNalogTraseLok.resx">
       <DependentUpon>frmRadniNalogTraseLok.cs</DependentUpon>

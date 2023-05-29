@@ -899,5 +899,11 @@ namespace Saobracaj
             Dokumenta.frmPredatiVozovi predv = new Dokumenta.frmPredatiVozovi();
             predv.Show();
         }
+
+        private void toolStripButton126_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmRAdniNalogPregledServisneUluge rnsu = new Dokumenta.frmRAdniNalogPregledServisneUluge();
+            rnsu.Show();
+        }
     }
 }
