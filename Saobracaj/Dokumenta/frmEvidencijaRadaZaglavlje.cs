@@ -159,7 +159,7 @@ namespace Saobracaj.Dokumenta
                                  " CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Kraji.KrNaziv as Mesto," +
                                   " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                    " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano," +
-                                   " Aktivnosti.DatumInserta" +
+                                   " Aktivnosti.DatumInserta, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
                              " from Aktivnosti  " +
                              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                                " inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja" +
@@ -179,7 +179,7 @@ namespace Saobracaj.Dokumenta
                                 " CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja, Kraji.KrNaziv as Mesto," +
                                  " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                   " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
-                                   " Aktivnosti.DatumInserta" +
+                                   " Aktivnosti.DatumInserta, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
                                   " from Aktivnosti  " +
                                  " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                                    " inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja" +
@@ -346,7 +346,7 @@ namespace Saobracaj.Dokumenta
  "  Kraji.KrNaziv as Mesto, CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) " +
  "  END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) " +
  "  END as Pregledano, CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped , " +
- "   (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Outside" +
+ "   (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Outside, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
  "    from Aktivnosti   inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " + 
   "   inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja  " +
                               "  where  Aktivnosti.Masinovodja = 1 and Zaposleni = " + Convert.ToInt32(cboZaposleni.SelectedValue) + " order by Aktivnosti.ID desc";
@@ -366,7 +366,7 @@ namespace Saobracaj.Dokumenta
                                  " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                   " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano," +
                                    " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Outside " +
+                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Outside, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin " +
                                    " from Aktivnosti  " +
                                  " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                                    " inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja" +
@@ -386,7 +386,7 @@ namespace Saobracaj.Dokumenta
                                  " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                   " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano," +
                                    " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Outside " +
+                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Outside, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin " +
                                    " from Aktivnosti  " +
                                  " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                                    " inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja" +
@@ -515,7 +515,7 @@ namespace Saobracaj.Dokumenta
                         " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni,  " +
                         "  VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN,  " +
                           "   CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail,  " +
-                              " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno, Racun, Kartica " +
+                              " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno, Racun, Kartica, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin " +
                         " from Aktivnosti  " +
                         " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                          "  where VremeOD  >= " + sqlFormattedDate + " and  VremeOd <= " + sqlFormattedDate2 +
@@ -777,7 +777,7 @@ namespace Saobracaj.Dokumenta
                                   " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                    " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
                                     " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                                " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                                " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin " +
                                     " from Aktivnosti  " +
                              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni " +
                               "  inner Join AktivnostiStavke " +
@@ -801,7 +801,7 @@ namespace Saobracaj.Dokumenta
                                   " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                    " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
                                    " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                              " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                              " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
                                    " from Aktivnosti  " +
                              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni " +
                               "  inner Join AktivnostiStavke " +
@@ -825,7 +825,7 @@ namespace Saobracaj.Dokumenta
                                   " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                    " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano," +
                                     " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                               " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                               " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
                                     " from Aktivnosti  " +
                              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni " +
                               "  inner Join AktivnostiStavke " +
@@ -849,7 +849,7 @@ namespace Saobracaj.Dokumenta
                                   " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
                                    " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
                                     " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                               " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                               " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin " +
                                     " from Aktivnosti  " +
                              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni " +
                               "  inner Join AktivnostiStavke " +
@@ -971,7 +971,7 @@ namespace Saobracaj.Dokumenta
 "  Kraji.KrNaziv as Mesto, CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) " +
 "  END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) " +
 "  END as Pregledano, CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped , " +
-"   (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Outside, DatumInserta" +
+"   (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa , Outside, DatumInserta, Aktivnosti.KontrolisaoDispecer, Aktivnosti.KontrolisaoAdmin" +
 "    from Aktivnosti   inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
 "   inner join Kraji on Kraji.KrSifra = Aktivnosti.MestoUpucivanja  " +
                           "  where  outside = 1 order by Aktivnosti.ID desc";

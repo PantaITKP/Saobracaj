@@ -170,5 +170,10 @@ namespace Saobracaj.Dokumenta
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
         }
+
+        private void tsSave_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

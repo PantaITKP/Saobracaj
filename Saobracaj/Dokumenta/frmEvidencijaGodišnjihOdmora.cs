@@ -46,7 +46,7 @@ namespace Saobracaj.Dokumenta
 
             tsDelete.Enabled = false;
             tsDelete.Visible = false;
-            cboGodina.SelectedValue = "2021";
+            cboGodina.SelectedValue = "2023";
         }
         string niz = "";
         public static string code = "frmEvidencijaGodišnjihOdmora";
@@ -152,7 +152,8 @@ namespace Saobracaj.Dokumenta
             NapomenaM = Napomena;
             SlobodanDanM = SlobodanDan;
             DatumZahtevaM = DatumZahteva;
-            cboGodina.SelectedValue = "2022";
+            dtpDatumZahteva.Value = DatumZahteva;
+            cboGodina.SelectedValue = "2023";
             tsDelete.Visible = false;
         }
 
@@ -211,7 +212,7 @@ namespace Saobracaj.Dokumenta
                 cboOdobrio.SelectedValue = Convert.ToInt32(dr["Odobrio"].ToString());
                 txtNadredjeni.Text = dr["IDNadredjena"].ToString();
                 cbostatusGOdmora.SelectedValue = Convert.ToInt32(dr["StatusGodmora"].ToString());
-                dtpDatumZahteva.Value = Convert.ToDateTime(dr["DatumZahteva"].ToString());
+               // dtpDatumZahteva.Value = Convert.ToDateTime(dr["DatumZahteva"].ToString());
                 dtpDatumPovratka.Value = Convert.ToDateTime(dr["DatumPovratka"].ToString());
                 poslatMail = Convert.ToInt32(dr["PoslatMail"].ToString());
                 if (poslatMail == 1) { cbMail.Checked = true; } else { poslatMail = 0; cbMail.Checked = false; }

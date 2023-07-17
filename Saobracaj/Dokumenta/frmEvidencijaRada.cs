@@ -38,6 +38,7 @@ namespace Saobracaj.Dokumenta
             IdForme();
             PravoPristupa();
             toolStripButton6.Text = "Arhiviraj";
+            ProveraZakljucavanjaDispecer(Korisnik);
         }
         public static string code = "frmEvidencijaRada";
         public bool Pravo;
@@ -142,9 +143,60 @@ namespace Saobracaj.Dokumenta
             IdGrupe();
             IdForme();
             PravoPristupa();
+            ProveraZakljucavanjaDispecer(Korisnik);
+            //KOntrolisaoDispecer
 
         }
 
+        private void ProveraZakljucavanjaDispecer(string KOrisnik)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection con = new SqlConnection(s_connection);
+            string pomKontrolisaoDispecer = "";
+            string pomKontrolisaoAdmin= "";
+            con.Open();
+            if (txtSifra.Text == "")
+            { txtSifra.Text = "0";} 
+            SqlCommand cmd = new SqlCommand("select KontrolisaoDispecer, KontrolisaoAdmin  from Aktivnosti where ID = " + txtSifra.Text, con);
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                pomKontrolisaoDispecer = dr["KontrolisaoDispecer"].ToString();
+
+                pomKontrolisaoAdmin = dr["KontrolisaoAdmin"].ToString();
+
+            }
+
+            if (pomKontrolisaoAdmin == "1")
+            {
+                MessageBox.Show("Smena je kontrolisana sa sttrane Admina i ne moze je niko vise menjati vise menjati");
+                tsNew.Enabled = false;
+                tsSave.Enabled = false;
+                tsDelete.Enabled = false;
+                btnUnesi.Enabled = false;
+                btnUbaciAktivnost.Enabled = false;
+                button1.Enabled = false;
+                button2.Enabled = false;
+            }
+            else if ((pomKontrolisaoDispecer == "1") && (pomKontrolisaoAdmin != "1"))
+            {
+                if (Korisnik != "admin")
+                {
+                    MessageBox.Show("Nakon potvrde Dispecera smenu moze menjati samo admin");
+                    tsNew.Enabled = false;
+                    tsSave.Enabled = false;
+                    tsDelete.Enabled = false;
+                    btnUnesi.Enabled = false;
+                    btnUbaciAktivnost.Enabled = false;
+                    button1.Enabled = false;
+                    button2.Enabled = false;
+                }
+            }
+
+            con.Close();
+
+        }
         private void VratiPodatkeAktivnost()
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -2216,6 +2268,18 @@ namespace Saobracaj.Dokumenta
                 MessageBox.Show("Nemate prava za pristup ovoj formi");
             }
             
+        }
+
+        private void toolStripButton7_Click(object sender, EventArgs e)
+        {
+            InsertAktivnosti iad = new InsertAktivnosti();
+            iad.UpdateKontrolisaoDispecer(Convert.ToInt32(txtSifra.Text));
+        }
+
+        private void toolStripButton8_Click(object sender, EventArgs e)
+        {
+            InsertAktivnosti iad = new InsertAktivnosti();
+            iad.UpdateKontrolisaoAdmin(Convert.ToInt32(txtSifra.Text));
         }
     }
 

@@ -513,6 +513,12 @@
     <Compile Include="Administracija\frmNotifikacije.Designer.cs">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmDokumentaRadnika.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmDokumentaRadnika.Designer.cs">
+      <DependentUpon>frmDokumentaRadnika.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmArhivirajZapise.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1089,6 +1095,12 @@
     <Compile Include="Dokumenta\frmTimerPom.Designer.cs">
       <DependentUpon>frmTimerPom.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmTipDokumentaRadnika.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmTipDokumentaRadnika.Designer.cs">
+      <DependentUpon>frmTipDokumentaRadnika.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmTraseRadniNalog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1118,6 +1130,7 @@
     <Compile Include="Dokumenta\InsertAktivnostiStavke.cs" />
     <Compile Include="Dokumenta\InsertAutomobili.cs" />
     <Compile Include="Dokumenta\InsertCene.cs" />
+    <Compile Include="Dokumenta\InsertDokumentaRadnika.cs" />
     <Compile Include="Dokumenta\InsertEvidencijaGodisnjihOdmora.cs" />
     <Compile Include="Dokumenta\InsertEvidencijaGOLog.cs" />
     <Compile Include="Dokumenta\InsertIskljuceniVagoni.cs" />
@@ -1142,6 +1155,7 @@
     <Compile Include="Dokumenta\InsertPrijemnica.cs" />
     <Compile Include="Dokumenta\InsertPropratnica.cs" />
     <Compile Include="Dokumenta\InsertProracunKM.cs" />
+    <Compile Include="Dokumenta\InsertRadnikTipDokumenta.cs" />
     <Compile Include="Dokumenta\InsertRadniNalog.cs" />
     <Compile Include="Dokumenta\InsertRadniNalogDokumenta.cs" />
     <Compile Include="Dokumenta\InsertRadniNalogTrase.cs" />
@@ -1857,6 +1871,9 @@
     <EmbeddedResource Include="Administracija\frmNotifikacije.resx">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmDokumentaRadnika.resx">
+      <DependentUpon>frmDokumentaRadnika.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmArhivirajZapise.resx">
       <DependentUpon>frmArhivirajZapise.cs</DependentUpon>
     </EmbeddedResource>
@@ -2148,6 +2165,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmTimerPom.resx">
       <DependentUpon>frmTimerPom.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmTipDokumentaRadnika.resx">
+      <DependentUpon>frmTipDokumentaRadnika.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmTraseRadniNalog.resx">
       <DependentUpon>frmTraseRadniNalog.cs</DependentUpon>

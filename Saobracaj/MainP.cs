@@ -905,5 +905,11 @@ namespace Saobracaj
             Dokumenta.frmRAdniNalogPregledServisneUluge rnsu = new Dokumenta.frmRAdniNalogPregledServisneUluge();
             rnsu.Show();
         }
+
+        private void toolStripButton128_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmTipDokumentaRadnika dtrr = new Dokumenta.frmTipDokumentaRadnika();
+            dtrr.Show();
+        }
     }
 }

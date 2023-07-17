@@ -358,6 +358,12 @@ namespace Saobracaj.Dokumenta
 
             dataGridView2.Columns[7].Visible = false;
         }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            frmDokumentaRadnika rd = new frmDokumentaRadnika(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(cboZaposleni.SelectedValue), 1);
+            rd.Show();
+        }
     }
 }
 
