@@ -911,5 +911,11 @@ namespace Saobracaj
             Dokumenta.frmTipDokumentaRadnika dtrr = new Dokumenta.frmTipDokumentaRadnika();
             dtrr.Show();
         }
+
+        private void toolStripButton129_Click(object sender, EventArgs e)
+        {
+            Dokumenta.frmNajavljeniVozovi nv = new Dokumenta.frmNajavljeniVozovi();
+            nv.Show();
+        }
     }
 }

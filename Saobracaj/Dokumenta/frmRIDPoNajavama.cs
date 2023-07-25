@@ -132,7 +132,7 @@ namespace Saobracaj.Dokumenta
          " n1.StvarnaPredaja,  n1.OnBroj + '\'+ n1.DispecerRID as DispecerRID," +
          " (select SUM(neto) from TeretnicaStavke inner join Teretnica on TeretnicaStavke.BrojTeretnice = Teretnica.ID " +
          " where TeretnicaStavke.IDNajave = n1.ID) as Neto  " +
-        " from Najava n1 " +
+        " from (Select * from Najava where RTRIM(RIDBroj)<>'') n1 " +
         " inner join stanice so on so.ID = n1.Otpravna " +
         " inner join stanice su on su.ID = n1.Uputna " +
         " inner join Partnerji pos on pos.PaSifra = n1.Posiljalac " +

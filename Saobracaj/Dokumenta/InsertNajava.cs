@@ -12,7 +12,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertNajava
     {
-        public void InsNaj(string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RidBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona)
+        public void InsNaj(string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RidBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona, int OtpravnaGr, int UputnaGr, int Tovareno, string NapomenaPriprema)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -308,6 +308,35 @@ namespace Saobracaj.Dokumenta
             parameter39.Value = SerijaVagona;
             myCommand.Parameters.Add(parameter39);
 
+            SqlParameter parameter40 = new SqlParameter();
+            parameter40.ParameterName = "@OtpravnaGr";
+            parameter40.SqlDbType = SqlDbType.Int;
+            parameter40.Direction = ParameterDirection.Input;
+            parameter40.Value = OtpravnaGr;
+            myCommand.Parameters.Add(parameter40);
+
+            SqlParameter parameter41 = new SqlParameter();
+            parameter41.ParameterName = "@UputnaGr";
+            parameter41.SqlDbType = SqlDbType.Int;
+            parameter41.Direction = ParameterDirection.Input;
+            parameter41.Value = UputnaGr;
+            myCommand.Parameters.Add(parameter41);
+
+            SqlParameter parameter42 = new SqlParameter();
+            parameter42.ParameterName = "@Tovareno";
+            parameter42.SqlDbType = SqlDbType.Int;
+            parameter42.Direction = ParameterDirection.Input;
+            parameter42.Value = Tovareno;
+            myCommand.Parameters.Add(parameter42);
+
+            SqlParameter parameter43 = new SqlParameter();
+            parameter43.ParameterName = "@NapomenaPriprema";
+            parameter43.SqlDbType = SqlDbType.NVarChar;
+            parameter43.Size = 300;
+            parameter43.Direction = ParameterDirection.Input;
+            parameter43.Value = NapomenaPriprema;
+            myCommand.Parameters.Add(parameter43);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -557,7 +586,7 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-        public void UpdNaj(int ID, string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RIDBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona)
+        public void UpdNaj(int ID, string BrojNajave, int Voz, int Posiljalac, int Prevoznik, int Otpravna, int Uputna, int Primalac, int RobaNHM, string PrevozniPut, double Tezina, double Duzina, int BrojKola, bool RID, System.DateTime PredvidjenoPrimanje, System.DateTime StvarnoPrimanje, System.DateTime PredvidjenaPredaja, System.DateTime StvarnaPredaja, int Status, string OnBroj, string RIDBroj, string Komentar, int VozP, int Granicna, int Platilac, bool AdHoc, int PrevoznikZa, string Faktura, string Zadatak, bool CIM, string Korisnik, string DispecerRid, int TipPrevoza, double NetoTezinaM, int PorudzbinaID, int ImaPovrat, int TehnologijaID, int RobaNHM2, string DodatnoPorudzbina,string SerijaVagona, int OtpravnaGr, int UputnaGr, int Tovareno, string NapomenaPriprema)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -862,6 +891,35 @@ namespace Saobracaj.Dokumenta
             parameter39.Direction = ParameterDirection.Input;
             parameter39.Value = SerijaVagona;
             myCommand.Parameters.Add(parameter39);
+
+            SqlParameter parameter40 = new SqlParameter();
+            parameter40.ParameterName = "@OtpravnaGr";
+            parameter40.SqlDbType = SqlDbType.Int;
+            parameter40.Direction = ParameterDirection.Input;
+            parameter40.Value = OtpravnaGr;
+            myCommand.Parameters.Add(parameter40);
+
+            SqlParameter parameter41 = new SqlParameter();
+            parameter41.ParameterName = "@UputnaGr";
+            parameter41.SqlDbType = SqlDbType.Int;
+            parameter41.Direction = ParameterDirection.Input;
+            parameter41.Value = UputnaGr;
+            myCommand.Parameters.Add(parameter41);
+
+            SqlParameter parameter42 = new SqlParameter();
+            parameter42.ParameterName = "@Tovareno";
+            parameter42.SqlDbType = SqlDbType.Int;
+            parameter42.Direction = ParameterDirection.Input;
+            parameter42.Value = Tovareno;
+            myCommand.Parameters.Add(parameter42);
+
+            SqlParameter parameter43 = new SqlParameter();
+            parameter43.ParameterName = "@NapomenaPriprema";
+            parameter43.SqlDbType = SqlDbType.NVarChar;
+            parameter43.Size = 300;
+            parameter43.Direction = ParameterDirection.Input;
+            parameter43.Value = NapomenaPriprema;
+            myCommand.Parameters.Add(parameter43);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();

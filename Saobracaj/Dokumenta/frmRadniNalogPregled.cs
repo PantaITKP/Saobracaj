@@ -755,8 +755,10 @@ namespace Saobracaj.Dokumenta
 " STUFF( " +
 " ( " +
 " SELECT distinct " +
-"  '/' + Cast(SmSifra as nvarchar(8)) " +
+"  '/' + Cast(SmSifra as nvarchar(8)) + ' '  + RTRIM(stanice_2.Opis) + ' ' + RTRIM(stanice_3.Opis) " + 
 "  FROM RadniNalogLokNaTrasi " +
+" INNER JOIN stanice AS stanice_2 ON RadniNalogLokNaTrasi.StanicaOd = stanice_2.ID " +
+ " INNER JOIN  stanice AS stanice_3 ON RadniNalogLokNaTrasi.StanicaDo = stanice_3.ID " +
 " where RadniNalogLokNaTrasi.IDRadnogNaloga = d1.IDRadnogNaloga and  RadniNalogLokNaTrasi.IdTrase = d1.IDTrase " +
 "  FOR XML PATH('') " +
 "  ), 1, 1, '' " +

@@ -2065,9 +2065,6 @@ namespace Saobracaj.Dokumenta
             //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik);
             RefreshDataGridPoAktivnostima();
         
-
-           
-
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)

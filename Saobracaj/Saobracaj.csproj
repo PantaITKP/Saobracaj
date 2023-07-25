@@ -753,6 +753,12 @@
     <Compile Include="Dokumenta\frmNajavaStavkePorudzbine.Designer.cs">
       <DependentUpon>frmNajavaStavkePorudzbine.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmNajavljeniVozovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmNajavljeniVozovi.designer.cs">
+      <DependentUpon>frmNajavljeniVozovi.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmObracunFiksni.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1990,6 +1996,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmNajavaStavkePorudzbine.resx">
       <DependentUpon>frmNajavaStavkePorudzbine.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmNajavljeniVozovi.resx">
+      <DependentUpon>frmNajavljeniVozovi.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmObracunFiksni.resx">
       <DependentUpon>frmObracunFiksni.cs</DependentUpon>
