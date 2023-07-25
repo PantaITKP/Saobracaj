@@ -128,7 +128,7 @@ namespace Saobracaj.Dokumenta
         private void RefreshDataGrid1()
         {
             string pom = "'1'";
-            var select = " SELECT  d1.IDRadnogNaloga, d1.RB, d1.IDTrase, " +
+            var select = " SELECT TOP "+Convert.ToInt32(textBox1.Text.ToString().TrimEnd())+" d1.IDRadnogNaloga, d1.RB, d1.IDTrase, " +
 " RTrim(Trase.Voz) as Voz, " +
 " RN.StatusRN, " +
  "   CASE WHEN d1.Rezi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Rezi, " +

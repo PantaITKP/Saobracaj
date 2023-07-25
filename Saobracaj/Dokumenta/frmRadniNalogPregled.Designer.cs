@@ -33,6 +33,7 @@
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -45,12 +46,13 @@
             this.button1 = new System.Windows.Forms.Button();
             this.txtNajava = new System.Windows.Forms.TextBox();
             this.button2 = new System.Windows.Forms.Button();
-            this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.button3 = new System.Windows.Forms.Button();
             this.dtpVremeOd2 = new System.Windows.Forms.DateTimePicker();
             this.dtpVremeDo2 = new System.Windows.Forms.DateTimePicker();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -96,6 +98,16 @@
             this.toolStripButton3.Size = new System.Drawing.Size(144, 24);
             this.toolStripButton3.Text = "Novi radni nalog";
             this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
+            // 
+            // toolStripButton5
+            // 
+            this.toolStripButton5.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
+            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton5.Name = "toolStripButton5";
+            this.toolStripButton5.Size = new System.Drawing.Size(132, 24);
+            this.toolStripButton5.Text = "Izvoz z ExceL - ZA";
+            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
             // 
             // dataGridView1
             // 
@@ -236,16 +248,6 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // toolStripButton5
-            // 
-            this.toolStripButton5.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton5.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton5.Image")));
-            this.toolStripButton5.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton5.Name = "toolStripButton5";
-            this.toolStripButton5.Size = new System.Drawing.Size(132, 24);
-            this.toolStripButton5.Text = "Izvoz z ExceL - ZA";
-            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click);
-            // 
             // button3
             // 
             this.button3.Location = new System.Drawing.Point(1204, 59);
@@ -302,6 +304,25 @@
             this.label8.TabIndex = 315;
             this.label8.Text = "Period od:";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(226, 66);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(82, 17);
+            this.label2.TabIndex = 121;
+            this.label2.Text = "Broj zapisa:";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(316, 64);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(77, 22);
+            this.textBox1.TabIndex = 120;
+            this.textBox1.Text = "1000";
+            // 
             // frmRadniNalogPregled
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -321,6 +342,8 @@
             this.Controls.Add(this.chkOD);
             this.Controls.Add(this.chkLA);
             this.Controls.Add(this.chkPR);
+            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.txtSifra);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dataGridView1);
@@ -363,5 +386,7 @@
         private System.Windows.Forms.DateTimePicker dtpVremeDo2;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }
