@@ -168,6 +168,8 @@ namespace Saobracaj.Dokumenta
 
             }
 
+            toolStripButton8.Enabled = false;
+
             if (pomKontrolisaoAdmin == "1")
             {
                 MessageBox.Show("Smena je kontrolisana sa sttrane Admina i ne moze je niko vise menjati vise menjati");
@@ -178,6 +180,8 @@ namespace Saobracaj.Dokumenta
                 btnUbaciAktivnost.Enabled = false;
                 button1.Enabled = false;
                 button2.Enabled = false;
+                toolStripButton8.Enabled = false;
+                toolStripButton7.Enabled = false;
             }
             else if ((pomKontrolisaoDispecer == "1") && (pomKontrolisaoAdmin != "1"))
             {
@@ -191,6 +195,12 @@ namespace Saobracaj.Dokumenta
                     btnUbaciAktivnost.Enabled = false;
                     button1.Enabled = false;
                     button2.Enabled = false;
+                    toolStripButton8.Enabled = false;
+                   
+                }
+                else
+                {
+                    toolStripButton8.Enabled = true;
                 }
             }
 
@@ -2060,6 +2070,10 @@ namespace Saobracaj.Dokumenta
             ins.InsAktivnostiStavke(Convert.ToInt32(txtSifra.Text), 43, Convert.ToDouble(1), Convert.ToDouble(Convert.ToDouble(txtRazlika.Text) * 100), "Zaključenje smene", 0, "", 1, "", 0, dtpStavke.Value,0);
             InsertAktivnosti insA = new InsertAktivnosti();
             insA.UpdAktivnostiZarada(Convert.ToInt32(txtSifra.Text), Convert.ToDouble(txtIzracun.Text), Convert.ToDouble(txtRazlika.Text), Convert.ToDouble(txtZarada.Text));
+
+            insA.UpdateKontrolisaoDispecer(Convert.ToInt32(txtSifra.Text));
+            toolStripButton7.Enabled = false;
+
             InsertLogAktivnosti insL = new InsertLogAktivnosti();
             insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik, DateTime.Now, 0, 0, 0);
             //  insL.InsLog(Convert.ToInt32(txtSifra.Text), "Kraj unosa", Korisnik);

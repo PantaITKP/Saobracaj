@@ -917,5 +917,17 @@ namespace Saobracaj
             Dokumenta.frmNajavljeniVozovi nv = new Dokumenta.frmNajavljeniVozovi();
             nv.Show();
         }
+
+        private void toolStripButton102_Click(object sender, EventArgs e)
+        {
+            Mobile.frmPrijavaSmene2 prs = new Mobile.frmPrijavaSmene2();
+            prs.Show();
+        }
+
+        private void toolStripButton130_Click(object sender, EventArgs e)
+        {
+            Servis.frmAVVNeispravnosti avv = new Servis.frmAVVNeispravnosti();
+            avv.Show();
+        }
     }
 }

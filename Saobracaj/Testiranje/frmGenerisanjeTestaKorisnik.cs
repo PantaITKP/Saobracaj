@@ -198,7 +198,7 @@ namespace Saobracaj.Testiranje
             dataGridView3.ReadOnly = true;
             dataGridView3.DataSource = ds.Tables[0];
             Tehnologija.InsertTestoviPitanja ins = new Tehnologija.InsertTestoviPitanja();
-
+            ins.DelGenerisaniTestoviPitanja(Zaposleni, Convert.ToInt32(cboGrupaTesta.SelectedValue));
             foreach (DataGridViewRow row in dataGridView3.Rows)
             {
                 ins.InsGenerisaniTestoviPitanja(Zaposleni, Convert.ToInt32(cboGrupaTesta.SelectedValue), Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToInt32(0));

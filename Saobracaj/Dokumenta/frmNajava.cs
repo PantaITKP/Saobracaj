@@ -666,7 +666,34 @@ namespace Saobracaj.Dokumenta
             cboTehnologijaID.DataSource = view;
             cboTehnologijaID.DisplayMember = "MpNaziv";
             cboTehnologijaID.ValueMember = "ID";
-           
+
+
+            var select6g = " Select ID, RTrim(Opis) as Stanica From Stanice order by opis";
+            var s_connection6g = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection6g = new SqlConnection(s_connection6g);
+            var c6g = new SqlConnection(s_connection6g);
+            var dataAdapter6g = new SqlDataAdapter(select6g, c6g);
+            var commandBuilder6g = new SqlCommandBuilder(dataAdapter6g);
+            var ds6g = new DataSet();
+            dataAdapter6g.Fill(ds6g);
+            cboOtpravnaGr.DataSource = ds6g.Tables[0];
+            cboOtpravnaGr.DisplayMember = "Stanica";
+            cboOtpravnaGr.ValueMember = "ID";
+
+
+
+            var select6g2 = " Select ID, RTrim(Opis) as Stanica From Stanice order by opis";
+            var s_connection6g2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection6g2 = new SqlConnection(s_connection6g2);
+            var c6g2 = new SqlConnection(s_connection6g);
+            var dataAdapter6g2 = new SqlDataAdapter(select6g2, c6g2);
+            var commandBuilder6g2 = new SqlCommandBuilder(dataAdapter6g2);
+            var ds6g2 = new DataSet();
+            dataAdapter6g2.Fill(ds6g2);
+            cboUputnaGr.DataSource = ds6g2.Tables[0];
+            cboUputnaGr.DisplayMember = "Stanica";
+            cboUputnaGr.ValueMember = "ID";
+
             //Panta
             loadStatus = 0;
         }
@@ -1554,7 +1581,7 @@ namespace Saobracaj.Dokumenta
                 txtPorDodatno.Text = dr["DodatnoPorudznina"].ToString();
                 combo_SerijaVagona.SelectedValue = dr["SerijaVagona"].ToString();
                 cboOtpravnaGr.SelectedValue = Convert.ToInt32(dr["OtpravnaGr"].ToString());
-                cboUputnaGr.SelectedValue = Convert.ToInt32(dr["OtpravnaGr"].ToString());
+                cboUputnaGr.SelectedValue = Convert.ToInt32(dr["UputnaGr"].ToString());
                 if (dr["Tovareno"].ToString() == "1")
                 {
                     chkTovareno.Checked = true;
@@ -1563,7 +1590,7 @@ namespace Saobracaj.Dokumenta
                 {
                     chkTovareno.Checked = false;
                 }
-                txtNapomenaPriprema.Text = dr["OtpravnaGr"].ToString();
+                txtNapomenaPriprema.Text = dr["NapomenaPriprema"].ToString();
             }
 
             con.Close();

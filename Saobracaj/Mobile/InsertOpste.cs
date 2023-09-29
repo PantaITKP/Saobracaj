@@ -65,5 +65,53 @@ namespace Saobracaj.Mobile
 
         }
 
+        public void SelectLokomotivaPresek()
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "SelectLokomotivaPresek";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+           
+
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešan update");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Unos NHM broja je uspešno završena", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+
+
+        }
+
     }
 }

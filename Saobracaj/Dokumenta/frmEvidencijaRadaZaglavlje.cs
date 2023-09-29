@@ -485,7 +485,49 @@ namespace Saobracaj.Dokumenta
             RefreshTroskovi();
 
         }
+        int ProveraZakljucavanjaDispecer(string Korisnik, int Aktivnost)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection con = new SqlConnection(s_connection);
+            string pomKontrolisaoDispecer = "";
+            string pomKontrolisaoAdmin = "";
+            con.Open();
+            if (Aktivnost.ToString() == "")
+            { Aktivnost = 0; }
+            SqlCommand cmd = new SqlCommand("select KontrolisaoDispecer, KontrolisaoAdmin  from Aktivnosti where ID = " + Aktivnost, con);
+            SqlDataReader dr = cmd.ExecuteReader();
 
+            while (dr.Read())
+            {
+                pomKontrolisaoDispecer = dr["KontrolisaoDispecer"].ToString();
+
+                pomKontrolisaoAdmin = dr["KontrolisaoAdmin"].ToString();
+
+            }
+
+            con.Close();
+
+            if (pomKontrolisaoAdmin == "1")
+            {
+                MessageBox.Show("Smena je kontrolisana sa strane Admina i ne moze je niko vise menjati vise menjati ni brisati");
+                return 0;
+            }
+            else if ((pomKontrolisaoDispecer == "1") && (pomKontrolisaoAdmin != "1"))
+            {
+                if (Korisnik != "admin")
+                {
+                    MessageBox.Show("Nakon potvrde Dispecera smenu moze brisati samo admin");
+
+                    return 1;
+                }
+            }
+            else if ((pomKontrolisaoDispecer != "1") && (pomKontrolisaoAdmin != "1"))
+            { return 1; }
+
+            return 0;
+            
+
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -495,8 +537,14 @@ namespace Saobracaj.Dokumenta
 
                 if (row.Selected == true)
                 {
-                    delAkt.DeleteAktivnosti(Convert.ToInt32(row.Cells[0].Value.ToString()));
-                    delAktStav.DeleteAktivnostiStavkePoNadredjenom(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                    int SifraAktivnosti = Convert.ToInt32(row.Cells[0].Value.ToString());
+                    int MozeBrisanje = ProveraZakljucavanjaDispecer(Kor, SifraAktivnosti);
+                    if (MozeBrisanje == 1)
+                    {
+                        delAkt.DeleteAktivnosti(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                        delAktStav.DeleteAktivnostiStavkePoNadredjenom(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                    }
+                   
                 }
 
 

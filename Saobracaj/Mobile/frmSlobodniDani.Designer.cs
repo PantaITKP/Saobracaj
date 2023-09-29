@@ -87,7 +87,7 @@
             this.dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(956, 503);
+            this.dataGridView1.Size = new System.Drawing.Size(979, 503);
             this.dataGridView1.TabIndex = 1;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
@@ -131,7 +131,7 @@
             this.txtNapomena.PasswordChar = '\0';
             this.txtNapomena.ScrollBars = System.Windows.Forms.ScrollBars.None;
             this.txtNapomena.SelectedText = "";
-            this.txtNapomena.Size = new System.Drawing.Size(258, 88);
+            this.txtNapomena.Size = new System.Drawing.Size(360, 88);
             this.txtNapomena.Style = MetroFramework.MetroColorStyle.Green;
             this.txtNapomena.TabIndex = 5;
             this.txtNapomena.Theme = MetroFramework.MetroThemeStyle.Light;

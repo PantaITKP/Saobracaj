@@ -663,6 +663,12 @@
     <Compile Include="Dokumenta\frmEvidencijaRadaSmederevo.Designer.cs">
       <DependentUpon>frmEvidencijaRadaSmederevo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRadaZakljucavanje.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRadaZakljucavanje.Designer.cs">
+      <DependentUpon>frmEvidencijaRadaZakljucavanje.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmEvidencijaTroskova.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1264,6 +1270,12 @@
     <Compile Include="Mobile\frmPrijavaSmene.Designer.cs">
       <DependentUpon>frmPrijavaSmene.cs</DependentUpon>
     </Compile>
+    <Compile Include="Mobile\frmPrijavaSmene2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Mobile\frmPrijavaSmene2.Designer.cs">
+      <DependentUpon>frmPrijavaSmene2.cs</DependentUpon>
+    </Compile>
     <Compile Include="Mobile\frmSlobodniDani.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1393,6 +1405,12 @@
     <Compile Include="PropertyGridForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Servis\frmAVVNeispravnosti.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Servis\frmAVVNeispravnosti.Designer.cs">
+      <DependentUpon>frmAVVNeispravnosti.cs</DependentUpon>
+    </Compile>
     <Compile Include="Servis\frmEvidencijaKvarova.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1483,6 +1501,7 @@
     <Compile Include="Servis\frmVrstePopisa.Designer.cs">
       <DependentUpon>frmVrstePopisa.cs</DependentUpon>
     </Compile>
+    <Compile Include="Servis\InsertAVVNeispravnosti.cs" />
     <Compile Include="Servis\InsertGrupaKvarova.cs" />
     <Compile Include="Servis\InsertKvarovi.cs" />
     <Compile Include="Servis\InsertLokomotiveVrstaPopisa.cs" />
@@ -1952,6 +1971,9 @@
     <EmbeddedResource Include="Dokumenta\frmEvidencijaRadaSmederevo.resx">
       <DependentUpon>frmEvidencijaRadaSmederevo.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmEvidencijaRadaZakljucavanje.resx">
+      <DependentUpon>frmEvidencijaRadaZakljucavanje.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmEvidencijaTroskova.resx">
       <DependentUpon>frmEvidencijaTroskova.cs</DependentUpon>
     </EmbeddedResource>
@@ -2250,6 +2272,9 @@
     <EmbeddedResource Include="Mobile\frmPrijavaSmene.resx">
       <DependentUpon>frmPrijavaSmene.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Mobile\frmPrijavaSmene2.resx">
+      <DependentUpon>frmPrijavaSmene2.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Mobile\frmSlobodniDani.resx">
       <DependentUpon>frmSlobodniDani.cs</DependentUpon>
     </EmbeddedResource>
@@ -2272,6 +2297,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="Servis\frmAVVNeispravnosti.resx">
+      <DependentUpon>frmAVVNeispravnosti.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Servis\frmEvidencijaKvarova.resx">
       <DependentUpon>frmEvidencijaKvarova.cs</DependentUpon>
     </EmbeddedResource>
