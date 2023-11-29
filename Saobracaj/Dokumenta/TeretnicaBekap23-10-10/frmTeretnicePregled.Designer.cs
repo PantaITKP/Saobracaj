@@ -289,11 +289,12 @@
             // 
             // toolStripButton7
             // 
+            this.toolStripButton7.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripButton7.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton7.Image")));
             this.toolStripButton7.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton7.Name = "toolStripButton7";
-            this.toolStripButton7.Size = new System.Drawing.Size(128, 24);
-            this.toolStripButton7.Text = "Random vrednosti";
+            this.toolStripButton7.Size = new System.Drawing.Size(112, 24);
+            this.toolStripButton7.Text = "Random vredmpsti";
             this.toolStripButton7.Click += new System.EventHandler(this.toolStripButton7_Click);
             // 
             // frmTeretnicePregled

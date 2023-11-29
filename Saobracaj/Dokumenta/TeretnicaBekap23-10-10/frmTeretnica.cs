@@ -26,7 +26,6 @@ namespace Saobracaj.Dokumenta
         public frmTeretnica()
         {
             InitializeComponent();
-            panel3.Visible = false;
         }
 
         public frmTeretnica(string IdTeretnice, string KorisnikTeretnica)
@@ -36,8 +35,6 @@ namespace Saobracaj.Dokumenta
             txtSifra.Text = IdTeretnice;
             VratiPodatke(IdTeretnice);
             RefreshDataGrid();
-            panel3.Visible = false;
-            ProveriTeren();
         }
 
         private void VratiPodatke(string IdTeretnice)
@@ -808,32 +805,6 @@ namespace Saobracaj.Dokumenta
         {
             frmTeretnicaTerenIzmena teren = new frmTeretnicaTerenIzmena(txtSifra.Text);
             teren.Show();
-        }
-
-        private void button10_Click(object sender, EventArgs e)
-        {
-            panel3.Visible = false;
-        }
-
-        private void toolStripButton8_Click(object sender, EventArgs e)
-        {
-            panel3.Visible = true;
-        }
-        private void ProveriTeren()
-        {
-            var select = "select BrojKola,KontrolaBrojKola,Duzina,KontrolaDuznina,Tara,KontrolaTara,P,KontrolaP,Ruckoc,KontrolaRucKoc from TeretnicaStavke Where(BrojKola<>KontrolaBrojKola or Duzina<>KontrolaDuznina or Tara<>KontrolaTara or P<>KontrolaP or RucKoc<>KontrolaRucKoc) and BrojTeretnice=" + Convert.ToInt32(txtSifra.Text)+" order by RB asc";
-
-            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection = new SqlConnection(s_connection);
-            var c = new SqlConnection(s_connection);
-            var dataAdapter = new SqlDataAdapter(select, c);
-
-            var commandBuilder = new SqlCommandBuilder(dataAdapter);
-            var ds = new DataSet();
-            dataAdapter.Fill(ds);
-            dataGridView2.ReadOnly = false;
-            dataGridView2.DataSource = ds.Tables[0];
-
         }
     }
 }

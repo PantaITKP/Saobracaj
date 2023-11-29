@@ -68,8 +68,6 @@
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.txtNeispravnost = new System.Windows.Forms.TextBox();
-            this.label38 = new System.Windows.Forms.Label();
             this.button9 = new System.Windows.Forms.Button();
             this.txtDokument = new System.Windows.Forms.TextBox();
             this.label36 = new System.Windows.Forms.Label();
@@ -144,10 +142,8 @@
             this.button5 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.button10 = new System.Windows.Forms.Button();
+            this.label38 = new System.Windows.Forms.Label();
+            this.txtNeispravnost = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -168,8 +164,6 @@
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.tabPage6.SuspendLayout();
-            this.panel3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -190,8 +184,7 @@
             this.toolStripButton2,
             this.toolStripButton5,
             this.toolStripButton6,
-            this.toolStripButton7,
-            this.toolStripButton8});
+            this.toolStripButton7});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1352, 27);
@@ -614,22 +607,6 @@
             this.panel2.Size = new System.Drawing.Size(1326, 147);
             this.panel2.TabIndex = 9;
             this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
-            // 
-            // txtNeispravnost
-            // 
-            this.txtNeispravnost.Location = new System.Drawing.Point(86, 109);
-            this.txtNeispravnost.Name = "txtNeispravnost";
-            this.txtNeispravnost.Size = new System.Drawing.Size(371, 20);
-            this.txtNeispravnost.TabIndex = 176;
-            // 
-            // label38
-            // 
-            this.label38.AutoSize = true;
-            this.label38.Location = new System.Drawing.Point(8, 112);
-            this.label38.Name = "label38";
-            this.label38.Size = new System.Drawing.Size(72, 13);
-            this.label38.TabIndex = 175;
-            this.label38.Text = "Neispravnost:";
             // 
             // button9
             // 
@@ -1224,7 +1201,7 @@
             this.tabPage1.Controls.Add(this.dataGridView1);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
             this.tabPage1.Size = new System.Drawing.Size(1289, 318);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Stavke teretnice";
@@ -1259,8 +1236,8 @@
             this.tabPage2.Controls.Add(this.reportViewer1);
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage2.Size = new System.Drawing.Size(1303, 254);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Štampa teretnice";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -1281,7 +1258,7 @@
             this.tabPage3.Controls.Add(this.reportViewer2);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage3.Size = new System.Drawing.Size(1303, 254);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "K-200";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -1302,7 +1279,7 @@
             this.tabPage4.Controls.Add(this.reportViewer3);
             this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage4.Size = new System.Drawing.Size(1303, 254);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Kol-65";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -1323,8 +1300,8 @@
             this.tabPage5.Controls.Add(this.reportViewer4);
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage5.Size = new System.Drawing.Size(1303, 254);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "K-200 Bosna";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -1345,7 +1322,7 @@
             this.tabPage6.Controls.Add(this.reportViewer5);
             this.tabPage6.Location = new System.Drawing.Point(4, 22);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage6.Size = new System.Drawing.Size(1303, 254);
             this.tabPage6.TabIndex = 5;
             this.tabPage6.Text = "Kol-65 Bosna";
             this.tabPage6.UseVisualStyleBackColor = true;
@@ -1393,48 +1370,27 @@
             this.button8.UseVisualStyleBackColor = false;
             this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
-            // toolStripButton8
+            // label38
             // 
-            this.toolStripButton8.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton8.Image")));
-            this.toolStripButton8.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton8.Name = "toolStripButton8";
-            this.toolStripButton8.Size = new System.Drawing.Size(98, 24);
-            this.toolStripButton8.Text = "Proveri teren";
-            this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
+            this.label38.AutoSize = true;
+            this.label38.Location = new System.Drawing.Point(8, 112);
+            this.label38.Name = "label38";
+            this.label38.Size = new System.Drawing.Size(72, 13);
+            this.label38.TabIndex = 175;
+            this.label38.Text = "Neispravnost:";
             // 
-            // panel3
+            // txtNeispravnost
             // 
-            this.panel3.Controls.Add(this.button10);
-            this.panel3.Controls.Add(this.dataGridView2);
-            this.panel3.Location = new System.Drawing.Point(12, 28);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(1050, 258);
-            this.panel3.TabIndex = 125;
-            // 
-            // dataGridView2
-            // 
-            this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(12, 44);
-            this.dataGridView2.Name = "dataGridView2";
-            this.dataGridView2.Size = new System.Drawing.Size(1024, 199);
-            this.dataGridView2.TabIndex = 0;
-            // 
-            // button10
-            // 
-            this.button10.Location = new System.Drawing.Point(11, 9);
-            this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(89, 29);
-            this.button10.TabIndex = 1;
-            this.button10.Text = "Zavrsi proveru";
-            this.button10.UseVisualStyleBackColor = true;
-            this.button10.Click += new System.EventHandler(this.button10_Click);
+            this.txtNeispravnost.Location = new System.Drawing.Point(86, 109);
+            this.txtNeispravnost.Name = "txtNeispravnost";
+            this.txtNeispravnost.Size = new System.Drawing.Size(371, 20);
+            this.txtNeispravnost.TabIndex = 176;
             // 
             // frmTeretnica
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1352, 598);
-            this.Controls.Add(this.panel3);
             this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button5);
@@ -1470,8 +1426,6 @@
             this.tabPage4.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1594,9 +1548,5 @@
         private System.Windows.Forms.ToolStripButton toolStripButton7;
         private System.Windows.Forms.Label label38;
         private System.Windows.Forms.TextBox txtNeispravnost;
-        private System.Windows.Forms.ToolStripButton toolStripButton8;
-        private System.Windows.Forms.Panel panel3;
-        private System.Windows.Forms.DataGridView dataGridView2;
-        private System.Windows.Forms.Button button10;
     }
 }

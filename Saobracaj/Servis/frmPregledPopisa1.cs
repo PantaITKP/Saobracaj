@@ -206,18 +206,18 @@ namespace Saobracaj.Servis
 
         private void RefreshDataGrid500PoLokomotivi()
         {
-            var select = " Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, " +
+            var select = " Select top 10000 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, " +
  " LokomotivaPopis.Kolicina,  LokomotiveVrstePopisa.ReferentnaKolicina, LokomotivaPopis.Vreme,  LokomotivaPopis.Napomena, LokomotiveVrstePopisa.ID as IDVrstePopisa, " +
  "   VrstaPopisa.Naziv as VrstaPopisa  from " +
- "   (select LokomotivaPrijava.ID as IDLokomotivaPrijava, LokomotivaPrijava.Lokomotiva " +
+ "   (select top 10000 LokomotivaPrijava.ID as IDLokomotivaPrijava, LokomotivaPrijava.Lokomotiva " +
   "   from LokomotivaPrijava " +
    "  inner join LokomotivaPopis on   LokomotivaPrijava.ID = LokomotivaPopis.LokomotivaPrijavaID " +
-  "where LokomotivaPrijava.Smer = 0 and Lokomotiva = '" + cboLokomotiva.SelectedValue.ToString().Trim() + "'"  + " group by LokomotivaPrijava.Lokomotiva, LokomotivaPrijava.ID) t1 " +
+  "where LokomotivaPrijava.Smer = 0 and Lokomotiva = '" + cboLokomotiva.SelectedValue.ToString().Trim() + "'"  + " group by LokomotivaPrijava.Lokomotiva, LokomotivaPrijava.ID,LokomotivaPrijava.Datum order by LokomotivaPrijava.Datum desc) t1 " +
  "   inner join LokomotivaPopis on t1.IDLokomotivaPrijava = LokomotivaPopis.LokomotivaPrijavaID " +
   "       inner join LokomotivaPrijava on LokomotivaPrijava.ID = t1.IDLokomotivaPrijava " +
   "         inner join Delavci on Delavci.DeSifra = LokomotivaPrijava.Zaposleni " +
   "           inner join LokomotiveVrstePopisa on LokomotiveVrstePopisa.Lokomotiva = t1.Lokomotiva and LokomotivaPopis.VrstaPopisaID = LokomotiveVrstePopisa.VrstaPopisaID " +
- " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID " ;
+ " inner join VrstaPopisa on VrstaPopisa.ID = LokomotiveVrstePopisa.VrstaPopisaID ";
 
 /*
             var select = "   Select top 500 t1.IDLokomotivaPrijava, t1.Lokomotiva, LokomotivaPrijava.Zaposleni as ZaposleniID, (RTrim(Delavci.DePriimek) + ' ' + Rtrim(Delavci.DeIme)) as Zaposleni, LokomotivaPopis.Kolicina, " +

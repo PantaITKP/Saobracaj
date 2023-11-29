@@ -409,7 +409,8 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
-        public void RandomVrednosti(int ID)
+
+        public void RAndpmVred(int ID)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -418,7 +419,7 @@ namespace Saobracaj.Dokumenta
             myCommand.CommandType = System.Data.CommandType.StoredProcedure;
 
             SqlParameter parameter = new SqlParameter();
-            parameter.ParameterName = "@IDTeretnice";
+            parameter.ParameterName = "@ID";
             parameter.SqlDbType = SqlDbType.Int;
             parameter.Direction = ParameterDirection.Input;
             parameter.Value = ID;
@@ -438,7 +439,7 @@ namespace Saobracaj.Dokumenta
 
             catch (SqlException)
             {
-                throw new Exception("Random neuspešno");
+                throw new Exception("Brisanje neuspešno");
             }
 
             finally

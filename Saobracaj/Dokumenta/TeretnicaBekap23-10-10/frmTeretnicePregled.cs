@@ -624,8 +624,8 @@ namespace Saobracaj.Dokumenta
 
         private void toolStripButton7_Click(object sender, EventArgs e)
         {
-            InsertTeretnica ins = new InsertTeretnica();
-            ins.RandomVrednosti(Convert.ToInt32(txtSifra.Text));
+            InsertTeretnica it = new InsertTeretnica();
+            it.RAndpmVred(Convert.ToInt32(txtSifra.Text));
         }
     }
 }
