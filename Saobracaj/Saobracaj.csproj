@@ -969,6 +969,12 @@
     <Compile Include="Dokumenta\frmPropratnice.Designer.cs">
       <DependentUpon>frmPropratnice.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmPutniList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmPutniList.Designer.cs">
+      <DependentUpon>frmPutniList.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmPutniNaloziPregled.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2123,6 +2129,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPropratnice.resx">
       <DependentUpon>frmPropratnice.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmPutniList.resx">
+      <DependentUpon>frmPutniList.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmPutniNaloziPregled.resx">
       <DependentUpon>frmPutniNaloziPregled.cs</DependentUpon>

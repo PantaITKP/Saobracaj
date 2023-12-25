@@ -145,7 +145,10 @@ namespace Saobracaj.Dokumenta
             " CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail, " +
             " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica,  CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto, " +
             " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano,  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
-            "    (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa  from Aktivnosti " +
+            " (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa,  " +
+            " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
+             " CASE WHEN Aktivnosti.PlacenoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlacenoTroskovi" +
+             " from Aktivnosti " +
             " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0 " +
             " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
 
@@ -444,7 +447,413 @@ namespace Saobracaj.Dokumenta
 
         private void button8_Click(object sender, EventArgs e)
         {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na troskove
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiPregledanoKartice(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            PremostiDataGridView();
+       
+            var select = "";
+
+            int tmpStigao = 0;
+            int tmpPregledan = 0;
+
+            if (chkStigli.Checked == true)
+            { tmpStigao = 1; }
+
+            if (chkPregledani.Checked == true)
+            { tmpPregledan = 1; }
+
+            select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka,  " +
+ " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+ "   VremeOD, VremeDo, Ukupno as UkupnoVreme,     RAcun,  " +
+  "   CASE WHEN Aktivnosti.StigaoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoRAcun, " +
+  "   CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
+     "     (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+     "   from Aktivnosti inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    " +
+     "where (RACUN) > 0 and Convert(nvarchar(10), VremeDo, 126) >='" + dtpVremeOd.Text + 
+     "' And Convert(nvarchar(10), VremeDo, 126) <='" + dtpVremeDo.Text + "'  and StigaoRacun = " + tmpStigao + "And Pregledano = " + tmpPregledan +
+"  order by Aktivnosti.ID desc ";
+           
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Oznaka";
+            dataGridView1.Columns[1].Visible = false;
+            dataGridView1.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Zaposleni";
+            dataGridView1.Columns[2].Width = 100;
+
+            RefreshCellColor();
+
+            
+        }
+        private void RefreshCellColor()
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (Convert.ToInt32(row.Cells[7].Value) == 0)
+                {
+                    row.Cells[6].Style.BackColor = Color.Red;
+                }
+                else if (Convert.ToInt32(row.Cells[7].Value) == 1 && Convert.ToInt32(row.Cells[8].Value) == 0)
+                {
+                    // row.DefaultCellStyle.BackColor = Color.LightSalmon; // Use it in order to colorize all cells of the row
+
+                    row.Cells[6].Style.BackColor = Color.Yellow;
+                }
+                else
+                {
+                    row.Cells[6].Style.BackColor = Color.Green;
+                }
+            }
+
+
+
+        }
+
+        private void RefreshCellColorSvi()
+        {
+            foreach (DataGridViewRow row in dataGridView2.Rows)
+            {
+                if (Convert.ToInt32(row.Cells[7].Value) == 0 && Convert.ToDecimal(row.Cells[6].Value.ToString()) > 0)
+                {
+                    row.Cells[6].Style.BackColor = Color.Red;
+                }
+                else if (Convert.ToInt32(row.Cells[7].Value) == 1 && Convert.ToInt32(row.Cells[8].Value) == 0 && Convert.ToDecimal(row.Cells[6].Value) > 0)
+                {
+                    // row.DefaultCellStyle.BackColor = Color.LightSalmon; // Use it in order to colorize all cells of the row
+
+                    row.Cells[6].Style.BackColor = Color.Yellow;
+                }
+                else
+                {
+                    row.Cells[6].Style.BackColor = Color.Green;
+                }
+
+                if (Convert.ToInt32(row.Cells[11].Value) == 0 && Convert.ToDecimal(row.Cells[10].Value) > 0)
+                {
+                    row.Cells[10].Style.BackColor = Color.Red;
+                }
+                else if (Convert.ToInt32(row.Cells[11].Value) == 1 && Convert.ToInt32(row.Cells[12].Value) == 0 && Convert.ToDecimal(row.Cells[10].Value) > 0)
+                {
+                    // row.DefaultCellStyle.BackColor = Color.LightSalmon; // Use it in order to colorize all cells of the row
+
+                    row.Cells[10].Style.BackColor = Color.Yellow;
+                }
+                else
+                {
+                    row.Cells[10].Style.BackColor = Color.Green;
+                }
+
+                if (Convert.ToInt32(row.Cells[15].Value) == 0 && Convert.ToDecimal(row.Cells[14].Value) > 0)
+                {
+                    row.Cells[14].Style.BackColor = Color.Red;
+                }
+                else if (Convert.ToInt32(row.Cells[15].Value) == 1 && Convert.ToInt32(row.Cells[16].Value) == 0 && Convert.ToDecimal(row.Cells[14].Value) > 0)
+                {
+                    row.Cells[14].Style.BackColor = Color.Yellow;
+                }
+                else
+                {
+                    row.Cells[14].Style.BackColor = Color.Green;
+                }
+            }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            PremostiDataGridView();
+
+            var select = "";
+
+            int tmpStigao = 0;
+            int tmpPregledan = 0;
+
+            if (chkStigli.Checked == true)
+            { tmpStigao = 1; }
+
+            if (chkPregledani.Checked == true)
+            { tmpPregledan = 1; }
+
+            select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka,  " +
+ " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+ "   VremeOD, VremeDo, Ukupno as UkupnoVreme,     UkupniTroskovi,  " +
+  "   CASE WHEN Aktivnosti.StigaoTrosak > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoTrosak, " +
+  "   CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTrosak, " +
+     "     (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+     "   from Aktivnosti inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    " +
+     "where (UkupniTroskovi) > 0 and Convert(nvarchar(10), VremeDo, 126) >='" + dtpVremeOd.Text +
+     "' And Convert(nvarchar(10), VremeDo, 126) <='" + dtpVremeDo.Text + "'  and StigaoTrosak= " + tmpStigao + "And PregledanoTroskovi = " + tmpPregledan +
+"  order by Aktivnosti.ID desc ";
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Oznaka";
+            dataGridView1.Columns[1].Visible = false;
+            dataGridView1.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Zaposleni";
+            dataGridView1.Columns[2].Width = 100;
+
+            RefreshCellColor();
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            PremostiDataGridView();
+    
+
+            var select = "";
+
+            int tmpStigao = 0;
+            int tmpPregledan = 0;
+
+            if (chkStigli.Checked == true)
+            { tmpStigao = 1; }
+
+            if (chkPregledani.Checked == true)
+            { tmpPregledan = 1; }
+
+            select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka,  " +
+            " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+            "   VremeOD, VremeDo, Ukupno as UkupnoVreme,     Kartica,  " +
+            "   CASE WHEN Aktivnosti.StigaoKartica > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoKartica, " +
+            "  CASE WHEN Aktivnosti.PregledanoKartice > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoKartice, " +
+     "     (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+     "   from Aktivnosti inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    " +
+     "where (Kartica) > 0 and Convert(nvarchar(10), VremeDo, 126) >='" + dtpVremeOd.Text +
+     "' And Convert(nvarchar(10), VremeDo, 126) <='" + dtpVremeDo.Text + "'  and StigaoKartica = " + tmpStigao + " and PregledanoKartice = " + tmpPregledan +
+"  order by Aktivnosti.ID desc ";
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Oznaka";
+            dataGridView1.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Zaposleni";
+            dataGridView1.Columns[2].Width = 100;
+
+            RefreshCellColor();
+
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na racune
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiPregledano(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na troskove
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiPregledanoTroskovi(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
+
+        private void PremostiDataGridView()
+        {
+            dataGridView1.Refresh();
+            var select = "";
+
+            select = " Select 1 ";
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+           
+
+       
+        }
+
+        private void button11_Click_1(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na racune
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiStigao(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na troskove
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiStigaoTroskovi(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na troskove
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiStigaoKartice(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+        }
+
+        private void button14_Click(object sender, EventArgs e)
+        {
+            PremostiDataGridView();
+
+            var select = "";
+
+          
+            select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka,  " +
+  " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+  "   VremeOD, VremeDo, Ukupno as UkupnoVreme,     RAcun,  " +
+   "   CASE WHEN Aktivnosti.StigaoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoRAcun, " +
+   "   CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
+   "   CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, " +
+    "   UkupniTroskovi,  " +
+     "   CASE WHEN Aktivnosti.StigaoTrosak > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoTrosak," +
+     "    CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
+      "    CASE WHEN Aktivnosti.PlacenoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlacenoTroskovi," +
+      "     Kartica ," +
+       "    CASE WHEN Aktivnosti.StigaoKartica > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoKArtica, " +
+       "  CASE WHEN Aktivnosti.PregledanoKartice > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoKartice, " + 
+      "     (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+      "   from Aktivnosti inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    where (RACUN + UkupniTroskovi + Kartica) > 0 and Convert(nvarchar(10), VremeDo, 126) >='" + dtpVremeOd.Text + "' And Convert(nvarchar(10), VremeDo, 126) <='" + dtpVremeDo.Text + "'  " +
+"  order by Aktivnosti.ID desc ";
+       
+
+            
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView2.ReadOnly = true;
+            dataGridView2.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView2.Columns[0];
+            dataGridView2.Columns[0].HeaderText = "ID";
+            dataGridView2.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView2.Columns[1];
+            dataGridView2.Columns[1].HeaderText = "Oznaka";
+            dataGridView2.Columns[1].Visible = false;
+            dataGridView2.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView2.Columns[2];
+            dataGridView2.Columns[2].HeaderText = "Zaposleni";
+            dataGridView2.Columns[2].Width = 100;
+
+
+            dataGridView1.Refresh();
+            RefreshCellColorSvi();
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView2.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    {
+                        frmEvidencijaRada er = new frmEvidencijaRada(Convert.ToInt32(row.Cells[0].Value.ToString()), "");
+                        er.Show();
+                    }
+                }
+            }
         }
     }
 }

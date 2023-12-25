@@ -929,5 +929,11 @@ namespace Saobracaj
             Servis.frmAVVNeispravnosti avv = new Servis.frmAVVNeispravnosti();
             avv.Show();
         }
+
+        private void toolStripButton131_Click(object sender, EventArgs e)
+        {
+            Saobracaj.Dokumenta.frmPutniList pl = new Dokumenta.frmPutniList();
+            pl.Show();
+        }
     }
 }

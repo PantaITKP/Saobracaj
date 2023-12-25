@@ -840,5 +840,325 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            if (txtSifra.Text == "DejanIvan")
+            {
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if (row.Selected == true)
+                    {
+                        InsertAktivnosti ins = new InsertAktivnosti();
+                        ins.UpdateAktivnostiPlacenoRacuni(Convert.ToInt32(row.Cells[0].Value.ToString()));
+
+                    }
+                }
+            }
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            if (txtSifra.Text == "DejanIvan")
+            {
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if (row.Selected == true)
+                    {
+                        InsertAktivnosti ins = new InsertAktivnosti();
+                        ins.UpdateAktivnostiPlacenoTroskovi(Convert.ToInt32(row.Cells[0].Value.ToString()));
+
+                    }
+                }
+            }
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+
+
+            var select = "";
+
+           
+            select = " Select Aktivnosti.ID as Zapis,Aktivnosti.Oznaka, " +
+             "    (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+             " VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN, " +
+             " CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail, " +
+             " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,  " +
+             "  RAcun, Kartica,  CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto, " +
+             " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, " +
+             " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano," +
+             "  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
+             "    (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa, " +
+                " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
+             " CASE WHEN Aktivnosti.PlacenoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlacenoTroskovi,   BaSifra as SifraBanke, BaNaziv as Banka,  DePStevTRHr as Ziro" +
+             " from Aktivnosti " +
+             " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni   " +
+             " inner join DelavciPl on DelavciPl.DePSifDe = Delavci.DeSifra  " +
+                " inner join Banke on BaSifra = DePSifBanke  " +
+             " where Aktivnosti.Pregledano = 1 and Aktivnosti.PlacenoRacun = 0  " +
+             " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "'  and RAcun > 0 order by Aktivnosti.ID desc";
+
+            /*
+                        select = "Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka, " +
+                                 " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni,  " +
+                                 "  VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN,  " +
+                                  "   CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail,  " +
+                                   " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica, " +
+                                     " CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto," +
+                                      " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
+                                       " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
+                                        " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
+                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                                        " from Aktivnosti  " +
+                                 " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
+                                  "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun) > 0 " +
+                                  " And  VremeOd <=  '" +
+                                   dtpVremeDo.Text +
+                                  "' order by Aktivnosti.ID desc";
+            */
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView4.ReadOnly = true;
+            dataGridView4.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView4.Columns[0];
+            dataGridView4.Columns[0].HeaderText = "ID";
+            dataGridView4.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView4.Columns[1];
+            dataGridView4.Columns[1].HeaderText = "Oznaka";
+            dataGridView4.Columns[1].Visible = false;
+            dataGridView4.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView4.Columns[2];
+            dataGridView4.Columns[2].HeaderText = "Zaposleni";
+            dataGridView4.Columns[2].Width = 100;
+
+            DataGridViewColumn column3 = dataGridView4.Columns[3];
+            dataGridView4.Columns[3].HeaderText = "Vreme od";
+            dataGridView4.Columns[3].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView4.Columns[4];
+            dataGridView4.Columns[4].HeaderText = "Vreme do";
+            dataGridView4.Columns[4].Width = 100;
+
+            DataGridViewColumn column5 = dataGridView4.Columns[5];
+            dataGridView4.Columns[5].HeaderText = "Ukupno";
+            dataGridView4.Columns[5].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView4.Columns[6];
+            dataGridView4.Columns[6].HeaderText = "Ukupni troškovi";
+            dataGridView4.Columns[6].Visible = false;
+            dataGridView4.Columns[6].DefaultCellStyle.BackColor = Color.Aqua;
+            dataGridView4.Columns[6].Width = 50;
+
+            DataGridViewColumn column7 = dataGridView4.Columns[7];
+            dataGridView4.Columns[7].HeaderText = "Opis";
+            dataGridView4.Columns[7].Width = 120;
+
+            DataGridViewColumn column8 = dataGridView4.Columns[8];
+            dataGridView4.Columns[8].HeaderText = "RN";
+            dataGridView4.Columns[8].Visible = false;
+            dataGridView4.Columns[8].Width = 50;
+
+            DataGridViewColumn column9 = dataGridView4.Columns[9];
+            dataGridView4.Columns[9].HeaderText = "Poslat Email";
+            dataGridView4.Columns[9].Width = 50;
+
+            DataGridViewColumn column10 = dataGridView4.Columns[10];
+            dataGridView4.Columns[10].HeaderText = "Plaćeno smena";
+            dataGridView4.Columns[10].DefaultCellStyle.BackColor = Color.OrangeRed;
+            dataGridView4.Columns[10].Width = 50;
+
+            DataGridViewColumn column11 = dataGridView4.Columns[11];
+            dataGridView4.Columns[11].HeaderText = "Računi Iznos";
+            dataGridView4.Columns[11].Visible = true;
+            dataGridView4.Columns[11].DefaultCellStyle.BackColor = Color.CadetBlue;
+            dataGridView4.Columns[11].Width = 50;
+
+            DataGridViewColumn column12 = dataGridView4.Columns[12];
+            dataGridView4.Columns[12].HeaderText = "Kartice";
+            dataGridView4.Columns[12].Visible = false;
+            dataGridView4.Columns[12].Width = 50;
+
+            DataGridViewColumn column13 = dataGridView4.Columns[13];
+            dataGridView4.Columns[13].HeaderText = "Masinovodja";
+            dataGridView4.Columns[13].Width = 50;
+
+            DataGridViewColumn column14 = dataGridView4.Columns[14];
+            dataGridView4.Columns[14].HeaderText = "Mesto";
+            dataGridView4.Columns[14].Width = 100;
+
+            DataGridViewColumn column15 = dataGridView4.Columns[15];
+            dataGridView4.Columns[15].HeaderText = "Placeno računi";
+            dataGridView4.Columns[15].Visible = true;
+            dataGridView4.Columns[15].Width = 50;
+
+            DataGridViewColumn column16 = dataGridView4.Columns[16];
+            dataGridView4.Columns[16].HeaderText = "Pregledano racuni";
+            dataGridView4.Columns[16].Visible = true;
+            dataGridView4.Columns[16].Width = 50;
+
+            DataGridViewColumn column17 = dataGridView4.Columns[17];
+            dataGridView4.Columns[17].HeaderText = "Milšped";
+            dataGridView4.Columns[17].Width = 50;
+
+            DataGridViewColumn column18 = dataGridView4.Columns[18];
+            dataGridView4.Columns[18].HeaderText = "Zapisa";
+            dataGridView4.Columns[18].Width = 50;
+
+            DataGridViewColumn column19 = dataGridView4.Columns[19];
+            dataGridView4.Columns[19].HeaderText = "Pregledano troskovi";
+            dataGridView4.Columns[19].Visible = false;
+            dataGridView4.Columns[19].Width = 50;
+
+            DataGridViewColumn column20 = dataGridView4.Columns[20];
+            dataGridView4.Columns[20].HeaderText = "Placeno troskovi";
+            dataGridView4.Columns[20].Visible = false;
+            dataGridView4.Columns[20].Width = 50;
+
+            dataGridView4.Refresh();
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+          
+
+            var select = "";
+
+          
+            select = " Select Aktivnosti.ID as Zapis, Aktivnosti.Oznaka, " +
+             "    (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+             " VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN, " +
+             " CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail, " +
+             " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica,  CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto, " +
+             " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano,  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
+             "    (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa,  " +
+                 " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
+             " CASE WHEN Aktivnosti.PlacenoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlacenoTroskovi,  BaSifra as SifraBanke, BaNaziv as Banka,  DePStevTRHr as Ziro " +
+             " from Aktivnosti " +
+             " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni   " +
+               " inner join DelavciPl on DelavciPl.DePSifDe = Delavci.DeSifra  " +
+                " inner join Banke on BaSifra = DePSifBanke  " +
+             " where Aktivnosti.PregledanoTroskovi = 1 and Aktivnosti.PlacenoTroskovi = 0  " +
+             " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "'  and UkupniTroskovi > 0 order by Aktivnosti.ID desc";
+
+           
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView5.ReadOnly = true;
+            dataGridView5.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView5.Columns[0];
+            dataGridView5.Columns[0].HeaderText = "ID";
+            dataGridView5.Columns[0].Width = 30;
+
+            DataGridViewColumn column1 = dataGridView5.Columns[1];
+            dataGridView5.Columns[1].HeaderText = "Oznaka";
+            dataGridView5.Columns[1].Width = 30;
+
+            DataGridViewColumn column2 = dataGridView5.Columns[2];
+            dataGridView5.Columns[2].HeaderText = "Zaposleni";
+            dataGridView5.Columns[2].Width = 100;
+
+            DataGridViewColumn column3 = dataGridView5.Columns[3];
+            dataGridView5.Columns[3].HeaderText = "Vreme od";
+            dataGridView5.Columns[3].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView5.Columns[4];
+            dataGridView5.Columns[4].HeaderText = "Vreme do";
+            dataGridView5.Columns[4].Width = 100;
+
+            DataGridViewColumn column5 = dataGridView5.Columns[5];
+            dataGridView5.Columns[5].HeaderText = "Ukupno";
+            dataGridView5.Columns[5].Width = 50;
+
+            DataGridViewColumn column6 = dataGridView5.Columns[6];
+            dataGridView5.Columns[6].HeaderText = "Ukupni troškovi";
+            dataGridView5.Columns[6].Visible = true;
+            dataGridView5.Columns[6].DefaultCellStyle.BackColor = Color.Aqua;
+            dataGridView5.Columns[6].Width = 50;
+
+            DataGridViewColumn column7 = dataGridView5.Columns[7];
+            dataGridView5.Columns[7].HeaderText = "Opis";
+            dataGridView5.Columns[7].Width = 120;
+
+            DataGridViewColumn column8 = dataGridView5.Columns[8];
+            dataGridView5.Columns[8].HeaderText = "RN";
+            dataGridView5.Columns[16].Visible = false;
+            dataGridView5.Columns[8].Width = 50;
+
+            DataGridViewColumn column9 = dataGridView5.Columns[9];
+            dataGridView5.Columns[9].HeaderText = "Poslat Email";
+            dataGridView5.Columns[9].Width = 50;
+
+            DataGridViewColumn column10 = dataGridView5.Columns[10];
+            dataGridView5.Columns[10].HeaderText = "Plaćeno";
+            dataGridView5.Columns[10].Visible = false;
+            dataGridView5.Columns[10].DefaultCellStyle.BackColor = Color.OrangeRed;
+            dataGridView5.Columns[10].Width = 50;
+
+            DataGridViewColumn column11 = dataGridView5.Columns[11];
+            dataGridView5.Columns[11].HeaderText = "Računi";
+            dataGridView5.Columns[11].Visible = false;
+            dataGridView5.Columns[11].DefaultCellStyle.BackColor = Color.CadetBlue;
+            dataGridView5.Columns[11].Width = 50;
+
+            DataGridViewColumn column12 = dataGridView5.Columns[12];
+            dataGridView5.Columns[12].HeaderText = "Kartice";
+            dataGridView5.Columns[12].Visible = false;
+            dataGridView5.Columns[12].Width = 50;
+
+            DataGridViewColumn column13 = dataGridView5.Columns[13];
+            dataGridView5.Columns[13].HeaderText = "Masinovodja";
+            dataGridView5.Columns[13].Width = 50;
+
+            DataGridViewColumn column14 = dataGridView5.Columns[14];
+            dataGridView5.Columns[14].HeaderText = "Mesto";
+            dataGridView5.Columns[14].Width = 100;
+
+            DataGridViewColumn column15 = dataGridView5.Columns[15];
+            dataGridView5.Columns[15].HeaderText = "Pregledano računi";
+            dataGridView5.Columns[15].Visible = false;
+            dataGridView5.Columns[15].Width = 50;
+
+            DataGridViewColumn column16 = dataGridView5.Columns[16];
+            dataGridView5.Columns[16].HeaderText = "Placeno racun";
+            dataGridView5.Columns[16].Visible = false;
+            dataGridView5.Columns[16].Width = 50;
+
+            DataGridViewColumn column17 = dataGridView5.Columns[17];
+            dataGridView5.Columns[17].HeaderText = "Milšped";
+            dataGridView5.Columns[17].Width = 50;
+
+            DataGridViewColumn column18 = dataGridView5.Columns[18];
+            dataGridView5.Columns[18].HeaderText = "Zapisa";
+            dataGridView5.Columns[18].Width = 50;
+
+            DataGridViewColumn column19 = dataGridView5.Columns[19];
+            dataGridView5.Columns[19].HeaderText = "Pregledano troskovi";
+            dataGridView5.Columns[19].Visible = true;
+            dataGridView5.Columns[19].Width = 50;
+
+            DataGridViewColumn column20 = dataGridView5.Columns[20];
+            dataGridView5.Columns[20].HeaderText = "Placeno troskovi";
+            dataGridView5.Columns[20].Visible = true;
+            dataGridView5.Columns[20].Width = 50;
+
+            dataGridView5.Refresh();
+        }
     }
 }
