@@ -12,6 +12,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 
 using Microsoft.Reporting.WinForms;
+using Syncfusion.XlsIO;
 
 namespace Saobracaj.Dokumenta
 {
@@ -116,9 +117,8 @@ namespace Saobracaj.Dokumenta
 
             conn.Close();
         }
-        private void btnPretrazi_Click(object sender, EventArgs e)
+        private void FillGVSvi()
         {
-
             var select = "";
 
             /*
@@ -139,37 +139,37 @@ namespace Saobracaj.Dokumenta
             " CONVERT(varchar, '" + Convert.ToDateTime(dtpVremeDo.Value) + "',104)      + ' '      + SUBSTRING(CONVERT(varchar,'" + Convert.ToDateTime(dtpVremeDo.Value) + "',108),1,5) " +
                             " order by Aktivnosti.ID desc";
             */
-           select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka, " +
-            "    (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
-            " VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN, " +
-            " CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail, " +
-            " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica,  CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto, " +
-            " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano,  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
-            " (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa,  " +
-            " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
-             " CASE WHEN Aktivnosti.PlacenoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlacenoTroskovi" +
-             " from Aktivnosti " +
-            " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0 " +
-            " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
+            select = " Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka, " +
+             "    (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni, " +
+             " VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN, " +
+             " CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail, " +
+             " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica,  CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto, " +
+             " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano,  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
+             " (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa,  " +
+             " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
+              " CASE WHEN Aktivnosti.StigaoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoRacun" +
+              " from Aktivnosti " +
+             " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0 " +
+             " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
 
-/*
-            select = "Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka, " +
-                     " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni,  " +
-                     "  VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN,  " +
-                      "   CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail,  " +
-                       " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica, " +
-                         " CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto," +
-                          " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
-                           " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
-                            " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
-                      " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
-                            " from Aktivnosti  " +
-                     " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
-                      "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun) > 0 " +
-                      " And  VremeOd <=  '" +
-                       dtpVremeDo.Text +
-                      "' order by Aktivnosti.ID desc";
-*/
+            /*
+                        select = "Select Aktivnosti.ID as Zapis,  Aktivnosti.Oznaka, " +
+                                 " (RTrim(DeIme) + ' ' + RTRim(DePriimek)) as Zaposleni,  " +
+                                 "  VremeOD, VremeDo, Ukupno, UkupniTroskovi, Aktivnosti.Opis, RN,  " +
+                                  "   CASE WHEN Aktivnosti.PoslatEmail > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PoslatEmail,  " +
+                                   " CASE WHEN Aktivnosti.Placeno > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Placeno,   RAcun, Kartica, " +
+                                     " CASE WHEN Aktivnosti.Masinovodja > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Masinovodja , Mesto," +
+                                      " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni," +
+                                       " CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano, " +
+                                        " CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped" +
+                                  " , (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa " +
+                                        " from Aktivnosti  " +
+                                 " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
+                                  "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun) > 0 " +
+                                  " And  VremeOd <=  '" +
+                                   dtpVremeDo.Text +
+                                  "' order by Aktivnosti.ID desc";
+            */
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -260,9 +260,41 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[18].HeaderText = "Zapisa";
             dataGridView1.Columns[18].Width = 50;
 
-        }
 
-        private void button1_Click(object sender, EventArgs e)
+            dataGridView1.Columns[13].Visible = false;
+            dataGridView1.Columns[14].Visible = false;
+            dataGridView1.Columns[15].Visible = false;
+            dataGridView1.Columns[16].Visible = false;
+            dataGridView1.Columns[17].Visible = false;
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if ((bool)row.Cells[19].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Yellow;
+                }
+                if ((bool)row.Cells[20].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Yellow;
+                }
+                if ((bool)row.Cells[19].Value == true && (bool)row.Cells[20].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Green;
+                }
+            }
+
+            dataGridView1.Columns[20].HeaderText = "Stigli računi";
+
+        }
+        int svi = 0;
+        int radnik = 0;
+        private void btnPretrazi_Click(object sender, EventArgs e)
+        {
+            FillGVSvi();
+            svi = 1;
+            radnik = 0;
+        }
+        private void FillGVRadnik()
         {
             var select = "";
 
@@ -280,7 +312,7 @@ namespace Saobracaj.Dokumenta
                            " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni  " +
                             "  where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0  > 0 and Zaposleni = " + Convert.ToInt32(cboZaposleni.SelectedValue) +
                              " And  Convert(nvarchar(10),VremeDo,126) <  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
-           
+
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -371,11 +403,47 @@ namespace Saobracaj.Dokumenta
             DataGridViewColumn column18 = dataGridView1.Columns[18];
             dataGridView1.Columns[18].HeaderText = "Zapisa";
             dataGridView1.Columns[18].Width = 50;
+
+            dataGridView1.Columns[13].Visible = false;
+            dataGridView1.Columns[14].Visible = false;
+            dataGridView1.Columns[15].Visible = false;
+            dataGridView1.Columns[16].Visible = false;
+            dataGridView1.Columns[17].Visible = false;
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if ((bool)row.Cells[19].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Yellow;
+                }
+                if ((bool)row.Cells[20].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Yellow;
+                }
+                if ((bool)row.Cells[19].Value == true && (bool)row.Cells[20].Value == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Green;
+                }
+            }
+            dataGridView1.Columns[20].HeaderText = "Stigli računi";
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            FillGVRadnik();
+            radnik = 1;
+            svi = 0;
         }
 
         private void frmEvidencijaRAdaNeplaceno_Load(object sender, EventArgs e)
         {
-            var select3 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci  order by opis";
+            tabControl1.TabPages.Remove(tabPage2);
+            panel1.Visible = false;
+            panel2.Visible = false;
+            button14.Visible = false;
+            button15.Visible = false;
+            button6.Text = "Prebaci u banku";
+
+                     var select3 = " select DeSifra as ID, (Rtrim(DePriimek) + ' ' + RTrim(DeIme)) as Opis from Delavci  order by opis";
             var s_connection3 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection3 = new SqlConnection(s_connection3);
             var c3 = new SqlConnection(s_connection3);
@@ -854,6 +922,34 @@ namespace Saobracaj.Dokumenta
                     }
                 }
             }
+        }
+
+        private void button16_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na troskove
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiPregledanoTroskovi(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+            if (radnik == 1) { FillGVRadnik(); }else if (svi == 1) { FillGVSvi(); } else { return; }
+        }
+
+        private void button17_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected == true)
+                {
+                    //Misli se na racune
+                    InsertAktivnosti ins = new InsertAktivnosti();
+                    ins.UpdateAktivnostiStigao(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                }
+            }
+            if (radnik == 1) { FillGVRadnik(); } else if (svi == 1) { FillGVSvi(); } else { return; }
         }
     }
 }

@@ -65,9 +65,11 @@
             this.dtpVremeOd = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.chkStigli = new System.Windows.Forms.CheckBox();
             this.chkPregledani = new System.Windows.Forms.CheckBox();
+            this.chkStigli = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.button16 = new System.Windows.Forms.Button();
+            this.button17 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -79,9 +81,9 @@
             // 
             // btnPretrazi
             // 
-            this.btnPretrazi.Location = new System.Drawing.Point(396, 40);
+            this.btnPretrazi.Location = new System.Drawing.Point(381, 40);
             this.btnPretrazi.Name = "btnPretrazi";
-            this.btnPretrazi.Size = new System.Drawing.Size(111, 23);
+            this.btnPretrazi.Size = new System.Drawing.Size(108, 23);
             this.btnPretrazi.TabIndex = 101;
             this.btnPretrazi.Text = "Pretraži sve neplaćeno";
             this.btnPretrazi.UseVisualStyleBackColor = true;
@@ -90,7 +92,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(21, 12);
+            this.label6.Location = new System.Drawing.Point(12, 9);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(56, 13);
             this.label6.TabIndex = 100;
@@ -100,14 +102,14 @@
             // 
             this.cboZaposleni.BackColor = System.Drawing.Color.White;
             this.cboZaposleni.FormattingEnabled = true;
-            this.cboZaposleni.Location = new System.Drawing.Point(94, 12);
+            this.cboZaposleni.Location = new System.Drawing.Point(74, 9);
             this.cboZaposleni.Name = "cboZaposleni";
             this.cboZaposleni.Size = new System.Drawing.Size(171, 21);
             this.cboZaposleni.TabIndex = 99;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(280, 39);
+            this.button1.Location = new System.Drawing.Point(265, 40);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(110, 23);
             this.button1.TabIndex = 102;
@@ -125,12 +127,13 @@
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(8, 6);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(1129, 502);
+            this.dataGridView1.Size = new System.Drawing.Size(1250, 545);
             this.dataGridView1.TabIndex = 103;
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(940, 15);
+            this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button4.Location = new System.Drawing.Point(1091, 40);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(193, 23);
             this.button4.TabIndex = 164;
@@ -151,7 +154,8 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(940, 44);
+            this.button6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button6.Location = new System.Drawing.Point(1091, 9);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(193, 23);
             this.button6.TabIndex = 198;
@@ -163,7 +167,7 @@
             // 
             this.chkPlaceno.AutoSize = true;
             this.chkPlaceno.Enabled = false;
-            this.chkPlaceno.Location = new System.Drawing.Point(180, 70);
+            this.chkPlaceno.Location = new System.Drawing.Point(263, 73);
             this.chkPlaceno.Name = "chkPlaceno";
             this.chkPlaceno.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkPlaceno.Size = new System.Drawing.Size(112, 17);
@@ -175,7 +179,7 @@
             // 
             this.checkBox1.AutoSize = true;
             this.checkBox1.Enabled = false;
-            this.checkBox1.Location = new System.Drawing.Point(308, 70);
+            this.checkBox1.Location = new System.Drawing.Point(391, 73);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.checkBox1.Size = new System.Drawing.Size(112, 17);
@@ -187,7 +191,7 @@
             // 
             this.checkBox2.AutoSize = true;
             this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(441, 70);
+            this.checkBox2.Location = new System.Drawing.Point(524, 73);
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.checkBox2.Size = new System.Drawing.Size(115, 17);
@@ -197,7 +201,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(399, 10);
+            this.button3.Location = new System.Drawing.Point(381, 10);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(108, 23);
             this.button3.TabIndex = 203;
@@ -208,7 +212,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(393, 109);
+            this.label2.Location = new System.Drawing.Point(13, 40);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(54, 13);
             this.label2.TabIndex = 205;
@@ -218,7 +222,7 @@
             // 
             this.dtpVremeDo.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeDo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeDo.Location = new System.Drawing.Point(453, 109);
+            this.dtpVremeDo.Location = new System.Drawing.Point(73, 40);
             this.dtpVremeDo.Name = "dtpVremeDo";
             this.dtpVremeDo.ShowUpDown = true;
             this.dtpVremeDo.Size = new System.Drawing.Size(110, 20);
@@ -229,7 +233,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label5.Location = new System.Drawing.Point(774, 9);
+            this.label5.Location = new System.Drawing.Point(707, 4);
             this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(37, 17);
@@ -240,7 +244,7 @@
             // 
             this.txtSifra.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(187)))), ((int)(((byte)(0)))));
             this.txtSifra.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.txtSifra.Location = new System.Drawing.Point(777, 28);
+            this.txtSifra.Location = new System.Drawing.Point(710, 23);
             this.txtSifra.Margin = new System.Windows.Forms.Padding(2);
             this.txtSifra.Name = "txtSifra";
             this.txtSifra.Size = new System.Drawing.Size(102, 26);
@@ -251,7 +255,7 @@
             // 
             this.dtpVremePlaceno.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpVremePlaceno.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremePlaceno.Location = new System.Drawing.Point(637, 67);
+            this.dtpVremePlaceno.Location = new System.Drawing.Point(720, 70);
             this.dtpVremePlaceno.Name = "dtpVremePlaceno";
             this.dtpVremePlaceno.ShowUpDown = true;
             this.dtpVremePlaceno.Size = new System.Drawing.Size(108, 20);
@@ -262,7 +266,7 @@
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(562, 67);
+            this.label21.Location = new System.Drawing.Point(645, 70);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(73, 13);
             this.label21.TabIndex = 209;
@@ -272,7 +276,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(525, 20);
+            this.label1.Location = new System.Drawing.Point(495, 12);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(78, 13);
             this.label1.TabIndex = 211;
@@ -282,7 +286,7 @@
             // 
             this.cboPregledac.BackColor = System.Drawing.Color.White;
             this.cboPregledac.FormattingEnabled = true;
-            this.cboPregledac.Location = new System.Drawing.Point(528, 38);
+            this.cboPregledac.Location = new System.Drawing.Point(498, 28);
             this.cboPregledac.Name = "cboPregledac";
             this.cboPregledac.Size = new System.Drawing.Size(207, 21);
             this.cboPregledac.TabIndex = 210;
@@ -369,7 +373,7 @@
             // 
             // button14
             // 
-            this.button14.Location = new System.Drawing.Point(385, 165);
+            this.button14.Location = new System.Drawing.Point(696, 123);
             this.button14.Name = "button14";
             this.button14.Size = new System.Drawing.Size(178, 23);
             this.button14.TabIndex = 220;
@@ -384,10 +388,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Location = new System.Drawing.Point(12, 233);
+            this.tabControl1.Location = new System.Drawing.Point(12, 181);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1151, 540);
+            this.tabControl1.Size = new System.Drawing.Size(1272, 583);
             this.tabControl1.TabIndex = 221;
             // 
             // tabPage1
@@ -396,7 +400,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1143, 514);
+            this.tabPage1.Size = new System.Drawing.Size(1264, 557);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Stari pregled";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -427,7 +431,7 @@
             // 
             // button15
             // 
-            this.button15.Location = new System.Drawing.Point(385, 194);
+            this.button15.Location = new System.Drawing.Point(696, 152);
             this.button15.Name = "button15";
             this.button15.Size = new System.Drawing.Size(178, 23);
             this.button15.TabIndex = 222;
@@ -439,7 +443,7 @@
             // 
             this.dtpVremeOd.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeOd.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeOd.Location = new System.Drawing.Point(453, 138);
+            this.dtpVremeOd.Location = new System.Drawing.Point(73, 69);
             this.dtpVremeOd.Name = "dtpVremeOd";
             this.dtpVremeOd.ShowUpDown = true;
             this.dtpVremeOd.Size = new System.Drawing.Size(110, 20);
@@ -449,7 +453,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(393, 138);
+            this.label3.Location = new System.Drawing.Point(13, 69);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(54, 13);
             this.label3.TabIndex = 224;
@@ -462,20 +466,10 @@
             this.panel1.Controls.Add(this.button2);
             this.panel1.Controls.Add(this.button5);
             this.panel1.Controls.Add(this.button7);
-            this.panel1.Location = new System.Drawing.Point(24, 145);
+            this.panel1.Location = new System.Drawing.Point(335, 103);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(352, 72);
             this.panel1.TabIndex = 225;
-            // 
-            // chkStigli
-            // 
-            this.chkStigli.AutoSize = true;
-            this.chkStigli.Location = new System.Drawing.Point(241, 5);
-            this.chkStigli.Name = "chkStigli";
-            this.chkStigli.Size = new System.Drawing.Size(48, 17);
-            this.chkStigli.TabIndex = 215;
-            this.chkStigli.Text = "Stigli";
-            this.chkStigli.UseVisualStyleBackColor = true;
             // 
             // chkPregledani
             // 
@@ -487,6 +481,16 @@
             this.chkPregledani.Text = "Pregledani";
             this.chkPregledani.UseVisualStyleBackColor = true;
             // 
+            // chkStigli
+            // 
+            this.chkStigli.AutoSize = true;
+            this.chkStigli.Location = new System.Drawing.Point(241, 5);
+            this.chkStigli.Name = "chkStigli";
+            this.chkStigli.Size = new System.Drawing.Size(48, 17);
+            this.chkStigli.TabIndex = 215;
+            this.chkStigli.Text = "Stigli";
+            this.chkStigli.UseVisualStyleBackColor = true;
+            // 
             // panel2
             // 
             this.panel2.Controls.Add(this.button11);
@@ -495,16 +499,38 @@
             this.panel2.Controls.Add(this.button10);
             this.panel2.Controls.Add(this.button8);
             this.panel2.Controls.Add(this.button9);
-            this.panel2.Location = new System.Drawing.Point(615, 125);
+            this.panel2.Location = new System.Drawing.Point(881, 73);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(403, 102);
             this.panel2.TabIndex = 226;
+            // 
+            // button16
+            // 
+            this.button16.Location = new System.Drawing.Point(865, 12);
+            this.button16.Name = "button16";
+            this.button16.Size = new System.Drawing.Size(91, 37);
+            this.button16.TabIndex = 227;
+            this.button16.Text = "Pregledan trošak";
+            this.button16.UseVisualStyleBackColor = true;
+            this.button16.Click += new System.EventHandler(this.button16_Click);
+            // 
+            // button17
+            // 
+            this.button17.Location = new System.Drawing.Point(962, 12);
+            this.button17.Name = "button17";
+            this.button17.Size = new System.Drawing.Size(91, 37);
+            this.button17.TabIndex = 227;
+            this.button17.Text = "Stigao račun";
+            this.button17.UseVisualStyleBackColor = true;
+            this.button17.Click += new System.EventHandler(this.button17_Click);
             // 
             // frmEvidencijaRAdaNeplaceno
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1175, 776);
+            this.ClientSize = new System.Drawing.Size(1296, 776);
+            this.Controls.Add(this.button17);
+            this.Controls.Add(this.button16);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label3);
@@ -588,5 +614,7 @@
         private System.Windows.Forms.CheckBox chkPregledani;
         private System.Windows.Forms.CheckBox chkStigli;
         private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Button button16;
+        private System.Windows.Forms.Button button17;
     }
 }
