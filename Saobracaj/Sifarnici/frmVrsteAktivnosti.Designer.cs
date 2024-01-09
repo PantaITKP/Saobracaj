@@ -30,7 +30,16 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmVrsteAktivnosti));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.tsNew = new System.Windows.Forms.ToolStripButton();
+            this.tsSave = new System.Windows.Forms.ToolStripButton();
+            this.tsDelete = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.tsPrvi = new System.Windows.Forms.ToolStripButton();
+            this.tsNazad = new System.Windows.Forms.ToolStripButton();
+            this.tsNapred = new System.Windows.Forms.ToolStripButton();
+            this.tsPoslednja = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.txtNaziv = new System.Windows.Forms.TextBox();
             this.lblNaziv = new System.Windows.Forms.Label();
@@ -61,15 +70,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.txtMaxSati = new System.Windows.Forms.NumericUpDown();
             this.txtMaxVagona = new System.Windows.Forms.NumericUpDown();
-            this.tsNew = new System.Windows.Forms.ToolStripButton();
-            this.tsSave = new System.Windows.Forms.ToolStripButton();
-            this.tsDelete = new System.Windows.Forms.ToolStripButton();
-            this.tsPrvi = new System.Windows.Forms.ToolStripButton();
-            this.tsNazad = new System.Windows.Forms.ToolStripButton();
-            this.tsNapred = new System.Windows.Forms.ToolStripButton();
-            this.tsPoslednja = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtCena)).BeginInit();
@@ -92,363 +93,13 @@
             this.tsNapred,
             this.tsPoslednja,
             this.toolStripButton1,
-            this.toolStripButton2});
+            this.toolStripButton2,
+            this.toolStripButton3});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1187, 27);
+            this.toolStrip1.Size = new System.Drawing.Size(890, 27);
             this.toolStrip1.TabIndex = 6;
             this.toolStrip1.Text = "toolStrip1";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
-            // 
-            // dataGridView1
-            // 
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(23, 308);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1155, 183);
-            this.dataGridView1.TabIndex = 17;
-            this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
-            // 
-            // txtNaziv
-            // 
-            this.txtNaziv.Location = new System.Drawing.Point(69, 85);
-            this.txtNaziv.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtNaziv.Name = "txtNaziv";
-            this.txtNaziv.Size = new System.Drawing.Size(489, 22);
-            this.txtNaziv.TabIndex = 14;
-            // 
-            // lblNaziv
-            // 
-            this.lblNaziv.AutoSize = true;
-            this.lblNaziv.Location = new System.Drawing.Point(16, 85);
-            this.lblNaziv.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblNaziv.Name = "lblNaziv";
-            this.lblNaziv.Size = new System.Drawing.Size(47, 17);
-            this.lblNaziv.TabIndex = 16;
-            this.lblNaziv.Text = "Naziv:";
-            // 
-            // txtSifra
-            // 
-            this.txtSifra.Location = new System.Drawing.Point(69, 53);
-            this.txtSifra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtSifra.Name = "txtSifra";
-            this.txtSifra.Size = new System.Drawing.Size(132, 22);
-            this.txtSifra.TabIndex = 12;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 53);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(41, 17);
-            this.label1.TabIndex = 15;
-            this.label1.Text = "Šifra:";
-            // 
-            // txtCena
-            // 
-            this.txtCena.DecimalPlaces = 5;
-            this.txtCena.Location = new System.Drawing.Point(69, 117);
-            this.txtCena.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtCena.Maximum = new decimal(new int[] {
-            1000000,
-            0,
-            0,
-            0});
-            this.txtCena.Name = "txtCena";
-            this.txtCena.Size = new System.Drawing.Size(105, 22);
-            this.txtCena.TabIndex = 65;
-            this.txtCena.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(177, 119);
-            this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(55, 17);
-            this.label17.TabIndex = 64;
-            this.label17.Text = "( EUR )";
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(19, 119);
-            this.label18.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(45, 17);
-            this.label18.TabIndex = 63;
-            this.label18.Text = "Cena:";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(567, 38);
-            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(41, 17);
-            this.label7.TabIndex = 160;
-            this.label7.Text = "Opis:";
-            // 
-            // txtOpis
-            // 
-            this.txtOpis.Location = new System.Drawing.Point(616, 38);
-            this.txtOpis.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtOpis.Multiline = true;
-            this.txtOpis.Name = "txtOpis";
-            this.txtOpis.Size = new System.Drawing.Size(553, 134);
-            this.txtOpis.TabIndex = 159;
-            // 
-            // chkObracunPoSatu
-            // 
-            this.chkObracunPoSatu.AutoSize = true;
-            this.chkObracunPoSatu.Location = new System.Drawing.Point(16, 199);
-            this.chkObracunPoSatu.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkObracunPoSatu.Name = "chkObracunPoSatu";
-            this.chkObracunPoSatu.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkObracunPoSatu.Size = new System.Drawing.Size(136, 21);
-            this.chkObracunPoSatu.TabIndex = 161;
-            this.chkObracunPoSatu.Text = "Obračun po satu";
-            this.chkObracunPoSatu.UseVisualStyleBackColor = true;
-            // 
-            // chkPotrebanRazlog
-            // 
-            this.chkPotrebanRazlog.AutoSize = true;
-            this.chkPotrebanRazlog.Location = new System.Drawing.Point(16, 228);
-            this.chkPotrebanRazlog.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkPotrebanRazlog.Name = "chkPotrebanRazlog";
-            this.chkPotrebanRazlog.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkPotrebanRazlog.Size = new System.Drawing.Size(174, 21);
-            this.chkPotrebanRazlog.TabIndex = 162;
-            this.chkPotrebanRazlog.Text = "Potreban unos razloga";
-            this.chkPotrebanRazlog.UseVisualStyleBackColor = true;
-            // 
-            // chkPotrebanNalogodavac
-            // 
-            this.chkPotrebanNalogodavac.AutoSize = true;
-            this.chkPotrebanNalogodavac.Location = new System.Drawing.Point(176, 199);
-            this.chkPotrebanNalogodavac.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkPotrebanNalogodavac.Name = "chkPotrebanNalogodavac";
-            this.chkPotrebanNalogodavac.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkPotrebanNalogodavac.Size = new System.Drawing.Size(208, 21);
-            this.chkPotrebanNalogodavac.TabIndex = 163;
-            this.chkPotrebanNalogodavac.Text = "Potreban unos nalogodavca";
-            this.chkPotrebanNalogodavac.UseVisualStyleBackColor = true;
-            // 
-            // chkPotrebnoVozilo
-            // 
-            this.chkPotrebnoVozilo.AutoSize = true;
-            this.chkPotrebnoVozilo.Location = new System.Drawing.Point(223, 228);
-            this.chkPotrebnoVozilo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkPotrebnoVozilo.Name = "chkPotrebnoVozilo";
-            this.chkPotrebnoVozilo.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkPotrebnoVozilo.Size = new System.Drawing.Size(163, 21);
-            this.chkPotrebnoVozilo.TabIndex = 164;
-            this.chkPotrebnoVozilo.Text = "Potreban unos vozila";
-            this.chkPotrebnoVozilo.UseVisualStyleBackColor = true;
-            // 
-            // chkObaveznaNapomena
-            // 
-            this.chkObaveznaNapomena.AutoSize = true;
-            this.chkObaveznaNapomena.Location = new System.Drawing.Point(412, 228);
-            this.chkObaveznaNapomena.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkObaveznaNapomena.Name = "chkObaveznaNapomena";
-            this.chkObaveznaNapomena.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkObaveznaNapomena.Size = new System.Drawing.Size(166, 21);
-            this.chkObaveznaNapomena.TabIndex = 165;
-            this.chkObaveznaNapomena.Text = "Obavezna napomena";
-            this.chkObaveznaNapomena.UseVisualStyleBackColor = true;
-            // 
-            // txtFiksniDeo
-            // 
-            this.txtFiksniDeo.DecimalPlaces = 2;
-            this.txtFiksniDeo.Location = new System.Drawing.Point(337, 117);
-            this.txtFiksniDeo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtFiksniDeo.Maximum = new decimal(new int[] {
-            1000000,
-            0,
-            0,
-            0});
-            this.txtFiksniDeo.Name = "txtFiksniDeo";
-            this.txtFiksniDeo.Size = new System.Drawing.Size(105, 22);
-            this.txtFiksniDeo.TabIndex = 168;
-            this.txtFiksniDeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(452, 119);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(55, 17);
-            this.label2.TabIndex = 167;
-            this.label2.Text = "( EUR )";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(252, 119);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(76, 17);
-            this.label3.TabIndex = 166;
-            this.label3.Text = "Fiksni deo:";
-            // 
-            // chkSmederevo
-            // 
-            this.chkSmederevo.AutoSize = true;
-            this.chkSmederevo.Location = new System.Drawing.Point(644, 181);
-            this.chkSmederevo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkSmederevo.Name = "chkSmederevo";
-            this.chkSmederevo.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkSmederevo.Size = new System.Drawing.Size(102, 21);
-            this.chkSmederevo.TabIndex = 169;
-            this.chkSmederevo.Text = "Smederevo";
-            this.chkSmederevo.UseVisualStyleBackColor = true;
-            // 
-            // chkKragujevac
-            // 
-            this.chkKragujevac.AutoSize = true;
-            this.chkKragujevac.Location = new System.Drawing.Point(777, 181);
-            this.chkKragujevac.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkKragujevac.Name = "chkKragujevac";
-            this.chkKragujevac.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkKragujevac.Size = new System.Drawing.Size(101, 21);
-            this.chkKragujevac.TabIndex = 170;
-            this.chkKragujevac.Text = "Kragujevac";
-            this.chkKragujevac.UseVisualStyleBackColor = true;
-            // 
-            // chkCG
-            // 
-            this.chkCG.AutoSize = true;
-            this.chkCG.Location = new System.Drawing.Point(908, 181);
-            this.chkCG.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkCG.Name = "chkCG";
-            this.chkCG.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkCG.Size = new System.Drawing.Size(49, 21);
-            this.chkCG.TabIndex = 171;
-            this.chkCG.Text = "Ino";
-            this.chkCG.UseVisualStyleBackColor = true;
-            // 
-            // chkRemont
-            // 
-            this.chkRemont.AutoSize = true;
-            this.chkRemont.Location = new System.Drawing.Point(997, 181);
-            this.chkRemont.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkRemont.Name = "chkRemont";
-            this.chkRemont.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkRemont.Size = new System.Drawing.Size(79, 21);
-            this.chkRemont.TabIndex = 172;
-            this.chkRemont.Text = "Remont";
-            this.chkRemont.UseVisualStyleBackColor = true;
-            // 
-            // chkMilsped
-            // 
-            this.chkMilsped.AutoSize = true;
-            this.chkMilsped.Location = new System.Drawing.Point(1093, 181);
-            this.chkMilsped.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkMilsped.Name = "chkMilsped";
-            this.chkMilsped.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkMilsped.Size = new System.Drawing.Size(78, 21);
-            this.chkMilsped.TabIndex = 173;
-            this.chkMilsped.Text = "Milšped";
-            this.chkMilsped.UseVisualStyleBackColor = true;
-            // 
-            // chkUlaziUDnevnicu
-            // 
-            this.chkUlaziUDnevnicu.AutoSize = true;
-            this.chkUlaziUDnevnicu.Location = new System.Drawing.Point(443, 199);
-            this.chkUlaziUDnevnicu.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.chkUlaziUDnevnicu.Name = "chkUlaziUDnevnicu";
-            this.chkUlaziUDnevnicu.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkUlaziUDnevnicu.Size = new System.Drawing.Size(134, 21);
-            this.chkUlaziUDnevnicu.TabIndex = 174;
-            this.chkUlaziUDnevnicu.Text = "Ulazi u dnevnicu";
-            this.chkUlaziUDnevnicu.UseVisualStyleBackColor = true;
-            // 
-            // txtVremeVagon
-            // 
-            this.txtVremeVagon.DecimalPlaces = 4;
-            this.txtVremeVagon.Location = new System.Drawing.Point(117, 151);
-            this.txtVremeVagon.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtVremeVagon.Maximum = new decimal(new int[] {
-            1000000,
-            0,
-            0,
-            0});
-            this.txtVremeVagon.Name = "txtVremeVagon";
-            this.txtVremeVagon.Size = new System.Drawing.Size(105, 22);
-            this.txtVremeVagon.TabIndex = 176;
-            this.txtVremeVagon.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(19, 151);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(96, 17);
-            this.label4.TabIndex = 175;
-            this.label4.Text = "Vreme vagon:";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(222, 268);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(86, 17);
-            this.label5.TabIndex = 178;
-            this.label5.Text = "MaxVagona:";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(26, 268);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(61, 17);
-            this.label6.TabIndex = 180;
-            this.label6.Text = "MaxSati:";
-            // 
-            // txtMaxSati
-            // 
-            this.txtMaxSati.DecimalPlaces = 2;
-            this.txtMaxSati.Location = new System.Drawing.Point(98, 265);
-            this.txtMaxSati.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtMaxSati.Maximum = new decimal(new int[] {
-            1000000,
-            0,
-            0,
-            0});
-            this.txtMaxSati.Name = "txtMaxSati";
-            this.txtMaxSati.Size = new System.Drawing.Size(105, 22);
-            this.txtMaxSati.TabIndex = 181;
-            this.txtMaxSati.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // txtMaxVagona
-            // 
-            this.txtMaxVagona.DecimalPlaces = 2;
-            this.txtMaxVagona.Location = new System.Drawing.Point(319, 268);
-            this.txtMaxVagona.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtMaxVagona.Maximum = new decimal(new int[] {
-            1000000,
-            0,
-            0,
-            0});
-            this.txtMaxVagona.Name = "txtMaxVagona";
-            this.txtMaxVagona.Size = new System.Drawing.Size(105, 22);
-            this.txtMaxVagona.TabIndex = 182;
-            this.txtMaxVagona.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // tsNew
             // 
@@ -456,7 +107,7 @@
             this.tsNew.Image = ((System.Drawing.Image)(resources.GetObject("tsNew.Image")));
             this.tsNew.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNew.Name = "tsNew";
-            this.tsNew.Size = new System.Drawing.Size(29, 24);
+            this.tsNew.Size = new System.Drawing.Size(24, 24);
             this.tsNew.Text = "Novi";
             this.tsNew.Click += new System.EventHandler(this.tsNew_Click);
             // 
@@ -466,7 +117,7 @@
             this.tsSave.Image = ((System.Drawing.Image)(resources.GetObject("tsSave.Image")));
             this.tsSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsSave.Name = "tsSave";
-            this.tsSave.Size = new System.Drawing.Size(29, 24);
+            this.tsSave.Size = new System.Drawing.Size(24, 24);
             this.tsSave.Text = "tsSave";
             this.tsSave.Click += new System.EventHandler(this.tsSave_Click);
             // 
@@ -476,8 +127,13 @@
             this.tsDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsDelete.Image")));
             this.tsDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsDelete.Name = "tsDelete";
-            this.tsDelete.Size = new System.Drawing.Size(29, 24);
+            this.tsDelete.Size = new System.Drawing.Size(24, 24);
             this.tsDelete.Text = "toolStripButton1";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
             // 
             // tsPrvi
             // 
@@ -485,7 +141,7 @@
             this.tsPrvi.Image = ((System.Drawing.Image)(resources.GetObject("tsPrvi.Image")));
             this.tsPrvi.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPrvi.Name = "tsPrvi";
-            this.tsPrvi.Size = new System.Drawing.Size(29, 24);
+            this.tsPrvi.Size = new System.Drawing.Size(24, 24);
             this.tsPrvi.Text = "toolStripButton1";
             // 
             // tsNazad
@@ -494,7 +150,7 @@
             this.tsNazad.Image = ((System.Drawing.Image)(resources.GetObject("tsNazad.Image")));
             this.tsNazad.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNazad.Name = "tsNazad";
-            this.tsNazad.Size = new System.Drawing.Size(29, 24);
+            this.tsNazad.Size = new System.Drawing.Size(24, 24);
             this.tsNazad.Text = "toolStripButton1";
             // 
             // tsNapred
@@ -503,7 +159,7 @@
             this.tsNapred.Image = ((System.Drawing.Image)(resources.GetObject("tsNapred.Image")));
             this.tsNapred.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsNapred.Name = "tsNapred";
-            this.tsNapred.Size = new System.Drawing.Size(29, 24);
+            this.tsNapred.Size = new System.Drawing.Size(24, 24);
             this.tsNapred.Text = "toolStripButton1";
             // 
             // tsPoslednja
@@ -512,7 +168,7 @@
             this.tsPoslednja.Image = ((System.Drawing.Image)(resources.GetObject("tsPoslednja.Image")));
             this.tsPoslednja.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsPoslednja.Name = "tsPoslednja";
-            this.tsPoslednja.Size = new System.Drawing.Size(29, 24);
+            this.tsPoslednja.Size = new System.Drawing.Size(24, 24);
             this.tsPoslednja.Text = "toolStripButton1";
             // 
             // toolStripButton1
@@ -521,7 +177,7 @@
             this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(77, 24);
+            this.toolStripButton1.Size = new System.Drawing.Size(64, 24);
             this.toolStripButton1.Text = "Cenovnici";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
@@ -531,15 +187,340 @@
             this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
             this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(254, 24);
+            this.toolStripButton2.Size = new System.Drawing.Size(206, 24);
             this.toolStripButton2.Text = "Prebacivanje cena u Arhivski cenonik";
             this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
             // 
+            // dataGridView1
+            // 
+            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(17, 250);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowHeadersWidth = 51;
+            this.dataGridView1.Size = new System.Drawing.Size(866, 149);
+            this.dataGridView1.TabIndex = 17;
+            this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
+            // 
+            // txtNaziv
+            // 
+            this.txtNaziv.Location = new System.Drawing.Point(52, 69);
+            this.txtNaziv.Name = "txtNaziv";
+            this.txtNaziv.Size = new System.Drawing.Size(368, 20);
+            this.txtNaziv.TabIndex = 14;
+            // 
+            // lblNaziv
+            // 
+            this.lblNaziv.AutoSize = true;
+            this.lblNaziv.Location = new System.Drawing.Point(12, 69);
+            this.lblNaziv.Name = "lblNaziv";
+            this.lblNaziv.Size = new System.Drawing.Size(37, 13);
+            this.lblNaziv.TabIndex = 16;
+            this.lblNaziv.Text = "Naziv:";
+            // 
+            // txtSifra
+            // 
+            this.txtSifra.Location = new System.Drawing.Point(52, 43);
+            this.txtSifra.Name = "txtSifra";
+            this.txtSifra.Size = new System.Drawing.Size(100, 20);
+            this.txtSifra.TabIndex = 12;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(12, 43);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(31, 13);
+            this.label1.TabIndex = 15;
+            this.label1.Text = "Šifra:";
+            // 
+            // txtCena
+            // 
+            this.txtCena.DecimalPlaces = 5;
+            this.txtCena.Location = new System.Drawing.Point(52, 95);
+            this.txtCena.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtCena.Name = "txtCena";
+            this.txtCena.Size = new System.Drawing.Size(79, 20);
+            this.txtCena.TabIndex = 65;
+            this.txtCena.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(133, 97);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(42, 13);
+            this.label17.TabIndex = 64;
+            this.label17.Text = "( EUR )";
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(14, 97);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(35, 13);
+            this.label18.TabIndex = 63;
+            this.label18.Text = "Cena:";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(425, 31);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(31, 13);
+            this.label7.TabIndex = 160;
+            this.label7.Text = "Opis:";
+            // 
+            // txtOpis
+            // 
+            this.txtOpis.Location = new System.Drawing.Point(462, 31);
+            this.txtOpis.Multiline = true;
+            this.txtOpis.Name = "txtOpis";
+            this.txtOpis.Size = new System.Drawing.Size(416, 110);
+            this.txtOpis.TabIndex = 159;
+            // 
+            // chkObracunPoSatu
+            // 
+            this.chkObracunPoSatu.AutoSize = true;
+            this.chkObracunPoSatu.Location = new System.Drawing.Point(12, 162);
+            this.chkObracunPoSatu.Name = "chkObracunPoSatu";
+            this.chkObracunPoSatu.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkObracunPoSatu.Size = new System.Drawing.Size(105, 17);
+            this.chkObracunPoSatu.TabIndex = 161;
+            this.chkObracunPoSatu.Text = "Obračun po satu";
+            this.chkObracunPoSatu.UseVisualStyleBackColor = true;
+            // 
+            // chkPotrebanRazlog
+            // 
+            this.chkPotrebanRazlog.AutoSize = true;
+            this.chkPotrebanRazlog.Location = new System.Drawing.Point(12, 185);
+            this.chkPotrebanRazlog.Name = "chkPotrebanRazlog";
+            this.chkPotrebanRazlog.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkPotrebanRazlog.Size = new System.Drawing.Size(132, 17);
+            this.chkPotrebanRazlog.TabIndex = 162;
+            this.chkPotrebanRazlog.Text = "Potreban unos razloga";
+            this.chkPotrebanRazlog.UseVisualStyleBackColor = true;
+            // 
+            // chkPotrebanNalogodavac
+            // 
+            this.chkPotrebanNalogodavac.AutoSize = true;
+            this.chkPotrebanNalogodavac.Location = new System.Drawing.Point(132, 162);
+            this.chkPotrebanNalogodavac.Name = "chkPotrebanNalogodavac";
+            this.chkPotrebanNalogodavac.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkPotrebanNalogodavac.Size = new System.Drawing.Size(160, 17);
+            this.chkPotrebanNalogodavac.TabIndex = 163;
+            this.chkPotrebanNalogodavac.Text = "Potreban unos nalogodavca";
+            this.chkPotrebanNalogodavac.UseVisualStyleBackColor = true;
+            // 
+            // chkPotrebnoVozilo
+            // 
+            this.chkPotrebnoVozilo.AutoSize = true;
+            this.chkPotrebnoVozilo.Location = new System.Drawing.Point(167, 185);
+            this.chkPotrebnoVozilo.Name = "chkPotrebnoVozilo";
+            this.chkPotrebnoVozilo.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkPotrebnoVozilo.Size = new System.Drawing.Size(125, 17);
+            this.chkPotrebnoVozilo.TabIndex = 164;
+            this.chkPotrebnoVozilo.Text = "Potreban unos vozila";
+            this.chkPotrebnoVozilo.UseVisualStyleBackColor = true;
+            // 
+            // chkObaveznaNapomena
+            // 
+            this.chkObaveznaNapomena.AutoSize = true;
+            this.chkObaveznaNapomena.Location = new System.Drawing.Point(309, 185);
+            this.chkObaveznaNapomena.Name = "chkObaveznaNapomena";
+            this.chkObaveznaNapomena.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkObaveznaNapomena.Size = new System.Drawing.Size(128, 17);
+            this.chkObaveznaNapomena.TabIndex = 165;
+            this.chkObaveznaNapomena.Text = "Obavezna napomena";
+            this.chkObaveznaNapomena.UseVisualStyleBackColor = true;
+            // 
+            // txtFiksniDeo
+            // 
+            this.txtFiksniDeo.DecimalPlaces = 2;
+            this.txtFiksniDeo.Location = new System.Drawing.Point(253, 95);
+            this.txtFiksniDeo.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtFiksniDeo.Name = "txtFiksniDeo";
+            this.txtFiksniDeo.Size = new System.Drawing.Size(79, 20);
+            this.txtFiksniDeo.TabIndex = 168;
+            this.txtFiksniDeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(339, 97);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(42, 13);
+            this.label2.TabIndex = 167;
+            this.label2.Text = "( EUR )";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(189, 97);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(58, 13);
+            this.label3.TabIndex = 166;
+            this.label3.Text = "Fiksni deo:";
+            // 
+            // chkSmederevo
+            // 
+            this.chkSmederevo.AutoSize = true;
+            this.chkSmederevo.Location = new System.Drawing.Point(483, 147);
+            this.chkSmederevo.Name = "chkSmederevo";
+            this.chkSmederevo.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkSmederevo.Size = new System.Drawing.Size(80, 17);
+            this.chkSmederevo.TabIndex = 169;
+            this.chkSmederevo.Text = "Smederevo";
+            this.chkSmederevo.UseVisualStyleBackColor = true;
+            // 
+            // chkKragujevac
+            // 
+            this.chkKragujevac.AutoSize = true;
+            this.chkKragujevac.Location = new System.Drawing.Point(583, 147);
+            this.chkKragujevac.Name = "chkKragujevac";
+            this.chkKragujevac.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkKragujevac.Size = new System.Drawing.Size(80, 17);
+            this.chkKragujevac.TabIndex = 170;
+            this.chkKragujevac.Text = "Kragujevac";
+            this.chkKragujevac.UseVisualStyleBackColor = true;
+            // 
+            // chkCG
+            // 
+            this.chkCG.AutoSize = true;
+            this.chkCG.Location = new System.Drawing.Point(681, 147);
+            this.chkCG.Name = "chkCG";
+            this.chkCG.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkCG.Size = new System.Drawing.Size(41, 17);
+            this.chkCG.TabIndex = 171;
+            this.chkCG.Text = "Ino";
+            this.chkCG.UseVisualStyleBackColor = true;
+            // 
+            // chkRemont
+            // 
+            this.chkRemont.AutoSize = true;
+            this.chkRemont.Location = new System.Drawing.Point(748, 147);
+            this.chkRemont.Name = "chkRemont";
+            this.chkRemont.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkRemont.Size = new System.Drawing.Size(63, 17);
+            this.chkRemont.TabIndex = 172;
+            this.chkRemont.Text = "Remont";
+            this.chkRemont.UseVisualStyleBackColor = true;
+            // 
+            // chkMilsped
+            // 
+            this.chkMilsped.AutoSize = true;
+            this.chkMilsped.Location = new System.Drawing.Point(820, 147);
+            this.chkMilsped.Name = "chkMilsped";
+            this.chkMilsped.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkMilsped.Size = new System.Drawing.Size(62, 17);
+            this.chkMilsped.TabIndex = 173;
+            this.chkMilsped.Text = "Milšped";
+            this.chkMilsped.UseVisualStyleBackColor = true;
+            // 
+            // chkUlaziUDnevnicu
+            // 
+            this.chkUlaziUDnevnicu.AutoSize = true;
+            this.chkUlaziUDnevnicu.Location = new System.Drawing.Point(332, 162);
+            this.chkUlaziUDnevnicu.Name = "chkUlaziUDnevnicu";
+            this.chkUlaziUDnevnicu.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkUlaziUDnevnicu.Size = new System.Drawing.Size(105, 17);
+            this.chkUlaziUDnevnicu.TabIndex = 174;
+            this.chkUlaziUDnevnicu.Text = "Ulazi u dnevnicu";
+            this.chkUlaziUDnevnicu.UseVisualStyleBackColor = true;
+            // 
+            // txtVremeVagon
+            // 
+            this.txtVremeVagon.DecimalPlaces = 4;
+            this.txtVremeVagon.Location = new System.Drawing.Point(88, 123);
+            this.txtVremeVagon.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtVremeVagon.Name = "txtVremeVagon";
+            this.txtVremeVagon.Size = new System.Drawing.Size(79, 20);
+            this.txtVremeVagon.TabIndex = 176;
+            this.txtVremeVagon.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(14, 123);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(73, 13);
+            this.label4.TabIndex = 175;
+            this.label4.Text = "Vreme vagon:";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(166, 218);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(67, 13);
+            this.label5.TabIndex = 178;
+            this.label5.Text = "MaxVagona:";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(20, 218);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(48, 13);
+            this.label6.TabIndex = 180;
+            this.label6.Text = "MaxSati:";
+            // 
+            // txtMaxSati
+            // 
+            this.txtMaxSati.DecimalPlaces = 2;
+            this.txtMaxSati.Location = new System.Drawing.Point(74, 215);
+            this.txtMaxSati.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtMaxSati.Name = "txtMaxSati";
+            this.txtMaxSati.Size = new System.Drawing.Size(79, 20);
+            this.txtMaxSati.TabIndex = 181;
+            this.txtMaxSati.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // txtMaxVagona
+            // 
+            this.txtMaxVagona.DecimalPlaces = 2;
+            this.txtMaxVagona.Location = new System.Drawing.Point(239, 218);
+            this.txtMaxVagona.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
+            this.txtMaxVagona.Name = "txtMaxVagona";
+            this.txtMaxVagona.Size = new System.Drawing.Size(79, 20);
+            this.txtMaxVagona.TabIndex = 182;
+            this.txtMaxVagona.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // toolStripButton3
+            // 
+            this.toolStripButton3.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
+            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton3.Name = "toolStripButton3";
+            this.toolStripButton3.Size = new System.Drawing.Size(129, 24);
+            this.toolStripButton3.Text = "Koeficjent Zaposlenog";
+            // 
             // frmVrsteAktivnosti
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1187, 498);
+            this.ClientSize = new System.Drawing.Size(890, 405);
             this.Controls.Add(this.txtMaxVagona);
             this.Controls.Add(this.txtMaxSati);
             this.Controls.Add(this.label6);
@@ -571,7 +552,6 @@
             this.Controls.Add(this.txtSifra);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.toolStrip1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "frmVrsteAktivnosti";
             this.Text = "Vrste aktivnosti";
             this.Load += new System.EventHandler(this.frmVrsteAktivnosti_Load);
@@ -631,5 +611,6 @@
         private System.Windows.Forms.NumericUpDown txtMaxVagona;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
         private System.Windows.Forms.ToolStripButton toolStripButton2;
+        private System.Windows.Forms.ToolStripButton toolStripButton3;
     }
 }
