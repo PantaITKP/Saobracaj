@@ -117,7 +117,7 @@ namespace Saobracaj.Dokumenta
 
             con.Open();
 
-            SqlCommand cmd = new SqlCommand("SELECT TeretnicaStavke.id as [ID]  ,[RB] ,[BrojTeretnice] ,[IDNajave] ,[Uvrstena]" +
+            SqlCommand cmd = new SqlCommand("SELECT TeretnicaStavke.id as [ID]  ,[RB] ,[BrojTeretnice] ,[IDNajave] ,[Uvrstena]," +
                 "[Otkacena] ,[BrojKola] ,[Serija] ,[BrojOsovina] ,[Duzina] ,[Tara] ,[Neto] ,[G],[P] ,[R] ,[RR] ,[VRNP] ,[Otpravna] ,[Uputna] ,[Reon] ,[Primedba],[RucKoc], [Uvozna], [Izvozna], RID, Dokument," +
                 "(AVV_Neispravnosti.SifraKvara + '/'+AVV_Neispravnosti.Opis) as [Neispravnost] " +
                 "FROM [Perftech_Beograd].[dbo].[TeretnicaStavke] left join AVV_Neispravnosti on TeretnicaStavke.SifraKVaraID=AVV_Neispravnosti.ID " +

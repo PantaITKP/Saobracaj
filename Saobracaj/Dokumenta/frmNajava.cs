@@ -2391,7 +2391,7 @@ namespace Saobracaj.Dokumenta
             var select = "   Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
                    "  inner join NHM on NHM.ID = RobaNHM " +
                     " left join NHM as n2 on n2.ID = RobaNHM2" +
-                "  where PorudzbinaID = " + PorudzbinaID;
+                "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + PorudzbinaID;
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -2454,7 +2454,7 @@ namespace Saobracaj.Dokumenta
             var select = "   Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
               "  Left join NHM on NHM.ID = RobaNHM " +
                " left join NHM as n2 on n2.ID = RobaNHM2" +
-           "  where PorudzbinaID = " + NajavaID;
+           "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + NajavaID;
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -2480,7 +2480,7 @@ namespace Saobracaj.Dokumenta
             var select = "   Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
               "  left join NHM on NHM.ID = RobaNHM " +
                " left join NHM as n2 on n2.ID = RobaNHM2" +
-           "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Platilac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+           "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Year(StvarnaPredaja)>'2022' and Platilac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -2724,7 +2724,7 @@ namespace Saobracaj.Dokumenta
             "NaPNote as Napomena   from Narocilo inner join NarociloPostav " +
 " on Narocilo.NaStNar = NarociloPostav.NaPStNar " +
 " inner join MaticniPodatki  on MaticniPodatki.MpSifra = NarociloPostav.NaPSifra " +
-" where MpSifProdSkup in (2, 3) and NaStatus = 'PO' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+" where MpSifProdSkup in (2, 3) and NaStatus = 'PO' and Year(NaDatNar)>'2022' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -2825,7 +2825,7 @@ namespace Saobracaj.Dokumenta
  "NaPNote as Napomena   from Narocilo inner join NarociloPostav " +
 " on Narocilo.NaStNar = NarociloPostav.NaPStNar " +
 " inner join MaticniPodatki  on MaticniPodatki.MpSifra = NarociloPostav.NaPSifra " +
-" where MpSifProdSkup in (1) and Narocilo.NaStNar > 542 and NaStatus = 'PO' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+" where MpSifProdSkup in (1) and Narocilo.NaStNar > 542 and Year(NaDatNar)>'2022' and NaStatus = 'PO' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
             //Uslov porucbine
 
             var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -3107,7 +3107,7 @@ namespace Saobracaj.Dokumenta
             {
 
                 var select = "   Select PorudzbinaID, ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, RobaNHM2 from Najava " +
-                "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Platilac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+                "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Year(StvarnaPredaja)>'2022' and Platilac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
                 var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
                 SqlConnection myConnection = new SqlConnection(s_connection);
                 var c = new SqlConnection(s_connection);
@@ -3133,7 +3133,7 @@ namespace Saobracaj.Dokumenta
                  "NaPNote as Napomena   from Narocilo inner join NarociloPostav " +
     " on Narocilo.NaStNar = NarociloPostav.NaPStNar " +
     " inner join MaticniPodatki  on MaticniPodatki.MpSifra = NarociloPostav.NaPSifra " +
-    " where MpSifProdSkup in (1) and Narocilo.NaStNar > 542 and NaStatus = 'PO' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
+    " where MpSifProdSkup in (1) and Narocilo.NaStNar > 542 and NaStatus = 'PO' and Year(NaDatNar)>'2022' and NaPartPlac = " + Convert.ToInt32(cboPlatilac.SelectedValue);
                 //Uslov porucbine
 
                 var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
