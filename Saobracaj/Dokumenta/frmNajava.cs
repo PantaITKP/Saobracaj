@@ -1482,7 +1482,7 @@ namespace Saobracaj.Dokumenta
 
             SqlCommand cmd = new SqlCommand("SELECT [ID] ,[BrojNajave] ,[Voz] ,[Posiljalac] ,[Prevoznik],[Otpravna] ,[Uputna] ,[Primalac] ,[RobaNHM] ,[PrevozniPut] " +
             " ,[Tezina] ,[Duzina] ,[BrojKola] ,[RID] ,[PredvidjenoPrimanje] ,[StvarnoPrimanje] ,[PredvidjenaPredaja] ,[StvarnaPredaja] " +
-            " ,[Status] ,[OnBroj] ,[Verzija] ,[Razlog] ,[DatumUnosa] ,[RIDBroj] ,[Komentar], [VozP], [Granicna], Platilac, AdHoc, PrevoznikZa, Faktura, Zadatak, CIM, DispecerRID, TipPrevoza, NetoTezinaM, PorudzbinaID, ImaPovrat, TehnologijaID, RobaNHM2, DodatnoPorudznina,SerijaVagona, OtpravnaGr, Uputnagr, Tovareno, NapomenaPriprema FROM [Perftech_Beograd].[dbo].[Najava] where ID=" + txtSifra.Text, con);
+            " ,[Status] ,[OnBroj] ,[Verzija] ,[Razlog] ,[DatumUnosa] ,[RIDBroj] ,[Komentar], [VozP], [Granicna], Platilac, AdHoc, PrevoznikZa, Faktura, Zadatak, CIM, DispecerRID, TipPrevoza, NetoTezinaM, PorudzbinaID, ImaPovrat, TehnologijaID, RobaNHM2, DodatnoPorudznina,SerijaVagona, OtpravnaGr, Uputnagr, Tovareno, NapomenaPriprema FROM [Perftech_Beograd].[dbo].[Najava] where ID=" + Convert.ToInt32(txtSifra.Text), con);
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
@@ -1502,23 +1502,24 @@ namespace Saobracaj.Dokumenta
                 txtDuzinaM.Value = Convert.ToDecimal(dr["Duzina"].ToString());
                 txtBrojKola.Value = Convert.ToDecimal(dr["BrojKola"].ToString());
                 txtNetoTezinaM.Value = Convert.ToDecimal(dr["NetoTezinaM"].ToString());
-
-                //Nemamo Iz Najave polje
-
+                
                 if (dr["ImaPovrat"].ToString() == "1")
                 {
                     chkImaPovrat.Checked = true;
                     VratiPodatkePorudzbinaSelect(Convert.ToInt32(dr["PorudzbinaID"].ToString()));
+
                     chkIzNajave.Checked = false;
                 }
                 else
                 {
+
                     chkImaPovrat.Checked = false;
                     chkIzNajave.Checked = true;
                     VratiPodatkeNajavaSelect(Convert.ToInt32(dr["PorudzbinaID"].ToString()));
 
-                }
 
+                }
+                
 
 
 
@@ -1591,6 +1592,12 @@ namespace Saobracaj.Dokumenta
                     chkTovareno.Checked = false;
                 }
                 txtNapomenaPriprema.Text = dr["NapomenaPriprema"].ToString();
+
+
+                //Nemamo Iz Najave polje
+                
+
+                
             }
 
             con.Close();
@@ -2450,8 +2457,26 @@ namespace Saobracaj.Dokumenta
         private void VratiPodatkeNajavaSelect(int NajavaID)
         {
             //Iz Najava
+            
+              var select = "   Select PorudzbinaID, ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, RobaNHM2 " +
+                "from Najava " +
+                "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Year(StvarnaPredaja)>'2022' and Najava.ID="+NajavaID;
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection = new SqlConnection(s_connection);
+                var c = new SqlConnection(s_connection);
+                var dataAdapter = new SqlDataAdapter(select, c);
 
-            var select = "   Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
+                var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                var ds = new DataSet();
+                dataAdapter.Fill(ds);
+
+                DataView view = new DataView(ds.Tables[0]);
+                //multiColumnComboBox1.ReadOnly = true;
+                multiColumnComboBox1.DataSource = view;
+                multiColumnComboBox1.DisplayMember = "NajavaID";
+                multiColumnComboBox1.ValueMember = "NajavaID";
+           /*
+            var select = "Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
               "  Left join NHM on NHM.ID = RobaNHM " +
                " left join NHM as n2 on n2.ID = RobaNHM2" +
            "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + NajavaID;
@@ -2469,7 +2494,7 @@ namespace Saobracaj.Dokumenta
             multiColumnComboBox1.DataSource = view;
             multiColumnComboBox1.DisplayMember = "PorudzbinaID";
             multiColumnComboBox1.ValueMember = "PorudzbinaID";
-
+           */
             //Ovde vratiti Vrednosti Iz Porudzbine
 
 
