@@ -73,6 +73,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtRB = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtSifraZap = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -86,7 +87,6 @@
             this.cboPredhodniRadniNalog = new Syncfusion.Windows.Forms.Tools.MultiColumnComboBox();
             this.label10 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.txtRB = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -555,6 +555,14 @@
             this.groupBox1.Text = "Zaglavlje";
             this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
+            // txtRB
+            // 
+            this.txtRB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.txtRB.Location = new System.Drawing.Point(185, 19);
+            this.txtRB.Name = "txtRB";
+            this.txtRB.Size = new System.Drawing.Size(37, 20);
+            this.txtRB.TabIndex = 166;
+            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.txtSifraZap);
@@ -572,6 +580,7 @@
             this.groupBox2.TabIndex = 165;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Radni nalog formiran iz najave";
+            this.groupBox2.Visible = false;
             // 
             // txtSifraZap
             // 
@@ -700,14 +709,6 @@
             this.panel1.Size = new System.Drawing.Size(1281, 190);
             this.panel1.TabIndex = 154;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
-            // 
-            // txtRB
-            // 
-            this.txtRB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtRB.Location = new System.Drawing.Point(185, 19);
-            this.txtRB.Name = "txtRB";
-            this.txtRB.Size = new System.Drawing.Size(37, 20);
-            this.txtRB.TabIndex = 166;
             // 
             // frmRadniNalog
             // 
