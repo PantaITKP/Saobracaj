@@ -148,6 +148,9 @@
             this.panel3 = new System.Windows.Forms.Panel();
             this.button10 = new System.Windows.Forms.Button();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
+            this.chkCARINSKA = new System.Windows.Forms.CheckBox();
+            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
+            this.txtRBRN = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -191,7 +194,8 @@
             this.toolStripButton5,
             this.toolStripButton6,
             this.toolStripButton7,
-            this.toolStripButton8});
+            this.toolStripButton8,
+            this.toolStripButton9});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1352, 27);
@@ -344,6 +348,8 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.txtRBRN);
+            this.panel1.Controls.Add(this.chkCARINSKA);
             this.panel1.Controls.Add(this.label37);
             this.panel1.Controls.Add(this.txtRN);
             this.panel1.Controls.Add(this.chkPrevozna);
@@ -367,7 +373,7 @@
             this.panel1.Controls.Add(this.label1);
             this.panel1.Location = new System.Drawing.Point(13, 28);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1212, 71);
+            this.panel1.Size = new System.Drawing.Size(1230, 71);
             this.panel1.TabIndex = 8;
             // 
             // label37
@@ -383,7 +389,7 @@
             // 
             this.txtRN.Location = new System.Drawing.Point(1150, 6);
             this.txtRN.Name = "txtRN";
-            this.txtRN.Size = new System.Drawing.Size(53, 20);
+            this.txtRN.Size = new System.Drawing.Size(36, 20);
             this.txtRN.TabIndex = 123;
             this.txtRN.Text = "0";
             // 
@@ -1372,9 +1378,9 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(1231, 28);
+            this.button5.Location = new System.Drawing.Point(1249, 28);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(108, 63);
+            this.button5.Size = new System.Drawing.Size(90, 63);
             this.button5.TabIndex = 155;
             this.button5.Text = "Potvrda prijema / raspuštanje";
             this.button5.UseVisualStyleBackColor = true;
@@ -1428,6 +1434,37 @@
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.Size = new System.Drawing.Size(1024, 199);
             this.dataGridView2.TabIndex = 0;
+            // 
+            // chkCARINSKA
+            // 
+            this.chkCARINSKA.AutoSize = true;
+            this.chkCARINSKA.ForeColor = System.Drawing.Color.Red;
+            this.chkCARINSKA.Location = new System.Drawing.Point(1119, 44);
+            this.chkCARINSKA.Name = "chkCARINSKA";
+            this.chkCARINSKA.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkCARINSKA.Size = new System.Drawing.Size(80, 17);
+            this.chkCARINSKA.TabIndex = 125;
+            this.chkCARINSKA.Text = "CARINSKA";
+            this.chkCARINSKA.UseVisualStyleBackColor = true;
+            // 
+            // toolStripButton9
+            // 
+            this.toolStripButton9.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton9.ForeColor = System.Drawing.Color.Red;
+            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
+            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton9.Name = "toolStripButton9";
+            this.toolStripButton9.Size = new System.Drawing.Size(184, 24);
+            this.toolStripButton9.Text = "KOPIRAJ CARINSKU U PRIJEMNU";
+            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
+            // 
+            // txtRBRN
+            // 
+            this.txtRBRN.Location = new System.Drawing.Point(1192, 5);
+            this.txtRBRN.Name = "txtRBRN";
+            this.txtRBRN.Size = new System.Drawing.Size(31, 20);
+            this.txtRBRN.TabIndex = 126;
+            this.txtRBRN.Text = "0";
             // 
             // frmTeretnica
             // 
@@ -1598,5 +1635,8 @@
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.DataGridView dataGridView2;
         private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.ToolStripButton toolStripButton9;
+        private System.Windows.Forms.CheckBox chkCARINSKA;
+        private System.Windows.Forms.TextBox txtRBRN;
     }
 }

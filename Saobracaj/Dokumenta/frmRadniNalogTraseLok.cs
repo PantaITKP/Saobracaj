@@ -28,6 +28,7 @@ namespace Saobracaj.Dokumenta
             InitializeComponent();
             txtSifraRN.Text = RadniNalog;
             txtBrojNajave.Text = Voznja;
+            txtRB.Text = Voznja;
             //Ubaciti popunjavanje trasa
             pomTrasa = Trasa;
             
@@ -97,7 +98,7 @@ namespace Saobracaj.Dokumenta
 
         private void frmRadniNalogTraseLok_Load(object sender, EventArgs e)
         {
-            var select = " Select ID, (Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase where Godina = 2023 order by Voz ";
+            var select = " Select ID, (Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase order by Voz ";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -174,6 +175,30 @@ namespace Saobracaj.Dokumenta
             VratiPodatke(pomTrasa, txtSifraRN.Text);
             VratiLokomotive(pomTrasa, txtSifraRN.Text);
             RefreshDataGrid2();
+
+
+            var select61 = " Select Najava.ID, Najava.TehnologijaID, Tehnologija.PorudzbinaID as MP ,MpNaziv,Tezina as NajavaTezina,Duzina as NajavaDuzina , BrojKola as NajavaBrojKola, Tehnologija.Tonaza, Tehnologija.TonazaPovratak  from Najava " +
+" inner join Tehnologija on Tehnologija.ID = Najava.TehnologijaID " +
+" inner join MaticniPodatki on MaticniPodatki.MpSifra = Tehnologija.PorudzbinaID " +
+" order by Najava.ID desc";
+
+            var s_connection61 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection61 = new SqlConnection(s_connection61);
+            var c61 = new SqlConnection(s_connection61);
+            var dataAdapter61 = new SqlDataAdapter(select61, c61);
+
+            var commandBuilder61 = new SqlCommandBuilder(dataAdapter61);
+            var ds61 = new DataSet();
+            dataAdapter61.Fill(ds61);
+
+            DataView view = new DataView(ds61.Tables[0]);
+            //multiColumnComboBox1.ReadOnly = true;
+            cboPorudzbinaID.DataSource = view;
+            cboPorudzbinaID.DisplayMember = "ID";
+            cboPorudzbinaID.ValueMember = "ID";
+
+            RefreshDataGridNajave();
+            RefreshDataGrid4();
         }
 
         private void VratiPodatke(int trasa, string RN)
@@ -253,11 +278,6 @@ namespace Saobracaj.Dokumenta
             dataGridView1.ReadOnly = true;
             dataGridView1.DataSource = ds.Tables[0];
         
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-          
         }
 
         private void RefreshDataGrid2()
@@ -441,6 +461,8 @@ namespace Saobracaj.Dokumenta
                         
                     }
                 }
+                RefreshDataGridNajave();
+                RefreshDataGrid4();
             }
             catch
             {
@@ -561,6 +583,160 @@ namespace Saobracaj.Dokumenta
         private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
 
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            InsertRadniNalog ins = new InsertRadniNalog();
+            ins.InsRadniNalogVezaNajava2(Convert.ToInt32(txtSifraRN.Text), Convert.ToInt32(cboPorudzbinaID.Text), Convert.ToInt32(txtBrojKola.Value), Convert.ToInt32(txtRB.Text));
+            RefreshDataGridNajave();
+        }
+
+        private void RefreshDataGridNajave()
+        {
+            if (txtRB.Text != "")
+            {
+                var select = " select * from RadniNalogVezaNajave where IDRadnogNaloga = " + Convert.ToInt32(txtSifraRN.Text) + " and RB = " + txtRB.Text;
+
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection myConnection = new SqlConnection(s_connection);
+                var c = new SqlConnection(s_connection);
+                var dataAdapter = new SqlDataAdapter(select, c);
+
+                var commandBuilder = new SqlCommandBuilder(dataAdapter);
+                var ds = new DataSet();
+                dataAdapter.Fill(ds);
+                dataGridView3.ReadOnly = true;
+                dataGridView3.DataSource = ds.Tables[0];
+
+                DataGridViewColumn column = dataGridView3.Columns[0];
+                dataGridView3.Columns[0].HeaderText = "ID";
+                dataGridView3.Columns[0].Width = 40;
+
+                DataGridViewColumn column2 = dataGridView3.Columns[1];
+                dataGridView3.Columns[1].HeaderText = "IDRadnogNaloga";
+                dataGridView3.Columns[1].Width = 60;
+
+                DataGridViewColumn column3 = dataGridView3.Columns[2];
+                dataGridView3.Columns[2].HeaderText = "IDNajave";
+                dataGridView3.Columns[2].Width = 60;
+
+                DataGridViewColumn column4 = dataGridView3.Columns[3];
+                dataGridView3.Columns[3].HeaderText = "Broj kola";
+                dataGridView3.Columns[3].Width = 60;
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            InsertRadniNalog ins = new InsertRadniNalog();
+            ins.DeleteRNVezaNajava(Convert.ToInt32(txtSifraZap.Text));
+            RefreshDataGridNajave();
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            InsertTeretnica ins = new InsertTeretnica();
+            ins.PrekopirajTeretnicaPoNajavamaSL1(Convert.ToInt32(txtSifraRN.Text), Convert.ToInt32(txtRB.Text));
+            MessageBox.Show("Kopira se Teretnica koja je prijemna(cekirano) i koja ima najavu po unetom podatku");
+            RefreshDataGrid4();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            InsertTeretnica ins = new InsertTeretnica();
+            ins.PrekopirajTerPoNajavamaSL2(Convert.ToInt32(txtSifraRN.Text), Convert.ToInt32(txtRB.Text));
+            MessageBox.Show("Kopira zadnje zaglavlje teretnice po definisanim Najavama i uzima zadnje teretnice po najavama i formira listu, uzima sve stavke iz Najava");
+            RefreshDataGrid4();
+        }
+
+        private void ProglasiObaveznomStavkom()
+        {
+            try
+            {
+                foreach (DataGridViewRow row in dataGridView4.Rows)
+                {
+                    if (row.Selected)
+                    {
+                       // Trasa = Convert.ToInt32(row.Cells[2].Value.ToString());
+                        InsertTeretnica ins = new InsertTeretnica();
+                        ins.ProglasiObavezan(Convert.ToInt32(row.Cells[0].Value.ToString()));
+                      //  MessageBox.Show("Kopira zadnje zaglavlje teretnice po definisanim Najavama i uzima zadnje teretnice po najavama i formira listu, uzima sve stavke iz Najava");
+                        RefreshDataGrid4();
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspela selekcija stavki");
+            }
+
+
+
+        }
+
+       
+
+        private void RefreshDataGrid4()
+        {
+            if (txtRB.Text != "")
+            { 
+            var select = " SELECT TeretnicaStavke.ID, TeretnicaStavke.RB, TeretnicaStavke.IDNajave, TeretnicaStavke.Obavezna, stanice.Opis as Uvrstena, stanice_1.Opis AS Otkacena, TeretnicaStavke.BrojKola, TeretnicaStavke.Serija, " +
+                "TeretnicaStavke.BrojOsovina, TeretnicaStavke.Duzina, TeretnicaStavke.Tara, TeretnicaStavke.Neto, TeretnicaStavke.G, TeretnicaStavke.P, TeretnicaStavke.R, " +
+                "TeretnicaStavke.RR, TeretnicaStavke.VRNP, stanice_3.Opis AS Otpravna, stanice_2.Opis AS Uputna, TeretnicaStavke.Reon, TeretnicaStavke.Primedba, " +
+                "TeretnicaStavke.RucKoc,  stanice_5.Opis as Izvozna, stanice_4.Opis as Uvozna, RID, Dokument,AVV_Neispravnosti.SifraKvara as [Sifra kvara],AVV_Neispravnosti.Opis as [Opis kvara] " +
+                "FROM Teretnica INNER JOIN " +
+                "TeretnicaStavke ON Teretnica.ID = TeretnicaStavke.BrojTeretnice INNER JOIN " +
+                "stanice ON TeretnicaStavke.Uvrstena = stanice.ID INNER JOIN " +
+                "stanice AS stanice_1 ON TeretnicaStavke.Otkacena = stanice_1.ID INNER JOIN " +
+                "stanice AS stanice_3 ON TeretnicaStavke.Otpravna = stanice_3.ID INNER JOIN " +
+                "stanice AS stanice_2 ON TeretnicaStavke.Uputna = stanice_2.ID INNER JOIN " +
+                "stanice AS stanice_4 ON TeretnicaStavke.Uvozna = stanice_4.ID INNER JOIN " +
+                "stanice AS stanice_5 ON TeretnicaStavke.Izvozna = stanice_5.ID LEFT JOIN " +
+                "AVV_Neispravnosti on TeretnicaStavke.SifraKvaraID = AVV_Neispravnosti.ID " +
+" where Teretnica.RN = " + Convert.ToInt32(txtSifraRN.Text) + " and Teretnica.RB =  " + txtRB.Text  + 
+" and Prevozna = 1 ";
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView4.ReadOnly = true;
+            dataGridView4.DataSource = ds.Tables[0];
+            }
+        }
+        private void VratiPodatkeIDNajave()
+        {
+            try
+            {
+                foreach (DataGridViewRow row in dataGridView3.Rows)
+                {
+                    if (row.Selected)
+                    {
+                        txtSifraZap.Text = row.Cells[0].Value.ToString();
+                        cboPorudzbinaID.Text = row.Cells[2].Value.ToString();
+                        txtBrojKola.Value = Convert.ToDecimal(row.Cells[3].Value.ToString());
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspela selekcija stavki");
+            }
+
+
+        }
+        private void dataGridView3_SelectionChanged(object sender, EventArgs e)
+        {
+            VratiPodatkeIDNajave();
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            ProglasiObaveznomStavkom();
         }
     }
 }

@@ -582,7 +582,7 @@ namespace Saobracaj.Dokumenta
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
-            frmRadniNalogTraseLok frmtl = new frmRadniNalogTraseLok(txtSifra.Text, "1", pomTrasa);
+            frmRadniNalogTraseLok frmtl = new frmRadniNalogTraseLok(txtSifra.Text, txtRB.Text, pomTrasa);
             frmtl.Show();
         }
 
@@ -711,7 +711,7 @@ namespace Saobracaj.Dokumenta
                 if (row.Selected)
                 {
                     pomTrasa = Convert.ToInt32(row.Cells[2].Value.ToString());
-
+                    txtRB.Text = row.Cells[1].Value.ToString();
                     VratiLokomotive(pomTrasa, txtSifra.Text);
                 }
             }

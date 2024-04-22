@@ -47,6 +47,8 @@
             this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton7 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
@@ -84,8 +86,7 @@
             this.cboPredhodniRadniNalog = new Syncfusion.Windows.Forms.Tools.MultiColumnComboBox();
             this.label10 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
+            this.txtRB = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -266,10 +267,28 @@
             this.toolStripButton7.Text = "Tehnologija";
             this.toolStripButton7.Click += new System.EventHandler(this.toolStripButton7_Click_1);
             // 
+            // toolStripButton8
+            // 
+            this.toolStripButton8.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton8.Image")));
+            this.toolStripButton8.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton8.Name = "toolStripButton8";
+            this.toolStripButton8.Size = new System.Drawing.Size(113, 24);
+            this.toolStripButton8.Text = "Pokreni vagone";
+            this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
+            // 
+            // toolStripButton9
+            // 
+            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
+            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton9.Name = "toolStripButton9";
+            this.toolStripButton9.Size = new System.Drawing.Size(117, 24);
+            this.toolStripButton9.Text = "Raspusti vagone";
+            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
+            // 
             // txtSifra
             // 
             this.txtSifra.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtSifra.Location = new System.Drawing.Point(84, 19);
+            this.txtSifra.Location = new System.Drawing.Point(54, 19);
             this.txtSifra.Name = "txtSifra";
             this.txtSifra.Size = new System.Drawing.Size(69, 20);
             this.txtSifra.TabIndex = 1;
@@ -300,7 +319,7 @@
             this.tabPage1.Controls.Add(this.dataGridView1);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(1253, 155);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Trase";
@@ -341,7 +360,7 @@
             // txtTrase
             // 
             this.txtTrase.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtTrase.Location = new System.Drawing.Point(159, 19);
+            this.txtTrase.Location = new System.Drawing.Point(129, 19);
             this.txtTrase.Name = "txtTrase";
             this.txtTrase.Size = new System.Drawing.Size(50, 20);
             this.txtTrase.TabIndex = 136;
@@ -506,6 +525,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.txtRB);
             this.groupBox1.Controls.Add(this.groupBox2);
             this.groupBox1.Controls.Add(this.cboPredhodniRadniNalog);
             this.groupBox1.Controls.Add(this.label10);
@@ -681,23 +701,13 @@
             this.panel1.TabIndex = 154;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
-            // toolStripButton8
+            // txtRB
             // 
-            this.toolStripButton8.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton8.Image")));
-            this.toolStripButton8.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton8.Name = "toolStripButton8";
-            this.toolStripButton8.Size = new System.Drawing.Size(113, 24);
-            this.toolStripButton8.Text = "Pokreni vagone";
-            this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
-            // 
-            // toolStripButton9
-            // 
-            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
-            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton9.Name = "toolStripButton9";
-            this.toolStripButton9.Size = new System.Drawing.Size(117, 24);
-            this.toolStripButton9.Text = "Raspusti vagone";
-            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
+            this.txtRB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.txtRB.Location = new System.Drawing.Point(185, 19);
+            this.txtRB.Name = "txtRB";
+            this.txtRB.Size = new System.Drawing.Size(37, 20);
+            this.txtRB.TabIndex = 166;
             // 
             // frmRadniNalog
             // 
@@ -795,5 +805,6 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.ToolStripButton toolStripButton8;
         private System.Windows.Forms.ToolStripButton toolStripButton9;
+        private System.Windows.Forms.TextBox txtRB;
     }
 }

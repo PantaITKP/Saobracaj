@@ -1640,14 +1640,14 @@ namespace Saobracaj.Dokumenta
                     else if (Convert.ToInt32(myRow2["ObracunPoSatu"].ToString()) == 1)
                     {
                         double pom = 0;
-                        pom = Convert.ToDouble(myRow2["Sati"].ToString()) * Convert.ToDouble(myRow2["Cena"].ToString());
+                        pom = Convert.ToDouble(myRow2["Sati"].ToString()) * Convert.ToDouble(myRow2["Cena"].ToString()) * Convert.ToDouble(myRow2["Koeficijent"].ToString()) * 0.01;
                         body = body + "Sati: " + myRow2["Sati"].ToString() + " H " + "<br />";
                         body = body + "Zarada aktivnost: " + pom.ToString() + "<br />";
                     }
                     else
                     {
                         double pom = 0;
-                        pom = Convert.ToDouble(myRow2["BrojVagona"].ToString()) * Convert.ToDouble(myRow2["Cena"].ToString());
+                        pom = Convert.ToDouble(myRow2["BrojVagona"].ToString()) * Convert.ToDouble(myRow2["Cena"].ToString()) * Convert.ToDouble(myRow2["Koeficijent"].ToString()) * 0.01;
                         body = body + "Broj vagona: " + myRow2["BrojVagona"].ToString() + " VAG " + "<br />";
                         body = body + "Zarada aktivnost: " + pom.ToString() + "<br />";
                     }
@@ -2181,7 +2181,10 @@ namespace Saobracaj.Dokumenta
             txtIzracun.Text = "0";
             txtRazlika.Text = "0";
             txtZarada.Text = "0";
-            UpdejtKoeficijenta(txtSifra.Text); // Updejtuje koeficijente 
+            if (chkRucniKoeficijent.Checked == false)
+            { 
+            UpdejtKoeficijenta(txtSifra.Text);
+            }// Updejtuje koeficijente 
             //Panta
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {

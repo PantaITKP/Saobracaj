@@ -408,5 +408,11 @@ namespace Saobracaj.Sifarnici
             frmVrstaAktivnostiArhiv fvaa = new frmVrstaAktivnostiArhiv();
             fvaa.Show();
         }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            frmKoeficijentDelavci kd = new frmKoeficijentDelavci();
+            kd.Show();
+        }
     }
 }

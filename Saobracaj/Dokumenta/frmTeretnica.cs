@@ -47,7 +47,7 @@ namespace Saobracaj.Dokumenta
 
             con.Open();
 
-            SqlCommand cmd = new SqlCommand("select [ID],[BrojTeretnice] ,[StanicaOd],[StanicaDo],[StanicaPopisa],[VremeOd],[VremeDo],[BrojLista], [Prijemna], [Predajna], [Prevozna], [RN] from Teretnica where ID=" + IdTeretnice, con);
+            SqlCommand cmd = new SqlCommand("select [ID],[BrojTeretnice] ,[StanicaOd],[StanicaDo],[StanicaPopisa],[VremeOd],[VremeDo],[BrojLista], [Prijemna], [Predajna], [Prevozna], [RN], Carinska, RB from Teretnica where ID=" + IdTeretnice, con);
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
@@ -60,6 +60,7 @@ namespace Saobracaj.Dokumenta
                 dtpVremeDo.Value = Convert.ToDateTime(dr["VremeDo"].ToString());
                 txtBrojLista.Text = dr["BrojLista"].ToString();
                 txtRN.Text = dr["RN"].ToString();
+                txtRBRN.Text = dr["RB"].ToString();
                 if (dr["Prijemna"].ToString() == "1")
                 {
                     chkPrijemna.Checked = true;
@@ -86,6 +87,15 @@ namespace Saobracaj.Dokumenta
                 else
                 {
                     chkPrevozna.Checked = false;
+                }
+
+                if (dr["Carinska"].ToString() == "1")
+                {
+                    chkCARINSKA.Checked = true;
+                }
+                else
+                {
+                    chkCARINSKA.Checked = false;
                 }
             }
 
@@ -120,7 +130,7 @@ namespace Saobracaj.Dokumenta
             SqlCommand cmd = new SqlCommand("SELECT TeretnicaStavke.id as [ID]  ,[RB] ,[BrojTeretnice] ,[IDNajave] ,[Uvrstena]," +
                 "[Otkacena] ,[BrojKola] ,[Serija] ,[BrojOsovina] ,[Duzina] ,[Tara] ,[Neto] ,[G],[P] ,[R] ,[RR] ,[VRNP] ,[Otpravna] ,[Uputna] ,[Reon] ,[Primedba],[RucKoc], [Uvozna], [Izvozna], RID, Dokument," +
                 "(AVV_Neispravnosti.SifraKvara + '/'+AVV_Neispravnosti.Opis) as [Neispravnost] " +
-                "FROM [Perftech_Beograd].[dbo].[TeretnicaStavke] left join AVV_Neispravnosti on TeretnicaStavke.SifraKVaraID=AVV_Neispravnosti.ID " +
+                "FROM [TeretnicaStavke] left join AVV_Neispravnosti on TeretnicaStavke.SifraKVaraID=AVV_Neispravnosti.ID " +
                 "where BrojTeretnice=" + IdTeretnice +  " and RB = "  + RB, con);
            
             SqlDataReader dr = cmd.ExecuteReader();
@@ -834,6 +844,13 @@ namespace Saobracaj.Dokumenta
             dataGridView2.ReadOnly = false;
             dataGridView2.DataSource = ds.Tables[0];
 
+        }
+
+        private void toolStripButton9_Click(object sender, EventArgs e)
+        {
+            InsertTeretnica ins = new InsertTeretnica();
+            ins.PrekopirajTeretnicaCarinska(Convert.ToInt32(txtSifra.Text));
+            MessageBox.Show("Uspesno je prekopirana teretnica u Prijemnu");
         }
     }
 }

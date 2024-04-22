@@ -40,6 +40,7 @@
             this.tsPoslednja = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.txtNaziv = new System.Windows.Forms.TextBox();
             this.lblNaziv = new System.Windows.Forms.Label();
@@ -70,7 +71,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.txtMaxSati = new System.Windows.Forms.NumericUpDown();
             this.txtMaxVagona = new System.Windows.Forms.NumericUpDown();
-            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtCena)).BeginInit();
@@ -190,6 +190,16 @@
             this.toolStripButton2.Size = new System.Drawing.Size(206, 24);
             this.toolStripButton2.Text = "Prebacivanje cena u Arhivski cenonik";
             this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
+            // 
+            // toolStripButton3
+            // 
+            this.toolStripButton3.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
+            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton3.Name = "toolStripButton3";
+            this.toolStripButton3.Size = new System.Drawing.Size(129, 24);
+            this.toolStripButton3.Text = "Koeficjent Zaposlenog";
+            this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
             // 
             // dataGridView1
             // 
@@ -506,15 +516,6 @@
             this.txtMaxVagona.Size = new System.Drawing.Size(79, 20);
             this.txtMaxVagona.TabIndex = 182;
             this.txtMaxVagona.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // toolStripButton3
-            // 
-            this.toolStripButton3.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
-            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(129, 24);
-            this.toolStripButton3.Text = "Koeficjent Zaposlenog";
             // 
             // frmVrsteAktivnosti
             // 

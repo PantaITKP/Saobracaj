@@ -46,6 +46,8 @@
             this.toolStripButton4 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton7 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
             this.label3 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.cboRadniNalog = new System.Windows.Forms.ComboBox();
@@ -123,8 +125,7 @@
             this.cboNadlezni = new System.Windows.Forms.ComboBox();
             this.label30 = new System.Windows.Forms.Label();
             this.button6 = new System.Windows.Forms.Button();
-            this.toolStripButton7 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
+            this.chkRucniKoeficijent = new System.Windows.Forms.CheckBox();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -301,6 +302,26 @@
             this.toolStripButton6.Text = "Arhiiraj zapise";
             this.toolStripButton6.Click += new System.EventHandler(this.toolStripButton6_Click);
             // 
+            // toolStripButton7
+            // 
+            this.toolStripButton7.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton7.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton7.Image")));
+            this.toolStripButton7.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton7.Name = "toolStripButton7";
+            this.toolStripButton7.Size = new System.Drawing.Size(125, 24);
+            this.toolStripButton7.Text = "Kontrolisano dispecer";
+            this.toolStripButton7.Click += new System.EventHandler(this.toolStripButton7_Click);
+            // 
+            // toolStripButton8
+            // 
+            this.toolStripButton8.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton8.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton8.Image")));
+            this.toolStripButton8.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton8.Name = "toolStripButton8";
+            this.toolStripButton8.Size = new System.Drawing.Size(117, 24);
+            this.toolStripButton8.Text = "Kontrolisano Admin";
+            this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -447,9 +468,9 @@
             // txtKoeficijent
             // 
             this.txtKoeficijent.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtKoeficijent.Location = new System.Drawing.Point(585, 170);
+            this.txtKoeficijent.Location = new System.Drawing.Point(577, 168);
             this.txtKoeficijent.Name = "txtKoeficijent";
-            this.txtKoeficijent.Size = new System.Drawing.Size(43, 20);
+            this.txtKoeficijent.Size = new System.Drawing.Size(35, 20);
             this.txtKoeficijent.TabIndex = 168;
             this.txtKoeficijent.Text = "100";
             this.txtKoeficijent.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -457,7 +478,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(582, 157);
+            this.label5.Location = new System.Drawing.Point(574, 154);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(32, 13);
             this.label5.TabIndex = 169;
@@ -465,15 +486,15 @@
             // 
             // txtDodatnaNapomena
             // 
-            this.txtDodatnaNapomena.Location = new System.Drawing.Point(640, 172);
+            this.txtDodatnaNapomena.Location = new System.Drawing.Point(653, 172);
             this.txtDodatnaNapomena.Name = "txtDodatnaNapomena";
-            this.txtDodatnaNapomena.Size = new System.Drawing.Size(199, 20);
+            this.txtDodatnaNapomena.Size = new System.Drawing.Size(186, 20);
             this.txtDodatnaNapomena.TabIndex = 170;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(637, 157);
+            this.label10.Location = new System.Drawing.Point(650, 157);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(101, 13);
             this.label10.TabIndex = 171;
@@ -784,7 +805,7 @@
             // txtRad
             // 
             this.txtRad.DecimalPlaces = 2;
-            this.txtRad.Location = new System.Drawing.Point(514, 171);
+            this.txtRad.Location = new System.Drawing.Point(513, 169);
             this.txtRad.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -1066,31 +1087,23 @@
             this.button6.UseVisualStyleBackColor = true;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
-            // toolStripButton7
+            // chkRucniKoeficijent
             // 
-            this.toolStripButton7.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton7.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton7.Image")));
-            this.toolStripButton7.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton7.Name = "toolStripButton7";
-            this.toolStripButton7.Size = new System.Drawing.Size(125, 24);
-            this.toolStripButton7.Text = "Kontrolisano dispecer";
-            this.toolStripButton7.Click += new System.EventHandler(this.toolStripButton7_Click);
-            // 
-            // toolStripButton8
-            // 
-            this.toolStripButton8.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton8.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton8.Image")));
-            this.toolStripButton8.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton8.Name = "toolStripButton8";
-            this.toolStripButton8.Size = new System.Drawing.Size(117, 24);
-            this.toolStripButton8.Text = "Kontrolisano Admin";
-            this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
+            this.chkRucniKoeficijent.AutoSize = true;
+            this.chkRucniKoeficijent.Location = new System.Drawing.Point(613, 168);
+            this.chkRucniKoeficijent.Name = "chkRucniKoeficijent";
+            this.chkRucniKoeficijent.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkRucniKoeficijent.Size = new System.Drawing.Size(34, 17);
+            this.chkRucniKoeficijent.TabIndex = 228;
+            this.chkRucniKoeficijent.Text = "R";
+            this.chkRucniKoeficijent.UseVisualStyleBackColor = true;
             // 
             // frmEvidencijaRada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1366, 591);
+            this.Controls.Add(this.chkRucniKoeficijent);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.dataGridView3);
@@ -1284,5 +1297,6 @@
         private System.Windows.Forms.ToolStripButton toolStripButton6;
         private System.Windows.Forms.ToolStripButton toolStripButton7;
         private System.Windows.Forms.ToolStripButton toolStripButton8;
+        private System.Windows.Forms.CheckBox chkRucniKoeficijent;
     }
 }

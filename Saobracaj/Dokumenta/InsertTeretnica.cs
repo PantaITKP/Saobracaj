@@ -459,6 +459,221 @@ namespace Saobracaj.Dokumenta
             }
         }
 
+
+        public void PrekopirajTeretnicaCarinska(int TeretnicaID)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "PrekopirajTeretnicuCarinska";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@TeretnicaID";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = TeretnicaID;
+            myCommand.Parameters.Add(parameter);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Brisanje neuspešno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Teretnice uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+        public void PrekopirajTeretnicaPoNajavamaSL1(int RadniNalogID, int rb)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "PrekopirajTerPoNajaviSL1";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@RNID";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = RadniNalogID;
+            myCommand.Parameters.Add(parameter);
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@RNRB";
+            parameter1.SqlDbType = SqlDbType.Int;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = rb;
+            myCommand.Parameters.Add(parameter1);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešno kopiranje");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Teretnice uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+        public void PrekopirajTerPoNajavamaSL2(int RadniNalogID, int rb)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "PrekopirajTerPoNajavamaSL2";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@RNID";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = RadniNalogID;
+            myCommand.Parameters.Add(parameter);
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@RNRB";
+            parameter1.SqlDbType = SqlDbType.Int;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = rb;
+            myCommand.Parameters.Add(parameter1);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Kopiranje neuspesno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Teretnice uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+        public void ProglasiObavezan(int ID)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "ProglasiObaveznomStavku";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@ID";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = ID;
+            myCommand.Parameters.Add(parameter);
+
+         
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Kopiranje neuspesno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Teretnice uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
     }
 
 }

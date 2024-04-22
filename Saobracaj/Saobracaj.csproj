@@ -1548,6 +1548,12 @@
     <Compile Include="Sifarnici\frmDodelaLokomotive.Designer.cs">
       <DependentUpon>frmDodelaLokomotive.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sifarnici\frmKoeficijentDelavci.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sifarnici\frmKoeficijentDelavci.Designer.cs">
+      <DependentUpon>frmKoeficijentDelavci.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmKopiranjeTeretnice.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2368,6 +2374,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmDodelaLokomotive.resx">
       <DependentUpon>frmDodelaLokomotive.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sifarnici\frmKoeficijentDelavci.resx">
+      <DependentUpon>frmKoeficijentDelavci.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sifarnici\frmKopiranjeTeretnice.resx">
       <DependentUpon>frmKopiranjeTeretnice.cs</DependentUpon>

@@ -528,7 +528,7 @@ namespace Saobracaj.Tehnologija
 
         private void RefreshDataGridTehnologijaTrase()
         {
-            var select = "  SELECT TehnologijaTrase.[ID] , TehnologijaTrase.[Trasa], Trase.Voz as Trasa      ,[StanicaOd], stanice.Opis ,[StanicaDo], st2.Opis      ,[IDTehnologije], TehnologijaTrase.Povratak     FROM [Perftech_Beograd].[dbo].[TehnologijaTrase]  inner join stanice on TehnologijaTrase.StanicaOd = stanice.id  inner join stanice st2 on TehnologijaTrase.StanicaDo = st2.id "+
+            var select = "  SELECT TehnologijaTrase.[ID] , TehnologijaTrase.[Trasa], Trase.Voz as Trasa      ,[StanicaOd], stanice.Opis ,[StanicaDo], st2.Opis      ,[IDTehnologije], TehnologijaTrase.Povratak     FROM [TehnologijaTrase]  inner join stanice on TehnologijaTrase.StanicaOd = stanice.id  inner join stanice st2 on TehnologijaTrase.StanicaDo = st2.id "+
             " inner join Trase on TehnologijaTrase.Trasa = Trase.ID " +
             " where TehnologijaTrase.IDTehnologije = " + Convert.ToInt32(txtSifra.Text);
 
