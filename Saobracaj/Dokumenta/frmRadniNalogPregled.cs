@@ -983,6 +983,80 @@ namespace Saobracaj.Dokumenta
                 MessageBox.Show(ex.Message.ToString());
             }
         }
+
+        private void DopuniTeksBoxViber(string ID, string RB)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection con = new SqlConnection(s_connection);
+
+            con.Open();
+
+            SqlCommand cmd = new SqlCommand(" Select distinct RN.ID, RadniNalogTrase.RB,  Trase.Voz, " +
+                " (RTrim(stanice.Opis) + ' - ' + RTrim(stanice1.Opis)) as Relacija, " +
+                  "(Select STUFF((Select distinct '/' + Cast(SmSifra as nvarchar(8)) From RadniNalogVezaNajave " +
+                " Where RadniNalogTrase.IDRadnogNaloga  = RadniNalogVezaNajave.IDRadnogNaloga and RadniNalogTrase.Rb = RadniNalogVezaNajave.RB" +
+                " FOR XML PATH('')), 1, 1, '') as a)as Najave, " +
+                "(Select STUFF((Select distinct '/' + Cast(SmSifra as nvarchar(8)) From RadniNalogLokNaTrasi " +
+                " where RadniNalogLokNaTrasi.IDRadnogNaloga = RadniNalogTrase.IDRadnogNaloga " +
+                "and RadniNalogLokNaTrasi.IDTrase = RadniNalogTrase.IDTrase FOR XML PATH('')), 1, 1, '') as a)as Lokomotiva, " +
+                "CASE " +
+                "WHEN((Select Stuff((Select distinct '/' + (Select Cast(SUM(BrojKola) as nvarchar(8)) " +
+                "+ '  ' + Cast(SerijaVagona as nvarchar(8))from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) group by SerijaVagona " +
+                "FOR XML PATH('')),1,1,'')as a)) is null " +
+                "THEN Cast((Select SUM(BrojKola) as BK from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) as nvarchar(8)) " +
+                "ELSE(Select Stuff((Select distinct '/' + (Select Cast(SUM(BrojKola) as nvarchar(8)) " +
+                "+ '  ' + Cast(SerijaVagona as nvarchar(8))from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) group by SerijaVagona " +
+                "FOR XML PATH('')),1,1,'')as a) " +
+                "END, " +
+                "RadniNalogTrase.Napomena " +
+                "FROM RadniNalog RN " +
+                "inner join RadniNalogTrase on RN.ID = RadniNalogTrase.IDRadnogNaloga " +
+                "inner join Trase on RadniNalogTrase.IDTrase = Trase.ID " +
+                "inner join stanice on RadniNalogTrase.StanicaOd = stanice.ID " +
+                "inner join stanice as stanice1 on RadniNalogTrase.StanicaDo = stanice1.ID " +
+                "inner join RadniNalogLokNaTrasi on RN.ID = RadniNalogLokNaTrasi.IDRadnogNaloga " +
+                "inner join RadniNalogVezaNajave on RN.ID = RadniNalogVezaNajave.IDRadnogNaloga " +
+                "inner join Najava on RadniNalogVezaNajave.IDNajave = Najava.ID " +
+                "Where StatusRN = 'PL'  and RN.ID = "+ ID + " and RadniNalogTrase.RB = " + RB, con);
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+
+                txtSaobraca.Text = txtSaobraca.Text + "\r\n \r\n RNID: " + dr["ID"].ToString() + "  RB: " + dr["RB"].ToString()  + " \r\n  VOZ: " + dr["Voz"].ToString();
+                txtSaobraca.Text = txtSaobraca.Text + " \r\n Najave: " + dr["Najave"].ToString() + "\r\n Lokomotiva: " + dr["Lokomotiva"].ToString() + " \r\n Napomena: " + dr["Napomena"].ToString();
+            }
+
+            con.Close();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            txtSaobraca.Text = "Saobraća: \r\n\r\n";
+            try
+            {
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if (row.Selected)
+                    {
+                        // txtSifra.Text = row.Cells[0].Value.ToString();
+                        DopuniTeksBoxViber(row.Cells[0].Value.ToString(), row.Cells[1].Value.ToString());
+                        // txtOpis.Text = row.Cells[1].Value.ToString();
+                    }
+                }
+
+
+            }
+            catch
+            {
+                MessageBox.Show("Nije uspela selekcija stavki");
+            }
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
     }
 

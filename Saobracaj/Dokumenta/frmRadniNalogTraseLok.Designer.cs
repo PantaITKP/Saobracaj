@@ -1044,7 +1044,7 @@
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmRadniNalogTraseLok";
-            this.Text = "Radni nalog trase ";
+            this.Text = "frm";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmRadniNalogTraseLok_Load);
             this.toolStrip1.ResumeLayout(false);
