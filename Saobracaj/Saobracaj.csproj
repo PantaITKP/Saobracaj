@@ -2102,6 +2102,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmNajava.resx">
       <DependentUpon>frmNajava.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmNajava20.resx">
       <DependentUpon>frmNajava20.cs</DependentUpon>

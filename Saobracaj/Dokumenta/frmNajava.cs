@@ -14,6 +14,7 @@ using System.Net;
 using System.Net.Mail; 
 using Microsoft.Reporting.WinForms;
 using Microsoft.Office.Interop.Excel;
+using Microsoft.Ajax.Utilities;
 
 
 namespace Saobracaj.Dokumenta
@@ -915,6 +916,7 @@ namespace Saobracaj.Dokumenta
                     }
                 }
                 InsertNajava upd = new InsertNajava();
+                
                 upd.UpdNaj(Convert.ToInt32(txtSifra.Text), txtOpis.Text, Convert.ToInt32(cmbVoz.SelectedValue), Convert.ToInt32(cboPosiljalac.SelectedValue),
                     Convert.ToInt32(cboPrevoznik.SelectedValue), Convert.ToInt32(cboOtpravna.SelectedValue),
                     Convert.ToInt32(cboUputna.SelectedValue), Convert.ToInt32(cboPrimalac.SelectedValue), Convert.ToInt32(cboNHM.SelectedValue),
@@ -1270,6 +1272,7 @@ namespace Saobracaj.Dokumenta
                     if (row.Selected)
                     {
                         txtSifra.Text = row.Cells[0].Value.ToString();
+                        //multiColumnComboBox1.DataSource = null;
                         VratiPodatkeSelect(txtSifra.Text);
                        // txtOpis.Text = row.Cells[1].Value.ToString();
                     }
@@ -1277,9 +1280,9 @@ namespace Saobracaj.Dokumenta
 
 
             }
-            catch
+            catch(Exception ex)
             {
-                MessageBox.Show("Nije uspela selekcija stavki");
+                MessageBox.Show("Nije uspela selekcija stavki\n"+ex.ToString());
             }
         }
 
@@ -2251,74 +2254,78 @@ namespace Saobracaj.Dokumenta
             }
 
             con.Close();
-
+            if (NHMOvi != "") 
+            { 
             NHMOvi = NHMOvi.Remove(0, 5);
-            if (ImaPovrat == 0)
-            {
-                //Nema povrat ali treba upisati u sve NHM ove koji se pojave
-                if (NacinD == "5")
+                if (ImaPovrat == 0)
                 {
-                    NapunicboNHM1(NHMOvi);
+                    //Nema povrat ali treba upisati u sve NHM ove koji se pojave
+                    if (NacinD == "5")
+                    {
+                        NapunicboNHM1(NHMOvi);
+                    }
+                    else
+                    {
+                        NapunicboNHM1("9920");
+                    }
+                    // cboNHM.SelectedValue = NHMOvi;
+                    cboNHM2.SelectedValue = 0;
+                    cboNHM2.Enabled = false;
                 }
                 else
                 {
-                    NapunicboNHM1("9920");
-                }
-                // cboNHM.SelectedValue = NHMOvi;
-                cboNHM2.SelectedValue = 0;
-                cboNHM2.Enabled = false;
-            }
-            else
-            {
-                if (NacinD == "7")
-                {
-                    //Prazno - Puno
-                    NapunicboNHM1("9920");
-                    NapunicboNHM2(NHMOvi);
-
-                }
-                else if (NacinD == "8")
-                {
-                    NapunicboNHM2("9920");
-                    NapunicboNHM1(NHMOvi);
-
-                }
-                else if (NacinD == "9")
-                {
-                    NapunicboNHM2("9920");
-                    NapunicboNHM1("9920");
-
-                }
-                else if (NacinD == "10")
-                {
-                    // "PUNO / PUNO"
-                    String str = NHMOvi;
-
-                    String[] spearator = { "-" };
-                    Int32 count = 2;
-
-                    // using the method
-                    String[] strlist = str.Split(spearator, count,
-                           StringSplitOptions.RemoveEmptyEntries);
-                    int pom = 1;
-                    foreach (String s in strlist)
+                    if (NacinD == "7")
                     {
-                        if (pom == 1)
+                        //Prazno - Puno
+                        NapunicboNHM1("9920");
+                        NapunicboNHM2(NHMOvi);
+
+                    }
+                    else if (NacinD == "8")
+                    {
+                        NapunicboNHM2("9920");
+                        NapunicboNHM1(NHMOvi);
+
+                    }
+                    else if (NacinD == "9")
+                    {
+                        NapunicboNHM2("9920");
+                        NapunicboNHM1("9920");
+
+                    }
+                    else if (NacinD == "10")
+                    {
+                        // "PUNO / PUNO"
+                        String str = NHMOvi;
+
+                        String[] spearator = { "-" };
+                        Int32 count = 2;
+
+                        // using the method
+                        String[] strlist = str.Split(spearator, count,
+                               StringSplitOptions.RemoveEmptyEntries);
+                        int pom = 1;
+                        foreach (String s in strlist)
                         {
-                            NapunicboNHM1(s);
-                            
-                            pom = 2;
-                        }
-                        else
-                        {
-                            NapunicboNHM2(s);
+                            if (pom == 1)
+                            {
+                                NapunicboNHM1(s);
+
+                                pom = 2;
+                            }
+                            else
+                            {
+                                NapunicboNHM2(s);
+                            }
                         }
                     }
                 }
 
+
                 //Ima povrat i trba videti koji je nacin otpreme ako je PUNO-PUNO crtica
-                
+
             }
+            else { return; }
         }
 
         private void PronadjiIDNhma(string s, int Prvi)
@@ -2395,10 +2402,10 @@ namespace Saobracaj.Dokumenta
         }
         private void VratiTMPPor(int PorudzbinaID)
         {
-            var select = "   Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
+            var select = "Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
                    "  inner join NHM on NHM.ID = RobaNHM " +
                     " left join NHM as n2 on n2.ID = RobaNHM2" +
-                "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + PorudzbinaID;
+                " Where PorudzbinaID = " + PorudzbinaID;
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -2414,6 +2421,11 @@ namespace Saobracaj.Dokumenta
             multiColumnComboBox1.DisplayMember = "PorudzbinaID";
             multiColumnComboBox1.ValueMember = "PorudzbinaID";
 
+
+            if (multiColumnComboBox1.Text == "")
+            {
+                multiColumnComboBox1.Text = "0";
+            }
 
         }
 
@@ -2458,9 +2470,9 @@ namespace Saobracaj.Dokumenta
         {
             //Iz Najava
             
-              var select = "   Select PorudzbinaID, ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, RobaNHM2 " +
+              var select = "Select PorudzbinaID, ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, RobaNHM2 " +
                 "from Najava " +
-                "  where Faktura = '' and ImaPovrat = 1 and Status = 9 and Year(StvarnaPredaja)>'2022' and Najava.ID="+NajavaID;
+                "where Faktura = '' and Status=9 and ImaPovrat = '1' and Najava.ID="+NajavaID;
                 var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
                 SqlConnection myConnection = new SqlConnection(s_connection);
                 var c = new SqlConnection(s_connection);
@@ -2475,26 +2487,31 @@ namespace Saobracaj.Dokumenta
                 multiColumnComboBox1.DataSource = view;
                 multiColumnComboBox1.DisplayMember = "NajavaID";
                 multiColumnComboBox1.ValueMember = "NajavaID";
-           /*
-            var select = "Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
-              "  Left join NHM on NHM.ID = RobaNHM " +
-               " left join NHM as n2 on n2.ID = RobaNHM2" +
-           "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + NajavaID;
-            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection myConnection = new SqlConnection(s_connection);
-            var c = new SqlConnection(s_connection);
-            var dataAdapter = new SqlDataAdapter(select, c);
 
-            var commandBuilder = new SqlCommandBuilder(dataAdapter);
-            var ds = new DataSet();
-            dataAdapter.Fill(ds);
+            if (multiColumnComboBox1.Text == "")
+            {
+                multiColumnComboBox1.Text = "0";
+            }
+            /*
+             var select = "Select PorudzbinaID, Najava.ID as NajavaID, StvarnaPredaja, PrevozniPut, RobaNHM, NHM.Broj, RobaNHM2, N2.Broj from Najava " +
+               "  Left join NHM on NHM.ID = RobaNHM " +
+                " left join NHM as n2 on n2.ID = RobaNHM2" +
+            "  where Year(StvarnaPredaja)>'2022' and PorudzbinaID = " + NajavaID;
+             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+             SqlConnection myConnection = new SqlConnection(s_connection);
+             var c = new SqlConnection(s_connection);
+             var dataAdapter = new SqlDataAdapter(select, c);
 
-            DataView view = new DataView(ds.Tables[0]);
-            //multiColumnComboBox1.ReadOnly = true;
-            multiColumnComboBox1.DataSource = view;
-            multiColumnComboBox1.DisplayMember = "PorudzbinaID";
-            multiColumnComboBox1.ValueMember = "PorudzbinaID";
-           */
+             var commandBuilder = new SqlCommandBuilder(dataAdapter);
+             var ds = new DataSet();
+             dataAdapter.Fill(ds);
+
+             DataView view = new DataView(ds.Tables[0]);
+             //multiColumnComboBox1.ReadOnly = true;
+             multiColumnComboBox1.DataSource = view;
+             multiColumnComboBox1.DisplayMember = "PorudzbinaID";
+             multiColumnComboBox1.ValueMember = "PorudzbinaID";
+            */
             //Ovde vratiti Vrednosti Iz Porudzbine
 
 
@@ -2522,6 +2539,11 @@ namespace Saobracaj.Dokumenta
             multiColumnComboBox1.ValueMember = "NajavaID";
 
             VratiTMPNajava(Convert.ToInt32(multiColumnComboBox1.Text));
+
+            if (multiColumnComboBox1.Text == "")
+            {
+                multiColumnComboBox1.Text = "0";
+            }
 
 
         }
@@ -3148,6 +3170,11 @@ namespace Saobracaj.Dokumenta
                 multiColumnComboBox1.DisplayMember = "NajavaID";
                 multiColumnComboBox1.ValueMember = "NajavaID";
 
+                if (multiColumnComboBox1.Text == "")
+                {
+                    multiColumnComboBox1.Text = "0";
+                }
+
             }
             else
             {
@@ -3176,7 +3203,14 @@ namespace Saobracaj.Dokumenta
                 multiColumnComboBox1.DisplayMember = "NaPNarZap";
                 multiColumnComboBox1.ValueMember = "NaPNarZap";
 
+                MessageBox.Show("NE postoji nijedna Porudzbina sa tim uslovima(Platila i status PO), Obratite se obavezno Komercijalnoj sluzbi");
+                return;
 
+                if (multiColumnComboBox1.Text == "")
+                {
+                    multiColumnComboBox1.Text = "0";
+                }
+                ///Staviti MSGBox
                 //Proveriti ImaPovrat
 
                 //Vratiti NHM

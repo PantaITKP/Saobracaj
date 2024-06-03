@@ -607,7 +607,7 @@ namespace Saobracaj.Dokumenta
 " INNER JOIN  stanice AS stanice_1 ON Trase.Krajnja = stanice_1.ID " +
 " inner Join RadniNalog as RN ON d1.IDRadnogNaloga = RN.ID " +
 " inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra " +
-" inner join RadniNalogVezaNajave on d1.IdRadnogNaloga=RadniNalogVezaNajave.IDRadnogNaloga ";
+" inner join RadniNalogVezaNajave on d1.IdRadnogNaloga=RadniNalogVezaNajave.IDRadnogNaloga and RadniNalogVezaNajave.RB=d1.RB ";
 
 
             if (chkLA.Checked == true)
@@ -782,7 +782,7 @@ namespace Saobracaj.Dokumenta
 " INNER JOIN  stanice AS stanice_1 ON Trase.Krajnja = stanice_1.ID " +
 " inner Join RadniNalog as RN ON d1.IDRadnogNaloga = RN.ID " +
 " inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra " +
-" inner join RadniNalogVezaNajave on d1.IdRadnogNaloga=RadniNalogVezaNajave.IDRadnogNaloga ";
+" inner join RadniNalogVezaNajave on d1.IdRadnogNaloga=RadniNalogVezaNajave.IDRadnogNaloga and RadniNalogVezaNajave.RB=d1.RB ";
 
 
        
