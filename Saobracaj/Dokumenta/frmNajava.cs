@@ -3204,7 +3204,7 @@ namespace Saobracaj.Dokumenta
                 multiColumnComboBox1.ValueMember = "NaPNarZap";
 
                 MessageBox.Show("NE postoji nijedna Porudzbina sa tim uslovima(Platila i status PO), Obratite se obavezno Komercijalnoj sluzbi");
-                return;
+                //return;
 
                 if (multiColumnComboBox1.Text == "")
                 {

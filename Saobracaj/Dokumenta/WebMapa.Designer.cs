@@ -28,68 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.Mapa = new System.Windows.Forms.WebBrowser();
-            this.webBrowser1 = new System.Windows.Forms.WebBrowser();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // splitContainer1
-            // 
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Name = "splitContainer1";
-            // 
-            // splitContainer1.Panel2
-            // 
-            this.splitContainer1.Panel2.Controls.Add(this.webBrowser1);
-            this.splitContainer1.Panel2.Controls.Add(this.Mapa);
-            this.splitContainer1.Size = new System.Drawing.Size(655, 328);
-            this.splitContainer1.SplitterDistance = 218;
-            this.splitContainer1.TabIndex = 0;
-            // 
-            // Mapa
-            // 
-            this.Mapa.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.Mapa.Location = new System.Drawing.Point(0, 0);
-            this.Mapa.MinimumSize = new System.Drawing.Size(20, 20);
-            this.Mapa.Name = "Mapa";
-            this.Mapa.Size = new System.Drawing.Size(433, 328);
-            this.Mapa.TabIndex = 0;
-            this.Mapa.Url = new System.Uri("", System.UriKind.Relative);
-            // 
-            // webBrowser1
-            // 
-            this.webBrowser1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webBrowser1.Location = new System.Drawing.Point(0, 0);
-            this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowser1.Name = "webBrowser1";
-            this.webBrowser1.Size = new System.Drawing.Size(433, 328);
-            this.webBrowser1.TabIndex = 1;
-            // 
-            // WebMapa
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(655, 328);
-            this.Controls.Add(this.splitContainer1);
-            this.Name = "WebMapa";
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Text = "WebMapa";
-            this.Load += new System.EventHandler(this.WebMapa_Load);
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
-            this.ResumeLayout(false);
-
         }
 
         #endregion
-
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.WebBrowser Mapa;
-        private System.Windows.Forms.WebBrowser webBrowser1;
-
     }
 }

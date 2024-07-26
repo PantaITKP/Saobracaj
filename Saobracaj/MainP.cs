@@ -935,5 +935,11 @@ namespace Saobracaj
             Saobracaj.Dokumenta.frmPutniList pl = new Dokumenta.frmPutniList();
             pl.Show();
         }
+
+        private void toolStripButton132_Click(object sender, EventArgs e)
+        {
+            Dokumenta.LocoTrack frm = new Dokumenta.LocoTrack();
+            frm.Show();
+        }
     }
 }

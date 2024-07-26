@@ -176,6 +176,18 @@
       <HintPath>..\packages\Microsoft.SqlServer.Types.14.0.1016.290\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="MindFusion.Common, Version=1.3.1.29444, Culture=neutral, PublicKeyToken=7fed53ada5b92263, processorArchitecture=MSIL">
+      <HintPath>..\packages\MindFusion.Gauges.1.0.0\lib\net40\MindFusion.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="MindFusion.Gauges, Version=1.0.0.19549, Culture=neutral, PublicKeyToken=40e6b33d8f7febfd, processorArchitecture=MSIL">
+      <HintPath>..\packages\MindFusion.Gauges.1.0.0\lib\net40\MindFusion.Gauges.dll</HintPath>
+    </Reference>
+    <Reference Include="MindFusion.Gauges.WinForms, Version=1.0.0.19550, Culture=neutral, PublicKeyToken=bcb1413090857d45, processorArchitecture=MSIL">
+      <HintPath>..\packages\MindFusion.Gauges.1.0.0\lib\net40\MindFusion.Gauges.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="MindFusion.Licensing, Version=1.0.1.24632, Culture=neutral, PublicKeyToken=9d02e21d957ddaef, processorArchitecture=MSIL">
+      <HintPath>..\packages\MindFusion.Gauges.1.0.0\lib\net40\MindFusion.Licensing.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -424,6 +436,7 @@
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -1186,6 +1199,13 @@
     <Compile Include="Dokumenta\InsertTeretnica.cs" />
     <Compile Include="Dokumenta\InsertTraseDokumenta.cs" />
     <Compile Include="Dokumenta\InsertUzrociKasnjenjaLok.cs" />
+    <Compile Include="Dokumenta\InsertWebMap.cs" />
+    <Compile Include="Dokumenta\LocoTrack.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\LocoTrack.Designer.cs">
+      <DependentUpon>LocoTrack.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\PivotTable.cs" />
     <Compile Include="Dokumenta\frmTeretnicaTerenIzmena.cs">
       <SubType>Form</SubType>
@@ -2229,6 +2249,9 @@
     <EmbeddedResource Include="Dokumenta\frmPrimljeniVozovi.resx">
       <DependentUpon>frmPrimljeniVozovi.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\LocoTrack.resx">
+      <DependentUpon>LocoTrack.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\rptGodisnjiOdmor.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoNeplaceno.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoTrue.rdlc" />
@@ -2236,6 +2259,7 @@
     <EmbeddedResource Include="Dokumenta\frmTeretnicaTerenIzmena.resx">
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
     </EmbeddedResource>
+    <Content Include="Dokumenta\map.html" />
     <Content Include="Dokumenta\rptregistrator2019.rdlc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
