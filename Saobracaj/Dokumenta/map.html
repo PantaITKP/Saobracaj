@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRailwayMap</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        var map = L.map('map').setView([44.7866, 20.4489], 13);
+        var osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            opacity: 0.7
+        }).addTo(map);
+
+        var defaultTileLayer = L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
+            attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>, Style: <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0</a> <a href="https://www.openrailwaymap.org/?layers=standard">OpenRailwayMap</a> and OpenStreetMap'
+        }).addTo(map);
+
+        var baseMaps = { "OpenStreetMap": osmTileLayer };
+        var overlayMaps = { "Railway Map": defaultTileLayer };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        function updateLayer(Maplayer) {
+            var baseLayerUrl = 'https://{s}.tiles.openrailwaymap.org/';
+            map.removeLayer(defaultTileLayer);
+            var layerUrl = baseLayerUrl + Maplayer + '/{z}/{x}/{y}.png';
+
+            defaultTileLayer = L.tileLayer(layerUrl, {
+                attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>, Style: <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0</a> <a href="https://www.openrailwaymap.org/?layers=' + Maplayer + '">OpenRailwayMap</a> and OpenStreetMap'
+            }).addTo(map);
+        }
+
+        function addMarker(latitude, longitude) {
+            map.eachLayer(function (layer) {
+                if (layer !== osmTileLayer && layer!==defaultTileLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+            var marker = L.marker([latitude, longitude]).addTo(map);
+            map.setView([latitude, longitude], 15);
+        }
+
+        var pins = [];
+        var polyline;
+        function addPin(latitude, longitude) {
+
+            var pin = L.circleMarker([latitude, longitude], {
+                color: '#0059FF',
+                fillColor: '#0059FF',
+                fillOpacity: 0.6,
+                radius: 5
+            }).addTo(map);
+
+            pins.push([latitude, longitude]);
+
+            if (pins.length > 1) {
+                polyline = L.polyline(pins, {
+                    color: '#151B54',
+                    weight: 2,
+                    opacity: 0.7
+                }).addTo(map);
+                map.fitBounds(polyline.getBounds());
+            }
+            map.setView([latitude, longitude], 7);
+        }
+
+        function clearMap() {
+            map.eachLayer(function (layer) {
+                if (layer !== osmTileLayer && layer !== defaultTileLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+            pins = [];
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+        }
+
+        function addLoco(latitude, longitude, id, locomotive) {
+            var loco = L.circleMarker([latitude, longitude], {
+                color: 'red',
+                fillColor: 'red',
+                fillOpacity: 0.6,
+                radius: 5
+            }).addTo(map);
+
+            var tooltipContent = '<strong>ID:</strong> ' + id + '<br><strong>Locomotive:</strong> ' + locomotive;
+            loco.bindTooltip(tooltipContent, {
+                permanent: true,
+                direction: 'top'
+            }).openTooltip();
+            map.setView([latitude, longitude], 7);
+        }
+        function focusPin(latitude, longitude) {
+            map.setView([latitude, longitude], 13);
+        }
+
+        map.zoomControl.remove();
+        map.attributionControl.remove();
+    </script>
+</body>
+</html>

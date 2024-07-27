@@ -16,11 +16,5 @@ namespace Saobracaj.Dokumenta
         {
             InitializeComponent();
         }
-
-        private void WebMapa_Load(object sender, EventArgs e)
-        {
-            Mapa.Navigate("http://87.106.181.103/sr/track");
-            Mapa.ScriptErrorsSuppressed = true;
-        }
     }
 }
