@@ -175,8 +175,9 @@ namespace Saobracaj.Dokumenta
      "  ,[Bol100Iznos]      ,[Praznik110Iznos] " +
      "  ,[Praznik100Iznos],( PrekovremenoSati * 0.26 * CenaRada) as PrekovremeniIznos     ,[RedovanRadIznos] " +
      "  ,[RadPoUcinkuIznos]      ,[GodinaStaza] " +
-     "  ,[MinuliRadIznos], Prevoz  FROM [ObracunZaposleniFiksni]" +
-     "inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID Where Zarada.Fiksna = 1";
+     "  ,[MinuliRadIznos], Prevoz, Bonusi.Iznos as Bonus FROM [ObracunZaposleniFiksni] " +
+     " inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID" +
+     " left join Bonusi on Bonusi.DeSifra = ObracunZaposleniFiksni.ID Where Zarada.Fiksna = 1";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -206,8 +207,10 @@ namespace Saobracaj.Dokumenta
      "  ,[Bol100Iznos]      ,[Praznik110Iznos] " +
      "  ,[Praznik100Iznos],( PrekovremenoSati * 0.26 * CenaRada) as PrekovremeniIznos     ,[RedovanRadIznos] " +
      "  ,[RadPoUcinkuIznos]      ,[GodinaStaza] " +
-     "  ,[MinuliRadIznos], Prevoz  FROM [ObracunZaposleniFiksni]" +
-     "inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID Where Zarada.Fiksna = 0";
+     "  ,[MinuliRadIznos], Prevoz , Bonusi.Iznos as Bonus FROM [ObracunZaposleniFiksni]" +
+     " inner join Zarada on Zarada.Zaposleni =  ObracunZaposleniFiksni.ID " +
+    "  left join Bonusi on Bonusi.DeSifra = ObracunZaposleniFiksni.ID " +
+     " Where Zarada.Fiksna = 0";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);

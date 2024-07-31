@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
 {
     class InsertOsnovnaZarada
     {
-        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres,  double TopliObrok, double ProsecnaCena, double ProsecnaCena100, int StazRanije)
+        public void InsZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres,  double TopliObrok, double ProsecnaCena, double ProsecnaCena100, int StazRanije, int Bonus)
         {
            
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -142,6 +142,14 @@ namespace Saobracaj.Dokumenta
             parameter17.Value = StazRanije;
             myCommand.Parameters.Add(parameter17);
 
+
+            SqlParameter parameter18 = new SqlParameter();
+            parameter18.ParameterName = "@Bonus";
+            parameter18.SqlDbType = SqlDbType.Int;
+            parameter18.Direction = ParameterDirection.Input;
+            parameter18.Value = Bonus;
+            myCommand.Parameters.Add(parameter18);
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -179,7 +187,7 @@ namespace Saobracaj.Dokumenta
 
         }
 
-        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres, double TopliObrok,  double ProsecnaCena, double ProsecnaCena100,int StazRanije)
+        public void UpdZar(int Zaposleni, double Ciljna, double Minimalna, int Smena, int Parametar1, int Parametar2, double PrviDeo, double DrugiDeo, int Fiksna, int Benificirani, string TipRadnika, double Prevoz, double Regres, double TopliObrok,  double ProsecnaCena, double ProsecnaCena100,int StazRanije, int Bonus)
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -308,6 +316,14 @@ namespace Saobracaj.Dokumenta
             myCommand.Parameters.Add(parameter17);
 
 
+            SqlParameter parameter18 = new SqlParameter();
+            parameter18.ParameterName = "@Bonus";
+            parameter18.SqlDbType = SqlDbType.Int;
+            parameter18.Direction = ParameterDirection.Input;
+            parameter18.Value = Bonus;
+            myCommand.Parameters.Add(parameter18);
+
+
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
             myCommand.Transaction = myTransaction;
@@ -394,6 +410,114 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
+
+        public void PrebaciUBonuse ()
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "PrebaciUBonuse";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Promena izvrsena");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Zarade uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
+        public void IzracunajIznosBonusa(int Zap, double Koef, double Osnovica)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "IzracunajIznosBonusa";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@Zap";
+            parameter1.SqlDbType = SqlDbType.Int;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = Zap;
+            myCommand.Parameters.Add(parameter1);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@Koef";
+            parameter2.SqlDbType = SqlDbType.Decimal;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = Koef;
+            myCommand.Parameters.Add(parameter2);
+
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@Osnovica";
+            parameter3.SqlDbType = SqlDbType.Decimal;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = Osnovica;
+            myCommand.Parameters.Add(parameter3);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Promena izvrsena");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Zarade uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+
 
         public void PrebaciIzPlata()
         {

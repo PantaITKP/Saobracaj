@@ -73,6 +73,7 @@
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.txtPrazniciFond = new System.Windows.Forms.NumericUpDown();
             this.label12 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtKurs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtZarada)).BeginInit();
@@ -91,11 +92,10 @@
             // 
             this.dtpVremeDo.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpVremeDo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeDo.Location = new System.Drawing.Point(339, 30);
-            this.dtpVremeDo.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeDo.Location = new System.Drawing.Point(254, 24);
             this.dtpVremeDo.Name = "dtpVremeDo";
             this.dtpVremeDo.ShowUpDown = true;
-            this.dtpVremeDo.Size = new System.Drawing.Size(152, 22);
+            this.dtpVremeDo.Size = new System.Drawing.Size(115, 20);
             this.dtpVremeDo.TabIndex = 273;
             this.dtpVremeDo.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
             this.dtpVremeDo.ValueChanged += new System.EventHandler(this.dtpVremeDo_ValueChanged);
@@ -103,10 +103,9 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(257, 31);
-            this.label15.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label15.Location = new System.Drawing.Point(193, 25);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(73, 17);
+            this.label15.Size = new System.Drawing.Size(55, 13);
             this.label15.TabIndex = 275;
             this.label15.Text = "Period do:";
             // 
@@ -114,30 +113,27 @@
             // 
             this.dtpVremeOd.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpVremeOd.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeOd.Location = new System.Drawing.Point(105, 31);
-            this.dtpVremeOd.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeOd.Location = new System.Drawing.Point(79, 25);
             this.dtpVremeOd.Name = "dtpVremeOd";
             this.dtpVremeOd.ShowUpDown = true;
-            this.dtpVremeOd.Size = new System.Drawing.Size(143, 22);
+            this.dtpVremeOd.Size = new System.Drawing.Size(108, 20);
             this.dtpVremeOd.TabIndex = 272;
             this.dtpVremeOd.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
             // 
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(19, 29);
-            this.label21.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label21.Location = new System.Drawing.Point(14, 24);
             this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(73, 17);
+            this.label21.Size = new System.Drawing.Size(55, 13);
             this.label21.TabIndex = 274;
             this.label21.Text = "Period od:";
             // 
             // btnIzracunaj
             // 
-            this.btnIzracunaj.Location = new System.Drawing.Point(513, 26);
-            this.btnIzracunaj.Margin = new System.Windows.Forms.Padding(4);
+            this.btnIzracunaj.Location = new System.Drawing.Point(385, 21);
             this.btnIzracunaj.Name = "btnIzracunaj";
-            this.btnIzracunaj.Size = new System.Drawing.Size(191, 30);
+            this.btnIzracunaj.Size = new System.Drawing.Size(143, 24);
             this.btnIzracunaj.TabIndex = 276;
             this.btnIzracunaj.Text = "Izračunaj 1";
             this.btnIzracunaj.UseVisualStyleBackColor = true;
@@ -150,94 +146,86 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(7, 7);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
+            this.dataGridView1.Location = new System.Drawing.Point(5, 6);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(1479, 392);
+            this.dataGridView1.Size = new System.Drawing.Size(1109, 318);
             this.dataGridView1.TabIndex = 277;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(20, 104);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(15, 84);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(41, 17);
+            this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 279;
             this.label1.Text = "Kurs:";
             // 
             // txtKurs
             // 
             this.txtKurs.DecimalPlaces = 2;
-            this.txtKurs.Location = new System.Drawing.Point(106, 104);
-            this.txtKurs.Margin = new System.Windows.Forms.Padding(4);
+            this.txtKurs.Location = new System.Drawing.Point(80, 84);
             this.txtKurs.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtKurs.Name = "txtKurs";
-            this.txtKurs.Size = new System.Drawing.Size(92, 22);
+            this.txtKurs.Size = new System.Drawing.Size(69, 20);
             this.txtKurs.TabIndex = 280;
             this.txtKurs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // txtZarada
             // 
             this.txtZarada.DecimalPlaces = 2;
-            this.txtZarada.Location = new System.Drawing.Point(370, 104);
-            this.txtZarada.Margin = new System.Windows.Forms.Padding(4);
+            this.txtZarada.Location = new System.Drawing.Point(278, 84);
             this.txtZarada.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtZarada.Name = "txtZarada";
-            this.txtZarada.Size = new System.Drawing.Size(108, 22);
+            this.txtZarada.Size = new System.Drawing.Size(81, 20);
             this.txtZarada.TabIndex = 283;
             this.txtZarada.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(242, 103);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(182, 84);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(120, 17);
+            this.label2.Size = new System.Drawing.Size(91, 13);
             this.label2.TabIndex = 282;
             this.label2.Text = "Nova Zarada eur:";
             // 
             // txtSmanjenje
             // 
             this.txtSmanjenje.DecimalPlaces = 2;
-            this.txtSmanjenje.Location = new System.Drawing.Point(101, 144);
-            this.txtSmanjenje.Margin = new System.Windows.Forms.Padding(4);
+            this.txtSmanjenje.Location = new System.Drawing.Point(76, 117);
             this.txtSmanjenje.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtSmanjenje.Name = "txtSmanjenje";
-            this.txtSmanjenje.Size = new System.Drawing.Size(108, 22);
+            this.txtSmanjenje.Size = new System.Drawing.Size(81, 20);
             this.txtSmanjenje.TabIndex = 285;
             this.txtSmanjenje.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(20, 143);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label3.Location = new System.Drawing.Point(15, 116);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(52, 17);
+            this.label3.Size = new System.Drawing.Size(40, 13);
             this.label3.TabIndex = 284;
             this.label3.Text = "Kazne:";
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(486, 101);
-            this.button2.Margin = new System.Windows.Forms.Padding(4);
+            this.button2.Location = new System.Drawing.Point(364, 82);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(33, 28);
+            this.button2.Size = new System.Drawing.Size(25, 23);
             this.button2.TabIndex = 286;
             this.button2.Text = "?";
             this.button2.UseVisualStyleBackColor = true;
@@ -245,10 +233,9 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(217, 146);
-            this.button3.Margin = new System.Windows.Forms.Padding(4);
+            this.button3.Location = new System.Drawing.Point(163, 119);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(33, 23);
+            this.button3.Size = new System.Drawing.Size(25, 19);
             this.button3.TabIndex = 287;
             this.button3.Text = "? - 3";
             this.button3.UseVisualStyleBackColor = true;
@@ -257,34 +244,31 @@
             // txtMinimalac
             // 
             this.txtMinimalac.DecimalPlaces = 2;
-            this.txtMinimalac.Location = new System.Drawing.Point(556, 151);
-            this.txtMinimalac.Margin = new System.Windows.Forms.Padding(4);
+            this.txtMinimalac.Location = new System.Drawing.Point(417, 123);
             this.txtMinimalac.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtMinimalac.Name = "txtMinimalac";
-            this.txtMinimalac.Size = new System.Drawing.Size(92, 22);
+            this.txtMinimalac.Size = new System.Drawing.Size(69, 20);
             this.txtMinimalac.TabIndex = 289;
             this.txtMinimalac.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(474, 151);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(356, 123);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(74, 17);
+            this.label4.Size = new System.Drawing.Size(57, 13);
             this.label4.TabIndex = 288;
             this.label4.Text = "Minimalac:";
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(712, 112);
-            this.button4.Margin = new System.Windows.Forms.Padding(4);
+            this.button4.Location = new System.Drawing.Point(534, 91);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(179, 30);
+            this.button4.Size = new System.Drawing.Size(134, 24);
             this.button4.TabIndex = 290;
             this.button4.Text = "Minimalac 2";
             this.button4.UseVisualStyleBackColor = true;
@@ -292,10 +276,9 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(903, 20);
-            this.button5.Margin = new System.Windows.Forms.Padding(4);
+            this.button5.Location = new System.Drawing.Point(677, 16);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(259, 34);
+            this.button5.Size = new System.Drawing.Size(194, 28);
             this.button5.TabIndex = 291;
             this.button5.Text = "PN 1";
             this.button5.UseVisualStyleBackColor = true;
@@ -303,10 +286,9 @@
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(903, 62);
-            this.button7.Margin = new System.Windows.Forms.Padding(4);
+            this.button7.Location = new System.Drawing.Point(677, 50);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(259, 34);
+            this.button7.Size = new System.Drawing.Size(194, 28);
             this.button7.TabIndex = 293;
             this.button7.Text = "PN - 2";
             this.button7.UseVisualStyleBackColor = true;
@@ -314,10 +296,9 @@
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(903, 103);
-            this.button8.Margin = new System.Windows.Forms.Padding(4);
+            this.button8.Location = new System.Drawing.Point(677, 84);
             this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(259, 37);
+            this.button8.Size = new System.Drawing.Size(194, 30);
             this.button8.TabIndex = 294;
             this.button8.Text = "Brisanje viška PN - 3";
             this.button8.UseVisualStyleBackColor = true;
@@ -327,30 +308,27 @@
             // 
             this.dtpZakljucavanjeSmene.CustomFormat = "dd.MM.yyyy HH:mm";
             this.dtpZakljucavanjeSmene.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpZakljucavanjeSmene.Location = new System.Drawing.Point(1212, 31);
-            this.dtpZakljucavanjeSmene.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpZakljucavanjeSmene.Location = new System.Drawing.Point(909, 25);
             this.dtpZakljucavanjeSmene.Name = "dtpZakljucavanjeSmene";
             this.dtpZakljucavanjeSmene.ShowUpDown = true;
-            this.dtpZakljucavanjeSmene.Size = new System.Drawing.Size(152, 22);
+            this.dtpZakljucavanjeSmene.Size = new System.Drawing.Size(115, 20);
             this.dtpZakljucavanjeSmene.TabIndex = 295;
             this.dtpZakljucavanjeSmene.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1208, 11);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(906, 9);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(153, 17);
+            this.label5.Size = new System.Drawing.Size(116, 13);
             this.label5.TabIndex = 296;
             this.label5.Text = "Vreme početka smene:";
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1212, 62);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Location = new System.Drawing.Point(909, 50);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(259, 37);
+            this.button1.Size = new System.Drawing.Size(194, 30);
             this.button1.TabIndex = 297;
             this.button1.Text = "Zaključavanje smena";
             this.button1.UseVisualStyleBackColor = true;
@@ -358,10 +336,9 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(1212, 103);
-            this.button6.Margin = new System.Windows.Forms.Padding(4);
+            this.button6.Location = new System.Drawing.Point(909, 84);
             this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(259, 37);
+            this.button6.Size = new System.Drawing.Size(194, 30);
             this.button6.TabIndex = 298;
             this.button6.Text = "Arhiviranje smena u izradi";
             this.button6.UseVisualStyleBackColor = true;
@@ -370,29 +347,26 @@
             // txtPassword
             // 
             this.txtPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtPassword.Location = new System.Drawing.Point(65, 226);
-            this.txtPassword.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPassword.Location = new System.Drawing.Point(49, 184);
             this.txtPassword.Name = "txtPassword";
-            this.txtPassword.Size = new System.Drawing.Size(132, 22);
+            this.txtPassword.Size = new System.Drawing.Size(100, 20);
             this.txtPassword.TabIndex = 301;
             this.txtPassword.UseSystemPasswordChar = true;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(20, 226);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Location = new System.Drawing.Point(15, 184);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(37, 17);
+            this.label6.Size = new System.Drawing.Size(28, 13);
             this.label6.TabIndex = 299;
             this.label6.Text = "Šifra";
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(205, 226);
-            this.button9.Margin = new System.Windows.Forms.Padding(4);
+            this.button9.Location = new System.Drawing.Point(154, 184);
             this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(175, 28);
+            this.button9.Size = new System.Drawing.Size(131, 23);
             this.button9.TabIndex = 302;
             this.button9.Text = "Refresh";
             this.button9.UseVisualStyleBackColor = true;
@@ -400,10 +374,9 @@
             // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(712, 26);
-            this.button10.Margin = new System.Windows.Forms.Padding(4);
+            this.button10.Location = new System.Drawing.Point(534, 21);
             this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(169, 30);
+            this.button10.Size = new System.Drawing.Size(127, 24);
             this.button10.TabIndex = 303;
             this.button10.Text = "Uključi prevoz";
             this.button10.UseVisualStyleBackColor = true;
@@ -412,10 +385,9 @@
             // button11
             // 
             this.button11.ForeColor = System.Drawing.Color.Red;
-            this.button11.Location = new System.Drawing.Point(388, 226);
-            this.button11.Margin = new System.Windows.Forms.Padding(4);
+            this.button11.Location = new System.Drawing.Point(291, 184);
             this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(236, 28);
+            this.button11.Size = new System.Drawing.Size(177, 23);
             this.button11.TabIndex = 304;
             this.button11.Text = "Forma Obracuna za fiksne";
             this.button11.UseVisualStyleBackColor = true;
@@ -424,15 +396,14 @@
             // txtSatiMesec
             // 
             this.txtSatiMesec.DecimalPlaces = 2;
-            this.txtSatiMesec.Location = new System.Drawing.Point(363, 141);
-            this.txtSatiMesec.Margin = new System.Windows.Forms.Padding(4);
+            this.txtSatiMesec.Location = new System.Drawing.Point(272, 115);
             this.txtSatiMesec.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtSatiMesec.Name = "txtSatiMesec";
-            this.txtSatiMesec.Size = new System.Drawing.Size(92, 22);
+            this.txtSatiMesec.Size = new System.Drawing.Size(69, 20);
             this.txtSatiMesec.TabIndex = 310;
             this.txtSatiMesec.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
@@ -440,10 +411,9 @@
             // 
             this.label9.AutoSize = true;
             this.label9.ForeColor = System.Drawing.Color.Red;
-            this.label9.Location = new System.Drawing.Point(274, 143);
-            this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label9.Location = new System.Drawing.Point(206, 116);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(81, 17);
+            this.label9.Size = new System.Drawing.Size(62, 13);
             this.label9.TabIndex = 309;
             this.label9.Text = "Sati mesec:";
             // 
@@ -451,11 +421,10 @@
             // 
             this.dtpVremeOd2.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeOd2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeOd2.Location = new System.Drawing.Point(95, 77);
-            this.dtpVremeOd2.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeOd2.Location = new System.Drawing.Point(71, 63);
             this.dtpVremeOd2.Name = "dtpVremeOd2";
             this.dtpVremeOd2.ShowUpDown = true;
-            this.dtpVremeOd2.Size = new System.Drawing.Size(145, 22);
+            this.dtpVremeOd2.Size = new System.Drawing.Size(110, 20);
             this.dtpVremeOd2.TabIndex = 314;
             this.dtpVremeOd2.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
             // 
@@ -463,11 +432,10 @@
             // 
             this.dtpVremeDo2.CustomFormat = "yyyy-MM-dd HH:mm";
             this.dtpVremeDo2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpVremeDo2.Location = new System.Drawing.Point(329, 77);
-            this.dtpVremeDo2.Margin = new System.Windows.Forms.Padding(4);
+            this.dtpVremeDo2.Location = new System.Drawing.Point(247, 63);
             this.dtpVremeDo2.Name = "dtpVremeDo2";
             this.dtpVremeDo2.ShowUpDown = true;
-            this.dtpVremeDo2.Size = new System.Drawing.Size(152, 22);
+            this.dtpVremeDo2.Size = new System.Drawing.Size(115, 20);
             this.dtpVremeDo2.TabIndex = 313;
             this.dtpVremeDo2.Value = new System.DateTime(1900, 1, 1, 0, 0, 0, 0);
             // 
@@ -475,10 +443,9 @@
             // 
             this.label7.AutoSize = true;
             this.label7.ForeColor = System.Drawing.Color.Red;
-            this.label7.Location = new System.Drawing.Point(247, 79);
-            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Location = new System.Drawing.Point(185, 64);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(73, 17);
+            this.label7.Size = new System.Drawing.Size(55, 13);
             this.label7.TabIndex = 312;
             this.label7.Text = "Period do:";
             // 
@@ -486,10 +453,9 @@
             // 
             this.label8.AutoSize = true;
             this.label8.ForeColor = System.Drawing.Color.Red;
-            this.label8.Location = new System.Drawing.Point(14, 79);
-            this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label8.Location = new System.Drawing.Point(10, 64);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(73, 17);
+            this.label8.Size = new System.Drawing.Size(55, 13);
             this.label8.TabIndex = 311;
             this.label8.Text = "Period od:";
             // 
@@ -497,19 +463,17 @@
             // 
             this.label10.AutoSize = true;
             this.label10.ForeColor = System.Drawing.Color.Red;
-            this.label10.Location = new System.Drawing.Point(14, 56);
-            this.label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label10.Location = new System.Drawing.Point(10, 46);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(325, 17);
+            this.label10.Size = new System.Drawing.Size(243, 13);
             this.label10.TabIndex = 339;
             this.label10.Text = "Prekucati isti datum dok se ne nadje bolje resenje:";
             // 
             // button12
             // 
-            this.button12.Location = new System.Drawing.Point(645, 197);
-            this.button12.Margin = new System.Windows.Forms.Padding(4);
+            this.button12.Location = new System.Drawing.Point(484, 160);
             this.button12.Name = "button12";
-            this.button12.Size = new System.Drawing.Size(236, 57);
+            this.button12.Size = new System.Drawing.Size(177, 46);
             this.button12.TabIndex = 340;
             this.button12.Text = "Prikazi GAP - nema ih u obracunu/Nisu Pasivni";
             this.button12.UseVisualStyleBackColor = true;
@@ -518,25 +482,23 @@
             // txtPoreskoOslobodjenje
             // 
             this.txtPoreskoOslobodjenje.DecimalPlaces = 2;
-            this.txtPoreskoOslobodjenje.Location = new System.Drawing.Point(824, 151);
-            this.txtPoreskoOslobodjenje.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPoreskoOslobodjenje.Location = new System.Drawing.Point(618, 123);
             this.txtPoreskoOslobodjenje.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtPoreskoOslobodjenje.Name = "txtPoreskoOslobodjenje";
-            this.txtPoreskoOslobodjenje.Size = new System.Drawing.Size(92, 22);
+            this.txtPoreskoOslobodjenje.Size = new System.Drawing.Size(69, 20);
             this.txtPoreskoOslobodjenje.TabIndex = 342;
             this.txtPoreskoOslobodjenje.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(668, 151);
-            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label11.Location = new System.Drawing.Point(501, 123);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(148, 17);
+            this.label11.Size = new System.Drawing.Size(111, 13);
             this.label11.TabIndex = 341;
             this.label11.Text = "Poresko oslobodjenje:";
             // 
@@ -547,19 +509,21 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Location = new System.Drawing.Point(17, 270);
+            this.tabControl1.Location = new System.Drawing.Point(13, 219);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1501, 435);
+            this.tabControl1.Size = new System.Drawing.Size(1126, 353);
             this.tabControl1.TabIndex = 343;
             // 
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.dataGridView1);
-            this.tabPage1.Location = new System.Drawing.Point(4, 25);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1493, 406);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage1.Size = new System.Drawing.Size(1118, 327);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Stari obračun";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -567,10 +531,11 @@
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.dataGridView2);
-            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1493, 406);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage2.Size = new System.Drawing.Size(1118, 327);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Nataša";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -582,42 +547,51 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(7, 7);
-            this.dataGridView2.Margin = new System.Windows.Forms.Padding(4);
+            this.dataGridView2.Location = new System.Drawing.Point(5, 6);
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.RowHeadersWidth = 51;
-            this.dataGridView2.Size = new System.Drawing.Size(1479, 392);
+            this.dataGridView2.Size = new System.Drawing.Size(1109, 318);
             this.dataGridView2.TabIndex = 278;
             // 
             // txtPrazniciFond
             // 
-            this.txtPrazniciFond.Location = new System.Drawing.Point(1049, 205);
-            this.txtPrazniciFond.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPrazniciFond.Location = new System.Drawing.Point(787, 167);
             this.txtPrazniciFond.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtPrazniciFond.Name = "txtPrazniciFond";
-            this.txtPrazniciFond.Size = new System.Drawing.Size(92, 22);
+            this.txtPrazniciFond.Size = new System.Drawing.Size(69, 20);
             this.txtPrazniciFond.TabIndex = 376;
             this.txtPrazniciFond.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(947, 207);
-            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label12.Location = new System.Drawing.Point(710, 168);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(94, 17);
+            this.label12.Size = new System.Drawing.Size(71, 13);
             this.label12.TabIndex = 375;
             this.label12.Text = "Praznici fond:";
             // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.BackColor = System.Drawing.Color.Red;
+            this.label13.ForeColor = System.Drawing.Color.White;
+            this.label13.Location = new System.Drawing.Point(779, 204);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(324, 13);
+            this.label13.TabIndex = 377;
+            this.label13.Text = "Bonuse dodaje na UkupnoRSD na sp - SelectObracunMMVPrevoz";
+            // 
             // frmIzracunZarada
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1524, 706);
+            this.ClientSize = new System.Drawing.Size(1143, 574);
+            this.Controls.Add(this.label13);
             this.Controls.Add(this.txtPrazniciFond);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.tabControl1);
@@ -659,7 +633,6 @@
             this.Controls.Add(this.label15);
             this.Controls.Add(this.dtpVremeOd);
             this.Controls.Add(this.label21);
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmIzracunZarada";
             this.Text = "Izraćun Zarada";
             this.Load += new System.EventHandler(this.frmIzracunZarada_Load);
@@ -727,5 +700,6 @@
         private System.Windows.Forms.DataGridView dataGridView2;
         private System.Windows.Forms.NumericUpDown txtPrazniciFond;
         private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label13;
     }
 }

@@ -526,6 +526,12 @@
     <Compile Include="Administracija\frmNotifikacije.Designer.cs">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </Compile>
+    <Compile Include="Dokumenta\frmBonusi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dokumenta\frmBonusi.Designer.cs">
+      <DependentUpon>frmBonusi.cs</DependentUpon>
+    </Compile>
     <Compile Include="Dokumenta\frmDokumentaRadnika.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1927,6 +1933,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Administracija\frmNotifikacije.resx">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dokumenta\frmBonusi.resx">
+      <DependentUpon>frmBonusi.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmDokumentaRadnika.resx">
       <DependentUpon>frmDokumentaRadnika.cs</DependentUpon>

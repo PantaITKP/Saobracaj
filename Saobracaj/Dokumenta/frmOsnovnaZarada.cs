@@ -208,7 +208,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika,Zarada.Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije,  CASE WHEN Zarada.Bonus > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Bonus from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 1 " +
             " order by Zarada.Zaposleni";
@@ -310,7 +310,7 @@ namespace Saobracaj.Dokumenta
                 return;
 
             }
-            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije from Zarada " +
+            var select = " select Zarada.Zaposleni, (Rtrim(Delavci.DePriimek) + ' ' + RTrim(DeIme)) as Zaposleni,Zarada.Osnovna,Zarada.Minimalna ,  Smena, Parametar1, Parametar2, Zarada.PrviDeo, Zarada.DrugiDeo, Zarada.Fiksna,  Zarada.Benificirani,  Zarada.TipRadnika, Prevoz,Zarada.Regres, Zarada.TopliObrok, Zarada.MesecniFondSatiRadnika, Zarada.ProsecnaCena, Zarada.ProsecnaCena100, StazRanije,  CASE WHEN Bonus > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Bonus from Zarada " +
             " inner join Delavci on Zarada.Zaposleni = DElavci.DeSifra " +
              " where Fiksna = 0 " +
             " order by Zarada.Zaposleni";
@@ -435,7 +435,18 @@ namespace Saobracaj.Dokumenta
            int PomParametar2 = 0;
            int Fiksna = 0;
            int PomBenigiciraniStaz = 0;
+            int PomBonus = 0;
             string PomTipRadnika = "";
+
+            if (chkBonus.Checked == true)
+            {
+                PomBonus = 1;
+            }
+            else
+            {
+                PomBonus = 0;
+            }
+
             if (chkSmenski.Checked == true)
             {
             PomSmena = 1;
@@ -486,14 +497,14 @@ namespace Saobracaj.Dokumenta
             if (status == true)
             {
                 InsertOsnovnaZarada ins = new InsertOsnovnaZarada();
-                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value),  Convert.ToDouble(txtProsecnaCena.Value),  Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value));
+                ins.InsZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value),Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna, PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value),  Convert.ToDouble(txtProsecnaCena.Value),  Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value), Convert.ToInt32(PomBonus));
                 RefreshDataGrid();
                 status = false;
             }
             else
             {
                 InsertOsnovnaZarada upd = new InsertOsnovnaZarada();
-                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value), Convert.ToDouble(txtProsecnaCena.Value), Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value));
+                upd.UpdZar(Convert.ToInt32(cboZaposleni.SelectedValue), Convert.ToDouble(txtCiljna.Value), Convert.ToDouble(txtMinimalna.Value), PomSmena, PomParametar1, PomParametar2, Convert.ToDouble(txtPrviDeo.Value), Convert.ToDouble(txtDrugiDeo.Text), Fiksna,  PomBenigiciraniStaz, cboTipRadnika.Text, Convert.ToDouble(txtPrevoz.Value), Convert.ToDouble(txtRegres.Value), Convert.ToDouble(txtTopliObrok.Value), Convert.ToDouble(txtProsecnaCena.Value), Convert.ToDouble(txtProsecnaCena100.Value), Convert.ToInt32(nmStazRanije.Value), Convert.ToInt32(PomBonus));
                 status = false;
                /// txtSifra.Enabled = false;
                 RefreshDataGrid();
@@ -539,6 +550,17 @@ namespace Saobracaj.Dokumenta
                         txtProsecnaCena100.Value = Convert.ToDecimal(row.Cells[17].Value.ToString());
                         nmRadnikFS.Value = Convert.ToDecimal(row.Cells[15].Value.ToString());
                         nmStazRanije.Value = Convert.ToDecimal(row.Cells[18].Value.ToString());
+                        if (Convert.ToBoolean(row.Cells[19].Value) == true)
+                        {
+                            chkBonus.Checked = true;
+
+                        }
+                        else
+                        {
+                            chkBonus.Checked = false;
+                        }
+
+
                         if (Convert.ToInt32(row.Cells[9].Value.ToString()) == 1)
                         {
                             chkFiksna.Checked = true;
@@ -715,6 +737,18 @@ namespace Saobracaj.Dokumenta
             ins.UpdateProsekePlata(Convert.ToInt32(nmUkupno12.Value), Convert.ToInt32(nmProsla.Value));
             RefreshDataGrid();
             status = false;
+        }
+
+        private void toolStripButton6_Click(object sender, EventArgs e)
+        {
+            if (txtPassword.Text != "iv4321")
+            {
+                MessageBox.Show("Unesite sifru");
+                return;
+
+            }
+            frmBonusi bonusi = new frmBonusi();
+            bonusi.Show();
         }
     }
 }
