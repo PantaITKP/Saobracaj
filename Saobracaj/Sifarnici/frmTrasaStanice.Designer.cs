@@ -50,6 +50,7 @@
             this.cboPruga = new System.Windows.Forms.ComboBox();
             this.btnUbaci = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.button1 = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -98,6 +99,7 @@
             this.tsDelete.Name = "tsDelete";
             this.tsDelete.Size = new System.Drawing.Size(23, 22);
             this.tsDelete.Text = "toolStripButton1";
+            this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
             // 
             // toolStripSeparator1
             // 
@@ -143,7 +145,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(202, 39);
+            this.label6.Location = new System.Drawing.Point(193, 39);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(98, 13);
             this.label6.TabIndex = 65;
@@ -160,7 +162,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(485, 68);
+            this.label3.Location = new System.Drawing.Point(694, 60);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(42, 13);
             this.label3.TabIndex = 63;
@@ -170,15 +172,15 @@
             // 
             this.cboKrajnja.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.cboKrajnja.FormattingEnabled = true;
-            this.cboKrajnja.Location = new System.Drawing.Point(533, 65);
+            this.cboKrajnja.Location = new System.Drawing.Point(742, 60);
             this.cboKrajnja.Name = "cboKrajnja";
-            this.cboKrajnja.Size = new System.Drawing.Size(121, 21);
+            this.cboKrajnja.Size = new System.Drawing.Size(154, 21);
             this.cboKrajnja.TabIndex = 62;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(278, 65);
+            this.label2.Location = new System.Drawing.Point(12, 68);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(50, 13);
             this.label2.TabIndex = 61;
@@ -188,9 +190,9 @@
             // 
             this.cmbPocetna.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.cmbPocetna.FormattingEnabled = true;
-            this.cmbPocetna.Location = new System.Drawing.Point(348, 65);
+            this.cmbPocetna.Location = new System.Drawing.Point(92, 65);
             this.cmbPocetna.Name = "cmbPocetna";
-            this.cmbPocetna.Size = new System.Drawing.Size(121, 21);
+            this.cmbPocetna.Size = new System.Drawing.Size(335, 21);
             this.cmbPocetna.TabIndex = 60;
             // 
             // txtSifra
@@ -213,7 +215,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(17, 65);
+            this.label4.Location = new System.Drawing.Point(644, 28);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(38, 13);
             this.label4.TabIndex = 68;
@@ -223,7 +225,7 @@
             // 
             this.cboPruga.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.cboPruga.FormattingEnabled = true;
-            this.cboPruga.Location = new System.Drawing.Point(61, 65);
+            this.cboPruga.Location = new System.Drawing.Point(698, 28);
             this.cboPruga.Name = "cboPruga";
             this.cboPruga.Size = new System.Drawing.Size(198, 21);
             this.cboPruga.TabIndex = 67;
@@ -232,11 +234,11 @@
             // 
             // btnUbaci
             // 
-            this.btnUbaci.Location = new System.Drawing.Point(674, 63);
+            this.btnUbaci.Location = new System.Drawing.Point(447, 63);
             this.btnUbaci.Name = "btnUbaci";
-            this.btnUbaci.Size = new System.Drawing.Size(158, 23);
+            this.btnUbaci.Size = new System.Drawing.Size(116, 23);
             this.btnUbaci.TabIndex = 69;
-            this.btnUbaci.Text = "Ubaci stanice";
+            this.btnUbaci.Text = "Ubaci stanicu";
             this.btnUbaci.UseVisualStyleBackColor = true;
             this.btnUbaci.Click += new System.EventHandler(this.btnUbaci_Click);
             // 
@@ -251,11 +253,22 @@
             this.dataGridView1.Size = new System.Drawing.Size(884, 258);
             this.dataGridView1.TabIndex = 70;
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(566, 63);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(116, 23);
+            this.button1.TabIndex = 71;
+            this.button1.Text = "Izbaci";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // frmTrasaStanice
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(908, 372);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.btnUbaci);
             this.Controls.Add(this.label4);
@@ -304,5 +317,6 @@
         private System.Windows.Forms.ComboBox cboPruga;
         private System.Windows.Forms.Button btnUbaci;
         private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.Button button1;
     }
 }

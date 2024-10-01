@@ -86,7 +86,71 @@ namespace Saobracaj.Sifarnici
 
         }
 
-        
+        public void DelTStan(int IDTrasa, int RB)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "DeleteStaniceNaTrasi";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+          
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@IDTrase";
+            parameter2.SqlDbType = SqlDbType.Int;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = IDTrasa;
+            myCommand.Parameters.Add(parameter2);
+
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@RB";
+            parameter3.SqlDbType = SqlDbType.Int;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = RB;
+            myCommand.Parameters.Add(parameter3);
+
+
+           
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Neuspešno brisanje Stanica na trasi brojeva");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Unos NHM broja je uspešno završena", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+
+
+        }
+
+
 
     }
 }

@@ -241,7 +241,9 @@ namespace Saobracaj.Dokumenta
  " CenaSata, OsnovnaZarada1, OsnovnaZarada2, IznosPraznik, IznosPrekovremeno, IznosBolovanje65, IznosBolovanje100, ObracunZaposleni.Regres, ObracunZaposleni.TopliObrok, GoSati, GOIznos, RedovnoSati,RedovnoSatiIznos,  [BrutoCSata] "+
   "    ,[MesecniFondSati]       ,[PrekovremeneoSati]       ,[RedovanRadSati]       ,[UcinakSati] "+
    "   ,[RedovanRadIZ]      ,[GodOSati]       ,[GodIZNOS]      ,[BOL100Sati]      ,[BOL100IZNOS]      ,[BOL65Sati] "+
-    " ,[BOL65IZNOS] from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
+    " ,[BOL65IZNOS] , Bonusi.Iznos as Bonus  from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni " +
+    " left join Bonusi on Bonusi.DeSifra = ObracunZaposleni.ID " +
+    " where Zarada.Fiksna = 0  ";
 
             //PoreskaOlaksica,BrutoZarada,BrutoCenaSata,PrekovremeniCenaSata, PrekovremeniBrutoIznos
 
@@ -508,8 +510,9 @@ namespace Saobracaj.Dokumenta
             var select = "";
 
             select = " SELECT ObracunZaposleni.[ID] ,ObracunZaposleni.[Zaposleni], ObracunZaposleni.MesecnoSati, GoSati, Remont as Bol65, Smederevo as Bol100, Milsped as Praznik, NaknadaPraznik as FondPraznik, ABS(Ukupno1 * 118 / CenaSata) as Provera, BrojSati, Kragujevac as Prekovremeni, RadPoVremenu, RadPoUcinku, CenaSata, " +
-                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, Praznik100Iznos, Praznik110Iznos, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada, GodinaStaza, MinuliRadIznos" +
-                " from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni  where Zarada.Fiksna = 0  ";
+                " ProsecnoSat, GoIznos, ObracunZaposleni.Prevoz, BOL100IZNOS, BOL65IZNOS, Praznik100Iznos, Praznik110Iznos, (Kragujevac * cenasata * 0.26) as Prekovremeno,  (BrojSati * CenaSata) as Redovno, (RadPoUcinku * CenaSata) as PoUcinku, (RadPoVremenu * CenaSata) as PoVremenu, PocetnaZarada, GodinaStaza, MinuliRadIznos, Bonusi.Iznos as Bonus " +
+                " from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni " +
+                "   left join Bonusi on Bonusi.DeSifra = ObracunZaposleni.ID  where Zarada.Fiksna = 0  ";
 
             //PoreskaOlaksica,BrutoZarada,BrutoCenaSata,PrekovremeniCenaSata, PrekovremeniBrutoIznos
 

@@ -171,7 +171,8 @@ namespace Saobracaj.Dokumenta
 
         private void VratiLokomotive(int IDTrase, string IDRadnogNaloga)
          {
-             var select = " SELECT IDRadnogNaloga, IDTrase, SmSifra,  CASE WHEN Vucna > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Vucna , Komentar, StanicaOd, RTrim(s1.Opis) as Od," +
+             var select = " SELECT IDRadnogNaloga, IDTrase, SmSifra,  CASE WHEN Vucna > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Vucna , Komentar, " +
+                " StanicaOd, RTrim(s1.Opis) as Od," +
                 "  StanicaDo, RTrim(s2.Opis) as Do, Vreme " +
                 " FROM RadniNalogLokNaTrasi " +
                 " inner join stanice s1 on s1.ID = StanicaOd" +
