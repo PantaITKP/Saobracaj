@@ -50,7 +50,7 @@ namespace Saobracaj.Dokumenta
 
             cboTrase.SelectedValue = pomTrasa;
 
-            var select2 = " Select SmSifra, SmSifra as Opis from Mesta where Lokomotiva=1";
+            var select2 = " Select Rtrim(SmSifra) as SmSifra, RTrim(SmSifra) as Opis from Mesta where Lokomotiva=1";
             var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection2 = new SqlConnection(s_connection2);
             var c2 = new SqlConnection(s_connection2);
@@ -205,12 +205,12 @@ namespace Saobracaj.Dokumenta
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection con = new SqlConnection(s_connection);
             con.Open();
-            SqlCommand cmd = new SqlCommand("select IDRadnogNaloga, IDTrase, SMSifra, Komentar, Vucna, StanicaOd, StanicaDo, Vreme from RadniNalogLokNaTrasi where IDRadnogNaloga=" + txtSifraRN.Text + " and IDTrase = " + Convert.ToInt32(cboTrase.SelectedValue) + "and SmSifra = "  + lokomotiva, con);
+            SqlCommand cmd = new SqlCommand("select IDRadnogNaloga, IDTrase, Rtrim(SMSifra) as SmSifra, Komentar, Vucna, StanicaOd, StanicaDo, Vreme from RadniNalogLokNaTrasi where IDRadnogNaloga=" + txtSifraRN.Text + " and IDTrase = " + Convert.ToInt32(cboTrase.SelectedValue) + "and SmSifra = '"  + lokomotiva + "'", con);
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
             {
-               cboLokomotiva.SelectedValue = Convert.ToInt32(dr["SmSifra"].ToString());
+               cboLokomotiva.SelectedValue = Convert.ToString(dr["SmSifra"].ToString());
                txtKomentar.Text = dr["Komentar"].ToString();
                 txtVreme.Value = Convert.ToInt32(dr["Vreme"].ToString());
                 cboStanicaOd.SelectedValue = Convert.ToInt32(dr["StanicaOd"].ToString());
@@ -237,8 +237,8 @@ namespace Saobracaj.Dokumenta
                 {
                     if (row.Selected)
                     {
-                       cboLokomotiva.SelectedValue = row.Cells[2].Value.ToString();
-                       VratiPodatke(cboLokomotiva.Text);
+                       //cboLokomotiva.SelectedValue = row.Cells[2].Value.ToString().TrimEnd();
+                       VratiPodatke(row.Cells[2].Value.ToString().TrimEnd());
                     }
                 }
 
