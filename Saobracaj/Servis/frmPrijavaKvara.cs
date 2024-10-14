@@ -20,6 +20,7 @@ namespace Saobracaj.Servis
 {
     public partial class frmPrijavaKvara : Syncfusion.Windows.Forms.Office2010Form
     {
+        bool arhiva = false;
         bool status = false;
         public static string code = "frmPrijavaKvara";
         public bool Pravo;
@@ -223,28 +224,54 @@ namespace Saobracaj.Servis
 
         private void VratiPodatke()
         {
-            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
-            SqlConnection con = new SqlConnection(s_connection);
-
-            con.Open();
-
-            SqlCommand cmd = new SqlCommand("SELECT [ID],Rtrim([Lokomotiva]) as Lokomotiva,[Prijavio],[DatumPrijave],[Kvar],[StatusKvara],[Promenio],[DatumPromene],[Napomena]  FROM [Perftech_Beograd].[dbo].[EvidencijaKvarova] where ID = " + Convert.ToInt32(txtSifra.Text), con);
-            SqlDataReader dr = cmd.ExecuteReader();
-
-            while (dr.Read())
+            if (arhiva == false)
             {
-                cboLokomotiva.SelectedValue = dr["Lokomotiva"].ToString();
-                cboPrijavio.SelectedValue = Convert.ToInt32(dr["Prijavio"].ToString());
-                dtpDatumPrijave.Value = Convert.ToDateTime(dr["DatumPrijave"].ToString());
-                cboKvar.SelectedValue = Convert.ToInt32(dr["Kvar"].ToString());
-                cboStatusKvara.SelectedValue = Convert.ToInt32(dr["StatusKvara"].ToString());
-                cboPromenio.SelectedValue = Convert.ToInt32(dr["Promenio"].ToString());
-                dtpDatumPromene.Value = Convert.ToDateTime(dr["DatumPromene"].ToString());
-                txtNapomena.Text = dr["Napomena"].ToString();
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection con = new SqlConnection(s_connection);
+
+                con.Open();
+
+                SqlCommand cmd = new SqlCommand("SELECT [ID],Rtrim([Lokomotiva]) as Lokomotiva,[Prijavio],[DatumPrijave],[Kvar],[StatusKvara],[Promenio],[DatumPromene],[Napomena]  FROM [Perftech_Beograd].[dbo].[EvidencijaKvarova] where ID = " + Convert.ToInt32(txtSifra.Text), con);
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    cboLokomotiva.SelectedValue = dr["Lokomotiva"].ToString();
+                    cboPrijavio.SelectedValue = Convert.ToInt32(dr["Prijavio"].ToString());
+                    dtpDatumPrijave.Value = Convert.ToDateTime(dr["DatumPrijave"].ToString());
+                    cboKvar.SelectedValue = Convert.ToInt32(dr["Kvar"].ToString());
+                    cboStatusKvara.SelectedValue = Convert.ToInt32(dr["StatusKvara"].ToString());
+                    cboPromenio.SelectedValue = Convert.ToInt32(dr["Promenio"].ToString());
+                    dtpDatumPromene.Value = Convert.ToDateTime(dr["DatumPromene"].ToString());
+                    txtNapomena.Text = dr["Napomena"].ToString();
+                }
+
+                con.Close();
             }
+            else
+            {
+                var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+                SqlConnection con = new SqlConnection(s_connection);
 
-            con.Close();
+                con.Open();
 
+                SqlCommand cmd = new SqlCommand("SELECT [ID],Rtrim([Lokomotiva]) as Lokomotiva,[Prijavio],[DatumPrijave],[Kvar],[StatusKvara],[Promenio],[DatumPromene],[Napomena]  FROM [Perftech_Beograd].[dbo].[EvidencijaKvarovaArhiva] where ID = " + Convert.ToInt32(txtSifra.Text), con);
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    cboLokomotiva.SelectedValue = dr["Lokomotiva"].ToString();
+                    cboPrijavio.SelectedValue = Convert.ToInt32(dr["Prijavio"].ToString());
+                    dtpDatumPrijave.Value = Convert.ToDateTime(dr["DatumPrijave"].ToString());
+                    cboKvar.SelectedValue = Convert.ToInt32(dr["Kvar"].ToString());
+                    cboStatusKvara.SelectedValue = Convert.ToInt32(dr["StatusKvara"].ToString());
+                    cboPromenio.SelectedValue = Convert.ToInt32(dr["Promenio"].ToString());
+                    dtpDatumPromene.Value = Convert.ToDateTime(dr["DatumPromene"].ToString());
+                    txtNapomena.Text = dr["Napomena"].ToString();
+                }
+
+                con.Close();
+            }
 
         }
 
@@ -258,12 +285,21 @@ namespace Saobracaj.Servis
 
         private void RefreshDataGrid()
         {
-            var select = "  select EvidencijaKvarova.ID, Lokomotiva, Prijavio, DatumPrijave, (Rtrim(Delavci.DeIme) + ' ' + Rtrim(Delavci.DePriimek)) as Prijavio " +
-            " , Kvarovi.Naziv, StatusKvara, Promenio, DatumPromene, Napomena from EvidencijaKvarova " +
-            "  inner join Delavci on Delavci.DeSifra = EvidencijaKvarova.Prijavio " +
-            " inner join Kvarovi on Kvarovi.ID = EvidencijaKvarova.Kvar order by EvidencijaKvarova.ID desc";
-
-
+            string select = "";
+            if (arhiva == false)
+            {
+                 select = "  select EvidencijaKvarova.ID, Lokomotiva, Prijavio, DatumPrijave, (Rtrim(Delavci.DeIme) + ' ' + Rtrim(Delavci.DePriimek)) as Prijavio " +
+                " , Kvarovi.Naziv, StatusKvara, Promenio, DatumPromene, Napomena from EvidencijaKvarova " +
+                "  inner join Delavci on Delavci.DeSifra = EvidencijaKvarova.Prijavio " +
+                " inner join Kvarovi on Kvarovi.ID = EvidencijaKvarova.Kvar order by EvidencijaKvarova.ID desc";
+            }
+            else
+            {
+                select = "  select EvidencijaKvarovaArhiva.ID, Lokomotiva, Prijavio, DatumPrijave, (Rtrim(Delavci.DeIme) + ' ' + Rtrim(Delavci.DePriimek)) as Prijavio " +
+               " , Kvarovi.Naziv, StatusKvara, Promenio, DatumPromene, Napomena from EvidencijaKvarovaArhiva " +
+               "  inner join Delavci on Delavci.DeSifra = EvidencijaKvarovaArhiva.Prijavio " +
+               " inner join Kvarovi on Kvarovi.ID = EvidencijaKvarovaArhiva.Kvar order by EvidencijaKvarovaArhiva.ID desc";
+            }
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -405,6 +441,24 @@ namespace Saobracaj.Servis
             }
             catch { }
             RefreshDataGrid();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            InsertPrijavaKvara ins = new InsertPrijavaKvara();
+            ins.ArhivirajKvarove();
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            arhiva = false;
+            RefreshDataGrid();
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            arhiva = true;
         }
     }
 }
