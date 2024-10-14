@@ -56,6 +56,8 @@
             this.txtSaobraca = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
+            this.txtTrasa = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
@@ -218,7 +220,7 @@
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(22, 83);
-            this.button1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button1.Margin = new System.Windows.Forms.Padding(2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(133, 22);
             this.button1.TabIndex = 128;
@@ -229,7 +231,7 @@
             // txtNajava
             // 
             this.txtNajava.Location = new System.Drawing.Point(167, 83);
-            this.txtNajava.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtNajava.Margin = new System.Windows.Forms.Padding(2);
             this.txtNajava.Name = "txtNajava";
             this.txtNajava.Size = new System.Drawing.Size(69, 20);
             this.txtNajava.TabIndex = 129;
@@ -237,7 +239,7 @@
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(240, 79);
-            this.button2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button2.Margin = new System.Windows.Forms.Padding(2);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(106, 27);
             this.button2.TabIndex = 130;
@@ -248,7 +250,7 @@
             // button3
             // 
             this.button3.Location = new System.Drawing.Point(394, 111);
-            this.button3.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button3.Margin = new System.Windows.Forms.Padding(2);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(109, 26);
             this.button3.TabIndex = 131;
@@ -317,18 +319,18 @@
             // 
             // txtSaobraca
             // 
-            this.txtSaobraca.Location = new System.Drawing.Point(562, 31);
+            this.txtSaobraca.Location = new System.Drawing.Point(578, 31);
             this.txtSaobraca.Margin = new System.Windows.Forms.Padding(2);
             this.txtSaobraca.Multiline = true;
             this.txtSaobraca.Name = "txtSaobraca";
-            this.txtSaobraca.Size = new System.Drawing.Size(450, 112);
+            this.txtSaobraca.Size = new System.Drawing.Size(434, 112);
             this.txtSaobraca.TabIndex = 319;
             this.txtSaobraca.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(559, 16);
+            this.label3.Location = new System.Drawing.Point(575, 16);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(65, 13);
             this.label3.TabIndex = 320;
@@ -345,11 +347,30 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(452, 79);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(121, 26);
+            this.button5.TabIndex = 322;
+            this.button5.Text = "Pretraži po broju trase";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // txtTrasa
+            // 
+            this.txtTrasa.Location = new System.Drawing.Point(366, 83);
+            this.txtTrasa.Name = "txtTrasa";
+            this.txtTrasa.Size = new System.Drawing.Size(80, 20);
+            this.txtTrasa.TabIndex = 323;
+            // 
             // frmRadniNalogPregled
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1036, 372);
+            this.Controls.Add(this.txtTrasa);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.txtSaobraca);
@@ -415,5 +436,7 @@
         private System.Windows.Forms.TextBox txtSaobraca;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.TextBox txtTrasa;
     }
 }
