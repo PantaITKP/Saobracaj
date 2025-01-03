@@ -133,7 +133,7 @@ namespace Saobracaj.Mobile
             " from ZavrsnaDokumenta " +
             " inner join TipZavrsnogDokumentaID on ZavrsnaDokumenta.TipZavrsnogDokumentaID = TipZavrsnogDokumentaID.ID " +
             " inner " +
-            " join Delavci on Delavci.DeSifra = ZavrsnaDokumenta.Kreirao  order by ZavrsnaDokumenta.ID";
+            " join Delavci on Delavci.DeSifra = ZavrsnaDokumenta.Kreirao  order by ZavrsnaDokumenta.ID desc";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
@@ -164,74 +164,30 @@ namespace Saobracaj.Mobile
             RefreshDataGrid();
         }
 
-        private void txtDirectory_TextChanged(object sender, EventArgs e)
-        {
-            foreach (PictureBox pic in PictureBoxes)
-            {
-                pic.DoubleClick -= PictureBox_DoubleClick;
-                pic.Dispose();
-            }
-            flpThumbnails.Controls.Clear();
-            PictureBoxes = new List<PictureBox>();
-
-            // If the directory doesn't exist, do nothing else.
-            if (!Directory.Exists(txtDirectory.Text)) return;
-
-            // Get the names of the files in the directory.
-            List<string> filenames = new List<string>();
-            string[] patterns = { "*.png", "*.gif", "*.jpg", "*.bmp", "*.tif" };
-            foreach (string pattern in patterns)
-            {
-                filenames.AddRange(Directory.GetFiles(txtDirectory.Text,
-                    pattern, SearchOption.TopDirectoryOnly));
-            }
-            filenames.Sort();
-
-            // Load the files.
-            foreach (string filename in filenames)
-            {
-                // Load the picture into a PictureBox.
-                PictureBox pic = new PictureBox();
-
-                pic.ClientSize = new Size(ThumbWidth, ThumbHeight);
-                pic.Image = new Bitmap(filename);
-
-                // If the image is too big, zoom.
-                if ((pic.Image.Width > ThumbWidth) ||
-                    (pic.Image.Height > ThumbHeight))
-                {
-                    pic.SizeMode = PictureBoxSizeMode.Zoom;
-                }
-                else
-                {
-                    pic.SizeMode = PictureBoxSizeMode.Normal;
-                }
-
-                // Add the DoubleClick event handler.
-                pic.DoubleClick += PictureBox_DoubleClick;
-
-                // Add a tooltip.
-                FileInfo file_info = new FileInfo(filename);
-                /*  tipPicture.SetToolTip(pic, file_info.Name +
-                      "\nCreated: " + file_info.CreationTime.ToShortDateString() +
-                      "\n(" + pic.Image.Width + " x " + pic.Image.Height + ") " +
-                      ToFileSizeApi(file_info.Length));
-                  pic.Tag = file_info;
-                */
-                // Add the PictureBox to the FlowLayoutPanel.
-                pic.Parent = flpThumbnails;
-            }
-        }
+       
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
         {
             try
             {
+                flowLayoutPanel1.Controls.Clear();
                 foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
                     if (row.Selected)
                     {
+                    
                         txtSifra.Text = row.Cells[0].Value.ToString();
+                        string path = Path.Combine(@"//192.168.1.6/ZavrsnaDokumenta/", txtSifra.Text + "/");
+                        string[] files = Directory.GetFiles(path, "*.jpg"); // Adjust the path and file type as needed
+                        foreach (string file in files)
+                        {
+                            PictureBox pictureBox = new PictureBox();
+                            pictureBox.Image = Image.FromFile(file);
+                            pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
+                            pictureBox.Height = 400; // Adjust size as needed
+                            pictureBox.Width = 400;  // Adjust size as needed
+                            flowLayoutPanel1.Controls.Add(pictureBox); // Assuming you have a FlowLayoutPanel to hold the PictureBoxes
+                        }
                     }
                 }
             }
@@ -239,9 +195,12 @@ namespace Saobracaj.Mobile
             {
                 MessageBox.Show("Nije uspela selekcija stavki");
             }
-            string path = Path.Combine(@"//192.168.1.6/ZavrsnaDokumenta/", txtSifra.Text + "/");
-            DirectoryInfo dir_info = new DirectoryInfo(path);
-            txtDirectory.Text = dir_info.FullName;
+     
+
+
+           
+         //   DirectoryInfo dir_info = new DirectoryInfo(path);
+           // txtDirectory.Text = dir_info.FullName;
         }
     }
 }

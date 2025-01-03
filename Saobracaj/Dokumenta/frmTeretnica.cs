@@ -22,6 +22,7 @@ namespace Saobracaj.Dokumenta
         int pomPrijemna = 0;
         int pomPredajna = 0;
         int pomPrevozna = 0;
+        int pomCarinska = 0;
         string Korisnik = "";
         public frmTeretnica()
         {
@@ -190,7 +191,39 @@ namespace Saobracaj.Dokumenta
                 {
                     pomPrijemna = 0;
                 }
-               
+
+
+                if (chkPredajna.Checked)
+                {
+                    pomPredajna = 1;
+                }
+                else
+                {
+                    pomPredajna = 0;
+                }
+
+                if (chkPrevozna.Checked)
+                {
+                    pomPrevozna = 1;
+                }
+                else
+                {
+                    pomPrevozna = 0;
+                }
+
+                if (chkCARINSKA.Checked)
+                {
+                    pomCarinska = 1;
+                }
+                else
+                {
+                    pomCarinska = 0;
+                }
+
+
+
+
+
                 InsertTeretnica ins = new InsertTeretnica();
                 ins.InsTeretnica(txtVozBroj.Text, Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaPopisa.SelectedValue), dtpVremeOd.Value, dtpVremeDo.Value, txtBrojLista.Text, pomPrijemna, pomPredajna, Korisnik, pomPrevozna, Convert.ToInt32(txtRN.Text));
                 VratiPodatkeMax();

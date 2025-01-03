@@ -126,6 +126,7 @@
             this.label30 = new System.Windows.Forms.Label();
             this.button6 = new System.Windows.Forms.Button();
             this.chkRucniKoeficijent = new System.Windows.Forms.CheckBox();
+            this.chkPregledac = new System.Windows.Forms.CheckBox();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -895,7 +896,7 @@
             // txtIzracun
             // 
             this.txtIzracun.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            this.txtIzracun.Location = new System.Drawing.Point(494, 127);
+            this.txtIzracun.Location = new System.Drawing.Point(494, 129);
             this.txtIzracun.Name = "txtIzracun";
             this.txtIzracun.Size = new System.Drawing.Size(54, 20);
             this.txtIzracun.TabIndex = 208;
@@ -905,7 +906,7 @@
             // txtRazlika
             // 
             this.txtRazlika.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            this.txtRazlika.Location = new System.Drawing.Point(609, 127);
+            this.txtRazlika.Location = new System.Drawing.Point(609, 129);
             this.txtRazlika.Name = "txtRazlika";
             this.txtRazlika.Size = new System.Drawing.Size(62, 20);
             this.txtRazlika.TabIndex = 209;
@@ -915,7 +916,7 @@
             // label25
             // 
             this.label25.AutoSize = true;
-            this.label25.Location = new System.Drawing.Point(436, 130);
+            this.label25.Location = new System.Drawing.Point(436, 132);
             this.label25.Name = "label25";
             this.label25.Size = new System.Drawing.Size(52, 13);
             this.label25.TabIndex = 210;
@@ -924,7 +925,7 @@
             // label26
             // 
             this.label26.AutoSize = true;
-            this.label26.Location = new System.Drawing.Point(558, 130);
+            this.label26.Location = new System.Drawing.Point(558, 132);
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(45, 13);
             this.label26.TabIndex = 211;
@@ -933,7 +934,7 @@
             // label27
             // 
             this.label27.AutoSize = true;
-            this.label27.Location = new System.Drawing.Point(677, 130);
+            this.label27.Location = new System.Drawing.Point(677, 132);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(44, 13);
             this.label27.TabIndex = 212;
@@ -942,7 +943,7 @@
             // txtZarada
             // 
             this.txtZarada.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(224)))), ((int)(((byte)(192)))));
-            this.txtZarada.Location = new System.Drawing.Point(727, 127);
+            this.txtZarada.Location = new System.Drawing.Point(727, 129);
             this.txtZarada.Name = "txtZarada";
             this.txtZarada.Size = new System.Drawing.Size(62, 20);
             this.txtZarada.TabIndex = 213;
@@ -963,7 +964,7 @@
             // 
             this.chkPravoDnevnice.AutoSize = true;
             this.chkPravoDnevnice.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.chkPravoDnevnice.Location = new System.Drawing.Point(622, 91);
+            this.chkPravoDnevnice.Location = new System.Drawing.Point(622, 88);
             this.chkPravoDnevnice.Name = "chkPravoDnevnice";
             this.chkPravoDnevnice.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.chkPravoDnevnice.Size = new System.Drawing.Size(101, 17);
@@ -1098,11 +1099,24 @@
             this.chkRucniKoeficijent.Text = "R";
             this.chkRucniKoeficijent.UseVisualStyleBackColor = true;
             // 
+            // chkPregledac
+            // 
+            this.chkPregledac.AutoSize = true;
+            this.chkPregledac.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.chkPregledac.Location = new System.Drawing.Point(649, 108);
+            this.chkPregledac.Name = "chkPregledac";
+            this.chkPregledac.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkPregledac.Size = new System.Drawing.Size(74, 17);
+            this.chkPregledac.TabIndex = 229;
+            this.chkPregledac.Text = "Pregledac";
+            this.chkPregledac.UseVisualStyleBackColor = false;
+            // 
             // frmEvidencijaRada
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1366, 591);
+            this.Controls.Add(this.chkPregledac);
             this.Controls.Add(this.chkRucniKoeficijent);
             this.Controls.Add(this.button6);
             this.Controls.Add(this.button5);
@@ -1298,5 +1312,6 @@
         private System.Windows.Forms.ToolStripButton toolStripButton7;
         private System.Windows.Forms.ToolStripButton toolStripButton8;
         private System.Windows.Forms.CheckBox chkRucniKoeficijent;
+        private System.Windows.Forms.CheckBox chkPregledac;
     }
 }

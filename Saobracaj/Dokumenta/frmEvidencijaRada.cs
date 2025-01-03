@@ -1892,31 +1892,31 @@ namespace Saobracaj.Dokumenta
                 double pom = Convert.ToDouble(txtIzracun.Text);
                 pom = pom + vrd;
                 txtIzracun.Text = pom.ToString();
-                if ((pom < 25.5) & (Smena == 1))
+                if ((pom < 27.5) & (Smena == 1))
                 {
-                    double Razlika = 25.5 - pom;
+                    double Razlika = 27.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "25.5";
+                    txtZarada.Text = "27.5";
                 }
-                else if ((pom < 25.5) & (Smena == 2))
+                else if ((pom < 27.5) & (Smena == 2))
                 {
-                    double Razlika = 25.5 - pom;
+                    double Razlika = 27.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "25.5";
+                    txtZarada.Text = "27.5";
                 }
-                else if ((pom > 25.5) & (Smena == 1))
+                else if ((pom > 27.5) & (Smena == 1))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
                     txtZarada.Text = txtIzracun.Text;
                 }
-                else if ((pom < 51) & (Smena == 2))
+                else if ((pom < 55) & (Smena == 2))
                 {
                     double Razlika = 51 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "51";
+                    txtZarada.Text = "55";
                 }
-                else if ((pom > 51) & (Smena == 2))
+                else if ((pom > 55) & (Smena == 2))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
@@ -1930,31 +1930,155 @@ namespace Saobracaj.Dokumenta
                 double pom = Convert.ToDouble(txtIzracun.Text);
                 pom = pom + vrd;
                 txtIzracun.Text = pom.ToString();
-                if ((pom < 25.5) & (Smena == 1))
+                if ((pom < 27.5) & (Smena == 1))
                 {
-                    double Razlika = 25.5 - pom;
+                    double Razlika = 27.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "25.5";
+                    txtZarada.Text = "27.5";
                 }
-                else if ((pom < 25.5) & (Smena == 2))
+                else if ((pom < 27.5) & (Smena == 2))
                 {
-                    double Razlika = 25.5 - pom;
+                    double Razlika = 27.5 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "25.5";
+                    txtZarada.Text = "27.5";
                 }
-                else if ((pom > 25.5) & (Smena == 1))
+                else if ((pom > 27.5) & (Smena == 1))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
                     txtZarada.Text = txtIzracun.Text;
                 }
-                else if ((pom < 51) & (Smena == 2))
+                else if ((pom < 55) & (Smena == 2))
                 {
-                    double Razlika = 51 - pom;
+                    double Razlika = 55 - pom;
                     txtRazlika.Text = Razlika.ToString();
-                    txtZarada.Text = "51";
+                    txtZarada.Text = "55";
                 }
-                else if ((pom > 51) & (Smena == 2))
+                else if ((pom > 55) & (Smena == 2))
+                {
+                    double Razlika = 0;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = txtIzracun.Text;
+                }
+
+                //end po vagonu
+            }
+
+        }
+
+        private void OduzmiPoDnevniciPregledac(int Stavka)
+        {
+            int Smena = 1;
+
+            if (Convert.ToDouble(txtVreme.Text) <= 7)
+            {
+                Smena = 1;
+            }
+            else
+            {
+                Smena = 2;
+            }
+            double cena = 0;
+            int obracunposatu = 1;
+            double sati = 0;
+            double koeficijent = 0;
+            double brojvagona = 0;
+            int vrstaaktivnostiid = 43;
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection);
+            conn.Open();
+            // SqlCommand command = new SqlCommand(" select ObracunPoSatu, PotrebanRazlog, PotrebanNalogodavac, PotrebnoVozilo, ObaveznaNapomena from VrstaAktivnosti where ID = " + Convert.ToInt32(cboAktivnost.SelectedValue), conn);
+            SqlCommand cmd = new SqlCommand("select Cena, ObracunPoSatu,Sati, Koeficijent, BrojVagona, VrstaAktivnosti.ID from VrstaAktivnosti " +
+            " inner join AktivnostiStavke on VrstaAktivnosti.ID = AktivnostiStavke.VrstaAktivnostiID " +
+            " where AktivnostiStavke.ID = " + Stavka, conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    cena = Convert.ToDouble(dr[0].ToString());
+                    obracunposatu = Convert.ToInt32(dr[1].ToString());
+                    sati = Convert.ToDouble(dr[2].ToString());
+                    koeficijent = Convert.ToDouble(dr[3].ToString());
+                    brojvagona = Convert.ToDouble(dr[4].ToString());
+                    vrstaaktivnostiid = Convert.ToInt32(dr[5].ToString());
+                }
+            }
+            conn.Close();
+            if (vrstaaktivnostiid == 43)
+            {
+                return;
+            }
+            if (obracunposatu == 1)
+            {
+                double vrd = sati * -cena;
+                double pom = Convert.ToDouble(txtIzracun.Text);
+                pom = pom + vrd;
+                txtIzracun.Text = pom.ToString();
+                if ((pom < 37.5) & (Smena == 1))
+                {
+                    double Razlika = 37.5 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "37.5";
+                }
+                else if ((pom < 37.5) & (Smena == 2))
+                {
+                    double Razlika = 37.5 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "37.5";
+                }
+                else if ((pom > 37.5) & (Smena == 1))
+                {
+                    double Razlika = 0;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = txtIzracun.Text;
+                }
+                else if ((pom < 65) & (Smena == 2))
+                {
+                    double Razlika = 65 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "65";
+                }
+                else if ((pom > 65) & (Smena == 2))
+                {
+                    double Razlika = 0;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = txtIzracun.Text;
+                }
+            }
+            else
+            {
+                // po vagonu
+                double vrd = brojvagona * -cena;
+                double pom = Convert.ToDouble(txtIzracun.Text);
+                pom = pom + vrd;
+                txtIzracun.Text = pom.ToString();
+                if ((pom < 37.5) & (Smena == 1))
+                {
+                    double Razlika = 37.5 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "37.5";
+                }
+                else if ((pom < 37.5) & (Smena == 2))
+                {
+                    double Razlika = 37.5 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "37.5";
+                }
+                else if ((pom > 37.5) & (Smena == 1))
+                {
+                    double Razlika = 0;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = txtIzracun.Text;
+                }
+                else if ((pom < 65) & (Smena == 2))
+                {
+                    double Razlika = 65 - pom;
+                    txtRazlika.Text = Razlika.ToString();
+                    txtZarada.Text = "65";
+                }
+                else if ((pom > 65) & (Smena == 2))
                 {
                     double Razlika = 0;
                     txtRazlika.Text = Razlika.ToString();
@@ -2042,8 +2166,18 @@ namespace Saobracaj.Dokumenta
         private void OduzmiStavku(int Stavka)
         {
             if (chkPravoDnevnice.Checked == true)
-            {       
-                OduzmiPoDnevnici(Stavka);
+            {    
+                if (chkPregledac.Checked == false)
+                {
+                    OduzmiPoDnevnici(Stavka);
+
+
+                }
+                else
+                {
+                    OduzmiPoDnevniciPregledac(Stavka);
+                }
+                
             }   
                 else
             {

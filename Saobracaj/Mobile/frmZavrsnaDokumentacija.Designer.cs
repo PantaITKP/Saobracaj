@@ -36,9 +36,7 @@ namespace Saobracaj.Mobile
             this.metroButton1 = new MetroFramework.Controls.MetroButton();
             this.panel2 = new System.Windows.Forms.Panel();
             this.dataGridView1 = new MetroFramework.Controls.MetroGrid();
-            this.flpThumbnails = new System.Windows.Forms.FlowLayoutPanel();
-            this.txtDirectory = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -47,23 +45,18 @@ namespace Saobracaj.Mobile
             // 
             // panel1
             // 
-            this.panel1.Controls.Add(this.flpThumbnails);
-            this.panel1.Controls.Add(this.txtDirectory);
-            this.panel1.Controls.Add(this.label2);
-            this.panel1.Controls.Add(this.txtSifra);
-            this.panel1.Controls.Add(this.metroButton1);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Controls.Add(this.flowLayoutPanel1);
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(800, 235);
+            this.panel1.Size = new System.Drawing.Size(486, 818);
             this.panel1.TabIndex = 0;
             // 
             // metroButton1
             // 
             this.metroButton1.BackColor = System.Drawing.SystemColors.ButtonShadow;
-            this.metroButton1.Location = new System.Drawing.Point(12, 12);
+            this.metroButton1.Location = new System.Drawing.Point(12, 10);
             this.metroButton1.Name = "metroButton1";
-            this.metroButton1.Size = new System.Drawing.Size(157, 30);
+            this.metroButton1.Size = new System.Drawing.Size(179, 30);
             this.metroButton1.TabIndex = 21;
             this.metroButton1.Text = "Ažuriraj sve";
             this.metroButton1.UseSelectable = true;
@@ -71,11 +64,15 @@ namespace Saobracaj.Mobile
             // 
             // panel2
             // 
+            this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel2.Controls.Add(this.txtSifra);
             this.panel2.Controls.Add(this.dataGridView1);
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(0, 235);
+            this.panel2.Controls.Add(this.metroButton1);
+            this.panel2.Location = new System.Drawing.Point(492, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(800, 215);
+            this.panel2.Size = new System.Drawing.Size(863, 815);
             this.panel2.TabIndex = 1;
             // 
             // dataGridView1
@@ -109,7 +106,7 @@ namespace Saobracaj.Mobile
             this.dataGridView1.EnableHeadersVisualStyles = false;
             this.dataGridView1.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
             this.dataGridView1.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.dataGridView1.Location = new System.Drawing.Point(3, 6);
+            this.dataGridView1.Location = new System.Drawing.Point(12, 53);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -122,58 +119,38 @@ namespace Saobracaj.Mobile
             this.dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(776, 255);
+            this.dataGridView1.Size = new System.Drawing.Size(836, 749);
             this.dataGridView1.TabIndex = 20;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
-            // flpThumbnails
+            // flowLayoutPanel1
             // 
-            this.flpThumbnails.AutoScroll = true;
-            this.flpThumbnails.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.flpThumbnails.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.flpThumbnails.Location = new System.Drawing.Point(377, 40);
-            this.flpThumbnails.Name = "flpThumbnails";
-            this.flpThumbnails.Size = new System.Drawing.Size(402, 179);
-            this.flpThumbnails.TabIndex = 66;
-            // 
-            // txtDirectory
-            // 
-            this.txtDirectory.Location = new System.Drawing.Point(497, 14);
-            this.txtDirectory.Name = "txtDirectory";
-            this.txtDirectory.Size = new System.Drawing.Size(282, 20);
-            this.txtDirectory.TabIndex = 65;
-            this.txtDirectory.TextChanged += new System.EventHandler(this.txtDirectory_TextChanged);
-            this.txtDirectory.DoubleClick += new System.EventHandler(this.PictureBox_DoubleClick);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(367, 14);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(52, 13);
-            this.label2.TabIndex = 64;
-            this.label2.Text = "Directory:";
+            this.flowLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(12, 12);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(460, 803);
+            this.flowLayoutPanel1.TabIndex = 68;
             // 
             // txtSifra
             // 
-            this.txtSifra.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
-            this.txtSifra.Location = new System.Drawing.Point(435, 14);
+            this.txtSifra.Location = new System.Drawing.Point(591, 10);
             this.txtSifra.Name = "txtSifra";
-            this.txtSifra.Size = new System.Drawing.Size(56, 20);
-            this.txtSifra.TabIndex = 63;
+            this.txtSifra.Size = new System.Drawing.Size(100, 20);
+            this.txtSifra.TabIndex = 69;
             // 
             // frmZavrsnaDokumentacija
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1367, 821);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Name = "frmZavrsnaDokumentacija";
-            this.Text = "Završna dokumentacija";
+            this.Text = "Prijemno predajna dokumentacija";
             this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
 
@@ -185,9 +162,7 @@ namespace Saobracaj.Mobile
         private MetroFramework.Controls.MetroButton metroButton1;
         private System.Windows.Forms.Panel panel2;
         private MetroFramework.Controls.MetroGrid dataGridView1;
-        private System.Windows.Forms.FlowLayoutPanel flpThumbnails;
-        private System.Windows.Forms.TextBox txtDirectory;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.TextBox txtSifra;
     }
 }
