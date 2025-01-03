@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Syncfusion.Windows.Forms.Gauge.Range range3 = new Syncfusion.Windows.Forms.Gauge.Range();
-            Syncfusion.Windows.Forms.Gauge.Range range4 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range1 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range2 = new Syncfusion.Windows.Forms.Gauge.Range();
             this.speedGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WaterTempGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
@@ -448,12 +448,13 @@
             // dataGridView1
             // 
             this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(336, 569);
+            this.dataGridView1.Location = new System.Drawing.Point(8, 416);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(956, 323);
+            this.dataGridView1.Size = new System.Drawing.Size(309, 446);
             this.dataGridView1.TabIndex = 6;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
@@ -746,14 +747,14 @@
             this.rpm1Gauge.Name = "rpm1Gauge";
             this.rpm1Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm1Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range3.Color = System.Drawing.Color.Red;
-            range3.EndValue = 5000F;
-            range3.Height = 5;
-            range3.InRange = false;
-            range3.Name = "GaugeRange1";
-            range3.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range3.StartValue = 3500F;
-            this.rpm1Gauge.Ranges.Add(range3);
+            range1.Color = System.Drawing.Color.Red;
+            range1.EndValue = 5000F;
+            range1.Height = 5;
+            range1.InRange = false;
+            range1.Name = "GaugeRange1";
+            range1.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range1.StartValue = 3500F;
+            this.rpm1Gauge.Ranges.Add(range1);
             this.rpm1Gauge.ShowGaugeValue = true;
             this.rpm1Gauge.ShowTicks = true;
             this.rpm1Gauge.Size = new System.Drawing.Size(215, 142);
@@ -969,7 +970,7 @@
             this.webBrowser1.Location = new System.Drawing.Point(0, 0);
             this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
             this.webBrowser1.Name = "webBrowser1";
-            this.webBrowser1.Size = new System.Drawing.Size(956, 562);
+            this.webBrowser1.Size = new System.Drawing.Size(956, 887);
             this.webBrowser1.TabIndex = 5;
             // 
             // panel2
@@ -980,17 +981,17 @@
             this.panel2.Controls.Add(this.webBrowser1);
             this.panel2.Location = new System.Drawing.Point(336, 1);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(956, 562);
+            this.panel2.Size = new System.Drawing.Size(956, 887);
             this.panel2.TabIndex = 7;
             // 
             // tabControl1
             // 
             this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Location = new System.Drawing.Point(0, 1);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -1141,14 +1142,14 @@
             this.rpm2Gauge.Name = "rpm2Gauge";
             this.rpm2Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm2Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range4.Color = System.Drawing.Color.Red;
-            range4.EndValue = 5000F;
-            range4.Height = 5;
-            range4.InRange = false;
-            range4.Name = "GaugeRange1";
-            range4.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range4.StartValue = 3500F;
-            this.rpm2Gauge.Ranges.Add(range4);
+            range2.Color = System.Drawing.Color.Red;
+            range2.EndValue = 5000F;
+            range2.Height = 5;
+            range2.InRange = false;
+            range2.Name = "GaugeRange1";
+            range2.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range2.StartValue = 3500F;
+            this.rpm2Gauge.Ranges.Add(range2);
             this.rpm2Gauge.ShowGaugeValue = true;
             this.rpm2Gauge.ShowTicks = true;
             this.rpm2Gauge.Size = new System.Drawing.Size(215, 142);
@@ -1188,6 +1189,7 @@
             // tabPage4
             // 
             this.tabPage4.BackColor = System.Drawing.Color.Gainsboro;
+            this.tabPage4.Controls.Add(this.dataGridView1);
             this.tabPage4.Controls.Add(this.label36);
             this.tabPage4.Controls.Add(this.label35);
             this.tabPage4.Controls.Add(this.label34);
@@ -1384,7 +1386,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1304, 904);
-            this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.panel2);
             this.Name = "LocoTrack";

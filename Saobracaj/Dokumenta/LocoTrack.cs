@@ -43,7 +43,7 @@ namespace Saobracaj.Dokumenta
         DateTime poslednjiZapis;
         private void LocoTrack_Load(object sender, EventArgs e)
         {
-            var select = "Select Max(DatumUpisa) From WebMap";
+            var select = "Select Max(DatumUpisa) From LocoTrackApp";
             SqlConnection conn = new SqlConnection(connection);
             SqlCommand cmd = new SqlCommand(select, conn);
             conn.Open();
@@ -57,11 +57,12 @@ namespace Saobracaj.Dokumenta
             lokomotiva = "2946";
             fromDt = poslednjiZapis.ToString("yyyy-MM-dd");
             toDt = DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
-
+            LoadMap();
             ReadData();
             FillCombo();
-            LoadMap();
-            FillGV();
+            
+            
+            
         }
         public class Record
         {
@@ -70,10 +71,7 @@ namespace Saobracaj.Dokumenta
             public string Vehicles_idVehicles { get; set; }
             public decimal Altitude { get; set; }
             public int SV { get; set; }
-            public int Eventid { get; set; }
             public decimal Mainvoltage { get; set; }
-            public bool IO0 { get; set; }
-            public bool Valid { get; set; }
             public decimal Latitude { get; set; }
             public decimal Longitude { get; set; }
             public decimal Speed { get; set; }
@@ -149,7 +147,7 @@ namespace Saobracaj.Dokumenta
                             mainVoltage = Convert.ToDecimal(i.Mainvoltage);
                             speedApi = Convert.ToDecimal(i.Speed);
                             ss = i.SS;
-
+                            /*
                             year = ss.Substring(0, 4);
                             month = ss.Substring(4, 2);
                             day = ss.Substring(6, 2);
@@ -206,9 +204,9 @@ namespace Saobracaj.Dokumenta
                             activeFault4 = ss.Substring(222, 5);
                             activeFault5 = ss.Substring(227, 5);
                             faultSync = ss.Substring(232, 3);
-                            faultAck = ss.Substring(235, 3);
+                            faultAck = ss.Substring(235, 3);*/
 
-                            var select = "select count(ID) From WebMap Where IDRecords=" + iDRecord;
+                            var select = "select count(ID) From LocoTrackApp Where IDRecords=" + iDRecord;
                             SqlConnection conn = new SqlConnection(connection);
                             SqlCommand cmd = new SqlCommand(select, conn);
                             conn.Open();
@@ -218,16 +216,8 @@ namespace Saobracaj.Dokumenta
                                 int count = Convert.ToInt32(reader[0].ToString());
                                 if (count == 0)
                                 {
-                                    string dateTimeStr = $"{year}-{month}-{day} {hour}:{minute}:{second}";
-                                    DateTime dt;
-                                    DateTime.TryParseExact(dateTimeStr, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt);
-
                                     InsertWebMap ins = new InsertWebMap();
-                                    ins.InsertAPI(iDRecord, iDVehicles, recordTime, latitude, longitude, altitude, direction, sV, mainVoltage, speedApi, DateTime.Now, locomotiveId, driverId, nforceFw, locoMode, speed, gboxState,
-                                        pwrContactState, throttlePos, tracMotorAvgCurr, targetPower, tracPower, tracForce, tracMotor1Curr, tracMotor2Curr, tracMotor3Curr, tracMotor4Curr, compressorState, mainResPress,
-                                        brakeCylPress, brakePipePress, mcoMask, asMask, alerterMask, trip, asssState, excLimit, wheelSlip, resetCnt, secEngAllow, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp,
-                                        eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2Rpm, eng2WorkHours, eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1,
-                                        activeFault2, activeFault3, activeFault4, activeFault5, faultSync, faultAck, DateTime.Now);
+                                    ins.InsertAPI(iDRecord, iDVehicles, Convert.ToDateTime(recordTime.ToString()), latitude, longitude, altitude, direction, sV, mainVoltage, speedApi, DateTime.Now, ss);
                                 }
                             }
                             conn.Close();
@@ -250,14 +240,14 @@ namespace Saobracaj.Dokumenta
         }
         private void FillGV()
         {
-            var select = "select top 300 * from WebMap order by ID desc";
+            var select = "select top 300 * from LocoTrackApp order by ID desc";
             SqlConnection conn = new SqlConnection(connection);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
             dataAdapter.Fill(ds);
             dataGridView1.ReadOnly = true;
             dataGridView1.DataSource = ds.Tables[0];
-            dataGridView1.MultiSelect = false;
+           // dataGridView1.MultiSelect = false;
 
 
             dataGridView1.Columns[0].Width = 60;
@@ -284,7 +274,7 @@ namespace Saobracaj.Dokumenta
         }
         private void FillCombo()
         {
-            var select = "Select distinct IDVehicles From WebMap";
+            var select = "Select distinct IDVehicles From LocoTrackApp";
             SqlConnection conn = new SqlConnection(connection);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
@@ -317,7 +307,7 @@ namespace Saobracaj.Dokumenta
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        {
+        {/*
             decimal longitude, latitude;
             int speed, gboxState, pwrContact, throtlePos, targetPower, tracPower, tracForce, compressorState, mainResPres, brakeCylPress, brakePipePress, wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp,
                 eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2RPM, eng2WorkHours, eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1, activeFault2, activeFault3,
@@ -375,14 +365,14 @@ namespace Saobracaj.Dokumenta
                         webBrowser1.Document.InvokeScript("focusPin", new object[] { latitude, longitude });
                     }
                 }
-            }
+            }*/
         }
         private void UpdateGauge(int speed, int gboxState, int pwrContact, int throtlePos, int targetPower, int tracPower, int tracForce, int compressorState, int mainResPres, int brakeCylPress,
             int brakePipePress, int wheelSlip, int eng1State, int eng1Rpm, int eng1WorkHours, int eng1WaterTemp, int eng1OilTemp, int eng1OilLevel, int eng1FuelCons, int eng2State, int eng2RPM,
             int eng2WorkHours, int eng2WaterTemp, int eng2OilTemp, int eng2OilLevel, int eng2FuelCons, int activeFaultCnt, int activeFault1, int activeFault2, int activeFault3, int activeFault4,
             int activeFault5, int faultSync, int faultAck)
         {
-            speedGauge.Value = speed;
+            /*speedGauge.Value = speed;
             gStateGauge.Value = gboxState.ToString();
             pwrGauge.Value = pwrContact.ToString();
             throttlePosGauge.Value = throtlePos;
@@ -415,7 +405,7 @@ namespace Saobracaj.Dokumenta
             activeFault4Gauge.Value = activeFault4.ToString();
             activeFautl5Gauge.Value = activeFault5.ToString();
             faultSyncGauge.Value = faultSync.ToString();
-            faultAckGauge.Value = faultAck.ToString();
+            faultAckGauge.Value = faultAck.ToString();*/
         }
         private void btn24H_Click(object sender, EventArgs e)
         {
@@ -433,7 +423,7 @@ namespace Saobracaj.Dokumenta
             string odPom, doPom;
             odPom = dateTimePicker1.Value.ToString("yyyy-MM-dd HH:mm:ss.fff");
             doPom = dateTimePicker2.Value.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var select = "select * from WebMap Where IDVehicles=" + comboBox1.SelectedValue + " and RecordTime between '" + odPom + "' and '" + doPom + "' order by ID desc";
+            var select = "select * from LocoTrackApp Where IDVehicles=" + comboBox1.SelectedValue + " and RecordTime between '" + odPom + "' and '" + doPom + "' order by ID desc";
             SqlConnection conn = new SqlConnection(connection);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
@@ -452,12 +442,12 @@ namespace Saobracaj.Dokumenta
                 webBrowser1.Document.InvokeScript("addPin", new object[] { latitude, longitude });
             }
         }
-        private void btnPozicije_Click(object sender, EventArgs e)
+        private void Pozicije()
         {
             status = false;
             webBrowser1.Document.InvokeScript("clearMap");
 
-            string select = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY IDVehicles ORDER BY RecordTime DESC) AS RowNum FROM WebMap) AS LastRecord WHERE RowNum = 1";
+            string select = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER(PARTITION BY IDVehicles ORDER BY RecordTime DESC) AS RowNum FROM LocoTrackApp) AS LastRecord WHERE RowNum = 1";
             SqlConnection conn = new SqlConnection(connection);
             var dataAdapter = new SqlDataAdapter(select, conn);
             var ds = new DataSet();
@@ -476,12 +466,18 @@ namespace Saobracaj.Dokumenta
             DesignGV();
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                decimal longitude = Convert.ToDecimal(row.Cells["Longitude"].Value);
-                decimal latitude = Convert.ToDecimal(row.Cells["Latitude"].Value);
-                int id = Convert.ToInt32(row.Cells["ID"].Value);
-                string locomotive = row.Cells["IDVehicles"].Value.ToString().TrimEnd();
-                webBrowser1.Document.InvokeScript("addLoco", new object[] { latitude, longitude,id,locomotive });
+
+                    decimal longitude = Convert.ToDecimal(row.Cells["Longitude"].Value);
+                    decimal latitude = Convert.ToDecimal(row.Cells["Latitude"].Value);
+                    int id = Convert.ToInt32(row.Cells["ID"].Value);
+                    string locomotive = row.Cells["IDVehicles"].Value.ToString().TrimEnd();
+                    webBrowser1.Document.InvokeScript("addLoco", new object[] { latitude, longitude, id, locomotive });
+
             }
+        }
+        private void btnPozicije_Click(object sender, EventArgs e)
+        {
+            Pozicije();
         }
         private void rbMaxSpeed_CheckedChanged(object sender, EventArgs e)
         {
