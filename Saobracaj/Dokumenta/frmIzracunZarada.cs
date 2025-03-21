@@ -163,7 +163,7 @@ namespace Saobracaj.Dokumenta
                     string Top2 = Convert.ToInt32(row.Cells[17].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     string sqlupit = " select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
- + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS Duration from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 3241 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
+ + "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS Duration from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 3380 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
  + "order by t1.Duration asc ";
 
                     SqlCommand cmd = new SqlCommand(sqlupit, con);
@@ -202,7 +202,7 @@ namespace Saobracaj.Dokumenta
                     string Top2 = Convert.ToInt32(row.Cells[18].Value).ToString();
                     string Radnik = Convert.ToInt32(row.Cells[0].Value).ToString();
                     SqlCommand cmd = new SqlCommand(" select Top " + Top1 + " t1.PnStZapisa as PnStZapisa, t1.Duration from ( "
-+ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1620.5 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
++ "select top  " + Top2 + "  PnStZapisa,DATEDIFF(MINUTE,PnDatOdh, PnDatPrih) AS 'Duration' from PotNal  where PnDelavec = " + Radnik + " and PnZnesOrg = 1690 and PnStatus = 'OD'  Order By PnStZapisa desc) t1 "
 + "order by t1.Duration asc ", con);
                     SqlDataReader dr = cmd.ExecuteReader();
 

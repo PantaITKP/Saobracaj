@@ -541,8 +541,8 @@ namespace Saobracaj.Dokumenta
                         cboZaposleni.SelectedValue = Convert.ToInt32(row.Cells[0].Value.ToString());
                         txtCiljna.Value = Convert.ToDecimal(row.Cells[2].Value.ToString());
                         txtMinimalna.Value = Convert.ToDecimal(row.Cells[3].Value.ToString());
-                         txtPrviDeo.Value = Convert.ToDecimal(row.Cells[7].Value.ToString());
-                        txtDrugiDeo.Value = Convert.ToDecimal(row.Cells[8].Value.ToString());
+                       txtPrviDeo.Value = Convert.ToDecimal(row.Cells[7].Value.ToString());
+                       txtDrugiDeo.Value = Convert.ToDecimal(row.Cells[8].Value.ToString());
                        txtPrevoz.Value = Convert.ToDecimal(row.Cells[12].Value.ToString());
                         txtRegres.Value = Convert.ToDecimal(row.Cells[13].Value.ToString());
                         txtTopliObrok.Value = Convert.ToDecimal(row.Cells[14].Value.ToString());

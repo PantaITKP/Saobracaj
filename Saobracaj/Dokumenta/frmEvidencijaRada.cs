@@ -1071,31 +1071,31 @@ namespace Saobracaj.Dokumenta
             double pom = Convert.ToDouble(txtIzracun.Text);
             pom = pom + vrd;
             txtIzracun.Text = pom.ToString();
-            if ((pom < 25.5) & (Smena == 1))
+            if ((pom < 27.5) & (Smena == 1))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom < 25.5) & (Smena == 2))
+            else if ((pom < 27.5) & (Smena == 2))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom > 25.5) & (Smena == 1))
+            else if ((pom > 27.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 51) & (Smena == 2))
+            else if ((pom < 55) & (Smena == 2))
             {
                 double Razlika = 51 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "51";
+                txtZarada.Text = "55";
             }
-            else if ((pom > 51) & (Smena == 2))
+            else if ((pom > 55) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1235,31 +1235,31 @@ namespace Saobracaj.Dokumenta
                 RefreshDataGridPoAktivnostima();
 
             }
-            if ((pom < 25.5) & (Smena == 1))
+            if ((pom < 27.5) & (Smena == 1))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom < 25.5) & (Smena == 2))
+            else if ((pom < 27.5) & (Smena == 2))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom > 25.5) & (Smena == 1))
+            else if ((pom > 27.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 51) & (Smena == 2))
+            else if ((pom < 55) & (Smena == 2))
             {
-                double Razlika = 51 - pom;
+                double Razlika = 55 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "51";
+                txtZarada.Text = "55";
             }
-            else if ((pom > 51) & (Smena == 2))
+            else if ((pom > 55) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1346,31 +1346,142 @@ namespace Saobracaj.Dokumenta
             pom = pom + vrd;
             txtIzracun.Text = pom.ToString();
            
-            if ((pom < 25.5) & (Smena == 1))
+            if ((pom < 27.5) & (Smena == 1))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom < 25.5) & (Smena == 2))
+            else if ((pom < 27.5) & (Smena == 2))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom > 25.5) & (Smena == 1))
+            else if ((pom > 27.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 51) & (Smena == 2))
+            else if ((pom < 55) & (Smena == 2))
             {
-                double Razlika = 51 - pom;
+                double Razlika = 55 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "51";
+                txtZarada.Text = "55";
             }
-            else if ((pom > 51) & (Smena == 2))
+            else if ((pom > 55) & (Smena == 2))
+            {
+                double Razlika = 0;
+                txtRazlika.Text = Razlika.ToString();
+                txtZarada.Text = txtIzracun.Text;
+            }
+        }
+
+        private void IzracunPoDnevniciSatiRefreshPregledac(int IDStavke)
+        {
+            int Smena = 1;  //Polusmena
+            if (Convert.ToDouble(txtVreme.Text) <= 7)
+            {
+                Smena = 1;
+            }
+            else
+            {
+                Smena = 2;
+            }
+
+            int VrstaAktivnostiID = 0;
+            double Sati = 0;
+            double BrojVagona = 0;
+            double Koeficijent = 0;
+
+
+
+            double cena = 0;
+            double FiksnaCena = 0;
+            int KG = 0;
+            int SM = 0;
+
+            // Updejtuj Koeficijent
+            // 
+            //Izvlacenje Vrste Aktivnosti, Sati, Koeficijenta, BrojaVagona
+
+
+            var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn2 = new SqlConnection(s_connection2);
+            conn2.Open();
+            // SqlCommand command = new SqlCommand(" select ObracunPoSatu, PotrebanRazlog, PotrebanNalogodavac, PotrebnoVozilo, ObaveznaNapomena from VrstaAktivnosti where ID = " + Convert.ToInt32(cboAktivnost.SelectedValue), conn);
+            SqlCommand cmd2 = new SqlCommand(" select VrstaAktivnostiID, Sati,BrojVagona, Koeficijent from AktivnostiStavke where ID  = " + IDStavke, conn2);
+            SqlDataReader dr2 = cmd2.ExecuteReader();
+            if (dr2.HasRows)
+            {
+                while (dr2.Read())
+                {
+                    VrstaAktivnostiID = Convert.ToInt32(dr2[0].ToString());
+                    Sati = Convert.ToDouble(dr2[1].ToString());
+                    BrojVagona = Convert.ToDouble(dr2[2].ToString());
+                    Koeficijent = Convert.ToDouble(dr2[3].ToString());
+                }
+            }
+            conn2.Close();
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection);
+            conn.Open();
+            // SqlCommand command = new SqlCommand(" select ObracunPoSatu, PotrebanRazlog, PotrebanNalogodavac, PotrebnoVozilo, ObaveznaNapomena from VrstaAktivnosti where ID = " + Convert.ToInt32(cboAktivnost.SelectedValue), conn);
+            SqlCommand cmd = new SqlCommand(" select Cena, Kragujevac,Smederevo, FisnaCena from VrstaAktivnosti where ID  = " + VrstaAktivnostiID, conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    cena = Convert.ToDouble(dr[0].ToString());
+                    KG = Convert.ToInt32(dr[1].ToString());
+                    SM = Convert.ToInt32(dr[2].ToString());
+                    FiksnaCena = Convert.ToDouble(dr[3].ToString());
+                }
+            }
+            conn.Close();
+            double vrd = 0;
+            if (VrstaAktivnostiID != 43)
+            {
+                vrd = (Sati * cena * (Koeficijent / 100)) + FiksnaCena + BrojVagona * cena * (Koeficijent / 100);
+            }
+            else
+            {
+                vrd = 0;
+
+            }
+            double pom = Convert.ToDouble(txtIzracun.Text);
+            pom = pom + vrd;
+            txtIzracun.Text = pom.ToString();
+
+            if ((pom < 32.5) & (Smena == 1))
+            {
+                double Razlika = 32.5 - pom;
+                txtRazlika.Text = Razlika.ToString();
+                txtZarada.Text = "32.5";
+            }
+            else if ((pom < 32.5) & (Smena == 2))
+            {
+                double Razlika = 32.5 - pom;
+                txtRazlika.Text = Razlika.ToString();
+                txtZarada.Text = "32.5";
+            }
+            else if ((pom > 32.5) & (Smena == 1))
+            {
+                double Razlika = 0;
+                txtRazlika.Text = Razlika.ToString();
+                txtZarada.Text = txtIzracun.Text;
+            }
+            else if ((pom < 65) & (Smena == 2))
+            {
+                double Razlika = 65 - pom;
+                txtRazlika.Text = Razlika.ToString();
+                txtZarada.Text = "65";
+            }
+            else if ((pom > 65) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -1430,31 +1541,31 @@ namespace Saobracaj.Dokumenta
                 RefreshDataGridPoAktivnostima();
 
             }
-            if ((pom < 25.5) & (Smena == 1))
+            if ((pom < 27.5) & (Smena == 1))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom < 25.5) & (Smena == 2))
+            else if ((pom < 27.5) & (Smena == 2))
             {
-                double Razlika = 25.5 - pom;
+                double Razlika = 27.5 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "25.5";
+                txtZarada.Text = "27.5";
             }
-            else if ((pom > 25.5) & (Smena == 1))
+            else if ((pom > 27.5) & (Smena == 1))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
                 txtZarada.Text = txtIzracun.Text;
             }
-            else if ((pom < 51) & (Smena == 2))
+            else if ((pom < 55) & (Smena == 2))
             {
-                double Razlika = 51 - pom;
+                double Razlika = 55 - pom;
                 txtRazlika.Text = Razlika.ToString();
-                txtZarada.Text = "51";
+                txtZarada.Text = "55";
             }
-            else if ((pom > 51) & (Smena == 2))
+            else if ((pom > 55) & (Smena == 2))
             {
                 double Razlika = 0;
                 txtRazlika.Text = Razlika.ToString();
@@ -2310,6 +2421,77 @@ namespace Saobracaj.Dokumenta
             txtRazlika.Text = "0";
             txtZarada.Text = txtIzracun.Text;
         }
+
+
+        private void IzracunPoStaromRefreshPregledac(int IDStavke)
+        {
+            int VrstaAktivnostiID = 0;
+            double Sati = 0;
+            double BrojVagona = 0;
+            double Koeficijent = 0;
+
+
+
+            double cena = 0;
+            double FiksnaCena = 0;
+            int KG = 0;
+            int SM = 0;
+
+
+            //Izvlacenje Vrste Aktivnosti, Sati, Koeficijenta, BrojaVagona
+
+
+            var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn2 = new SqlConnection(s_connection2);
+            conn2.Open();
+            // SqlCommand command = new SqlCommand(" select ObracunPoSatu, PotrebanRazlog, PotrebanNalogodavac, PotrebnoVozilo, ObaveznaNapomena from VrstaAktivnosti where ID = " + Convert.ToInt32(cboAktivnost.SelectedValue), conn);
+            SqlCommand cmd2 = new SqlCommand(" select VrstaAktivnostiID, Sati,BrojVagona, Koeficijent from AktivnostiStavke where ID  = " + IDStavke, conn2);
+            SqlDataReader dr2 = cmd2.ExecuteReader();
+            if (dr2.HasRows)
+            {
+                while (dr2.Read())
+                {
+                    VrstaAktivnostiID = Convert.ToInt32(dr2[0].ToString());
+                    Sati = Convert.ToDouble(dr2[1].ToString());
+                    BrojVagona = Convert.ToDouble(dr2[2].ToString());
+                    Koeficijent = Convert.ToDouble(dr2[3].ToString());
+                }
+            }
+            conn2.Close();
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection);
+            conn.Open();
+            // SqlCommand command = new SqlCommand(" select ObracunPoSatu, PotrebanRazlog, PotrebanNalogodavac, PotrebnoVozilo, ObaveznaNapomena from VrstaAktivnosti where ID = " + Convert.ToInt32(cboAktivnost.SelectedValue), conn);
+            SqlCommand cmd = new SqlCommand(" select Cena, Kragujevac,Smederevo, FisnaCena from VrstaAktivnosti where ID  = " + VrstaAktivnostiID, conn);
+            SqlDataReader dr = cmd.ExecuteReader();
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    cena = Convert.ToDouble(dr[0].ToString());
+                    KG = Convert.ToInt32(dr[1].ToString());
+                    SM = Convert.ToInt32(dr[2].ToString());
+                    FiksnaCena = Convert.ToDouble(dr[3].ToString());
+                }
+            }
+            conn.Close();
+            double vrd = 0;
+            if (VrstaAktivnostiID != 43)
+
+            { vrd = (Sati * cena * (Koeficijent / 100)) + FiksnaCena + BrojVagona * cena * (Koeficijent / 100); }
+            else
+            {
+                vrd = 0;
+
+            }
+            double pom = Convert.ToDouble(txtIzracun.Text);
+            pom = pom + vrd;
+            txtIzracun.Text = pom.ToString();
+            txtRazlika.Text = "0";
+            txtZarada.Text = txtIzracun.Text;
+        }
         private void button3_Click(object sender, EventArgs e)
         {
             txtIzracun.Text = "0";
@@ -2323,12 +2505,27 @@ namespace Saobracaj.Dokumenta
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if (chkPravoDnevnice.Checked == true)
-                { 
-                IzracunPoDnevniciSatiRefresh(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                {
+                    if (chkPregledac.Checked == true)
+                    {
+                        IzracunPoDnevniciSatiRefreshPregledac(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                    }
+                    else
+                    {
+                        IzracunPoDnevniciSatiRefresh(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                    }
+               
                 }
                 else
                 {
-                IzracunPoStaromRefresh(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                    if (chkPregledac.Checked == true)
+                    {
+                        IzracunPoStaromRefreshPregledac(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                    }
+                    else
+                    {
+                        IzracunPoStaromRefresh(Convert.ToInt32(row.Cells[8].Value.ToString()));
+                    }
                 }
                 // ins.UpdUkupnoUEUR(Convert.ToInt32(row.Cells[0].Value.ToString()), Convert.ToDouble(txtZarada.Value));
                    
