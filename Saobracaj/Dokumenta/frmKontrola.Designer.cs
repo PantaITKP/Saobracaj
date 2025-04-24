@@ -29,9 +29,12 @@ namespace Saobracaj.Dokumenta
         /// </summary>
         private void InitializeComponent()
         {
-            Syncfusion.Windows.Forms.MetroColorTable metroColorTable1 = new Syncfusion.Windows.Forms.MetroColorTable();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmKontrola));
+            Syncfusion.Windows.Forms.MetroColorTable metroColorTable1 = new Syncfusion.Windows.Forms.MetroColorTable();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.tsNew = new System.Windows.Forms.ToolStripButton();
+            this.tsSave = new System.Windows.Forms.ToolStripButton();
+            this.tsDelete = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.cboNajavaID = new Syncfusion.Windows.Forms.Tools.MultiColumnComboBox();
             this.label33 = new System.Windows.Forms.Label();
@@ -64,14 +67,12 @@ namespace Saobracaj.Dokumenta
             this.txtNapomenaStavka = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.sfButton2 = new Syncfusion.WinForms.Controls.SfButton();
-            this.tsNew = new System.Windows.Forms.ToolStripButton();
-            this.tsSave = new System.Windows.Forms.ToolStripButton();
-            this.tsDelete = new System.Windows.Forms.ToolStripButton();
             this.cboTipDokumenta = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
             this.txtKontrola1 = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.sfButton3 = new Syncfusion.WinForms.Controls.SfButton();
+            this.sfButton4 = new Syncfusion.WinForms.Controls.SfButton();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cboNajavaID)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gradientPanel4)).BeginInit();
@@ -95,6 +96,36 @@ namespace Saobracaj.Dokumenta
             this.toolStrip1.TabIndex = 161;
             this.toolStrip1.Text = "Štampaj izveštaj";
             // 
+            // tsNew
+            // 
+            this.tsNew.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsNew.Image = ((System.Drawing.Image)(resources.GetObject("tsNew.Image")));
+            this.tsNew.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsNew.Name = "tsNew";
+            this.tsNew.Size = new System.Drawing.Size(23, 22);
+            this.tsNew.Text = "Novi";
+            this.tsNew.Click += new System.EventHandler(this.tsNew_Click);
+            // 
+            // tsSave
+            // 
+            this.tsSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsSave.Image = ((System.Drawing.Image)(resources.GetObject("tsSave.Image")));
+            this.tsSave.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsSave.Name = "tsSave";
+            this.tsSave.Size = new System.Drawing.Size(23, 22);
+            this.tsSave.Text = "tsSave";
+            this.tsSave.Click += new System.EventHandler(this.tsSave_Click);
+            // 
+            // tsDelete
+            // 
+            this.tsDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsDelete.Image")));
+            this.tsDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsDelete.Name = "tsDelete";
+            this.tsDelete.Size = new System.Drawing.Size(23, 22);
+            this.tsDelete.Text = "toolStripButton1";
+            this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
+            // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
@@ -112,6 +143,7 @@ namespace Saobracaj.Dokumenta
             this.cboNajavaID.ScrollMetroColorTable = metroColorTable1;
             this.cboNajavaID.Size = new System.Drawing.Size(323, 21);
             this.cboNajavaID.TabIndex = 163;
+            this.cboNajavaID.KeyUp += new System.Windows.Forms.KeyEventHandler(this.cboNajavaID_KeyDown);
             this.cboNajavaID.Leave += new System.EventHandler(this.cboNajavaID_Leave);
             // 
             // label33
@@ -402,36 +434,6 @@ namespace Saobracaj.Dokumenta
             this.sfButton2.Text = "Promeni";
             this.sfButton2.Click += new System.EventHandler(this.sfButton2_Click);
             // 
-            // tsNew
-            // 
-            this.tsNew.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsNew.Image = ((System.Drawing.Image)(resources.GetObject("tsNew.Image")));
-            this.tsNew.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsNew.Name = "tsNew";
-            this.tsNew.Size = new System.Drawing.Size(23, 22);
-            this.tsNew.Text = "Novi";
-            this.tsNew.Click += new System.EventHandler(this.tsNew_Click);
-            // 
-            // tsSave
-            // 
-            this.tsSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsSave.Image = ((System.Drawing.Image)(resources.GetObject("tsSave.Image")));
-            this.tsSave.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsSave.Name = "tsSave";
-            this.tsSave.Size = new System.Drawing.Size(23, 22);
-            this.tsSave.Text = "tsSave";
-            this.tsSave.Click += new System.EventHandler(this.tsSave_Click);
-            // 
-            // tsDelete
-            // 
-            this.tsDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.tsDelete.Image = ((System.Drawing.Image)(resources.GetObject("tsDelete.Image")));
-            this.tsDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsDelete.Name = "tsDelete";
-            this.tsDelete.Size = new System.Drawing.Size(23, 22);
-            this.tsDelete.Text = "toolStripButton1";
-            this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
-            // 
             // cboTipDokumenta
             // 
             this.cboTipDokumenta.BackColor = System.Drawing.Color.White;
@@ -480,11 +482,23 @@ namespace Saobracaj.Dokumenta
             this.sfButton3.Text = "?";
             this.sfButton3.Click += new System.EventHandler(this.sfButton3_Click);
             // 
+            // sfButton4
+            // 
+            this.sfButton4.AccessibleName = "Button";
+            this.sfButton4.Font = new System.Drawing.Font("Segoe UI Semibold", 9F);
+            this.sfButton4.Location = new System.Drawing.Point(346, 104);
+            this.sfButton4.Name = "sfButton4";
+            this.sfButton4.Size = new System.Drawing.Size(30, 28);
+            this.sfButton4.TabIndex = 233;
+            this.sfButton4.Text = "?";
+            this.sfButton4.Click += new System.EventHandler(this.sfButton4_Click_1);
+            // 
             // frmKontrola
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1217, 600);
+            this.Controls.Add(this.sfButton4);
             this.Controls.Add(this.sfButton3);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.txtKontrola1);
@@ -580,5 +594,6 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.TextBox txtKontrola1;
         private System.Windows.Forms.Label label12;
         private Syncfusion.WinForms.Controls.SfButton sfButton3;
+        private Syncfusion.WinForms.Controls.SfButton sfButton4;
     }
 }

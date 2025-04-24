@@ -201,6 +201,71 @@ namespace Saobracaj.Dokumenta
 
         }
 
+        private void RefreshDataGridPoNajavi()
+        {
+
+            var select = "  Select KontrolaDokumentacije.ID, NajavaID, Delavci.DeSifra as RadnikID," +
+                " (Rtrim(Delavci.DeIme) + ' ' + Rtrim(Delavci.DePriimek)) as Radnik, DatumPrijemaKoverte, " +
+             "  Uradio, DatumCekiranja, Uradio2, DatumCekiranja2, Napomena from KontrolaDokumentacije " +
+             " inner join Delavci on Delavci.DeSifra = KontrolaDokumentacije.RadnikID where NajavaID like '%" + cboNajavaID.Text + "%'";
+
+
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 50;
+
+            DataGridViewColumn column1 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Najava ID";
+            dataGridView1.Columns[1].Width = 70;
+
+
+            DataGridViewColumn column2 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Radnik ID";
+            dataGridView1.Columns[2].Width = 70;
+
+
+            DataGridViewColumn column3 = dataGridView1.Columns[3];
+            dataGridView1.Columns[3].HeaderText = "Ime i prezime";
+            dataGridView1.Columns[3].Width = 170;
+
+            DataGridViewColumn column4 = dataGridView1.Columns[4];
+            dataGridView1.Columns[4].HeaderText = "ATA";
+            dataGridView1.Columns[4].Width = 70;
+
+            DataGridViewColumn column5 = dataGridView1.Columns[5];
+            dataGridView1.Columns[5].HeaderText = "Uradio";
+            dataGridView1.Columns[5].Width = 50;
+
+
+            DataGridViewColumn column6 = dataGridView1.Columns[6];
+            dataGridView1.Columns[6].HeaderText = "Datum prijema kovertr";
+            dataGridView1.Columns[6].Width = 70;
+
+            DataGridViewColumn column7 = dataGridView1.Columns[7];
+            dataGridView1.Columns[7].HeaderText = "Uradio 2";
+            dataGridView1.Columns[7].Width = 50;
+
+            DataGridViewColumn column8 = dataGridView1.Columns[8];
+            dataGridView1.Columns[8].HeaderText = "Datum izvršenog pregleda";
+            dataGridView1.Columns[8].Width = 70;
+
+            DataGridViewColumn column9 = dataGridView1.Columns[9];
+            dataGridView1.Columns[9].HeaderText = "Napomena";
+            dataGridView1.Columns[9].Width = 270;
+
+        }
+
 
         private void RefreshDataGridGreske()
         {
@@ -530,6 +595,21 @@ namespace Saobracaj.Dokumenta
             RefreshDataGrid();
             usao = 1;
             }
+        }
+
+        private void sfButton4_Click(object sender, EventArgs e)
+        {
+           
+        }
+
+        private void cboNajavaID_KeyDown(object sender, KeyEventArgs e)
+        {
+            RefreshDataGridPoNajavi();
+        }
+
+        private void sfButton4_Click_1(object sender, EventArgs e)
+        {
+            RefreshDataGrid();
         }
     }
 }
