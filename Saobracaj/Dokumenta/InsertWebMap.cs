@@ -13,7 +13,7 @@ namespace Saobracaj.Dokumenta
 {
     internal class InsertWebMap
     {
-        string connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.TestiranjeConnectionString"].ConnectionString;
+        string connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         public void InsertAPI(int IDRecords, string IDVehicles, DateTime RecordTime, decimal Latitude, decimal Longitude, decimal Altitude, decimal Direction, int SV, decimal MainVoltage, decimal SpeedAPI,
     DateTime DatumUpisa, string SS)
         {

@@ -48,11 +48,27 @@ namespace Saobracaj.Sifarnici
             dataGridView1.Columns[2].Width = 500;
 
         }
-
+        int ID,Elekt;
+        string Oznaka, NazivPruge;
         private void frmPrugeSpisak_Load(object sender, EventArgs e)
         {
             RefreshDataGrid();
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.Selected)
+                {
+                    ID = Convert.ToInt32(row.Cells[0].Value.ToString());
+                    Oznaka = row.Cells[1].Value.ToString().TrimEnd();
+                    NazivPruge = row.Cells[2].Value.ToString().TrimEnd();
+                    Elekt = Convert.ToInt32(row.Cells[3].Value.ToString());
+                }
+            }
+            frmPruge frm = new frmPruge(ID,Oznaka,NazivPruge,Elekt);
+            frm.Show();
+        }
     }
 }

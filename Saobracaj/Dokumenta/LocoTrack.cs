@@ -23,7 +23,7 @@ namespace Saobracaj.Dokumenta
 {
     public partial class LocoTrack : Form
     {
-        string connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.TestiranjeConnectionString"].ConnectionString;
+        string connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = true;
         public LocoTrack()
         {
@@ -54,11 +54,12 @@ namespace Saobracaj.Dokumenta
             }
             conn.Close();
 
-            lokomotiva = "2946";
-            fromDt = poslednjiZapis.ToString("yyyy-MM-dd");
-            toDt = DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+            lokomotiva = "2947";
+            //fromDt = "2024-12-26T08:00:00";
+            fromDt = "2024-12-26T01:00:00";
+            toDt = "2024-12-26T01:15:00";
             LoadMap();
-            ReadData();
+           // ReadData();
             FillCombo();
             
             
@@ -147,6 +148,7 @@ namespace Saobracaj.Dokumenta
                             mainVoltage = Convert.ToDecimal(i.Mainvoltage);
                             speedApi = Convert.ToDecimal(i.Speed);
                             ss = i.SS;
+
                             /*
                             year = ss.Substring(0, 4);
                             month = ss.Substring(4, 2);
@@ -204,7 +206,8 @@ namespace Saobracaj.Dokumenta
                             activeFault4 = ss.Substring(222, 5);
                             activeFault5 = ss.Substring(227, 5);
                             faultSync = ss.Substring(232, 3);
-                            faultAck = ss.Substring(235, 3);*/
+                            faultAck = ss.Substring(235, 3);
+                            */
 
                             var select = "select count(ID) From LocoTrackApp Where IDRecords=" + iDRecord;
                             SqlConnection conn = new SqlConnection(connection);
@@ -307,9 +310,10 @@ namespace Saobracaj.Dokumenta
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        {/*
+        {
+            string ss;
             decimal longitude, latitude;
-            int speed, gboxState, pwrContact, throtlePos, targetPower, tracPower, tracForce, compressorState, mainResPres, brakeCylPress, brakePipePress, wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp,
+            string speed, gboxState, pwrContact, throtlePos, targetPower, tracPower, tracForce, compressorState, mainResPres, brakeCylPress, brakePipePress, wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp,
                 eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2RPM, eng2WorkHours, eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1, activeFault2, activeFault3,
                 activeFault4, activeFault5, faultSync, faultAck;
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -318,9 +322,71 @@ namespace Saobracaj.Dokumenta
                 {
                     longitude = Convert.ToDecimal(row.Cells["Longitude"].Value);
                     latitude = Convert.ToDecimal(row.Cells["Latitude"].Value);
+                    ss = row.Cells["SS"].Value.ToString().TrimEnd();
 
                     AddMarker(latitude, longitude);
 
+                    string year = ss.Substring(0, 4);
+                    string month = ss.Substring(4, 2);
+                    string day = ss.Substring(6, 2);
+                    string hour = ss.Substring(8, 2);
+                    string minute = ss.Substring(10, 2);
+                    string second = ss.Substring(12, 2);
+                    string locomotiveId = ss.Substring(14, 5);
+                    string driverId = ss.Substring(19, 5);
+                    string nforceFw = ss.Substring(24, 5);
+                    string locoMode = ss.Substring(29, 5);
+                    speed = ss.Substring(34, 5);
+                    gboxState = ss.Substring(39, 3);
+                    pwrContact = ss.Substring(42, 3);
+                    throtlePos = ss.Substring(45, 3);
+                    tracMotorAvgCurr = ss.Substring(48, 5);
+                    targetPower = ss.Substring(53, 5);
+                    tracPower = ss.Substring(58, 5);
+                    tracForce = ss.Substring(63, 5);
+                    tracMotor1Curr = ss.Substring(68, 5);
+                    tracMotor2Curr = ss.Substring(73, 5);
+                    tracMotor3Curr = ss.Substring(78, 5);
+                    tracMotor4Curr = ss.Substring(83, 5);
+                    compressorState = ss.Substring(88, 3);
+                    mainResPres = ss.Substring(91, 5);
+                    brakeCylPress = ss.Substring(96, 5);
+                    brakePipePress = ss.Substring(101, 5);
+                    mcoMask = ss.Substring(106, 3);
+                    asMask = ss.Substring(109, 3);
+                    alerterMask = ss.Substring(112, 3);
+                    trip = ss.Substring(115, 8);
+                    asssState = ss.Substring(123, 3);
+                    excLimit = ss.Substring(126, 3);
+                    wheelSlip = ss.Substring(129, 3);
+                    resetCnt = ss.Substring(132, 3);
+                    secEngAllow = ss.Substring(135, 3);
+                    eng1State = ss.Substring(138, 3);
+                    eng1Rpm = ss.Substring(141, 5);
+                    eng1WorkHours = ss.Substring(146, 5);
+                    eng1WaterTemp = ss.Substring(151, 5);
+                    eng1OilTemp = ss.Substring(156, 5);
+                    eng1OilLevel = ss.Substring(161, 5);
+                    eng1FuelCons = ss.Substring(166, 5);
+                    eng2State = ss.Substring(171, 3);
+                    eng2RPM = ss.Substring(174, 5);
+                    eng2WorkHours = ss.Substring(179, 5);
+                    eng2WaterTemp = ss.Substring(184, 5);
+                    eng2OilTemp = ss.Substring(189, 5);
+                    eng2OilLevel = ss.Substring(194, 5);
+                    eng2FuelCons = ss.Substring(199, 5);
+                    activeFaultCnt = ss.Substring(204, 3);
+                    activeFault1 = ss.Substring(207, 5);
+                    activeFault2 = ss.Substring(212, 5);
+                    activeFault3 = ss.Substring(217, 5);
+                    activeFault4 = ss.Substring(222, 5);
+                    activeFault5 = ss.Substring(227, 5);
+                    faultSync = ss.Substring(232, 3);
+                    faultAck = ss.Substring(235, 3);
+
+
+
+                    /*
                     speed = Convert.ToInt32(row.Cells["SPEED"].Value);
                     gboxState = Convert.ToInt32(row.Cells["GBOX_STATE"].Value);
                     pwrContact = Convert.ToInt32(row.Cells["PWR_CONTACT_STATE"].Value);
@@ -354,28 +420,28 @@ namespace Saobracaj.Dokumenta
                     activeFault4 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_4"].Value);
                     activeFault5 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_5"].Value);
                     faultSync = Convert.ToInt32(row.Cells["FAULT_SYNC"].Value);
-                    faultAck = Convert.ToInt32(row.Cells["FAULT_ACK"].Value);
+                    faultAck = Convert.ToInt32(row.Cells["FAULT_ACK"].Value);*/
 
                     UpdateGauge(speed, gboxState, pwrContact, throtlePos, targetPower, tracPower, tracForce, compressorState, mainResPres, brakeCylPress, brakePipePress,
-                        wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp, eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2RPM, eng2WorkHours,
-                        eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1, activeFault2, activeFault3, activeFault4, activeFault5,
-                        faultSync, faultAck);
+                         wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp, eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2RPM, eng2WorkHours,
+                         eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1, activeFault2, activeFault3, activeFault4, activeFault5,
+                         faultSync, faultAck);
                     if (status == false)
                     {
                         webBrowser1.Document.InvokeScript("focusPin", new object[] { latitude, longitude });
                     }
                 }
-            }*/
+            }
         }
-        private void UpdateGauge(int speed, int gboxState, int pwrContact, int throtlePos, int targetPower, int tracPower, int tracForce, int compressorState, int mainResPres, int brakeCylPress,
-            int brakePipePress, int wheelSlip, int eng1State, int eng1Rpm, int eng1WorkHours, int eng1WaterTemp, int eng1OilTemp, int eng1OilLevel, int eng1FuelCons, int eng2State, int eng2RPM,
-            int eng2WorkHours, int eng2WaterTemp, int eng2OilTemp, int eng2OilLevel, int eng2FuelCons, int activeFaultCnt, int activeFault1, int activeFault2, int activeFault3, int activeFault4,
-            int activeFault5, int faultSync, int faultAck)
+        private void UpdateGauge(string speed, string gboxState, string pwrContact, string throtlePos, string targetPower, string tracPower, string tracForce, string compressorState, string mainResPres, string brakeCylPress,
+            string brakePipePress, string wheelSlip, string eng1State, string eng1Rpm, string eng1WorkHours, string eng1WaterTemp, string eng1OilTemp, string eng1OilLevel, string eng1FuelCons, string eng2State, string eng2RPM,
+            string eng2WorkHours, string eng2WaterTemp, string eng2OilTemp, string eng2OilLevel, string eng2FuelCons, string activeFaultCnt, string activeFault1, string activeFault2, string activeFault3, string activeFault4,
+            string activeFault5, string faultSync, string faultAck)
         {
-            /*speedGauge.Value = speed;
+            speedGauge.Value = Convert.ToInt32(speed);
             gStateGauge.Value = gboxState.ToString();
             pwrGauge.Value = pwrContact.ToString();
-            throttlePosGauge.Value = throtlePos;
+            throttlePosGauge.Value = Convert.ToInt32(throtlePos);
             targetPowerGauge.Value = targetPower.ToString();
             tracPowerGauge.Value = tracPower.ToString();
             tracForceGauge.Value = tracForce.ToString();
@@ -384,19 +450,19 @@ namespace Saobracaj.Dokumenta
             brakeCylPressGauge.Value = brakeCylPress.ToString();
             BrakePipePressGauge.Value = brakePipePress.ToString();
             WheelSlipGauge.Value = wheelSlip.ToString();
-            eng1StateGauge.Value = eng1State;
-            rpm1Gauge.Value = eng1Rpm;
+            eng1StateGauge.Value = Convert.ToInt32(eng1State);
+            rpm1Gauge.Value = Convert.ToInt32(eng1Rpm);
             eng1WorkHoursGauge.Value = eng1WorkHours.ToString();
-            eng1WaterTempGauge.Value = eng1WaterTemp;
-            eng1OilTempGauge.Value = eng1OilTemp;
-            eng1oilLevelGauge.Value = eng1OilLevel;
+            eng1WaterTempGauge.Value = Convert.ToInt32(eng1WaterTemp);
+            eng1OilTempGauge.Value = Convert.ToInt32(eng1OilTemp);
+            eng1oilLevelGauge.Value = Convert.ToInt32(eng1OilLevel);
             eng1FuelComp.Text = "Eng1FuelCons:" + eng1FuelCons.ToString();
-            eng2StateGauge.Value = eng2State;
-            rpm2Gauge.Value = eng2RPM;
+            eng2StateGauge.Value = Convert.ToInt32(eng2State);
+            rpm2Gauge.Value = Convert.ToInt32(eng2RPM);
             eng2WorkHoursGauge.Value = eng2WorkHours.ToString();
-            eng2WaterTempGauge.Value = eng2WaterTemp;
-            Eng2OilTempGauge.Value = eng2OilTemp;
-            eng2OilLevelGauge.Value = eng2OilLevel;
+            eng2WaterTempGauge.Value = Convert.ToInt32(eng2WaterTemp);
+            Eng2OilTempGauge.Value = Convert.ToInt32(eng2OilTemp);
+            eng2OilLevelGauge.Value = Convert.ToInt32(eng2OilLevel);
             eng2FuelComp.Text = "Eng2FuelCons:" + eng2FuelCons.ToString();
             activeFaultCNTGauge.Value = activeFaultCnt.ToString();
             activeFault1Gauge.Value = activeFault1.ToString();
@@ -405,7 +471,7 @@ namespace Saobracaj.Dokumenta
             activeFault4Gauge.Value = activeFault4.ToString();
             activeFautl5Gauge.Value = activeFault5.ToString();
             faultSyncGauge.Value = faultSync.ToString();
-            faultAckGauge.Value = faultAck.ToString();*/
+            faultAckGauge.Value = faultAck.ToString();
         }
         private void btn24H_Click(object sender, EventArgs e)
         {
@@ -472,7 +538,6 @@ namespace Saobracaj.Dokumenta
                     int id = Convert.ToInt32(row.Cells["ID"].Value);
                     string locomotive = row.Cells["IDVehicles"].Value.ToString().TrimEnd();
                     webBrowser1.Document.InvokeScript("addLoco", new object[] { latitude, longitude, id, locomotive });
-
             }
         }
         private void btnPozicije_Click(object sender, EventArgs e)

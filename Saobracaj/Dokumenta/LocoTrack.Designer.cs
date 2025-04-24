@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             Syncfusion.Windows.Forms.Gauge.Range range1 = new Syncfusion.Windows.Forms.Gauge.Range();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LocoTrack));
             Syncfusion.Windows.Forms.Gauge.Range range2 = new Syncfusion.Windows.Forms.Gauge.Range();
             this.speedGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WaterTempGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
@@ -90,16 +91,6 @@
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.panel2 = new System.Windows.Forms.Panel();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.label27 = new System.Windows.Forms.Label();
-            this.label25 = new System.Windows.Forms.Label();
-            this.label29 = new System.Windows.Forms.Label();
-            this.label28 = new System.Windows.Forms.Label();
-            this.label26 = new System.Windows.Forms.Label();
-            this.label24 = new System.Windows.Forms.Label();
-            this.rpm2Gauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.label36 = new System.Windows.Forms.Label();
             this.label35 = new System.Windows.Forms.Label();
@@ -117,13 +108,23 @@
             this.label31 = new System.Windows.Forms.Label();
             this.label30 = new System.Windows.Forms.Label();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.label27 = new System.Windows.Forms.Label();
+            this.label25 = new System.Windows.Forms.Label();
+            this.label29 = new System.Windows.Forms.Label();
+            this.label28 = new System.Windows.Forms.Label();
+            this.label26 = new System.Windows.Forms.Label();
+            this.label24 = new System.Windows.Forms.Label();
+            this.rpm2Gauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel2.SuspendLayout();
             this.tabControl1.SuspendLayout();
+            this.tabPage4.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage3.SuspendLayout();
-            this.tabPage4.SuspendLayout();
             this.SuspendLayout();
             // 
             // speedGauge
@@ -972,6 +973,7 @@
             this.webBrowser1.Name = "webBrowser1";
             this.webBrowser1.Size = new System.Drawing.Size(956, 887);
             this.webBrowser1.TabIndex = 5;
+            this.webBrowser1.Url = new System.Uri(resources.GetString("webBrowser1.Url"), System.UriKind.Relative);
             // 
             // panel2
             // 
@@ -997,194 +999,6 @@
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(330, 891);
             this.tabControl1.TabIndex = 9;
-            // 
-            // tabPage1
-            // 
-            this.tabPage1.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage1.Controls.Add(this.speedGauge);
-            this.tabPage1.Controls.Add(this.label7);
-            this.tabPage1.Controls.Add(this.WheelSlipGauge);
-            this.tabPage1.Controls.Add(this.label13);
-            this.tabPage1.Controls.Add(this.label12);
-            this.tabPage1.Controls.Add(this.label3);
-            this.tabPage1.Controls.Add(this.label4);
-            this.tabPage1.Controls.Add(this.BrakePipePressGauge);
-            this.tabPage1.Controls.Add(this.pwrGauge);
-            this.tabPage1.Controls.Add(this.gStateGauge);
-            this.tabPage1.Controls.Add(this.label11);
-            this.tabPage1.Controls.Add(this.throttlePosGauge);
-            this.tabPage1.Controls.Add(this.label8);
-            this.tabPage1.Controls.Add(this.compresorStateGauge);
-            this.tabPage1.Controls.Add(this.label6);
-            this.tabPage1.Controls.Add(this.label9);
-            this.tabPage1.Controls.Add(this.tracForceGauge);
-            this.tabPage1.Controls.Add(this.label10);
-            this.tabPage1.Controls.Add(this.brakeCylPressGauge);
-            this.tabPage1.Controls.Add(this.tracPowerGauge);
-            this.tabPage1.Controls.Add(this.targetPowerGauge);
-            this.tabPage1.Controls.Add(this.label5);
-            this.tabPage1.Controls.Add(this.MainResPressGauge);
-            this.tabPage1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(322, 865);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Main info";
-            // 
-            // tabPage2
-            // 
-            this.tabPage2.BackColor = System.Drawing.Color.Gainsboro;
-            this.tabPage2.Controls.Add(this.label27);
-            this.tabPage2.Controls.Add(this.label25);
-            this.tabPage2.Controls.Add(this.label29);
-            this.tabPage2.Controls.Add(this.label28);
-            this.tabPage2.Controls.Add(this.label26);
-            this.tabPage2.Controls.Add(this.label24);
-            this.tabPage2.Controls.Add(this.rpm2Gauge);
-            this.tabPage2.Controls.Add(this.rpm1Gauge);
-            this.tabPage2.Controls.Add(this.eng1WorkHoursGauge);
-            this.tabPage2.Controls.Add(this.label1);
-            this.tabPage2.Controls.Add(this.eng1StateGauge);
-            this.tabPage2.Controls.Add(this.eng1WaterTempGauge);
-            this.tabPage2.Controls.Add(this.eng1OilTempGauge);
-            this.tabPage2.Controls.Add(this.eng2WorkHoursGauge);
-            this.tabPage2.Controls.Add(this.label2);
-            this.tabPage2.Controls.Add(this.eng1oilLevelGauge);
-            this.tabPage2.Controls.Add(this.label14);
-            this.tabPage2.Controls.Add(this.eng2OilLevelGauge);
-            this.tabPage2.Controls.Add(this.label15);
-            this.tabPage2.Controls.Add(this.eng2StateGauge);
-            this.tabPage2.Controls.Add(this.eng2WaterTempGauge);
-            this.tabPage2.Controls.Add(this.Eng2OilTempGauge);
-            this.tabPage2.Controls.Add(this.eng1FuelComp);
-            this.tabPage2.Controls.Add(this.eng2FuelComp);
-            this.tabPage2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(322, 865);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Engines";
-            // 
-            // label27
-            // 
-            this.label27.AutoSize = true;
-            this.label27.Location = new System.Drawing.Point(203, 635);
-            this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(83, 15);
-            this.label27.TabIndex = 9;
-            this.label27.Text = "Eng2OilTemp";
-            // 
-            // label25
-            // 
-            this.label25.AutoSize = true;
-            this.label25.Location = new System.Drawing.Point(214, 516);
-            this.label25.Name = "label25";
-            this.label25.Size = new System.Drawing.Size(64, 15);
-            this.label25.TabIndex = 9;
-            this.label25.Text = "Eng2State";
-            // 
-            // label29
-            // 
-            this.label29.AutoSize = true;
-            this.label29.Location = new System.Drawing.Point(203, 747);
-            this.label29.Name = "label29";
-            this.label29.Size = new System.Drawing.Size(83, 15);
-            this.label29.TabIndex = 9;
-            this.label29.Text = "Eng2OilTemp";
-            // 
-            // label28
-            // 
-            this.label28.AutoSize = true;
-            this.label28.Location = new System.Drawing.Point(29, 747);
-            this.label28.Name = "label28";
-            this.label28.Size = new System.Drawing.Size(83, 15);
-            this.label28.TabIndex = 9;
-            this.label28.Text = "Eng1OilTemp";
-            // 
-            // label26
-            // 
-            this.label26.AutoSize = true;
-            this.label26.Location = new System.Drawing.Point(21, 635);
-            this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(100, 15);
-            this.label26.TabIndex = 9;
-            this.label26.Text = "Eng1WaterTemp";
-            // 
-            // label24
-            // 
-            this.label24.AutoSize = true;
-            this.label24.Location = new System.Drawing.Point(33, 516);
-            this.label24.Name = "label24";
-            this.label24.Size = new System.Drawing.Size(64, 15);
-            this.label24.TabIndex = 9;
-            this.label24.Text = "Eng1State";
-            // 
-            // rpm2Gauge
-            // 
-            this.rpm2Gauge.ArcThickness = 1F;
-            this.rpm2Gauge.CanApplyTheme = false;
-            this.rpm2Gauge.EnableCustomNeedles = false;
-            this.rpm2Gauge.FillColor = System.Drawing.Color.DarkGray;
-            this.rpm2Gauge.FrameThickness = 1;
-            this.rpm2Gauge.FrameType = Syncfusion.Windows.Forms.Gauge.FrameType.HalfCircle;
-            this.rpm2Gauge.GaugeLabel = "Eng1RPM";
-            this.rpm2Gauge.GaugeLableFont = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rpm2Gauge.GaugeValueFont = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rpm2Gauge.Location = new System.Drawing.Point(8, 191);
-            this.rpm2Gauge.MajorDifference = 120F;
-            this.rpm2Gauge.MajorTickMarkHeight = 20;
-            this.rpm2Gauge.MaximumValue = 5000F;
-            this.rpm2Gauge.MinimumSize = new System.Drawing.Size(130, 52);
-            this.rpm2Gauge.MinorDifference = 500F;
-            this.rpm2Gauge.MinorTickMarkHeight = 10;
-            this.rpm2Gauge.Name = "rpm2Gauge";
-            this.rpm2Gauge.NeedleColor = System.Drawing.Color.Red;
-            this.rpm2Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range2.Color = System.Drawing.Color.Red;
-            range2.EndValue = 5000F;
-            range2.Height = 5;
-            range2.InRange = false;
-            range2.Name = "GaugeRange1";
-            range2.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range2.StartValue = 3500F;
-            this.rpm2Gauge.Ranges.Add(range2);
-            this.rpm2Gauge.ShowGaugeValue = true;
-            this.rpm2Gauge.ShowTicks = true;
-            this.rpm2Gauge.Size = new System.Drawing.Size(215, 142);
-            this.rpm2Gauge.StartAngle = 180;
-            this.rpm2Gauge.SweepAngle = 180;
-            this.rpm2Gauge.TabIndex = 6;
-            this.rpm2Gauge.TickPlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.OutSide;
-            this.rpm2Gauge.TransparentBackGround = true;
-            // 
-            // tabPage3
-            // 
-            this.tabPage3.BackColor = System.Drawing.Color.Gainsboro;
-            this.tabPage3.Controls.Add(this.faultAckGauge);
-            this.tabPage3.Controls.Add(this.label17);
-            this.tabPage3.Controls.Add(this.activeFault1Gauge);
-            this.tabPage3.Controls.Add(this.label16);
-            this.tabPage3.Controls.Add(this.label22);
-            this.tabPage3.Controls.Add(this.activeFaultCNTGauge);
-            this.tabPage3.Controls.Add(this.faultSyncGauge);
-            this.tabPage3.Controls.Add(this.label23);
-            this.tabPage3.Controls.Add(this.label21);
-            this.tabPage3.Controls.Add(this.activeFault2Gauge);
-            this.tabPage3.Controls.Add(this.label18);
-            this.tabPage3.Controls.Add(this.activeFautl5Gauge);
-            this.tabPage3.Controls.Add(this.activeFault3Gauge);
-            this.tabPage3.Controls.Add(this.label19);
-            this.tabPage3.Controls.Add(this.activeFault4Gauge);
-            this.tabPage3.Controls.Add(this.label20);
-            this.tabPage3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(322, 865);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Faults";
             // 
             // tabPage4
             // 
@@ -1381,6 +1195,194 @@
             this.comboBox1.Size = new System.Drawing.Size(197, 23);
             this.comboBox1.TabIndex = 0;
             // 
+            // tabPage1
+            // 
+            this.tabPage1.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage1.Controls.Add(this.speedGauge);
+            this.tabPage1.Controls.Add(this.label7);
+            this.tabPage1.Controls.Add(this.WheelSlipGauge);
+            this.tabPage1.Controls.Add(this.label13);
+            this.tabPage1.Controls.Add(this.label12);
+            this.tabPage1.Controls.Add(this.label3);
+            this.tabPage1.Controls.Add(this.label4);
+            this.tabPage1.Controls.Add(this.BrakePipePressGauge);
+            this.tabPage1.Controls.Add(this.pwrGauge);
+            this.tabPage1.Controls.Add(this.gStateGauge);
+            this.tabPage1.Controls.Add(this.label11);
+            this.tabPage1.Controls.Add(this.throttlePosGauge);
+            this.tabPage1.Controls.Add(this.label8);
+            this.tabPage1.Controls.Add(this.compresorStateGauge);
+            this.tabPage1.Controls.Add(this.label6);
+            this.tabPage1.Controls.Add(this.label9);
+            this.tabPage1.Controls.Add(this.tracForceGauge);
+            this.tabPage1.Controls.Add(this.label10);
+            this.tabPage1.Controls.Add(this.brakeCylPressGauge);
+            this.tabPage1.Controls.Add(this.tracPowerGauge);
+            this.tabPage1.Controls.Add(this.targetPowerGauge);
+            this.tabPage1.Controls.Add(this.label5);
+            this.tabPage1.Controls.Add(this.MainResPressGauge);
+            this.tabPage1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(322, 865);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Main info";
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.BackColor = System.Drawing.Color.Gainsboro;
+            this.tabPage2.Controls.Add(this.label27);
+            this.tabPage2.Controls.Add(this.label25);
+            this.tabPage2.Controls.Add(this.label29);
+            this.tabPage2.Controls.Add(this.label28);
+            this.tabPage2.Controls.Add(this.label26);
+            this.tabPage2.Controls.Add(this.label24);
+            this.tabPage2.Controls.Add(this.rpm2Gauge);
+            this.tabPage2.Controls.Add(this.rpm1Gauge);
+            this.tabPage2.Controls.Add(this.eng1WorkHoursGauge);
+            this.tabPage2.Controls.Add(this.label1);
+            this.tabPage2.Controls.Add(this.eng1StateGauge);
+            this.tabPage2.Controls.Add(this.eng1WaterTempGauge);
+            this.tabPage2.Controls.Add(this.eng1OilTempGauge);
+            this.tabPage2.Controls.Add(this.eng2WorkHoursGauge);
+            this.tabPage2.Controls.Add(this.label2);
+            this.tabPage2.Controls.Add(this.eng1oilLevelGauge);
+            this.tabPage2.Controls.Add(this.label14);
+            this.tabPage2.Controls.Add(this.eng2OilLevelGauge);
+            this.tabPage2.Controls.Add(this.label15);
+            this.tabPage2.Controls.Add(this.eng2StateGauge);
+            this.tabPage2.Controls.Add(this.eng2WaterTempGauge);
+            this.tabPage2.Controls.Add(this.Eng2OilTempGauge);
+            this.tabPage2.Controls.Add(this.eng1FuelComp);
+            this.tabPage2.Controls.Add(this.eng2FuelComp);
+            this.tabPage2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(322, 865);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Engines";
+            // 
+            // label27
+            // 
+            this.label27.AutoSize = true;
+            this.label27.Location = new System.Drawing.Point(203, 635);
+            this.label27.Name = "label27";
+            this.label27.Size = new System.Drawing.Size(83, 15);
+            this.label27.TabIndex = 9;
+            this.label27.Text = "Eng2OilTemp";
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(214, 516);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(64, 15);
+            this.label25.TabIndex = 9;
+            this.label25.Text = "Eng2State";
+            // 
+            // label29
+            // 
+            this.label29.AutoSize = true;
+            this.label29.Location = new System.Drawing.Point(203, 747);
+            this.label29.Name = "label29";
+            this.label29.Size = new System.Drawing.Size(83, 15);
+            this.label29.TabIndex = 9;
+            this.label29.Text = "Eng2OilTemp";
+            // 
+            // label28
+            // 
+            this.label28.AutoSize = true;
+            this.label28.Location = new System.Drawing.Point(29, 747);
+            this.label28.Name = "label28";
+            this.label28.Size = new System.Drawing.Size(83, 15);
+            this.label28.TabIndex = 9;
+            this.label28.Text = "Eng1OilTemp";
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Location = new System.Drawing.Point(21, 635);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(100, 15);
+            this.label26.TabIndex = 9;
+            this.label26.Text = "Eng1WaterTemp";
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(33, 516);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(64, 15);
+            this.label24.TabIndex = 9;
+            this.label24.Text = "Eng1State";
+            // 
+            // rpm2Gauge
+            // 
+            this.rpm2Gauge.ArcThickness = 1F;
+            this.rpm2Gauge.CanApplyTheme = false;
+            this.rpm2Gauge.EnableCustomNeedles = false;
+            this.rpm2Gauge.FillColor = System.Drawing.Color.DarkGray;
+            this.rpm2Gauge.FrameThickness = 1;
+            this.rpm2Gauge.FrameType = Syncfusion.Windows.Forms.Gauge.FrameType.HalfCircle;
+            this.rpm2Gauge.GaugeLabel = "Eng1RPM";
+            this.rpm2Gauge.GaugeLableFont = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rpm2Gauge.GaugeValueFont = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rpm2Gauge.Location = new System.Drawing.Point(8, 191);
+            this.rpm2Gauge.MajorDifference = 120F;
+            this.rpm2Gauge.MajorTickMarkHeight = 20;
+            this.rpm2Gauge.MaximumValue = 5000F;
+            this.rpm2Gauge.MinimumSize = new System.Drawing.Size(130, 52);
+            this.rpm2Gauge.MinorDifference = 500F;
+            this.rpm2Gauge.MinorTickMarkHeight = 10;
+            this.rpm2Gauge.Name = "rpm2Gauge";
+            this.rpm2Gauge.NeedleColor = System.Drawing.Color.Red;
+            this.rpm2Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
+            range2.Color = System.Drawing.Color.Red;
+            range2.EndValue = 5000F;
+            range2.Height = 5;
+            range2.InRange = false;
+            range2.Name = "GaugeRange1";
+            range2.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range2.StartValue = 3500F;
+            this.rpm2Gauge.Ranges.Add(range2);
+            this.rpm2Gauge.ShowGaugeValue = true;
+            this.rpm2Gauge.ShowTicks = true;
+            this.rpm2Gauge.Size = new System.Drawing.Size(215, 142);
+            this.rpm2Gauge.StartAngle = 180;
+            this.rpm2Gauge.SweepAngle = 180;
+            this.rpm2Gauge.TabIndex = 6;
+            this.rpm2Gauge.TickPlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.OutSide;
+            this.rpm2Gauge.TransparentBackGround = true;
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.BackColor = System.Drawing.Color.Gainsboro;
+            this.tabPage3.Controls.Add(this.faultAckGauge);
+            this.tabPage3.Controls.Add(this.label17);
+            this.tabPage3.Controls.Add(this.activeFault1Gauge);
+            this.tabPage3.Controls.Add(this.label16);
+            this.tabPage3.Controls.Add(this.label22);
+            this.tabPage3.Controls.Add(this.activeFaultCNTGauge);
+            this.tabPage3.Controls.Add(this.faultSyncGauge);
+            this.tabPage3.Controls.Add(this.label23);
+            this.tabPage3.Controls.Add(this.label21);
+            this.tabPage3.Controls.Add(this.activeFault2Gauge);
+            this.tabPage3.Controls.Add(this.label18);
+            this.tabPage3.Controls.Add(this.activeFautl5Gauge);
+            this.tabPage3.Controls.Add(this.activeFault3Gauge);
+            this.tabPage3.Controls.Add(this.label19);
+            this.tabPage3.Controls.Add(this.activeFault4Gauge);
+            this.tabPage3.Controls.Add(this.label20);
+            this.tabPage3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(322, 865);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Faults";
+            // 
             // LocoTrack
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1396,14 +1398,14 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
-            this.tabPage4.ResumeLayout(false);
-            this.tabPage4.PerformLayout();
             this.ResumeLayout(false);
 
         }
