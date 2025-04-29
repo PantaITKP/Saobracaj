@@ -35,7 +35,7 @@ namespace Saobracaj.Sifarnici
             var select = "select PrugaStavke.ID as ID,IDPruge as Pruga,RTrim(stanice.Opis) as Stanica,stanicaOd " +
                 "From PrugaStavke " +
                 "inner join stanice on PrugaStavke.StanicaOd=stanice.ID " +
-                "Where IDPruge="+Convert.ToInt32(cboPruga.SelectedValue.ToString())+" order by RB asc";
+                "Where IDPruge=" + Convert.ToInt32(cboPruga.SelectedValue.ToString()) + " order by RB asc";
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);
             var c = new SqlConnection(s_connection);
@@ -84,7 +84,7 @@ namespace Saobracaj.Sifarnici
 
         private void RefreshDataGrid()
         {
-            
+
             //SELECT     TrasaStanice.IDTrase, TrasaStanice.RB, stanice.Opis, stanice.Kod FROM TrasaStanice INNER JOIN  PrugaStavke ON TrasaStanice.IDStanice = PrugaStavke.ID INNER JOIN stanice ON PrugaStavke.StanicaOd = stanice.ID
             var select = " SELECT     TrasaStanice.RB, TrasaStanice.IDTrase, stanice.Opis, stanice.Kod FROM TrasaStanice INNER JOIN stanice ON TrasaStanice.IDStanice = stanice.ID where TrasaStanice.IdTrase = " + txtSifra.Text;
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -113,7 +113,7 @@ namespace Saobracaj.Sifarnici
             DataGridViewColumn column4 = dataGridView1.Columns[3];
             dataGridView1.Columns[3].HeaderText = "Broj stanice";
             dataGridView1.Columns[3].Width = 100;
-            
+
 
         }
 
@@ -131,13 +131,27 @@ namespace Saobracaj.Sifarnici
             cboPruga.DataSource = ds.Tables[0];
             cboPruga.DisplayMember = "Opis";
             cboPruga.ValueMember = "ID";
+
+
+            var select2 = " Select ID, (Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase";
+            var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection2 = new SqlConnection(s_connection2);
+            var c2 = new SqlConnection(s_connection2);
+            var dataAdapter2 = new SqlDataAdapter(select2, c2);
+
+            var commandBuilder2 = new SqlCommandBuilder(dataAdapter2);
+            var ds2 = new DataSet();
+            dataAdapter2.Fill(ds2);
+            cboTrase.DataSource = ds2.Tables[0];
+            cboTrase.DisplayMember = "Opis";
+            cboTrase.ValueMember = "ID";
         }
 
         private void cboPruga_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (PrviUlazak != 0)
             {
-           
+
             }
 
         }
@@ -167,8 +181,8 @@ namespace Saobracaj.Sifarnici
                     if (row.Selected)
                     {
                         InsertTrasaStanice ins = new InsertTrasaStanice();
-                        ins.DelTStan( Convert.ToInt32(txtSifra.Text), Convert.ToInt32(row.Cells[0].Value.ToString()));
-                       
+                        ins.DelTStan(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(row.Cells[0].Value.ToString()));
+
                     }
                 }
                 RefreshDataGrid();
@@ -179,7 +193,7 @@ namespace Saobracaj.Sifarnici
                 MessageBox.Show("Nije uspelo brisanje stavki");
             }
 
-          
+
         }
 
         private void cboPruga_SelectionChangeCommitted(object sender, EventArgs e)
@@ -216,6 +230,13 @@ namespace Saobracaj.Sifarnici
             }
 
             RefreshDataGrid();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            InsertTrasaStanice ins = new InsertTrasaStanice();
+            ins.PrekopirajStanice(Convert.ToInt32(txtSifra.Text.ToString()), Convert.ToInt32(cboTrase.SelectedValue));
+
         }
     }
 }

@@ -182,7 +182,7 @@
             this.cboTrase.FormattingEnabled = true;
             this.cboTrase.Location = new System.Drawing.Point(427, 32);
             this.cboTrase.Name = "cboTrase";
-            this.cboTrase.Size = new System.Drawing.Size(121, 21);
+            this.cboTrase.Size = new System.Drawing.Size(305, 21);
             this.cboTrase.TabIndex = 3;
             // 
             // dataGridView1

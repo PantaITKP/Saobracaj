@@ -122,6 +122,7 @@
             this.txtRastojanjeP = new System.Windows.Forms.NumericUpDown();
             this.label40 = new System.Windows.Forms.Label();
             this.label41 = new System.Windows.Forms.Label();
+            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -485,7 +486,8 @@
             this.tsNazad,
             this.tsNapred,
             this.tsPoslednja,
-            this.toolStripButton1});
+            this.toolStripButton1,
+            this.toolStripButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1207, 25);
@@ -1088,6 +1090,15 @@
             this.label41.TabIndex = 94;
             this.label41.Text = "Prevozno rastojanje:";
             // 
+            // toolStripButton2
+            // 
+            this.toolStripButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
+            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton2.Name = "toolStripButton2";
+            this.toolStripButton2.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButton2.Text = "toolStripButton2";
+            // 
             // frmTrase
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1299,5 +1310,6 @@
         private System.Windows.Forms.NumericUpDown txtRastojanjeP;
         private System.Windows.Forms.Label label40;
         private System.Windows.Forms.Label label41;
+        private System.Windows.Forms.ToolStripButton toolStripButton2;
     }
 }
