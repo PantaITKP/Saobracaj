@@ -12,12 +12,14 @@ using System.Data.SqlClient;
 using System.Configuration;
 
 using Microsoft.Reporting.WinForms;
+using Microsoft.Office.Interop.Excel;
+using Syncfusion.XlsIO.Interfaces;
 
 namespace Saobracaj.Dokumenta
 {
     public partial class frmZarade : Form
     {
-        DataTable ndt;
+        System.Data.DataTable ndt;
         public frmZarade()
         {
             InitializeComponent();
@@ -160,6 +162,32 @@ namespace Saobracaj.Dokumenta
             cboZaposleni.ValueMember = "ID";
            // this.reportViewer1.RefreshReport();
            // this.reportViewer1.RefreshReport();
+        }
+
+        private void frmZarade_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(s_connection);
+            SqlCommand cmd = new SqlCommand("Update Aktivnosti Set KontrolisaoAdmin=1 Where Zaposleni=@id and VremeOd>=@vremeOd and VremeDo<=@vremeDo", conn);
+            cmd.Parameters.AddWithValue("@id", Convert.ToInt32(cboZaposleni.SelectedValue));
+            cmd.Parameters.AddWithValue("@vremeOd", Convert.ToDateTime(dtpVremeOd.Value));
+            cmd.Parameters.AddWithValue("@vremeDo",Convert.ToDateTime(dtpVremeDo.Value));
+            try
+            {
+                conn.Open();
+                cmd.ExecuteNonQuery();
+                MessageBox.Show("Uspešno ažurirano!");
+                conn.Close();
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }
