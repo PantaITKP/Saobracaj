@@ -35,7 +35,7 @@ namespace Saobracaj.ML_Training
         }
         private void FillCombo()
         {
-            var select = "select Trase.ID as ID,(RTrim(s1.Opis)+'-'+RTrim(s2.Opis)) as Opis From Trase inner join stanice as s1 on Trase.Pocetna=s1.ID inner join stanice as s2 on Trase.Krajnja=s2.ID Where Trase.ID in (1964,1916,1337,681)";
+            var select = "select Trase.ID as ID,(RTrim(s1.Opis)+'-'+RTrim(s2.Opis)) as Opis From Trase inner join stanice as s1 on Trase.Pocetna=s1.ID inner join stanice as s2 on Trase.Krajnja=s2.ID Where Trase.ID in (1917,1964,1916,1337,681)";
             SqlConnection conn = new SqlConnection(connection);
             var da = new SqlDataAdapter(select, conn);
             var ds = new System.Data.DataSet();
