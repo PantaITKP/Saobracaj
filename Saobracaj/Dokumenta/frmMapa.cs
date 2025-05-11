@@ -45,14 +45,14 @@ namespace Saobracaj.Dokumenta
         public frmMapa()
         {
             InitializeComponent();
-            IdGrupe();
+            /*IdGrupe();
             IdForme();
-            PravoPristupa();
+            PravoPristupa();*/
 
 
             LoadMap();
         }
-        public string IdGrupe()
+        /*public string IdGrupe()
         {
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             //Sifarnici.frmLogovanje frm = new Sifarnici.frmLogovanje();         
@@ -134,7 +134,7 @@ namespace Saobracaj.Dokumenta
             }
 
             conn.Close();
-        }
+        }*/
         private void frmMapa_Load(object sender, EventArgs e)
         {
             LoadNajave();
@@ -202,7 +202,7 @@ namespace Saobracaj.Dokumenta
         }
         private void map_OnMarkerClick(GMapMarker marker, MouseEventArgs e)
         {
-            overlay.Clear();
+            /*overlay.Clear();
 
             marker.ToolTipMode = MarkerTooltipMode.Always;
             overlay.Markers.Add(marker);
@@ -260,7 +260,7 @@ namespace Saobracaj.Dokumenta
             map.Overlays.Add(polyOvelray);
             map.Overlays.Add(overlay);
 
-            conn.Close();
+            conn.Close();*/
         } 
         private void btn_SveStanice_Click(object sender, EventArgs e)
         {
