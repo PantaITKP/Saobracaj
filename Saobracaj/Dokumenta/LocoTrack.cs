@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.PeerToPeer.Collaboration;
@@ -58,6 +59,7 @@ namespace Saobracaj.Dokumenta
             //fromDt = "2024-12-26T08:00:00";
             fromDt = "2024-12-26T01:00:00";
             toDt = "2024-12-26T01:15:00";
+
             LoadMap();
            // ReadData();
             FillCombo();
@@ -149,66 +151,6 @@ namespace Saobracaj.Dokumenta
                             speedApi = Convert.ToDecimal(i.Speed);
                             ss = i.SS;
 
-                            /*
-                            year = ss.Substring(0, 4);
-                            month = ss.Substring(4, 2);
-                            day = ss.Substring(6, 2);
-                            hour = ss.Substring(8, 2);
-                            minute = ss.Substring(10, 2);
-                            second = ss.Substring(12, 2);
-                            locomotiveId = ss.Substring(14, 5);
-                            driverId = ss.Substring(19, 5);
-                            nforceFw = ss.Substring(24, 5);
-                            locoMode = ss.Substring(29, 5);
-                            speed = ss.Substring(34, 5);
-                            gboxState = ss.Substring(39, 3);
-                            pwrContactState = ss.Substring(42, 3);
-                            throttlePos = ss.Substring(45, 3);
-                            tracMotorAvgCurr = ss.Substring(48, 5);
-                            targetPower = ss.Substring(53, 5);
-                            tracPower = ss.Substring(58, 5);
-                            tracForce = ss.Substring(63, 5);
-                            tracMotor1Curr = ss.Substring(68, 5);
-                            tracMotor2Curr = ss.Substring(73, 5);
-                            tracMotor3Curr = ss.Substring(78, 5);
-                            tracMotor4Curr = ss.Substring(83, 5);
-                            compressorState = ss.Substring(88, 3);
-                            mainResPress = ss.Substring(91, 5);
-                            brakeCylPress = ss.Substring(96, 5);
-                            brakePipePress = ss.Substring(101, 5);
-                            mcoMask = ss.Substring(106, 3);
-                            asMask = ss.Substring(109, 3);
-                            alerterMask = ss.Substring(112, 3);
-                            trip = ss.Substring(115, 8);
-                            asssState = ss.Substring(123, 3);
-                            excLimit = ss.Substring(126, 3);
-                            wheelSlip = ss.Substring(129, 3);
-                            resetCnt = ss.Substring(132, 3);
-                            secEngAllow = ss.Substring(135, 3);
-                            eng1State = ss.Substring(138, 3);
-                            eng1Rpm = ss.Substring(141, 5);
-                            eng1WorkHours = ss.Substring(146, 5);
-                            eng1WaterTemp = ss.Substring(151, 5);
-                            eng1OilTemp = ss.Substring(156, 5);
-                            eng1OilLevel = ss.Substring(161, 5);
-                            eng1FuelCons = ss.Substring(166, 5);
-                            eng2State = ss.Substring(171, 3);
-                            eng2Rpm = ss.Substring(174, 5);
-                            eng2WorkHours = ss.Substring(179, 5);
-                            eng2WaterTemp = ss.Substring(184, 5);
-                            eng2OilTemp = ss.Substring(189, 5);
-                            eng2OilLevel = ss.Substring(194, 5);
-                            eng2FuelCons = ss.Substring(199, 5);
-                            activeFaultCnt = ss.Substring(204, 3);
-                            activeFault1 = ss.Substring(207, 5);
-                            activeFault2 = ss.Substring(212, 5);
-                            activeFault3 = ss.Substring(217, 5);
-                            activeFault4 = ss.Substring(222, 5);
-                            activeFault5 = ss.Substring(227, 5);
-                            faultSync = ss.Substring(232, 3);
-                            faultAck = ss.Substring(235, 3);
-                            */
-
                             var select = "select count(ID) From LocoTrackApp Where IDRecords=" + iDRecord;
                             SqlConnection conn = new SqlConnection(connection);
                             SqlCommand cmd = new SqlCommand(select, conn);
@@ -288,9 +230,19 @@ namespace Saobracaj.Dokumenta
         }
         private void LoadMap()
         {
-            string html = System.IO.File.ReadAllText("map.html");
-            webBrowser1.DocumentText = html;
+            string fullPath = Path.Combine(Application.StartupPath, "map.html");
+
+            // Force well-formed file URI
+            string uriString = new Uri(fullPath).AbsoluteUri;
+
+            // This calls Navigate(string), which uses ReadyNavigateToUrl(string)
+            webBrowser1.Navigate(uriString);
         }
+
+
+
+
+
         private void AddMarker(decimal latitude, decimal longitude)
         {
             if (status == true)
@@ -383,44 +335,6 @@ namespace Saobracaj.Dokumenta
                     activeFault5 = ss.Substring(227, 5);
                     faultSync = ss.Substring(232, 3);
                     faultAck = ss.Substring(235, 3);
-
-
-
-                    /*
-                    speed = Convert.ToInt32(row.Cells["SPEED"].Value);
-                    gboxState = Convert.ToInt32(row.Cells["GBOX_STATE"].Value);
-                    pwrContact = Convert.ToInt32(row.Cells["PWR_CONTACT_STATE"].Value);
-                    throtlePos = Convert.ToInt32(row.Cells["THROTTLE_POS"].Value);
-                    targetPower = Convert.ToInt32(row.Cells["TARGET_POWER"].Value);
-                    tracPower = Convert.ToInt32(row.Cells["TRAC_POWER"].Value);
-                    tracForce = Convert.ToInt32(row.Cells["TRAC_FORCE"].Value);
-                    compressorState = Convert.ToInt32(row.Cells["COMPRESSOR_STATE"].Value);
-                    mainResPres = Convert.ToInt32(row.Cells["MAIN_RES_PRESS"].Value);
-                    brakeCylPress = Convert.ToInt32(row.Cells["BRAKE_CYL_PRESS"].Value);
-                    brakePipePress = Convert.ToInt32(row.Cells["BRAKE_PIPE_PRESS"].Value);
-                    wheelSlip = Convert.ToInt32(row.Cells["WHEEL_SLIP"].Value);
-                    eng1State = Convert.ToInt32(row.Cells["ENG_1_STATE"].Value);
-                    eng1Rpm = Convert.ToInt32(row.Cells["ENG_1_RPM"].Value);
-                    eng1WorkHours = Convert.ToInt32(row.Cells["ENG_1_WORK_HOURS"].Value);
-                    eng1WaterTemp = Convert.ToInt32(row.Cells["ENG_1_WATER_TEMP"].Value);
-                    eng1OilTemp = Convert.ToInt32(row.Cells["ENG_1_OIL_TEMP"].Value);
-                    eng1OilLevel = Convert.ToInt32(row.Cells["ENG_1_OIL_LEVEL"].Value);
-                    eng1FuelCons = Convert.ToInt32(row.Cells["ENG_1_FUEL_CONS"].Value);
-                    eng2State = Convert.ToInt32(row.Cells["ENG_2_STATE"].Value);
-                    eng2RPM = Convert.ToInt32(row.Cells["ENG_2_RPM"].Value);
-                    eng2WorkHours = Convert.ToInt32(row.Cells["ENG_2_WORK_HOURS"].Value);
-                    eng2WaterTemp = Convert.ToInt32(row.Cells["ENG_2_WATER_TEMP"].Value);
-                    eng2OilTemp = Convert.ToInt32(row.Cells["ENG_2_OIL_TEMP"].Value);
-                    eng2OilLevel = Convert.ToInt32(row.Cells["ENG_2_OIL_LEVEL"].Value);
-                    eng2FuelCons = Convert.ToInt32(row.Cells["ENG_2_FUEL_CONS"].Value);
-                    activeFaultCnt = Convert.ToInt32(row.Cells["ACTIVE_FAULT_CNT"].Value);
-                    activeFault1 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_1"].Value);
-                    activeFault2 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_2"].Value);
-                    activeFault3 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_3"].Value);
-                    activeFault4 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_4"].Value);
-                    activeFault5 = Convert.ToInt32(row.Cells["ACTIVE_FAULT_5"].Value);
-                    faultSync = Convert.ToInt32(row.Cells["FAULT_SYNC"].Value);
-                    faultAck = Convert.ToInt32(row.Cells["FAULT_ACK"].Value);*/
 
                     UpdateGauge(speed, gboxState, pwrContact, throtlePos, targetPower, tracPower, tracForce, compressorState, mainResPres, brakeCylPress, brakePipePress,
                          wheelSlip, eng1State, eng1Rpm, eng1WorkHours, eng1WaterTemp, eng1OilTemp, eng1OilLevel, eng1FuelCons, eng2State, eng2RPM, eng2WorkHours,
