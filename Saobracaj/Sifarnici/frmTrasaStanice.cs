@@ -138,7 +138,6 @@ namespace Saobracaj.Sifarnici
             SqlConnection myConnection2 = new SqlConnection(s_connection2);
             var c2 = new SqlConnection(s_connection2);
             var dataAdapter2 = new SqlDataAdapter(select2, c2);
-
             var commandBuilder2 = new SqlCommandBuilder(dataAdapter2);
             var ds2 = new DataSet();
             dataAdapter2.Fill(ds2);
