@@ -195,7 +195,7 @@ namespace Saobracaj.Dokumenta
                 pom = pom + ",'ZA'";
             }
 
-            select = select + "where RN.StatusRN in ( " + pom + ")" + " order by IDRadnogNaloga, d1.RB ";;
+            select = select + "where RN.StatusRN in ( " + pom + ")" + "and (YEAR(DatumPolaskaReal)='1900' or Year(DatumPolaskaReal)>'2024') and Year(DatumDolaskaReal)>'2024' order by IDRadnogNaloga, d1.RB "; ;
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -295,6 +295,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[19].HeaderText = "Trasa relacija";
             dataGridView1.Columns[19].Width = 150;
 
+            dataGridView1.Columns[17].Visible = false;
+            dataGridView1.Columns[18].Visible = false;
+            dataGridView1.Columns[19].Visible = false;
         }
 
         private void frmRadniNalogPregled_Load(object sender, EventArgs e)

@@ -163,10 +163,6 @@ namespace Saobracaj.Dokumenta
 
             dataGridView1.Columns[14].HeaderText = "Napomena";
             dataGridView1.Columns[14].Width = 300;
-     
-
- 
-
          }
 
         private void VratiLokomotive(int IDTrase, string IDRadnogNaloga)

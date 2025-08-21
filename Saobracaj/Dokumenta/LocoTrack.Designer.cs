@@ -28,9 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Syncfusion.Windows.Forms.Gauge.Range range1 = new Syncfusion.Windows.Forms.Gauge.Range();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LocoTrack));
-            Syncfusion.Windows.Forms.Gauge.Range range2 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range7 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range8 = new Syncfusion.Windows.Forms.Gauge.Range();
             this.speedGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WaterTempGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
@@ -118,6 +117,9 @@
             this.label24 = new System.Windows.Forms.Label();
             this.rpm2Gauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.label37 = new System.Windows.Forms.Label();
+            this.label38 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel2.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -125,6 +127,7 @@
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.tabPage5.SuspendLayout();
             this.SuspendLayout();
             // 
             // speedGauge
@@ -748,14 +751,14 @@
             this.rpm1Gauge.Name = "rpm1Gauge";
             this.rpm1Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm1Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range1.Color = System.Drawing.Color.Red;
-            range1.EndValue = 5000F;
-            range1.Height = 5;
-            range1.InRange = false;
-            range1.Name = "GaugeRange1";
-            range1.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range1.StartValue = 3500F;
-            this.rpm1Gauge.Ranges.Add(range1);
+            range7.Color = System.Drawing.Color.Red;
+            range7.EndValue = 5000F;
+            range7.Height = 5;
+            range7.InRange = false;
+            range7.Name = "GaugeRange1";
+            range7.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range7.StartValue = 3500F;
+            this.rpm1Gauge.Ranges.Add(range7);
             this.rpm1Gauge.ShowGaugeValue = true;
             this.rpm1Gauge.ShowTicks = true;
             this.rpm1Gauge.Size = new System.Drawing.Size(215, 142);
@@ -973,7 +976,6 @@
             this.webBrowser1.Name = "webBrowser1";
             this.webBrowser1.Size = new System.Drawing.Size(956, 887);
             this.webBrowser1.TabIndex = 5;
-            this.webBrowser1.Url = new System.Uri(resources.GetString("webBrowser1.Url"), System.UriKind.Relative);
             // 
             // panel2
             // 
@@ -994,6 +996,7 @@
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Location = new System.Drawing.Point(0, 1);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -1339,14 +1342,14 @@
             this.rpm2Gauge.Name = "rpm2Gauge";
             this.rpm2Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm2Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range2.Color = System.Drawing.Color.Red;
-            range2.EndValue = 5000F;
-            range2.Height = 5;
-            range2.InRange = false;
-            range2.Name = "GaugeRange1";
-            range2.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range2.StartValue = 3500F;
-            this.rpm2Gauge.Ranges.Add(range2);
+            range8.Color = System.Drawing.Color.Red;
+            range8.EndValue = 5000F;
+            range8.Height = 5;
+            range8.InRange = false;
+            range8.Name = "GaugeRange1";
+            range8.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range8.StartValue = 3500F;
+            this.rpm2Gauge.Ranges.Add(range8);
             this.rpm2Gauge.ShowGaugeValue = true;
             this.rpm2Gauge.ShowTicks = true;
             this.rpm2Gauge.Size = new System.Drawing.Size(215, 142);
@@ -1383,6 +1386,36 @@
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Faults";
             // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.label38);
+            this.tabPage5.Controls.Add(this.label37);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(322, 865);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "tabPage5";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Location = new System.Drawing.Point(17, 19);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(41, 13);
+            this.label37.TabIndex = 0;
+            this.label37.Text = "label37";
+            // 
+            // label38
+            // 
+            this.label38.AutoSize = true;
+            this.label38.Location = new System.Drawing.Point(183, 81);
+            this.label38.Name = "label38";
+            this.label38.Size = new System.Drawing.Size(41, 13);
+            this.label38.TabIndex = 1;
+            this.label38.Text = "label38";
+            // 
             // LocoTrack
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1406,6 +1439,8 @@
             this.tabPage2.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            this.tabPage5.ResumeLayout(false);
+            this.tabPage5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1498,5 +1533,8 @@
         private System.Windows.Forms.RadioButton rbMaxSpeed;
         private System.Windows.Forms.RadioButton rbSignals;
         private System.Windows.Forms.RadioButton rbStandard;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.Label label37;
+        private System.Windows.Forms.Label label38;
     }
 }

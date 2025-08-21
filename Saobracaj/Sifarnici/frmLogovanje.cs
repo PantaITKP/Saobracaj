@@ -15,6 +15,8 @@ using Syncfusion.Windows.Forms.Grid.Grouping;
 using Syncfusion.Windows.Forms;
 
 using MetroFramework.Forms;
+using Saobracaj.Dokumenta;
+using Saobracaj.MLProd;
 
 namespace Saobracaj.Sifarnici
 {
@@ -114,6 +116,12 @@ namespace Saobracaj.Sifarnici
         private void txtPassword_TextChanged(object sender, EventArgs e)
         {
             
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Predict frm = new Predict();
+            frm.Show();
         }
     }
 }

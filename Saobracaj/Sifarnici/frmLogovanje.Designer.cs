@@ -36,6 +36,7 @@
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.cboKorisnik = new MetroFramework.Controls.MetroComboBox();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.txtPassword)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -43,31 +44,28 @@
             // 
             // txtPassword
             // 
-            this.txtPassword.BeforeTouchSize = new System.Drawing.Size(375, 22);
-            this.txtPassword.Location = new System.Drawing.Point(131, 94);
-            this.txtPassword.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPassword.BeforeTouchSize = new System.Drawing.Size(282, 20);
+            this.txtPassword.Location = new System.Drawing.Point(98, 76);
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.PasswordChar = '●';
-            this.txtPassword.Size = new System.Drawing.Size(375, 22);
+            this.txtPassword.Size = new System.Drawing.Size(282, 20);
             this.txtPassword.TabIndex = 47;
             this.txtPassword.UseSystemPasswordChar = true;
             this.txtPassword.TextChanged += new System.EventHandler(this.txtPassword_TextChanged);
             // 
             // autoLabel1
             // 
-            this.autoLabel1.Location = new System.Drawing.Point(16, 37);
-            this.autoLabel1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.autoLabel1.Location = new System.Drawing.Point(12, 30);
             this.autoLabel1.Name = "autoLabel1";
-            this.autoLabel1.Size = new System.Drawing.Size(58, 17);
+            this.autoLabel1.Size = new System.Drawing.Size(44, 13);
             this.autoLabel1.TabIndex = 48;
             this.autoLabel1.Text = "Korisnik";
             // 
             // autoLabel2
             // 
-            this.autoLabel2.Location = new System.Drawing.Point(16, 97);
-            this.autoLabel2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.autoLabel2.Location = new System.Drawing.Point(12, 79);
             this.autoLabel2.Name = "autoLabel2";
-            this.autoLabel2.Size = new System.Drawing.Size(57, 17);
+            this.autoLabel2.Size = new System.Drawing.Size(44, 13);
             this.autoLabel2.TabIndex = 49;
             this.autoLabel2.Text = "Lozinka";
             // 
@@ -75,10 +73,9 @@
             // 
             this.button1.AccessibleName = "Button";
             this.button1.Font = new System.Drawing.Font("Segoe UI Semibold", 9F);
-            this.button1.Location = new System.Drawing.Point(131, 153);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Location = new System.Drawing.Point(98, 124);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(376, 34);
+            this.button1.Size = new System.Drawing.Size(282, 28);
             this.button1.TabIndex = 50;
             this.button1.Text = "Prijava";
             this.button1.Click += new System.EventHandler(this.button1_Click);
@@ -89,10 +86,9 @@
             this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
             this.pictureBox1.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.InitialImage")));
-            this.pictureBox1.Location = new System.Drawing.Point(83, 28);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.pictureBox1.Location = new System.Drawing.Point(62, 23);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(40, 34);
+            this.pictureBox1.Size = new System.Drawing.Size(30, 28);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 51;
             this.pictureBox1.TabStop = false;
@@ -101,29 +97,38 @@
             // 
             this.pictureBox2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pictureBox2.BackgroundImage")));
             this.pictureBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pictureBox2.Location = new System.Drawing.Point(83, 89);
-            this.pictureBox2.Margin = new System.Windows.Forms.Padding(4);
+            this.pictureBox2.Location = new System.Drawing.Point(62, 72);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(39, 36);
+            this.pictureBox2.Size = new System.Drawing.Size(29, 29);
             this.pictureBox2.TabIndex = 52;
             this.pictureBox2.TabStop = false;
             // 
             // cboKorisnik
             // 
             this.cboKorisnik.FormattingEnabled = true;
-            this.cboKorisnik.ItemHeight = 24;
-            this.cboKorisnik.Location = new System.Drawing.Point(131, 28);
-            this.cboKorisnik.Margin = new System.Windows.Forms.Padding(4);
+            this.cboKorisnik.ItemHeight = 23;
+            this.cboKorisnik.Location = new System.Drawing.Point(98, 23);
             this.cboKorisnik.Name = "cboKorisnik";
-            this.cboKorisnik.Size = new System.Drawing.Size(375, 30);
+            this.cboKorisnik.Size = new System.Drawing.Size(282, 29);
             this.cboKorisnik.TabIndex = 53;
             this.cboKorisnik.UseSelectable = true;
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(9, 126);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(53, 35);
+            this.button2.TabIndex = 54;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // frmLogovanje
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(549, 219);
+            this.ClientSize = new System.Drawing.Size(413, 178);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.cboKorisnik);
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.pictureBox1);
@@ -132,7 +137,6 @@
             this.Controls.Add(this.autoLabel1);
             this.Controls.Add(this.txtPassword);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmLogovanje";
             this.Text = "Logovanje";
             this.Load += new System.EventHandler(this.frmLogovanje_Load);
@@ -152,5 +156,6 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.PictureBox pictureBox2;
         public MetroFramework.Controls.MetroComboBox cboKorisnik;
+        private System.Windows.Forms.Button button2;
     }
 }

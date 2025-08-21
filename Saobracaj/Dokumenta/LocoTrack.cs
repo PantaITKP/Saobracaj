@@ -44,7 +44,7 @@ namespace Saobracaj.Dokumenta
         DateTime poslednjiZapis;
         private void LocoTrack_Load(object sender, EventArgs e)
         {
-            var select = "Select Max(DatumUpisa) From LocoTrackApp";
+            /*var select = "Select Max(DatumUpisa) From LocoTrackApp";
             SqlConnection conn = new SqlConnection(connection);
             SqlCommand cmd = new SqlCommand(select, conn);
             conn.Open();
@@ -53,15 +53,19 @@ namespace Saobracaj.Dokumenta
             {
                 poslednjiZapis = Convert.ToDateTime(reader[0].ToString());
             }
-            conn.Close();
+            conn.Close();*/
 
             lokomotiva = "2947";
             //fromDt = "2024-12-26T08:00:00";
-            fromDt = "2024-12-26T01:00:00";
-            toDt = "2024-12-26T01:15:00";
+            fromDt = "2025-06-13T01:00:00";
+            DateTime datumPom = DateTime.Now;
+            string pom = datumPom.ToString("yyyy-MM-ddTHH:mm:ss");
+            MessageBox.Show(pom);
+            toDt = pom;
+            //toDt = "2025-06-13T11:15:00";
 
             LoadMap();
-           // ReadData();
+            ReadData();
             FillCombo();
             
             
@@ -232,12 +236,19 @@ namespace Saobracaj.Dokumenta
         {
             string fullPath = Path.Combine(Application.StartupPath, "map.html");
 
-            // Force well-formed file URI
-            string uriString = new Uri(fullPath).AbsoluteUri;
+            if (!File.Exists(fullPath))
+            {
+                MessageBox.Show("map.html not found at: " + fullPath);
+                return;
+            }
 
-            // This calls Navigate(string), which uses ReadyNavigateToUrl(string)
-            webBrowser1.Navigate(uriString);
+            string fileUrl = new Uri(fullPath).AbsoluteUri;
+            webBrowser1.Navigate(fileUrl);
         }
+
+
+
+
 
 
 
@@ -344,6 +355,7 @@ namespace Saobracaj.Dokumenta
                     {
                         webBrowser1.Document.InvokeScript("focusPin", new object[] { latitude, longitude });
                     }
+                    label37.Text = "Speed: " + speed + "\nPozicija gasa: " + throtlePos + "\nTarget power: " + targetPower + "\ncompressorState: " + compressorState + "\nmainResPress: " + mainResPres + "\nbrakeCylPress: " + brakeCylPress + "\nbrakePipePress: " + brakePipePress + "\nTrip: " + trip + "\nAsss_state: " + asssState + "\nEng1WorkHours:" + eng1WorkHours + "\neng1WaterTemp: " + eng1WaterTemp + "\nEng1FuelCons: " + eng1FuelCons + "\neng2WorkHours: " + eng2WorkHours + "\neng2WaterTemp: " + eng2WaterTemp + "\neng2FuelCons: " + eng2FuelCons + ".";
                 }
             }
         }

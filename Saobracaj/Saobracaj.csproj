@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\LightGBM.3.3.5\build\LightGBM.props" Condition="Exists('..\packages\LightGBM.3.3.5\build\LightGBM.props')" />
   <Import Project="..\packages\Microsoft.ML.FastTree.4.0.2\build\netstandard2.0\Microsoft.ML.FastTree.props" Condition="Exists('..\packages\Microsoft.ML.FastTree.4.0.2\build\netstandard2.0\Microsoft.ML.FastTree.props')" />
   <Import Project="..\packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.props" Condition="Exists('..\packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.props')" />
   <Import Project="..\packages\Microsoft.ML.CpuMath.4.0.2\build\netstandard2.0\Microsoft.ML.CpuMath.props" Condition="Exists('..\packages\Microsoft.ML.CpuMath.4.0.2\build\netstandard2.0\Microsoft.ML.CpuMath.props')" />
@@ -78,6 +79,25 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AjaxMin">
@@ -217,6 +237,7 @@
     <Reference Include="OpenPop">
       <HintPath>..\packages\OpenPop.NET.2.0.6.1120\lib\net40\OpenPop.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="Syncfusion.BulletGraph.Windows, Version=18.4460.0.34, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL">
       <HintPath>..\packages\Syncfusion.BulletGraph.Windows.18.4.0.34\lib\net46\Syncfusion.BulletGraph.Windows.dll</HintPath>
@@ -470,7 +491,9 @@
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -1342,6 +1365,18 @@
     </Compile>
     <Compile Include="ML Training\TrainArrivalData.cs" />
     <Compile Include="ML Training\TrainArrivalPrediction.cs" />
+    <Compile Include="MLProd\EtaService.cs" />
+    <Compile Include="MLProd\GlobalTrainer.cs" />
+    <Compile Include="MLProd\Predict.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MLProd\Predict.Designer.cs">
+      <DependentUpon>Predict.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MLProd\SegmentData.cs" />
+    <Compile Include="MLProd\StopTrainer.cs" />
+    <Compile Include="MLProd\StopTypes.cs" />
+    <Compile Include="MLProd\TrainLogger.cs" />
     <Compile Include="Mobile\frmAnalizaGO.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2318,6 +2353,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\LocoTrack.resx">
       <DependentUpon>LocoTrack.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\rptGodisnjiOdmor.rdlc" />
     <EmbeddedResource Include="Dokumenta\rptPlacenoNeplaceno.rdlc" />
@@ -2378,6 +2414,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ML Training\SimulirajVremeTrase.resx">
       <DependentUpon>SimulirajVremeTrase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MLProd\Predict.resx">
+      <DependentUpon>Predict.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Mobile\frmAnalizaGO.resx">
       <DependentUpon>frmAnalizaGO.cs</DependentUpon>
@@ -2878,6 +2917,7 @@
   <ItemGroup>
     <Content Include="itextsharp.dll" />
     <EmbeddedResource Include="ML Training\map.html" />
+    <Content Include="MLProd\MapML.html" />
     <Content Include="SqlServerTypes\readme.htm" />
     <Content Include="SqlServerTypes\x64\msvcr120.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
