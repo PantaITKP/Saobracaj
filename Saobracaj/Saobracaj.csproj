@@ -1367,6 +1367,12 @@
     <Compile Include="ML Training\TrainArrivalPrediction.cs" />
     <Compile Include="MLProd\EtaService.cs" />
     <Compile Include="MLProd\GlobalTrainer.cs" />
+    <Compile Include="MLProd\PonudaML.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MLProd\PonudaML.Designer.cs">
+      <DependentUpon>PonudaML.cs</DependentUpon>
+    </Compile>
     <Compile Include="MLProd\Predict.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -1377,6 +1383,12 @@
     <Compile Include="MLProd\StopTrainer.cs" />
     <Compile Include="MLProd\StopTypes.cs" />
     <Compile Include="MLProd\TrainLogger.cs" />
+    <Compile Include="MLProd\UporediVremenaML.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MLProd\UporediVremenaML.Designer.cs">
+      <DependentUpon>UporediVremenaML.cs</DependentUpon>
+    </Compile>
     <Compile Include="Mobile\frmAnalizaGO.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2415,6 +2427,9 @@
     <EmbeddedResource Include="ML Training\SimulirajVremeTrase.resx">
       <DependentUpon>SimulirajVremeTrase.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="MLProd\PonudaML.resx">
+      <DependentUpon>PonudaML.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MLProd\Predict.resx">
       <DependentUpon>Predict.cs</DependentUpon>
     </EmbeddedResource>
@@ -2917,7 +2932,9 @@
   <ItemGroup>
     <Content Include="itextsharp.dll" />
     <EmbeddedResource Include="ML Training\map.html" />
-    <Content Include="MLProd\MapML.html" />
+    <EmbeddedResource Include="MLProd\MapML.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="SqlServerTypes\readme.htm" />
     <Content Include="SqlServerTypes\x64\msvcr120.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

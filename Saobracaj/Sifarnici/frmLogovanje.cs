@@ -123,5 +123,11 @@ namespace Saobracaj.Sifarnici
             Predict frm = new Predict();
             frm.Show();
         }
+
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            LocoTrack frm = new LocoTrack();
+            frm.Show();
+        }
     }
 }

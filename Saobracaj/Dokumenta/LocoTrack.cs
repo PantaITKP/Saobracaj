@@ -57,11 +57,14 @@ namespace Saobracaj.Dokumenta
 
             lokomotiva = "2947";
             //fromDt = "2024-12-26T08:00:00";
-            fromDt = "2025-06-13T01:00:00";
-            DateTime datumPom = DateTime.Now;
+            //fromDt = "2025-06-13T01:00:00";
+            DateTime datumPom = DateTime.Now.AddDays(-1);
             string pom = datumPom.ToString("yyyy-MM-ddTHH:mm:ss");
-            MessageBox.Show(pom);
-            toDt = pom;
+            fromDt = pom;
+            DateTime datumDo = DateTime.Now.AddDays(1);
+            string datumDoPom= datumDo.ToString("yyyy-MM-ddTHH:mm:ss");
+
+            toDt = datumDoPom;
             //toDt = "2025-06-13T11:15:00";
 
             LoadMap();
@@ -125,6 +128,8 @@ namespace Saobracaj.Dokumenta
                     dynamic data = JsonConvert.DeserializeObject(responseText);
                     token = data.access_token;
                     string apiEndpoint = "http://85.25.177.168/gpstrackjourney/api/journey/records";
+                    MessageBox.Show(fromDt.ToString());
+                    MessageBox.Show(toDt.ToString());
                     var resp = new MultipartFormDataContent
                     {
                         { new StringContent(lokomotiva), "vehicles" },
@@ -135,11 +140,14 @@ namespace Saobracaj.Dokumenta
                     request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                     request.Content = resp;
 
+
+
                     HttpResponseMessage response = await client.SendAsync(request);
                     if (response.IsSuccessStatusCode)
                     {
                         string content = await response.Content.ReadAsStringAsync();
                         rec = JsonConvert.DeserializeObject<List<Record>>(content);
+                        MessageBox.Show(content.ToString());
 
                         foreach (var i in rec)
                         {
@@ -409,6 +417,7 @@ namespace Saobracaj.Dokumenta
         }
         private void btnLokomotiva_Click(object sender, EventArgs e)
         {
+            
             status = false;
             webBrowser1.Document.InvokeScript("clearMap");
 

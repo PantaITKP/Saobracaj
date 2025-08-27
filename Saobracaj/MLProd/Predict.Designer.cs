@@ -35,6 +35,8 @@
             this.webBrowser1 = new System.Windows.Forms.WebBrowser();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.predvidiVremenaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.uToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sačuvajPredviđenaVremenaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.retrenirajModelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.prekiniTreningToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.otvoriLOGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -43,21 +45,21 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.lblBestLoco = new System.Windows.Forms.Label();
-            this.lblBestDriver = new System.Windows.Forms.Label();
-            this.lblEtaNoStops = new System.Windows.Forms.Label();
+            this.lblHandoverWithStops = new System.Windows.Forms.Label();
             this.lblEtaWithStops = new System.Windows.Forms.Label();
-            this.uToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.chkListPrijem = new System.Windows.Forms.CheckedListBox();
-            this.chkListPredaja = new System.Windows.Forms.CheckedListBox();
-            this.btnNazad = new System.Windows.Forms.Button();
-            this.btnPotvridAktivnosti = new System.Windows.Forms.Button();
             this.lblPrepStart = new System.Windows.Forms.Label();
             this.lblHandoverNoStops = new System.Windows.Forms.Label();
-            this.lblHandoverWithStops = new System.Windows.Forms.Label();
+            this.lblEtaNoStops = new System.Windows.Forms.Label();
+            this.lblBestDriver = new System.Windows.Forms.Label();
+            this.lblBestLoco = new System.Windows.Forms.Label();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.btnPotvridAktivnosti = new System.Windows.Forms.Button();
+            this.btnNazad = new System.Windows.Forms.Button();
+            this.chkListPredaja = new System.Windows.Forms.CheckedListBox();
+            this.chkListPrijem = new System.Windows.Forms.CheckedListBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.uporediVremenaRNZAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -128,9 +130,11 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.predvidiVremenaToolStripMenuItem,
             this.uToolStripMenuItem,
-            this.retrenirajModelToolStripMenuItem,
+            this.sačuvajPredviđenaVremenaToolStripMenuItem,
+            this.otvoriLOGToolStripMenuItem,
             this.prekiniTreningToolStripMenuItem,
-            this.otvoriLOGToolStripMenuItem});
+            this.retrenirajModelToolStripMenuItem,
+            this.uporediVremenaRNZAToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1556, 28);
@@ -139,15 +143,36 @@
             // 
             // predvidiVremenaToolStripMenuItem
             // 
+            this.predvidiVremenaToolStripMenuItem.BackColor = System.Drawing.Color.Green;
             this.predvidiVremenaToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.predvidiVremenaToolStripMenuItem.ForeColor = System.Drawing.Color.Lime;
+            this.predvidiVremenaToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
             this.predvidiVremenaToolStripMenuItem.Name = "predvidiVremenaToolStripMenuItem";
             this.predvidiVremenaToolStripMenuItem.Size = new System.Drawing.Size(136, 24);
             this.predvidiVremenaToolStripMenuItem.Text = "Predvidi vremena";
             this.predvidiVremenaToolStripMenuItem.Click += new System.EventHandler(this.predvidiVremenaToolStripMenuItem_Click);
             // 
+            // uToolStripMenuItem
+            // 
+            this.uToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.uToolStripMenuItem.Name = "uToolStripMenuItem";
+            this.uToolStripMenuItem.Size = new System.Drawing.Size(189, 24);
+            this.uToolStripMenuItem.Text = "Uključi aktivnosti prevoza";
+            this.uToolStripMenuItem.Click += new System.EventHandler(this.uToolStripMenuItem_Click);
+            // 
+            // sačuvajPredviđenaVremenaToolStripMenuItem
+            // 
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.BackColor = System.Drawing.Color.DarkOrange;
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.Name = "sačuvajPredviđenaVremenaToolStripMenuItem";
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.Size = new System.Drawing.Size(211, 24);
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.Text = "Sačuvaj predviđena vremena";
+            this.sačuvajPredviđenaVremenaToolStripMenuItem.Click += new System.EventHandler(this.sačuvajPredviđenaVremenaToolStripMenuItem_Click);
+            // 
             // retrenirajModelToolStripMenuItem
             // 
+            this.retrenirajModelToolStripMenuItem.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.retrenirajModelToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.retrenirajModelToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
             this.retrenirajModelToolStripMenuItem.Name = "retrenirajModelToolStripMenuItem";
@@ -157,8 +182,10 @@
             // 
             // prekiniTreningToolStripMenuItem
             // 
+            this.prekiniTreningToolStripMenuItem.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.prekiniTreningToolStripMenuItem.BackColor = System.Drawing.Color.Red;
             this.prekiniTreningToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.prekiniTreningToolStripMenuItem.ForeColor = System.Drawing.Color.DarkRed;
+            this.prekiniTreningToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
             this.prekiniTreningToolStripMenuItem.Name = "prekiniTreningToolStripMenuItem";
             this.prekiniTreningToolStripMenuItem.Size = new System.Drawing.Size(116, 24);
             this.prekiniTreningToolStripMenuItem.Text = "Prekini trening";
@@ -166,6 +193,7 @@
             // 
             // otvoriLOGToolStripMenuItem
             // 
+            this.otvoriLOGToolStripMenuItem.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.otvoriLOGToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.otvoriLOGToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ControlLightLight;
             this.otvoriLOGToolStripMenuItem.Name = "otvoriLOGToolStripMenuItem";
@@ -234,38 +262,16 @@
             this.panel1.Size = new System.Drawing.Size(304, 199);
             this.panel1.TabIndex = 9;
             // 
-            // lblBestLoco
+            // lblHandoverWithStops
             // 
-            this.lblBestLoco.AutoSize = true;
-            this.lblBestLoco.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBestLoco.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblBestLoco.Location = new System.Drawing.Point(5, 3);
-            this.lblBestLoco.Name = "lblBestLoco";
-            this.lblBestLoco.Size = new System.Drawing.Size(44, 16);
-            this.lblBestLoco.TabIndex = 0;
-            this.lblBestLoco.Text = "label2";
-            // 
-            // lblBestDriver
-            // 
-            this.lblBestDriver.AutoSize = true;
-            this.lblBestDriver.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBestDriver.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblBestDriver.Location = new System.Drawing.Point(3, 25);
-            this.lblBestDriver.Name = "lblBestDriver";
-            this.lblBestDriver.Size = new System.Drawing.Size(44, 16);
-            this.lblBestDriver.TabIndex = 0;
-            this.lblBestDriver.Text = "label2";
-            // 
-            // lblEtaNoStops
-            // 
-            this.lblEtaNoStops.AutoSize = true;
-            this.lblEtaNoStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblEtaNoStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblEtaNoStops.Location = new System.Drawing.Point(3, 76);
-            this.lblEtaNoStops.Name = "lblEtaNoStops";
-            this.lblEtaNoStops.Size = new System.Drawing.Size(44, 16);
-            this.lblEtaNoStops.TabIndex = 0;
-            this.lblEtaNoStops.Text = "label2";
+            this.lblHandoverWithStops.AutoSize = true;
+            this.lblHandoverWithStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblHandoverWithStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblHandoverWithStops.Location = new System.Drawing.Point(3, 156);
+            this.lblHandoverWithStops.Name = "lblHandoverWithStops";
+            this.lblHandoverWithStops.Size = new System.Drawing.Size(103, 16);
+            this.lblHandoverWithStops.TabIndex = 0;
+            this.lblHandoverWithStops.Text = "Nema aktivnosti";
             // 
             // lblEtaWithStops
             // 
@@ -278,14 +284,60 @@
             this.lblEtaWithStops.TabIndex = 0;
             this.lblEtaWithStops.Text = "label2";
             // 
-            // uToolStripMenuItem
+            // lblPrepStart
             // 
-            this.uToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.uToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.uToolStripMenuItem.Name = "uToolStripMenuItem";
-            this.uToolStripMenuItem.Size = new System.Drawing.Size(189, 24);
-            this.uToolStripMenuItem.Text = "Uključi aktivnosti prevoza";
-            this.uToolStripMenuItem.Click += new System.EventHandler(this.uToolStripMenuItem_Click);
+            this.lblPrepStart.AutoSize = true;
+            this.lblPrepStart.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPrepStart.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblPrepStart.Location = new System.Drawing.Point(3, 49);
+            this.lblPrepStart.Name = "lblPrepStart";
+            this.lblPrepStart.Size = new System.Drawing.Size(103, 16);
+            this.lblPrepStart.TabIndex = 0;
+            this.lblPrepStart.Text = "Nema aktivnosti";
+            // 
+            // lblHandoverNoStops
+            // 
+            this.lblHandoverNoStops.AutoSize = true;
+            this.lblHandoverNoStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblHandoverNoStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblHandoverNoStops.Location = new System.Drawing.Point(3, 102);
+            this.lblHandoverNoStops.Name = "lblHandoverNoStops";
+            this.lblHandoverNoStops.Size = new System.Drawing.Size(103, 16);
+            this.lblHandoverNoStops.TabIndex = 0;
+            this.lblHandoverNoStops.Text = "Nema aktivnosti";
+            // 
+            // lblEtaNoStops
+            // 
+            this.lblEtaNoStops.AutoSize = true;
+            this.lblEtaNoStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEtaNoStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblEtaNoStops.Location = new System.Drawing.Point(3, 76);
+            this.lblEtaNoStops.Name = "lblEtaNoStops";
+            this.lblEtaNoStops.Size = new System.Drawing.Size(44, 16);
+            this.lblEtaNoStops.TabIndex = 0;
+            this.lblEtaNoStops.Text = "label2";
+            // 
+            // lblBestDriver
+            // 
+            this.lblBestDriver.AutoSize = true;
+            this.lblBestDriver.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBestDriver.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblBestDriver.Location = new System.Drawing.Point(3, 25);
+            this.lblBestDriver.Name = "lblBestDriver";
+            this.lblBestDriver.Size = new System.Drawing.Size(44, 16);
+            this.lblBestDriver.TabIndex = 0;
+            this.lblBestDriver.Text = "label2";
+            // 
+            // lblBestLoco
+            // 
+            this.lblBestLoco.AutoSize = true;
+            this.lblBestLoco.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBestLoco.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.lblBestLoco.Location = new System.Drawing.Point(5, 3);
+            this.lblBestLoco.Name = "lblBestLoco";
+            this.lblBestLoco.Size = new System.Drawing.Size(44, 16);
+            this.lblBestLoco.TabIndex = 0;
+            this.lblBestLoco.Text = "label2";
             // 
             // panel2
             // 
@@ -301,41 +353,15 @@
             this.panel2.Size = new System.Drawing.Size(805, 584);
             this.panel2.TabIndex = 10;
             // 
-            // label2
+            // btnPotvridAktivnosti
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(3, 4);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(88, 16);
-            this.label2.TabIndex = 0;
-            this.label2.Text = "Prijem voza";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(365, 4);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(99, 16);
-            this.label3.TabIndex = 0;
-            this.label3.Text = "Predaja voza";
-            // 
-            // chkListPrijem
-            // 
-            this.chkListPrijem.FormattingEnabled = true;
-            this.chkListPrijem.Location = new System.Drawing.Point(6, 30);
-            this.chkListPrijem.Name = "chkListPrijem";
-            this.chkListPrijem.Size = new System.Drawing.Size(319, 544);
-            this.chkListPrijem.TabIndex = 1;
-            // 
-            // chkListPredaja
-            // 
-            this.chkListPredaja.FormattingEnabled = true;
-            this.chkListPredaja.Location = new System.Drawing.Point(368, 30);
-            this.chkListPredaja.Name = "chkListPredaja";
-            this.chkListPredaja.Size = new System.Drawing.Size(319, 544);
-            this.chkListPredaja.TabIndex = 1;
+            this.btnPotvridAktivnosti.Location = new System.Drawing.Point(704, 31);
+            this.btnPotvridAktivnosti.Name = "btnPotvridAktivnosti";
+            this.btnPotvridAktivnosti.Size = new System.Drawing.Size(79, 80);
+            this.btnPotvridAktivnosti.TabIndex = 2;
+            this.btnPotvridAktivnosti.Text = "Potvrdi aktivnosti";
+            this.btnPotvridAktivnosti.UseVisualStyleBackColor = true;
+            this.btnPotvridAktivnosti.Click += new System.EventHandler(this.btnPotvridAktivnosti_Click);
             // 
             // btnNazad
             // 
@@ -347,48 +373,50 @@
             this.btnNazad.UseVisualStyleBackColor = true;
             this.btnNazad.Click += new System.EventHandler(this.btnNazad_Click);
             // 
-            // btnPotvridAktivnosti
+            // chkListPredaja
             // 
-            this.btnPotvridAktivnosti.Location = new System.Drawing.Point(704, 31);
-            this.btnPotvridAktivnosti.Name = "btnPotvridAktivnosti";
-            this.btnPotvridAktivnosti.Size = new System.Drawing.Size(79, 80);
-            this.btnPotvridAktivnosti.TabIndex = 2;
-            this.btnPotvridAktivnosti.Text = "Potvrdi aktivnosti";
-            this.btnPotvridAktivnosti.UseVisualStyleBackColor = true;
-            this.btnPotvridAktivnosti.Click += new System.EventHandler(this.btnPotvridAktivnosti_Click);
+            this.chkListPredaja.FormattingEnabled = true;
+            this.chkListPredaja.Location = new System.Drawing.Point(368, 30);
+            this.chkListPredaja.Name = "chkListPredaja";
+            this.chkListPredaja.Size = new System.Drawing.Size(319, 544);
+            this.chkListPredaja.TabIndex = 1;
             // 
-            // lblPrepStart
+            // chkListPrijem
             // 
-            this.lblPrepStart.AutoSize = true;
-            this.lblPrepStart.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPrepStart.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblPrepStart.Location = new System.Drawing.Point(3, 49);
-            this.lblPrepStart.Name = "lblPrepStart";
-            this.lblPrepStart.Size = new System.Drawing.Size(44, 16);
-            this.lblPrepStart.TabIndex = 0;
-            this.lblPrepStart.Text = "label2";
+            this.chkListPrijem.FormattingEnabled = true;
+            this.chkListPrijem.Location = new System.Drawing.Point(6, 30);
+            this.chkListPrijem.Name = "chkListPrijem";
+            this.chkListPrijem.Size = new System.Drawing.Size(319, 544);
+            this.chkListPrijem.TabIndex = 1;
             // 
-            // lblHandoverNoStops
+            // label3
             // 
-            this.lblHandoverNoStops.AutoSize = true;
-            this.lblHandoverNoStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHandoverNoStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblHandoverNoStops.Location = new System.Drawing.Point(3, 102);
-            this.lblHandoverNoStops.Name = "lblHandoverNoStops";
-            this.lblHandoverNoStops.Size = new System.Drawing.Size(44, 16);
-            this.lblHandoverNoStops.TabIndex = 0;
-            this.lblHandoverNoStops.Text = "label2";
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(365, 4);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(99, 16);
+            this.label3.TabIndex = 0;
+            this.label3.Text = "Predaja voza";
             // 
-            // lblHandoverWithStops
+            // label2
             // 
-            this.lblHandoverWithStops.AutoSize = true;
-            this.lblHandoverWithStops.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblHandoverWithStops.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.lblHandoverWithStops.Location = new System.Drawing.Point(3, 156);
-            this.lblHandoverWithStops.Name = "lblHandoverWithStops";
-            this.lblHandoverWithStops.Size = new System.Drawing.Size(44, 16);
-            this.lblHandoverWithStops.TabIndex = 0;
-            this.lblHandoverWithStops.Text = "label2";
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(3, 4);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(88, 16);
+            this.label2.TabIndex = 0;
+            this.label2.Text = "Prijem voza";
+            // 
+            // uporediVremenaRNZAToolStripMenuItem
+            // 
+            this.uporediVremenaRNZAToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uporediVremenaRNZAToolStripMenuItem.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.uporediVremenaRNZAToolStripMenuItem.Name = "uporediVremenaRNZAToolStripMenuItem";
+            this.uporediVremenaRNZAToolStripMenuItem.Size = new System.Drawing.Size(185, 24);
+            this.uporediVremenaRNZAToolStripMenuItem.Text = "Uporedi vremena RN-ZA";
+            this.uporediVremenaRNZAToolStripMenuItem.Click += new System.EventHandler(this.uporediVremenaRNZAToolStripMenuItem_Click);
             // 
             // Predict
             // 
@@ -406,7 +434,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Predict";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Predict";
+            this.Text = " ";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
@@ -457,5 +485,7 @@
         private System.Windows.Forms.Label lblPrepStart;
         private System.Windows.Forms.Label lblHandoverWithStops;
         private System.Windows.Forms.Label lblHandoverNoStops;
+        private System.Windows.Forms.ToolStripMenuItem sačuvajPredviđenaVremenaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem uporediVremenaRNZAToolStripMenuItem;
     }
 }

@@ -207,7 +207,14 @@ namespace Saobracaj.MLProd
                 }
 
                 dataGridView1.DataSource = dt1;
-                dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                dataGridView1.Columns[0].Width = 60;
+                dataGridView1.Columns[1].Width = 60;
+                dataGridView1.Columns[3].Width = 60;
+
+                dataGridView1.Columns[4].Width = 100;
+                dataGridView1.Columns[5].Width = 80;
+
+
 
                 // 4) Preporuke — sada odvojeno: dataGridView2 (mašinovođa), dataGridView3 (lokomotiva)
                 BuildRecommendationsGrids(rn, start, final);
@@ -1356,6 +1363,7 @@ WHERE Sati IS NOT NULL AND Sati > 0
             {
                 // standardni slučaj: korisnik naknadno uključuje aktivnosti na već izračunate ETA
                 UkljuciAktivnosti();
+                panel2.Visible = false; 
             }
         }
         private Dictionary<int, string> LoadActivityNames(IEnumerable<int> ids)
@@ -1376,6 +1384,142 @@ WHERE Sati IS NOT NULL AND Sati > 0
                     map[Convert.ToInt32(r["ID"])] = Convert.ToString(r["Naziv"]);
             }
             return map;
+        }
+        public void DeleteVremenaRN(int RN)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "DeleteMLPredvidjenaVremenaRN";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@RN";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = RN;
+            myCommand.Parameters.Add(parameter);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Brisanje neuspešno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje nije uspešno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+        public void InsertVremenaRN(int RN,int RBTrase,int RBStanice,DateTime Vreme)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "InsertMLPredvidjenaVremenaRN";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@RN";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = RN;
+            myCommand.Parameters.Add(parameter);
+
+            SqlParameter parameter1 = new SqlParameter();
+            parameter1.ParameterName = "@RBTrase";
+            parameter1.SqlDbType = SqlDbType.Int;
+            parameter1.Direction = ParameterDirection.Input;
+            parameter1.Value = RBTrase;
+            myCommand.Parameters.Add(parameter1);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@RBStanice";
+            parameter2.SqlDbType = SqlDbType.Int;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = RBStanice;
+            myCommand.Parameters.Add(parameter2);
+
+            SqlParameter parameter3 = new SqlParameter();
+            parameter3.ParameterName = "@Vreme";
+            parameter3.SqlDbType = SqlDbType.DateTime;
+            parameter3.Direction = ParameterDirection.Input;
+            parameter3.Value = Vreme;
+            myCommand.Parameters.Add(parameter3);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Upisivanje neuspešno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Upisivanje nije uspešno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
+        private void sačuvajPredviđenaVremenaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            int rn = Convert.ToInt32(comboBox1.SelectedValue);
+            DeleteVremenaRN(rn);
+            foreach(DataGridViewRow row in dataGridView1.Rows)
+            {
+                InsertVremenaRN(rn, Convert.ToInt32(row.Cells[0].Value), Convert.ToInt32(row.Cells[1].Value), Convert.ToDateTime(row.Cells[6].Value));
+            }
+            MessageBox.Show("Vreme uspešno upisano!");
+        }
+
+        private void uporediVremenaRNZAToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UporediVremenaML frm = new UporediVremenaML();
+            frm.Show();
         }
     }
 }

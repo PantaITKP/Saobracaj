@@ -1,119 +1,61 @@
-﻿<!DOCTYPE html>
-<html lang="sr">
+﻿<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenRailwayMap</title>
     <style>
         html, body {
-            height: 100%;
             margin: 0;
             padding: 0;
+            height: 100%;
         }
 
         #map {
             height: 100%;
             width: 100%;
         }
-
-        .popup-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .popup-eta {
-            font-family: monospace;
-        }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Pin na verziju koja radi u IE11 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
 <body>
     <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet 1.7.1 (IE-compatible) -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
     <script>
-        // --- init ---
-        var map = L.map('map').setView([44.7866, 20.4489], 7);
-        var osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-            opacity: 0.7
-        }).addTo(map);
-        var railLayer = L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
-            attribution: 'Style: <a href="https://www.openrailwaymap.org/">OpenRailwayMap</a>'
-        }).addTo(map);
-        L.control.layers({ "OpenStreetMap": osmTileLayer }, { "Railway Map": railLayer }).addTo(map);
+        var map = L.map('map').setView([44.7866, 20.4489], 10);
 
-        // slojevi koje čistimo/ponovo crtamo
-        var markersGroup = L.layerGroup().addTo(map);
-        var routeGroup = L.layerGroup().addTo(map);
+        var osmTileLayer = L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            { attribution: '&copy; OpenStreetMap contributors', opacity: 0.7 }
+        ).addTo(map);
 
-        function clearRoute() {
-            markersGroup.clearLayers();
-            routeGroup.clearLayers();
-        }
+        var defaultTileLayer = L.tileLayer(
+            'https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
+            { attribution: '© OSM contributors | OpenRailwayMap' }
+        ).addTo(map);
 
-        // mapiranje verovatnoće (0..1) u gradijent (svetlo plava → crvena)
-        function probToColor(p) {
-            // light-blue #74c0ff (116,192,255) → red #ff0033 (255,0,51)
-            var r0 = 116, g0 = 192, b0 = 255;
-            var r1 = 255, g1 = 0, b1 = 51;
-            var r = Math.round(r0 + (r1 - r0) * p);
-            var g = Math.round(g0 + (g1 - g0) * p);
-            var b = Math.round(b0 + (b1 - b0) * p);
-            return 'rgb(' + r + ',' + g + ',' + b + ')';
-        }
+        var baseMaps = { 'OpenStreetMap': osmTileLayer };
+        var overlayMaps = { 'Railway Map': defaultTileLayer };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-        // C# šalje JSON niz:
-        // [{ "lat":.., "lon":.., "name":"..", "eta":"YYYY-MM-DD HH:mm", "p":0.23 }, ...]
-        // p = verovatnoća za segment *pre* dolaska u ovu tačku (p[i] za liniju i-1→i)
-        function setRouteFromJson(json) {
-            clearRoute();
-            var pts = JSON.parse(json);
-            if (!pts || pts.length === 0) return;
-
-            // markeri + popup
-            var latlngs = [];
-            for (var i = 0; i < pts.length; i++) {
-                var p = pts[i];
-                var ll = L.latLng(p.lon, p.lat);
-                latlngs.push(ll);
-                var popupHtml = '<div class="popup-title">' + (p.name || 'Stanica') + '</div>'
-                    + '<div class="popup-eta">ETA: ' + (p.eta || 'n/a') + '</div>';
-                L.marker(ll).addTo(markersGroup).bindPopup(popupHtml);
-            }
-
-            // segmenti obojeni po verovatnoći (ako nema p, tretiramo 0)
-            for (var i = 1; i < latlngs.length; i++) {
-                var p = pts[i].p || 0.0;
-                var seg = L.polyline([latlngs[i - 1], latlngs[i]], {
-                    color: probToColor(Math.max(0, Math.min(1, p))),
-                    weight: 5,
-                    opacity: 0.9
-                });
-                routeGroup.addLayer(seg);
-            }
-
-            // zoom na rutu
-            if (latlngs.length === 1) {
-                map.setView(latlngs[0], 12);
-            } else {
-                map.fitBounds(L.latLngBounds(latlngs));
-            }
-        }
-
-        // opcioni switch ORM sloja
+        // Ostavi tvoju updateLayer funkciju ako je koristiš
         function updateLayer(Maplayer) {
-            var base = 'https://{s}.tiles.openrailwaymap.org/';
-            map.removeLayer(railLayer);
-            railLayer = L.tileLayer(base + Maplayer + '/{z}/{x}/{y}.png', {
-                attribution: 'Style: <a href="https://www.openrailwaymap.org/?layers=' + Maplayer + '">OpenRailwayMap</a>'
+            var baseLayerUrl = 'https://{s}.tiles.openrailwaymap.org/';
+            map.removeLayer(defaultTileLayer);
+            var layerUrl = baseLayerUrl + Maplayer + '/{z}/{x}/{y}.png';
+            defaultTileLayer = L.tileLayer(layerUrl, {
+                attribution: '© OSM contributors | OpenRailwayMap'
             }).addTo(map);
         }
 
-        // izloži funkcije za C#
-        window.setRouteFromJson = setRouteFromJson;
-        window.clearRoute = clearRoute;
-        window.updateLayer = updateLayer;
+        // (Ako koristiš funkciju setRouteFromJson, ostavi je ovde)
+        // window.setRouteFromJson = function(json) { ... }
     </script>
 </body>
 </html>
