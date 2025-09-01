@@ -118,15 +118,10 @@ namespace Saobracaj.Sifarnici
             
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            Predict frm = new Predict();
-            frm.Show();
-        }
 
-        private void button2_Click_1(object sender, EventArgs e)
+        private void button2_Click_2(object sender, EventArgs e)
         {
-            LocoTrack frm = new LocoTrack();
+            PonudaML frm = new PonudaML();
             frm.Show();
         }
     }

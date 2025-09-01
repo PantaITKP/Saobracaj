@@ -1365,6 +1365,12 @@
     </Compile>
     <Compile Include="ML Training\TrainArrivalData.cs" />
     <Compile Include="ML Training\TrainArrivalPrediction.cs" />
+    <Compile Include="MLProd\AnalizaVozova.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MLProd\AnalizaVozova.Designer.cs">
+      <DependentUpon>AnalizaVozova.cs</DependentUpon>
+    </Compile>
     <Compile Include="MLProd\EtaService.cs" />
     <Compile Include="MLProd\GlobalTrainer.cs" />
     <Compile Include="MLProd\PonudaML.cs">
@@ -2426,6 +2432,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ML Training\SimulirajVremeTrase.resx">
       <DependentUpon>SimulirajVremeTrase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MLProd\AnalizaVozova.resx">
+      <DependentUpon>AnalizaVozova.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MLProd\PonudaML.resx">
       <DependentUpon>PonudaML.cs</DependentUpon>
