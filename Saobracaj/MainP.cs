@@ -941,5 +941,17 @@ namespace Saobracaj
             Mobile.frmZavrsnaDokumentacija zd = new Mobile.frmZavrsnaDokumentacija();
             zd.Show();
         }
+
+        private void toolStripButton134_Click(object sender, EventArgs e)
+        {
+            Dokumenta.LocoTrack lc = new Dokumenta.LocoTrack();
+            lc.Show();
+        }
+
+        private void toolStripButton133_Click(object sender, EventArgs e)
+        {
+            MLProd.PonudaML pon = new MLProd.PonudaML();
+            pon.Show();
+        }
     }
 }
