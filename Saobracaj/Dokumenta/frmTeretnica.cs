@@ -225,7 +225,7 @@ namespace Saobracaj.Dokumenta
 
 
                 InsertTeretnica ins = new InsertTeretnica();
-                ins.InsTeretnica(txtVozBroj.Text, Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaPopisa.SelectedValue), dtpVremeOd.Value, dtpVremeDo.Value, txtBrojLista.Text, pomPrijemna, pomPredajna, Korisnik, pomPrevozna, Convert.ToInt32(txtRN.Text));
+                ins.InsTeretnica(txtVozBroj.Text, Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaPopisa.SelectedValue), dtpVremeOd.Value, dtpVremeDo.Value, txtBrojLista.Text, pomPrijemna, pomPredajna, Korisnik, pomPrevozna, Convert.ToInt32(txtRN.Text), pomCarinska);
                 VratiPodatkeMax();
                 //RefreshDataGrid();
                 status = false;
@@ -240,8 +240,36 @@ namespace Saobracaj.Dokumenta
                 {
                     pomPrijemna = 0;
                 }
+
+
+                if (chkPredajna.Checked)
+                {
+                    pomPredajna = 1;
+                }
+                else
+                {
+                    pomPredajna = 0;
+                }
+
+                if (chkPrevozna.Checked)
+                {
+                    pomPrevozna = 1;
+                }
+                else
+                {
+                    pomPrevozna = 0;
+                }
+
+                if (chkCARINSKA.Checked)
+                {
+                    pomCarinska = 1;
+                }
+                else
+                {
+                    pomCarinska = 0;
+                }
                 InsertTeretnica upd = new InsertTeretnica();
-                upd.UpdTeretnica(Convert.ToInt32(txtSifra.Text), txtVozBroj.Text, Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaPopisa.SelectedValue), dtpVremeOd.Value, dtpVremeDo.Value, txtBrojLista.Text, pomPrijemna, pomPredajna, Korisnik, pomPrevozna, Convert.ToInt32(txtRN.Text));
+                upd.UpdTeretnica(Convert.ToInt32(txtSifra.Text), txtVozBroj.Text, Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaPopisa.SelectedValue), dtpVremeOd.Value, dtpVremeDo.Value, txtBrojLista.Text, pomPrijemna, pomPredajna, Korisnik, pomPrevozna, Convert.ToInt32(txtRN.Text), pomCarinska);
             }
         }
 
@@ -558,6 +586,13 @@ namespace Saobracaj.Dokumenta
             reportViewer1.LocalReport.SetParameters(par);
             reportViewer1.LocalReport.DataSources.Add(rds);
             reportViewer1.RefreshReport();
+
+
+            reportViewer6.LocalReport.DataSources.Clear();
+            reportViewer6.LocalReport.ReportPath = "TeretnicaKomercijalna.rdlc";
+            reportViewer6.LocalReport.SetParameters(par);
+            reportViewer6.LocalReport.DataSources.Add(rds);
+            reportViewer6.RefreshReport();
 
             InsertTeretnica upd = new InsertTeretnica();
             //Ukoliko je Najava i CIM onda Update
@@ -884,6 +919,13 @@ namespace Saobracaj.Dokumenta
             InsertTeretnica ins = new InsertTeretnica();
             ins.PrekopirajTeretnicaCarinska(Convert.ToInt32(txtSifra.Text));
             MessageBox.Show("Uspesno je prekopirana teretnica u Prijemnu");
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            InsertTeretnica naj = new InsertTeretnica();
+            naj.PromeniIDNajaveSvimStavkama(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtBrojNajave.Text));
+            RefreshDataGrid();
         }
     }
 }

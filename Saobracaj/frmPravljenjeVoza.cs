@@ -506,7 +506,7 @@ inner join TeretnicaStavke ts on TIV.IDTeretnice = ts.id*/
             try
             {
                 Dokumenta.InsertTeretnica it = new Dokumenta.InsertTeretnica();
-                it.InsTeretnica("", Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaIsklj.SelectedValue), Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeOd.Value), "", 0, 0, "sa", 1, Convert.ToInt32(cboRadniNalog.SelectedValue));
+                it.InsTeretnica("", Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaIsklj.SelectedValue), Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeOd.Value), "", 0, 0, "sa", 1, Convert.ToInt32(cboRadniNalog.SelectedValue),0);
 
                 Dokumenta.InsertRadniNalog irn = new Dokumenta.InsertRadniNalog();
                 irn.InsRNTeretnica(Convert.ToInt32(cboRadniNalog.SelectedValue));

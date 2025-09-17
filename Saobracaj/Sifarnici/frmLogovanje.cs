@@ -124,5 +124,11 @@ namespace Saobracaj.Sifarnici
             PonudaML frm = new PonudaML();
             frm.Show();
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Predict predict = new Predict();
+            predict.Show();
+        }
     }
 }

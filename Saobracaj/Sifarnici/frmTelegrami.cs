@@ -633,6 +633,53 @@ namespace Saobracaj.Sifarnici
             KopirajFajlPoTipu(txt_PDF.Text, txt_ID.Text,id);
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var query = "Select Telegrami.ID,BrojTelegrama,PrugaID,Rtrim(Pruga.Opis) as [Naziv], " +
+               "OdStanice,Rtrim(Stanice.Opis) as [Stanica OD],DoStanice,RTrim(s.Opis) as [Stanica DO],RTrim(Kolosek) as Kolosek, " +
+               "VaziOD,VaziDo,Aktivan,Napomena,PDF,NarocitaPosiljka " +
+               "From Telegrami " +
+               "Inner Join Pruga on Telegrami.PrugaID = Pruga.ID " +
+               "Inner join Stanice on Telegrami.OdStanice = Stanice.ID " +
+               "Inner join Stanice as s on Telegrami.DoStanice = s.ID " +
+               "Where(VaziDo Between Convert(Date, Getdate()) and Convert(Date, GetDate() + 1)) and aktivan=1" +
+               "order by Telegrami.ID desc";
+            SqlConnection conn = new SqlConnection(connect);
+            SqlDataAdapter da = new SqlDataAdapter(query, conn);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 50;
+            dataGridView1.Columns[1].HeaderText = "Broj Telegrama";
+            dataGridView1.Columns[2].Visible = false;
+            dataGridView1.Columns[3].HeaderText = "Naziv";
+            dataGridView1.Columns[3].Width = 250;
+            dataGridView1.Columns[4].Visible = false;
+            dataGridView1.Columns[5].HeaderText = "Stanica OD";
+            dataGridView1.Columns[5].Width = 100;
+            dataGridView1.Columns[6].Visible = false;
+            dataGridView1.Columns[7].HeaderText = "Stanica DO";
+            dataGridView1.Columns[7].Width = 100;
+            dataGridView1.Columns[8].Width = 75;
+            dataGridView1.Columns[9].HeaderText = "Vazi OD";
+            dataGridView1.Columns[9].Width = 100;
+            dataGridView1.Columns[10].HeaderText = "Vazi DO";
+            dataGridView1.Columns[10].Width = 100;
+            dataGridView1.Columns[11].HeaderText = "Aktivan";
+            dataGridView1.Columns[12].Width = 250;
+            dataGridView1.Columns[13].Width = 100;
+            dataGridView1.Columns[14].HeaderText = "Narocita posiljka";
+
+            timer3.Enabled = true;
+            timer1.Enabled = false;
+            timer2.Enabled = false;
+            timer4.Enabled = false;
+            timer3.Start();
+        }
+
         private void btn_narocite_Click(object sender, EventArgs e)
         {
             var query = "Select Telegrami.ID,BrojTelegrama,PrugaID,Rtrim(Pruga.Opis) as [Naziv], " +

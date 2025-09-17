@@ -20,7 +20,7 @@ namespace Saobracaj.Dokumenta
 
     class InsertTeretnica
     {
-        public void InsTeretnica(string BrojTeretnice, int StanicaOd, int StanicaDo, int StanicaPopisa, DateTime VremeOd, DateTime VremeDo, string BrojLista, int Prijemna, int Predajna, string Korisnik, int Prevozna, int RN)
+        public void InsTeretnica(string BrojTeretnice, int StanicaOd, int StanicaDo, int StanicaPopisa, DateTime VremeOd, DateTime VremeDo, string BrojLista, int Prijemna, int Predajna, string Korisnik, int Prevozna, int RN, int Carinska)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -113,8 +113,15 @@ namespace Saobracaj.Dokumenta
             parameter12.ParameterName = "@RN";
             parameter12.SqlDbType = SqlDbType.Int;
             parameter12.Direction = ParameterDirection.Input;
-            parameter12.Value = Prevozna;
+            parameter12.Value = RN;
             myCommand.Parameters.Add(parameter12);
+
+            SqlParameter parameter13 = new SqlParameter();
+            parameter13.ParameterName = "@Carinska";
+            parameter13.SqlDbType = SqlDbType.Int;
+            parameter13.Direction = ParameterDirection.Input;
+            parameter13.Value = Carinska;
+            myCommand.Parameters.Add(parameter13);
 
             myConnection.Open();
             SqlTransaction myTransaction = myConnection.BeginTransaction();
@@ -153,7 +160,7 @@ namespace Saobracaj.Dokumenta
             }
         }
 
-        public void UpdTeretnica(int ID, string BrojTeretnice, int StanicaOd, int StanicaDo, int StanicaPopisa, DateTime VremeOd, DateTime VremeDo, string BrojLista, int Prijemna, int Predajna, string Korisnik, int Prevozna, int RN)
+        public void UpdTeretnica(int ID, string BrojTeretnice, int StanicaOd, int StanicaDo, int StanicaPopisa, DateTime VremeOd, DateTime VremeDo, string BrojLista, int Prijemna, int Predajna, string Korisnik, int Prevozna, int RN, int Carinska)
         {
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -256,6 +263,13 @@ namespace Saobracaj.Dokumenta
             parameter12.Direction = ParameterDirection.Input;
             parameter12.Value = RN;
             myCommand.Parameters.Add(parameter12);
+
+            SqlParameter parameter13= new SqlParameter();
+            parameter13.ParameterName = "@Carinska";
+            parameter13.SqlDbType = SqlDbType.Int;
+            parameter13.Direction = ParameterDirection.Input;
+            parameter13.Value = Carinska;
+            myCommand.Parameters.Add(parameter13);
 
 
             myConnection.Open();
@@ -458,7 +472,64 @@ namespace Saobracaj.Dokumenta
                 }
             }
         }
+  
 
+            public void PromeniIDNajaveSvimStavkama(int TeretnicaID, int NajavaID)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            SqlCommand myCommand = myConnection.CreateCommand();
+            myCommand.CommandText = "PromeniIDNajaveSvimStavkama";
+            myCommand.CommandType = System.Data.CommandType.StoredProcedure;
+
+            SqlParameter parameter = new SqlParameter();
+            parameter.ParameterName = "@TeretnicaID";
+            parameter.SqlDbType = SqlDbType.Int;
+            parameter.Direction = ParameterDirection.Input;
+            parameter.Value = TeretnicaID;
+            myCommand.Parameters.Add(parameter);
+
+            SqlParameter parameter2 = new SqlParameter();
+            parameter2.ParameterName = "@NajavaID";
+            parameter2.SqlDbType = SqlDbType.Int;
+            parameter2.Direction = ParameterDirection.Input;
+            parameter2.Value = NajavaID;
+            myCommand.Parameters.Add(parameter2);
+
+            myConnection.Open();
+            SqlTransaction myTransaction = myConnection.BeginTransaction();
+            myCommand.Transaction = myTransaction;
+            bool error = true;
+            try
+            {
+                myCommand.ExecuteNonQuery();
+                myTransaction.Commit();
+                myTransaction = myConnection.BeginTransaction();
+                myCommand.Transaction = myTransaction;
+            }
+
+            catch (SqlException)
+            {
+                throw new Exception("Brisanje neuspešno");
+            }
+
+            finally
+            {
+                if (!error)
+                {
+                    myTransaction.Commit();
+                    MessageBox.Show("Brisanje Teretnice uspešno završeno", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                myConnection.Close();
+
+                if (error)
+                {
+                    // Nedra.DataSet1TableAdapters.QueriesTableAdapter adapter = new Nedra.DataSet1TableAdapters.QueriesTableAdapter();
+                }
+            }
+        }
 
         public void PrekopirajTeretnicaCarinska(int TeretnicaID)
         {

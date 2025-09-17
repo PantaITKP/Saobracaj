@@ -46,7 +46,10 @@
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton7 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.txtRBRN = new System.Windows.Forms.TextBox();
+            this.chkCARINSKA = new System.Windows.Forms.CheckBox();
             this.label37 = new System.Windows.Forms.Label();
             this.txtRN = new System.Windows.Forms.TextBox();
             this.chkPrevozna = new System.Windows.Forms.CheckBox();
@@ -69,6 +72,7 @@
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.button11 = new System.Windows.Forms.Button();
             this.txtNeispravnost = new System.Windows.Forms.TextBox();
             this.label38 = new System.Windows.Forms.Label();
             this.button9 = new System.Windows.Forms.Button();
@@ -148,9 +152,8 @@
             this.panel3 = new System.Windows.Forms.Panel();
             this.button10 = new System.Windows.Forms.Button();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.chkCARINSKA = new System.Windows.Forms.CheckBox();
-            this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
-            this.txtRBRN = new System.Windows.Forms.TextBox();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.reportViewer6 = new Microsoft.Reporting.WinForms.ReportViewer();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -173,6 +176,7 @@
             this.tabPage6.SuspendLayout();
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
+            this.tabPage7.SuspendLayout();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -346,8 +350,20 @@
             this.toolStripButton8.Text = "Proveri teren";
             this.toolStripButton8.Click += new System.EventHandler(this.toolStripButton8_Click);
             // 
+            // toolStripButton9
+            // 
+            this.toolStripButton9.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton9.ForeColor = System.Drawing.Color.Red;
+            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
+            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton9.Name = "toolStripButton9";
+            this.toolStripButton9.Size = new System.Drawing.Size(198, 24);
+            this.toolStripButton9.Text = "KOPIRAJ Komercijalnu U PRIJEMNU";
+            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
+            // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.panel3);
             this.panel1.Controls.Add(this.txtRBRN);
             this.panel1.Controls.Add(this.chkCARINSKA);
             this.panel1.Controls.Add(this.label37);
@@ -375,6 +391,26 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1230, 71);
             this.panel1.TabIndex = 8;
+            // 
+            // txtRBRN
+            // 
+            this.txtRBRN.Location = new System.Drawing.Point(1192, 5);
+            this.txtRBRN.Name = "txtRBRN";
+            this.txtRBRN.Size = new System.Drawing.Size(31, 20);
+            this.txtRBRN.TabIndex = 126;
+            this.txtRBRN.Text = "0";
+            // 
+            // chkCARINSKA
+            // 
+            this.chkCARINSKA.AutoSize = true;
+            this.chkCARINSKA.ForeColor = System.Drawing.Color.Red;
+            this.chkCARINSKA.Location = new System.Drawing.Point(1119, 44);
+            this.chkCARINSKA.Name = "chkCARINSKA";
+            this.chkCARINSKA.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.chkCARINSKA.Size = new System.Drawing.Size(86, 17);
+            this.chkCARINSKA.TabIndex = 125;
+            this.chkCARINSKA.Text = "Komercijalna";
+            this.chkCARINSKA.UseVisualStyleBackColor = true;
             // 
             // label37
             // 
@@ -565,6 +601,7 @@
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.button11);
             this.panel2.Controls.Add(this.txtNeispravnost);
             this.panel2.Controls.Add(this.label38);
             this.panel2.Controls.Add(this.button9);
@@ -624,15 +661,25 @@
             this.panel2.Controls.Add(this.label7);
             this.panel2.Controls.Add(this.cboOtkacena);
             this.panel2.Controls.Add(this.cboUvrstena);
-            this.panel2.Location = new System.Drawing.Point(13, 97);
+            this.panel2.Location = new System.Drawing.Point(14, 105);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(1326, 147);
             this.panel2.TabIndex = 9;
             this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
+            // button11
+            // 
+            this.button11.Location = new System.Drawing.Point(75, 103);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(67, 23);
+            this.button11.TabIndex = 177;
+            this.button11.Text = "Najava ";
+            this.button11.UseVisualStyleBackColor = true;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
             // txtNeispravnost
             // 
-            this.txtNeispravnost.Location = new System.Drawing.Point(86, 109);
+            this.txtNeispravnost.Location = new System.Drawing.Point(296, 109);
             this.txtNeispravnost.Name = "txtNeispravnost";
             this.txtNeispravnost.Size = new System.Drawing.Size(371, 20);
             this.txtNeispravnost.TabIndex = 176;
@@ -640,7 +687,7 @@
             // label38
             // 
             this.label38.AutoSize = true;
-            this.label38.Location = new System.Drawing.Point(8, 112);
+            this.label38.Location = new System.Drawing.Point(218, 112);
             this.label38.Name = "label38";
             this.label38.Size = new System.Drawing.Size(72, 13);
             this.label38.TabIndex = 175;
@@ -701,7 +748,7 @@
             // label34
             // 
             this.label34.AutoSize = true;
-            this.label34.Location = new System.Drawing.Point(229, 78);
+            this.label34.Location = new System.Drawing.Point(234, 79);
             this.label34.Name = "label34";
             this.label34.Size = new System.Drawing.Size(47, 13);
             this.label34.TabIndex = 168;
@@ -719,7 +766,7 @@
             // cboIzvozna
             // 
             this.cboIzvozna.FormattingEnabled = true;
-            this.cboIzvozna.Location = new System.Drawing.Point(282, 78);
+            this.cboIzvozna.Location = new System.Drawing.Point(287, 77);
             this.cboIzvozna.Name = "cboIzvozna";
             this.cboIzvozna.Size = new System.Drawing.Size(117, 21);
             this.cboIzvozna.TabIndex = 166;
@@ -1227,6 +1274,7 @@
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Controls.Add(this.tabPage6);
+            this.tabControl1.Controls.Add(this.tabPage7);
             this.tabControl1.Location = new System.Drawing.Point(24, 250);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -1288,7 +1336,8 @@
             this.reportViewer1.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
             this.reportViewer1.Location = new System.Drawing.Point(7, 4);
             this.reportViewer1.Name = "reportViewer1";
-            this.reportViewer1.Size = new System.Drawing.Size(1294, 244);
+            this.reportViewer1.ServerReport.BearerToken = null;
+            this.reportViewer1.Size = new System.Drawing.Size(1294, 286);
             this.reportViewer1.TabIndex = 0;
             // 
             // tabPage3
@@ -1309,6 +1358,7 @@
             this.reportViewer2.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
             this.reportViewer2.Location = new System.Drawing.Point(6, 5);
             this.reportViewer2.Name = "reportViewer2";
+            this.reportViewer2.ServerReport.BearerToken = null;
             this.reportViewer2.Size = new System.Drawing.Size(1294, 244);
             this.reportViewer2.TabIndex = 1;
             // 
@@ -1330,6 +1380,7 @@
             this.reportViewer3.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
             this.reportViewer3.Location = new System.Drawing.Point(6, 5);
             this.reportViewer3.Name = "reportViewer3";
+            this.reportViewer3.ServerReport.BearerToken = null;
             this.reportViewer3.Size = new System.Drawing.Size(1294, 244);
             this.reportViewer3.TabIndex = 2;
             // 
@@ -1352,6 +1403,7 @@
             this.reportViewer4.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
             this.reportViewer4.Location = new System.Drawing.Point(6, 5);
             this.reportViewer4.Name = "reportViewer4";
+            this.reportViewer4.ServerReport.BearerToken = null;
             this.reportViewer4.Size = new System.Drawing.Size(1294, 244);
             this.reportViewer4.TabIndex = 2;
             // 
@@ -1373,6 +1425,7 @@
             this.reportViewer5.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
             this.reportViewer5.Location = new System.Drawing.Point(6, 5);
             this.reportViewer5.Name = "reportViewer5";
+            this.reportViewer5.ServerReport.BearerToken = null;
             this.reportViewer5.Size = new System.Drawing.Size(1294, 244);
             this.reportViewer5.TabIndex = 3;
             // 
@@ -1412,9 +1465,9 @@
             // 
             this.panel3.Controls.Add(this.button10);
             this.panel3.Controls.Add(this.dataGridView2);
-            this.panel3.Location = new System.Drawing.Point(13, 28);
+            this.panel3.Location = new System.Drawing.Point(11, 6);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(1050, 258);
+            this.panel3.Size = new System.Drawing.Size(1045, 243);
             this.panel3.TabIndex = 125;
             // 
             // button10
@@ -1435,43 +1488,33 @@
             this.dataGridView2.Size = new System.Drawing.Size(1024, 199);
             this.dataGridView2.TabIndex = 0;
             // 
-            // chkCARINSKA
+            // tabPage7
             // 
-            this.chkCARINSKA.AutoSize = true;
-            this.chkCARINSKA.ForeColor = System.Drawing.Color.Red;
-            this.chkCARINSKA.Location = new System.Drawing.Point(1119, 44);
-            this.chkCARINSKA.Name = "chkCARINSKA";
-            this.chkCARINSKA.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkCARINSKA.Size = new System.Drawing.Size(80, 17);
-            this.chkCARINSKA.TabIndex = 125;
-            this.chkCARINSKA.Text = "CARINSKA";
-            this.chkCARINSKA.UseVisualStyleBackColor = true;
+            this.tabPage7.Controls.Add(this.reportViewer6);
+            this.tabPage7.Location = new System.Drawing.Point(4, 22);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage7.TabIndex = 6;
+            this.tabPage7.Text = "Štampaj komercijalnu";
+            this.tabPage7.UseVisualStyleBackColor = true;
             // 
-            // toolStripButton9
+            // reportViewer6
             // 
-            this.toolStripButton9.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton9.ForeColor = System.Drawing.Color.Red;
-            this.toolStripButton9.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton9.Image")));
-            this.toolStripButton9.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton9.Name = "toolStripButton9";
-            this.toolStripButton9.Size = new System.Drawing.Size(184, 24);
-            this.toolStripButton9.Text = "KOPIRAJ CARINSKU U PRIJEMNU";
-            this.toolStripButton9.Click += new System.EventHandler(this.toolStripButton9_Click);
-            // 
-            // txtRBRN
-            // 
-            this.txtRBRN.Location = new System.Drawing.Point(1192, 5);
-            this.txtRBRN.Name = "txtRBRN";
-            this.txtRBRN.Size = new System.Drawing.Size(31, 20);
-            this.txtRBRN.TabIndex = 126;
-            this.txtRBRN.Text = "0";
+            this.reportViewer6.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.reportViewer6.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
+            this.reportViewer6.Location = new System.Drawing.Point(-3, 16);
+            this.reportViewer6.Name = "reportViewer6";
+            this.reportViewer6.ServerReport.BearerToken = null;
+            this.reportViewer6.Size = new System.Drawing.Size(1294, 286);
+            this.reportViewer6.TabIndex = 1;
             // 
             // frmTeretnica
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1352, 598);
-            this.Controls.Add(this.panel3);
             this.Controls.Add(this.button8);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.button5);
@@ -1509,6 +1552,7 @@
             this.tabPage6.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
+            this.tabPage7.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1638,5 +1682,8 @@
         private System.Windows.Forms.ToolStripButton toolStripButton9;
         private System.Windows.Forms.CheckBox chkCARINSKA;
         private System.Windows.Forms.TextBox txtRBRN;
+        private System.Windows.Forms.Button button11;
+        private System.Windows.Forms.TabPage tabPage7;
+        private Microsoft.Reporting.WinForms.ReportViewer reportViewer6;
     }
 }

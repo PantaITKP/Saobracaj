@@ -446,7 +446,7 @@ namespace Saobracaj.Dokumenta
             try
             {
                 Dokumenta.InsertTeretnica it = new Dokumenta.InsertTeretnica();
-                it.InsTeretnica("", Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaIsklj.SelectedValue), Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeOd.Value), "", 0, 1, "sa", 0, Convert.ToInt32(cboRadniNalog.SelectedValue));
+                it.InsTeretnica("", Convert.ToInt32(cboStanicaOd.SelectedValue), Convert.ToInt32(cboStanicaDo.SelectedValue), Convert.ToInt32(cboStanicaIsklj.SelectedValue), Convert.ToDateTime(dtpVremeOd.Value), Convert.ToDateTime(dtpVremeOd.Value), "", 0, 1, "sa", 0, Convert.ToInt32(cboRadniNalog.SelectedValue),0);
 
                 Dokumenta.InsertRadniNalog irn = new Dokumenta.InsertRadniNalog();
                 irn.InsRNTeretnica(Convert.ToInt32(cboRadniNalog.SelectedValue));

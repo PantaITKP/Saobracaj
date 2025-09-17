@@ -3425,7 +3425,7 @@
                                   <Value>=Fields!Tara.Value</Value>
                                   <Style>
                                     <FontSize>8pt</FontSize>
-                                    <Format>0.00</Format>
+                                    <Format>0.000</Format>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -3454,7 +3454,7 @@
                                   <Value>=iif(Fields!Neto.Value = 0, "",Fields!Neto.Value)</Value>
                                   <Style>
                                     <FontSize>8pt</FontSize>
-                                    <Format>0.00</Format>
+                                    <Format>0.000</Format>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -4731,7 +4731,7 @@
                                   <Style>
                                     <FontSize>9pt</FontSize>
                                     <FontWeight>Bold</FontWeight>
-                                    <Format>0.00</Format>
+                                    <Format>0.000</Format>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -4808,7 +4808,7 @@
                                   <Style>
                                     <FontSize>9pt</FontSize>
                                     <FontWeight>Bold</FontWeight>
-                                    <Format>0.00</Format>
+                                    <Format>0.000</Format>
                                   </Style>
                                 </TextRun>
                               </TextRuns>
@@ -4879,7 +4879,7 @@
                                   <Style>
                                     <FontSize>9pt</FontSize>
                                     <FontWeight>Bold</FontWeight>
-                                    <Format>0.00</Format>
+                                    <Format>0.000;(0.000)</Format>
                                   </Style>
                                 </TextRun>
                               </TextRuns>

@@ -2416,6 +2416,7 @@
     <EmbeddedResource Include="Izvestaji\rptMUPDozvola.rdlc" />
     <EmbeddedResource Include="Izvestaji\rptUkupnoZaPeriod.rdlc" />
     <EmbeddedResource Include="Izvestaji\Teretnica.rdlc" />
+    <EmbeddedResource Include="Izvestaji\TeretnicaKomercijalna.rdlc" />
     <EmbeddedResource Include="Izvestaji\ZaradeStavkePoZaposlenom.rdlc" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
