@@ -45,7 +45,7 @@ namespace Saobracaj.Dokumenta
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(12, 62);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(975, 428);
+            this.dataGridView1.Size = new System.Drawing.Size(975, 516);
             this.dataGridView1.TabIndex = 104;
             // 
             // button1
@@ -54,7 +54,7 @@ namespace Saobracaj.Dokumenta
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 105;
-            this.button1.Text = "button1";
+            this.button1.Text = "Refresh";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 

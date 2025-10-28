@@ -133,7 +133,7 @@ namespace Saobracaj.Sifarnici
             cboPruga.ValueMember = "ID";
 
 
-            var select2 = " Select ID, (Cast(ID as nvarchar(10)) + ' ' + Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase";
+            var select2 = " Select ID, (Cast(ID as nvarchar(10)) + ' ' + Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase where Godina in (select Max(Godina) as Godina from Trase)";
             var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection2 = new SqlConnection(s_connection2);
             var c2 = new SqlConnection(s_connection2);
@@ -237,6 +237,21 @@ namespace Saobracaj.Sifarnici
             ins.PrekopirajStanice(Convert.ToInt32(txtSifra.Text.ToString()), Convert.ToInt32(cboTrase.SelectedValue));
             MessageBox.Show("Gotovo");
 
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var select2 = " Select ID, (Cast(ID as nvarchar(10)) + ' ' + Rtrim(Voz) + '-' + Rtrim(Relacija)) as Opis from Trase where Godina  = '" + cboGodinaVazenja.Text + "'";
+            var s_connection2 = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection2 = new SqlConnection(s_connection2);
+            var c2 = new SqlConnection(s_connection2);
+            var dataAdapter2 = new SqlDataAdapter(select2, c2);
+            var commandBuilder2 = new SqlCommandBuilder(dataAdapter2);
+            var ds2 = new DataSet();
+            dataAdapter2.Fill(ds2);
+            cboTrase.DataSource = ds2.Tables[0];
+            cboTrase.DisplayMember = "Opis";
+            cboTrase.ValueMember = "ID";
         }
     }
 }

@@ -15,6 +15,9 @@ using System.Net.Mail;
 using Microsoft.Office.Interop.Word;
 using Microsoft.Reporting.WinForms;
 using Microsoft.Office.Interop.Excel;
+using GMap.NET.MapProviders;
+using System.Web.UI.WebControls;
+using System.Windows.Controls.Primitives;
 
 namespace Saobracaj.Dokumenta
 {
@@ -146,17 +149,13 @@ namespace Saobracaj.Dokumenta
 "  FOR XML PATH('') " +
 "  ), 1, 1, '' " +
 " ) As Skupljen) as Lokom, " +
-"(  SELECT  STUFF(  (  SELECT distinct   '/' + (Cast(del.DeSifra as nvarchar(3)) + '--'  + Rtrim(del.DeIme) + ' ' + Rtrim(del.DePriimek))  " +
-"   from RadniNalogTraseLokZap  " +
-"   inner Join Delavci del on (RadniNalogTraseLokZap.DeSifra = del.DeSifra) "+
-"   where RadniNalogTraseLokZap.IDRadnogNaloga = d1.IDRadnogNaloga "+
-"   and  RadniNalogTraseLokZap.IdTrase = d1.IDTrase " +
-"   FOR XML PATH('')   ), 1, 1, ''  ) As Skupljen2) " +
-"   as Zaposleni2, " +  
+ " (SELECT  STUFF((SELECT distinct   '/' + Cast(RadniNalogVezaNajave.IDNajave as nvarchar(8))     from RadniNalogVezaNajave " +
+ " where RadniNalogVezaNajave.IDRadnogNaloga = d1.IDRadnogNaloga    and  RadniNalogVezaNajave.RB = d1.RB " +
+ " FOR XML PATH('')), 1, 1, ''  ) As Skupljen2)    as Najave, " +
 " d1.DatumPolaska ,d1.DatumDolaska , " +
 " d1.Vreme ,d1.DatumPolaskaReal , " +
 " d1.DatumDolaskaReal ,d1.VremeReal , " +
-" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
+" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija,  d1.IDTrase  " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -164,7 +163,8 @@ namespace Saobracaj.Dokumenta
 " INNER JOIN  stanice AS stanice_3 ON d1.StanicaDo = stanice_3.ID " +
 " INNER JOIN  stanice AS stanice_1 ON Trase.Krajnja = stanice_1.ID " +
 " inner Join RadniNalog as RN ON d1.IDRadnogNaloga = RN.ID " +
-" inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra ";
+" inner Join Delavci as Zaposleni ON RN.Planer = Zaposleni.DeSifra " +
+" ";
 
 
             if (chkLA.Checked == true)
@@ -195,7 +195,7 @@ namespace Saobracaj.Dokumenta
                 pom = pom + ",'ZA'";
             }
 
-            select = select + "where RN.StatusRN in ( " + pom + ")" + " order by IDRadnogNaloga, d1.RB "; ;
+            select = select + "where RN.StatusRN in ( " + pom + ")" + " order by d1.IDRadnogNaloga desc, d1.RB asc "; ;
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -211,7 +211,7 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column = dataGridView1.Columns[0];
             dataGridView1.Columns[0].HeaderText = "RN";
-            dataGridView1.Columns[0].Width = 30;
+            dataGridView1.Columns[0].Width = 70;
 
             DataGridViewColumn column2 = dataGridView1.Columns[1];
             dataGridView1.Columns[1].HeaderText = "RB";
@@ -253,8 +253,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[9].Width = 150;
 
             DataGridViewColumn column11 = dataGridView1.Columns[10];
-            dataGridView1.Columns[10].HeaderText = "Osoblje";
-            dataGridView1.Columns[10].Width = 220;
+            dataGridView1.Columns[10].HeaderText = "Najave";
+            dataGridView1.Columns[10].Width = 230;
+            dataGridView1.Columns[10].Visible = true;
 
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].Visible = false;
@@ -518,7 +519,7 @@ namespace Saobracaj.Dokumenta
                 object missing = System.Reflection.Missing.Value;
                 Document doc = word.Documents.Add(ref missing, ref missing, ref missing, ref missing);  
                 Microsoft.Office.Interop.Word.Paragraph para1 = doc.Content.Paragraphs.Add(ref missing);
-                Table table = doc.Tables.Add(para1.Range, 50, 7, ref missing, ref missing);
+                Microsoft.Office.Interop.Word.Table table = doc.Tables.Add(para1.Range, 50, 7, ref missing, ref missing);
 
                 table.Borders.Enable = 1;
                 int rb = 1;
@@ -591,17 +592,13 @@ namespace Saobracaj.Dokumenta
 "  FOR XML PATH('') " +
 "  ), 1, 1, '' " +
 " ) As Skupljen) as Lokom, " +
-"(  SELECT  STUFF(  (  SELECT distinct   '/' + (Cast(del.DeSifra as nvarchar(3)) + '--'  + Rtrim(del.DeIme) + ' ' + Rtrim(del.DePriimek))  " +
-"   from RadniNalogTraseLokZap  " +
-"   inner Join Delavci del on (RadniNalogTraseLokZap.DeSifra = del.DeSifra) " +
-"   where RadniNalogTraseLokZap.IDRadnogNaloga = d1.IDRadnogNaloga " +
-"   and  RadniNalogTraseLokZap.IdTrase = d1.IDTrase " +
-"   FOR XML PATH('')   ), 1, 1, ''  ) As Skupljen2) " +
-"   as Zaposleni2, " +
+ " (SELECT  STUFF((SELECT distinct   '/' + Cast(RadniNalogVezaNajave.IDNajave as nvarchar(8))     from RadniNalogVezaNajave " +
+ " where RadniNalogVezaNajave.IDRadnogNaloga = d1.IDRadnogNaloga    and  RadniNalogVezaNajave.RB = d1.RB " +
+ " FOR XML PATH('')), 1, 1, ''  ) As Skupljen2)    as Najave, " +
 " d1.DatumPolaska ,d1.DatumDolaska , " +
 " d1.Vreme ,d1.DatumPolaskaReal , " +
 " d1.DatumDolaskaReal ,d1.VremeReal , " +
-" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
+" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija ,  d1.IDTrase " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -657,7 +654,7 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column = dataGridView1.Columns[0];
             dataGridView1.Columns[0].HeaderText = "RN";
-            dataGridView1.Columns[0].Width = 30;
+            dataGridView1.Columns[0].Width = 70;
 
             DataGridViewColumn column2 = dataGridView1.Columns[1];
             dataGridView1.Columns[1].HeaderText = "RB";
@@ -699,8 +696,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[9].Width = 150;
 
             DataGridViewColumn column11 = dataGridView1.Columns[10];
-            dataGridView1.Columns[10].HeaderText = "Osoblje";
+            dataGridView1.Columns[10].HeaderText = "Najave";
             dataGridView1.Columns[10].Width = 220;
+            dataGridView1.Columns[10].Visible = true;
 
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].Visible = false;
@@ -763,20 +761,16 @@ namespace Saobracaj.Dokumenta
 " INNER JOIN stanice AS stanice_2 ON RadniNalogLokNaTrasi.StanicaOd = stanice_2.ID " +
  " INNER JOIN  stanice AS stanice_3 ON RadniNalogLokNaTrasi.StanicaDo = stanice_3.ID " +
 " where RadniNalogLokNaTrasi.IDRadnogNaloga = d1.IDRadnogNaloga and  RadniNalogLokNaTrasi.IdTrase = d1.IDTrase " +
-"  FOR XML PATH('') " +
-"  ), 1, 1, '' " +
-" ) As Skupljen) as Lokom, " +
-"(  SELECT  STUFF(  (  SELECT distinct   '/' + (Cast(del.DeSifra as nvarchar(3)) + '--'  + Rtrim(del.DeIme) + ' ' + Rtrim(del.DePriimek))  " +
-"   from RadniNalogTraseLokZap  " +
-"   inner Join Delavci del on (RadniNalogTraseLokZap.DeSifra = del.DeSifra) " +
-"   where RadniNalogTraseLokZap.IDRadnogNaloga = d1.IDRadnogNaloga " +
-"   and  RadniNalogTraseLokZap.IdTrase = d1.IDTrase " +
-"   FOR XML PATH('')   ), 1, 1, ''  ) As Skupljen2) " +
-"   as Zaposleni2, " +
+            "  FOR XML PATH('') " +
+            "  ), 1, 1, '' " +
+            " ) As Skupljen) as Lokom, " +
+ " (SELECT  STUFF((SELECT distinct   '/' + Cast(RadniNalogVezaNajave.IDNajave as nvarchar(8))     from RadniNalogVezaNajave " +
+ " where RadniNalogVezaNajave.IDRadnogNaloga = d1.IDRadnogNaloga    and  RadniNalogVezaNajave.RB = d1.RB " +
+ " FOR XML PATH('')), 1, 1, ''  ) As Skupljen2)    as Najave, " +
 " d1.DatumPolaska ,d1.DatumDolaska , " +
 " d1.Vreme ,d1.DatumPolaskaReal , " +
 " d1.DatumDolaskaReal ,d1.VremeReal , " +
-" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
+" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija, d1.IDTrase " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -807,7 +801,7 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column = dataGridView1.Columns[0];
             dataGridView1.Columns[0].HeaderText = "RN";
-            dataGridView1.Columns[0].Width = 30;
+            dataGridView1.Columns[0].Width = 70;
 
             DataGridViewColumn column2 = dataGridView1.Columns[1];
             dataGridView1.Columns[1].HeaderText = "RB";
@@ -849,8 +843,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[9].Width = 150;
 
             DataGridViewColumn column11 = dataGridView1.Columns[10];
-            dataGridView1.Columns[10].HeaderText = "Osoblje";
+            dataGridView1.Columns[10].HeaderText = "Najave";
             dataGridView1.Columns[10].Width = 220;
+            dataGridView1.Columns[10].Visible = true;
 
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].Visible = false;
@@ -1011,7 +1006,7 @@ namespace Saobracaj.Dokumenta
                 "+ '  ' + Cast(SerijaVagona as nvarchar(8))from RadniNalogVezaNajave Where RN.ID = RadniNalogVezaNajave.IDRadnogNaloga) group by SerijaVagona " +
                 "FOR XML PATH('')),1,1,'')as a) " +
                 "END, " +
-                "RadniNalogTrase.Napomena " +
+                "RadniNalogTrase.Napomena, , RadniNalogTrase.IDTrase  " +
                 "FROM RadniNalog RN " +
                 "inner join RadniNalogTrase on RN.ID = RadniNalogTrase.IDRadnogNaloga " +
                 "inner join Trase on RadniNalogTrase.IDTrase = Trase.ID " +
@@ -1082,17 +1077,13 @@ namespace Saobracaj.Dokumenta
 "  FOR XML PATH('') " +
 "  ), 1, 1, '' " +
 " ) As Skupljen) as Lokom, " +
-"(  SELECT  STUFF(  (  SELECT distinct   '/' + (Cast(del.DeSifra as nvarchar(3)) + '--'  + Rtrim(del.DeIme) + ' ' + Rtrim(del.DePriimek))  " +
-"   from RadniNalogTraseLokZap  " +
-"   inner Join Delavci del on (RadniNalogTraseLokZap.DeSifra = del.DeSifra) " +
-"   where RadniNalogTraseLokZap.IDRadnogNaloga = d1.IDRadnogNaloga " +
-"   and  RadniNalogTraseLokZap.IdTrase = d1.IDTrase " +
-"   FOR XML PATH('')   ), 1, 1, ''  ) As Skupljen2) " +
-"   as Zaposleni2, " +
+ " (SELECT  STUFF((SELECT distinct   '/' + Cast(RadniNalogVezaNajave.IDNajave as nvarchar(8))     from RadniNalogVezaNajave " +
+ " where RadniNalogVezaNajave.IDRadnogNaloga = d1.IDRadnogNaloga    and  RadniNalogVezaNajave.RB = d1.RB " +
+ " FOR XML PATH('')), 1, 1, ''  ) As Skupljen2)    as Najave, " +
 " d1.DatumPolaska ,d1.DatumDolaska , " +
 " d1.Vreme ,d1.DatumPolaskaReal , " +
 " d1.DatumDolaskaReal ,d1.VremeReal , " +
-" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija " +
+" RTrim(stanice.Opis) AS TRPocetna ,RTrim(stanice_1.Opis) AS TRKrajnja, Trase.Relacija,  d1.IDTrase  " +
 " FROM RadniNalogTrase d1 INNER JOIN  Trase " +
 " ON d1.IDTrase = Trase.ID " +
 " INNER JOIN  stanice ON Trase.Pocetna = stanice.ID " +
@@ -1131,7 +1122,7 @@ namespace Saobracaj.Dokumenta
                 pom = pom + ",'ZA'";
             }
 
-            select = select + "where RN.StatusRN in ( " + pom + ") and d1.IDTrase="+Convert.ToInt32(txtTrasa.Text) + " order by IDRadnogNaloga, d1.RB "; ;
+            select = select + "where RN.StatusRN in ( " + pom + ") and Trase.Voz = '"+txtTrasa.Text + "' order by IDRadnogNaloga, d1.RB "; ;
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -1147,7 +1138,7 @@ namespace Saobracaj.Dokumenta
 
             DataGridViewColumn column = dataGridView1.Columns[0];
             dataGridView1.Columns[0].HeaderText = "RN";
-            dataGridView1.Columns[0].Width = 30;
+            dataGridView1.Columns[0].Width = 70;
 
             DataGridViewColumn column2 = dataGridView1.Columns[1];
             dataGridView1.Columns[1].HeaderText = "RB";
@@ -1189,8 +1180,9 @@ namespace Saobracaj.Dokumenta
             dataGridView1.Columns[9].Width = 150;
 
             DataGridViewColumn column11 = dataGridView1.Columns[10];
-            dataGridView1.Columns[10].HeaderText = "Osoblje";
+            dataGridView1.Columns[10].HeaderText = "Najave";
             dataGridView1.Columns[10].Width = 220;
+            dataGridView1.Columns[10].Visible = true;
 
             DataGridViewColumn column12 = dataGridView1.Columns[11];
             dataGridView1.Columns[11].Visible = false;

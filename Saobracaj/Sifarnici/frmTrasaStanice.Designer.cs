@@ -46,9 +46,12 @@
             this.button2 = new System.Windows.Forms.Button();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.button3 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.cboTrase = new System.Windows.Forms.ComboBox();
-            this.button3 = new System.Windows.Forms.Button();
+            this.label25 = new System.Windows.Forms.Label();
+            this.cboGodinaVazenja = new System.Windows.Forms.ComboBox();
+            this.button4 = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
@@ -210,18 +213,31 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button4);
+            this.panel1.Controls.Add(this.label25);
             this.panel1.Controls.Add(this.button3);
             this.panel1.Controls.Add(this.label3);
+            this.panel1.Controls.Add(this.cboGodinaVazenja);
             this.panel1.Controls.Add(this.cboTrase);
             this.panel1.Location = new System.Drawing.Point(810, 28);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(438, 100);
             this.panel1.TabIndex = 73;
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(189, 74);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(232, 23);
+            this.button3.TabIndex = 76;
+            this.button3.Text = "Ubaci iste stanice";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(16, 11);
+            this.label3.Location = new System.Drawing.Point(38, 47);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(37, 13);
             this.label3.TabIndex = 75;
@@ -230,20 +246,47 @@
             // cboTrase
             // 
             this.cboTrase.FormattingEnabled = true;
-            this.cboTrase.Location = new System.Drawing.Point(75, 11);
+            this.cboTrase.Location = new System.Drawing.Point(116, 47);
             this.cboTrase.Name = "cboTrase";
             this.cboTrase.Size = new System.Drawing.Size(305, 21);
             this.cboTrase.TabIndex = 74;
             // 
-            // button3
+            // label25
             // 
-            this.button3.Location = new System.Drawing.Point(148, 38);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(232, 23);
-            this.button3.TabIndex = 76;
-            this.button3.Text = "Ubaci iste stanice";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(20, 14);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(84, 13);
+            this.label25.TabIndex = 78;
+            this.label25.Text = "Godina važenja:";
+            // 
+            // cboGodinaVazenja
+            // 
+            this.cboGodinaVazenja.FormattingEnabled = true;
+            this.cboGodinaVazenja.Items.AddRange(new object[] {
+            "2026",
+            "2025",
+            "2024",
+            "2023",
+            "2022",
+            "2021",
+            "2020",
+            "2019",
+            "2018"});
+            this.cboGodinaVazenja.Location = new System.Drawing.Point(116, 11);
+            this.cboGodinaVazenja.Name = "cboGodinaVazenja";
+            this.cboGodinaVazenja.Size = new System.Drawing.Size(90, 21);
+            this.cboGodinaVazenja.TabIndex = 77;
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(222, 9);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(103, 23);
+            this.button4.TabIndex = 79;
+            this.button4.Text = "Trase refresh";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // frmTrasaStanice
             // 
@@ -300,5 +343,8 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cboTrase;
+        private System.Windows.Forms.ComboBox cboGodinaVazenja;
+        private System.Windows.Forms.Label label25;
+        private System.Windows.Forms.Button button4;
     }
 }

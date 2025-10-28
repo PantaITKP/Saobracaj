@@ -24,7 +24,7 @@ namespace Saobracaj.Dokumenta
             string DatumOD = dateTimePicker1.Value.ToString("yyyy-MM-dd");
             string DatumDo = dateTimePicker2.Value.ToString("yyyy-MM-dd");
 
-            var select = "Select Najava.ID,stanice1.Opis as [Uputna],stanice2.Opis as [Otpravna],StvarnoPrimanje,StvarnaPredaja,Tezina,BrojKola " +
+            var select = "Select Najava.ID,stanice1.Opis as [Uputna],stanice2.Opis as [Otpravna],StvarnoPrimanje,StvarnaPredaja,Tezina,NetoTezinaM " +
                 "From Najava " +
                 "inner join stanice as stanice1 on Najava.Uputna = stanice1.ID " +
                 "inner join stanice as stanice2 on Najava.Otpravna = stanice2.ID " +

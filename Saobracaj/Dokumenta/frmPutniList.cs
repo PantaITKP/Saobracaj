@@ -31,14 +31,15 @@ namespace Saobracaj.Dokumenta
         {
             var select = "";
 
-            select = " SELECT PutniList.[Id]      ,[IDVoznje]      ,[BrojRN] " +
-             " ,[Lokomotiva]      ,[Zaposleni]      ,[Datum]      ,[PutniList].[Tip] " +
-             "  ,[Stanica]      , Stanice.Opis      ,[UzrokKasnjenja]      ,Razlozi.Opis as Razlog " +
-             "  ,[Napomena]      ,[IDTrase]      ,Trase.Voz      ,[Nalog] " +
-             "  ,[KM] FROM [PutniList] " +
-             " left join Stanice on PutniList.Stanica = Stanice.ID " +
-             " inner join Trase on Trase.ID = PutniList.IDTrase " +
-             " inner join Razlozi on Razlozi.ID = PutniList.UzrokKasnjenja where BrojRN = " + textBox1.Text + " Order by Datum desc";
+            select = " select PutniList.Id,IDVoznje,PutniList.Datum, BrojRN, Lokomotiva,  Korisnik  , " + 
+                        " stanice.Opis as Stanica, PutniList.Tip as Tip, Razlozi.Opis, PutniList.Napomena, " +
+                        " Trase.Voz ,Trase.Relacija, Nalog, KM " +
+                        " from PutniList " +
+                        " inner join stanice on PutniList.Stanica = stanice.ID " +
+                        " inner join Trase on Trase.ID = IDTrase " +
+                        " inner join KOrisnici on Korisnici.Korisnik = Zaposleni " +
+                        " left join Razlozi on Razlozi.ID = UzrokKasnjenja " +
+                        " order by PutniList.ID desc ";
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
             SqlConnection myConnection = new SqlConnection(s_connection);

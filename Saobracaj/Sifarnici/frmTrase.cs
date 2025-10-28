@@ -245,6 +245,112 @@ namespace Saobracaj.Sifarnici
            */
         }
 
+        private void RefreshDataGridPoTrasi()
+        {
+            var select = " SELECT     Trase.ID,  stanice.Opis as Pocetna, " +
+                      " stanice_1.Opis AS Krajnja, Trase.Relacija, Trase.OpisRelacije, Trase.Voz, Trase.Rang, Trase.TezinaVoza, Trase.TezinaLokomotive, Trase.Prevoznik, Trase.DuzinaVoza, " +
+                      " Trase.ProcenatKocenja, Trase.Cena, Trase.Rastojanje, CONVERT(VARCHAR(8),Trase.VremePolaska,108) as VremePolaska, CONVERT(VARCHAR(8),Trase.VremeDolaska,108) as VremeDolaska, Trase.DuzinaTrajanja, Trase.Rezi, Trase.Godina " +
+                      " FROM         Trase INNER JOIN " +
+                      " stanice ON Trase.Pocetna = stanice.ID INNER JOIN " +
+                      " stanice AS stanice_1 ON Trase.Krajnja = stanice_1.ID where Trase.Voz = '" + txtVoz.Text.Trim() + "'";
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection myConnection = new SqlConnection(s_connection);
+            var c = new SqlConnection(s_connection);
+            var dataAdapter = new SqlDataAdapter(select, c);
+
+            var commandBuilder = new SqlCommandBuilder(dataAdapter);
+            var ds = new DataSet();
+            dataAdapter.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            DataGridViewColumn column = dataGridView1.Columns[0];
+            dataGridView1.Columns[0].HeaderText = "ID";
+            dataGridView1.Columns[0].Width = 50;
+
+            DataGridViewColumn column2 = dataGridView1.Columns[1];
+            dataGridView1.Columns[1].HeaderText = "Početna";
+            dataGridView1.Columns[1].Width = 100;
+
+            DataGridViewColumn column3 = dataGridView1.Columns[2];
+            dataGridView1.Columns[2].HeaderText = "Krajnja";
+            dataGridView1.Columns[2].Width = 100;
+
+            DataGridViewColumn column4 = dataGridView1.Columns[3];
+            dataGridView1.Columns[3].HeaderText = "Relacija";
+            dataGridView1.Columns[3].Width = 150;
+
+            DataGridViewColumn column5 = dataGridView1.Columns[4];
+            dataGridView1.Columns[4].HeaderText = "Opis relacije";
+            dataGridView1.Columns[4].Width = 150;
+
+            DataGridViewColumn column6 = dataGridView1.Columns[5];
+            dataGridView1.Columns[5].HeaderText = "Voz";
+            dataGridView1.Columns[5].Width = 50;
+
+            DataGridViewColumn column7 = dataGridView1.Columns[6];
+            dataGridView1.Columns[6].HeaderText = "Rang";
+            dataGridView1.Columns[6].Width = 30;
+
+            DataGridViewColumn column8 = dataGridView1.Columns[7];
+            dataGridView1.Columns[7].HeaderText = "Težina voza";
+            dataGridView1.Columns[7].Width = 30;
+
+            DataGridViewColumn column9 = dataGridView1.Columns[8];
+            dataGridView1.Columns[8].HeaderText = "Težina lokomotive";
+            dataGridView1.Columns[8].Width = 30;
+
+            DataGridViewColumn column10 = dataGridView1.Columns[9];
+            dataGridView1.Columns[9].HeaderText = "Prevoznik";
+            dataGridView1.Columns[9].Width = 70;
+
+            DataGridViewColumn column11 = dataGridView1.Columns[10];
+            dataGridView1.Columns[10].HeaderText = "Dužina voza";
+            dataGridView1.Columns[10].Width = 70;
+
+            DataGridViewColumn column12 = dataGridView1.Columns[11];
+            dataGridView1.Columns[11].HeaderText = "Procenat kočenja";
+            dataGridView1.Columns[11].Width = 70;
+
+            DataGridViewColumn column13 = dataGridView1.Columns[12];
+            dataGridView1.Columns[12].HeaderText = "Cena";
+            dataGridView1.Columns[12].Width = 90;
+
+            DataGridViewColumn column14 = dataGridView1.Columns[13];
+            dataGridView1.Columns[13].HeaderText = "Rastojanje";
+            dataGridView1.Columns[13].Width = 70;
+
+            DataGridViewColumn column15 = dataGridView1.Columns[14];
+            dataGridView1.Columns[14].HeaderText = "Vreme polaska";
+            dataGridView1.Columns[14].Width = 70;
+
+            DataGridViewColumn column16 = dataGridView1.Columns[15];
+            dataGridView1.Columns[15].HeaderText = "Vreme dolaska";
+            dataGridView1.Columns[15].Width = 70;
+
+            DataGridViewColumn column17 = dataGridView1.Columns[16];
+            dataGridView1.Columns[16].HeaderText = "Dužina trajanja";
+            dataGridView1.Columns[16].Width = 70;
+
+            DataGridViewColumn column18 = dataGridView1.Columns[17];
+            dataGridView1.Columns[17].HeaderText = "Reži";
+            dataGridView1.Columns[17].Width = 70;
+
+            DataGridViewColumn column19 = dataGridView1.Columns[18];
+            dataGridView1.Columns[18].HeaderText = "Godina";
+            dataGridView1.Columns[18].Width = 70;
+
+            /*
+            @Cena decimal(18,2),
+            @Rastojanje decimal(18,2),
+            @VremePolaska datetime,
+            @VremeDolaska datetime,
+            @DuzinaTrajanja int,
+            @Rezi tinyint,
+            @Godina nvarchar(4)
+            */
+        }
+
         private void tsNew_Click(object sender, EventArgs e)
         {
             txtSifra.Text = "";
@@ -591,6 +697,16 @@ namespace Saobracaj.Sifarnici
                 ins.InsTraseDokumenta(Convert.ToInt32(txtVoz.Text), txtTrase.Text.TrimEnd());
                 RefreshDataGrid();
           
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            RefreshDataGridPoTrasi();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            RefreshDataGrid();
         }
     }
 }
