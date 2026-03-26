@@ -147,7 +147,8 @@ namespace Saobracaj.Dokumenta
              " CASE WHEN Aktivnosti.PlacenoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PlaceniRacuni, CASE WHEN Aktivnosti.Pregledano > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Pregledano,  CASE WHEN Aktivnosti.Milsped > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as Milsped ," +
              " (SELECT COUNT(*) FROM AktivnostiDokumenta where AktivnostiDokumenta.IDAktivnosti = Aktivnosti.ID) as Zapisa,  " +
              " CASE WHEN Aktivnosti.PregledanoTroskovi > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledanoTroskovi," +
-              " CASE WHEN Aktivnosti.StigaoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoRacun" +
+              " CASE WHEN Aktivnosti.StigaoRacun > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as StigaoRacun, " +
+               " CASE WHEN Aktivnosti.PregledanoKartice > 0 THEN Cast(1 as bit) ELSE Cast(0 as BIT) END as PregledaneKArtice" +
               " from Aktivnosti " +
              " inner join Delavci on Delavci.DeSifra = Aktivnosti.Zaposleni    where Aktivnosti.Placeno = 0 and (Aktivnosti.PlacenoRacun = 0) and (UkupniTroskovi + RAcun + Kartica) > 0 " +
              " And  Convert(nvarchar(10),VremeDo,126) <=  '" + dtpVremeDo.Text + "' order by Aktivnosti.ID desc";
@@ -524,6 +525,7 @@ namespace Saobracaj.Dokumenta
                     ins.UpdateAktivnostiPregledanoKartice(Convert.ToInt32(row.Cells[0].Value.ToString()));
                 }
             }
+            if (radnik == 1) { FillGVRadnik(); } else if (svi == 1) { FillGVSvi(); } else { return; }
         }
 
         private void button2_Click(object sender, EventArgs e)

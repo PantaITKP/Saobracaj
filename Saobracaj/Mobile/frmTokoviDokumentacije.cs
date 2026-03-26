@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace Saobracaj.Mobile
 {
-    public partial class frmTokoviDokumentacije : MetroForm
+    public partial class frmTokoviDokumentacije : Form
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
 
@@ -201,6 +201,11 @@ namespace Saobracaj.Mobile
                 // Add the PictureBox to the FlowLayoutPanel.
                 pic.Parent = flpThumbnails;
             }
+        }
+
+        private void btnPickDirectory_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

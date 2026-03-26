@@ -227,7 +227,7 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 18)
                     {
                         Puna = 1;
-                        Cena = 5070;
+                        Cena = 5206.5;
                       
                     }
                     
@@ -235,14 +235,14 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 12)
                     {
                         Puna = 1;
-                        Cena = 3380;
+                        Cena = 3471;
                     }
                    
                     
                     else
                     {
                         Puna = 0;
-                        Cena = 1690;
+                        Cena = 1735.5;
                     }
                     PotNal.InsPotNal(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, txtMestoTroska.Text, Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()), Convert.ToInt32(1), Cena, "");
                     PotNal.InsPotNalRelacije(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, Convert.ToInt32(1), Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()));
@@ -572,7 +572,7 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 18)
                     {
                         Puna = 1;
-                        Cena = 5070;
+                        Cena = 5206.5;
 
                     }
 
@@ -580,14 +580,14 @@ namespace Saobracaj.Dokumenta
                     if (Vreme >= 12)
                     {
                         Puna = 1;
-                        Cena = 3380;
+                        Cena = 3471;
                     }
 
 
                     else
                     {
                         Puna = 0;
-                        Cena = 1690;
+                        Cena = 1735.5;
                     }
                 //    PotNal.InsPotNal(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, txtMestoTroska.Text, Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()), Convert.ToInt32(1), Cena, "");
                  //   PotNal.InsPotNalRelacije(Convert.ToInt32(row.Cells[2].Value.ToString()), Convert.ToInt32(row.Cells[7].Value.ToString()), 1, Convert.ToInt32(1), Convert.ToDateTime(row.Cells[4].Value.ToString()), Convert.ToDateTime(row.Cells[5].Value.ToString()));

@@ -223,7 +223,7 @@
       </Fields>
       <rd:DataSetInfo>
         <rd:DataSetName>Perftech_BeogradDataSet3</rd:DataSetName>
-        <rd:SchemaPath>C:\Users\pantelija\documents\visual studio 2012\Projects\Saobracaj\Saobracaj\Perftech_BeogradDataSet3.xsd</rd:SchemaPath>
+        <rd:SchemaPath>C:\Users\Panta\source\repos\PantaITKP\Saobracaj\Saobracaj\Perftech_BeogradDataSet3.xsd</rd:SchemaPath>
         <rd:TableName>SelectAktivnostiTrosak</rd:TableName>
         <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
         <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>

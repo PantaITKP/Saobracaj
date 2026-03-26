@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Saobracaj.Mobile;
+//using Syncfusion.Windows.Forms.Grid.Grouping;
+using Syncfusion.Windows.Forms;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
-//using Syncfusion.Windows.Forms.Grid.Grouping;
-using Syncfusion.Windows.Forms;
-using System.Configuration;
-using System.Data.SqlClient;
 
 namespace Saobracaj
 {
@@ -789,7 +790,8 @@ namespace Saobracaj
 
         private void toolStripButton64_Click(object sender, EventArgs e)
         {
-
+            frmTokoviDokumentacije tokoviDokumentacije = new frmTokoviDokumentacije();
+            tokoviDokumentacije.Show();
         }
 
         private void toolStripButton66_Click(object sender, EventArgs e)
