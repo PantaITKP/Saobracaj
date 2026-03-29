@@ -633,5 +633,84 @@ namespace Saobracaj.Dokumenta
             opis.Show();
             opis.Focus();
         }
+        private class StanicaRuta
+        {
+            public string Naziv { get; set; }
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
+
+            public StanicaRuta(string naziv, double latitude, double longitude)
+            {
+                Naziv = naziv;
+                Latitude = latitude;
+                Longitude = longitude;
+            }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                map.Overlays.Clear();
+
+                var markerOverlay = new GMapOverlay("stanice");
+                var routeOverlay = new GMapOverlay("ruta");
+
+                var stanice = new List<StanicaRuta>
+        {
+            new StanicaRuta("Jakovo", 44.751418600658795, 20.254923569636006),
+            new StanicaRuta("ŠID", 45.124416370313526, 19.222164225500624),
+            new StanicaRuta("Zagreb", 45.80517412003623, 15.977577696973462),
+            new StanicaRuta("Savski Marof", 45.87295439092795, 15.737627745007833),
+            new StanicaRuta("Sezana", 45.70341317673655, 13.8629912329809),
+            new StanicaRuta("Vila Opicina", 45.694700105408536, 13.791487170305157),
+            new StanicaRuta("Venezia Porto Marghera", 45.472590254351054, 12.256132184016668)
+        };
+
+                List<PointLatLng> tackeRute = new List<PointLatLng>();
+
+                foreach (var s in stanice)
+                {
+                    PointLatLng tacka = new PointLatLng(s.Latitude, s.Longitude);
+                    tackeRute.Add(tacka);
+
+                    GMarkerGoogle marker = new GMarkerGoogle(tacka, GMarkerGoogleType.red_dot);
+                    marker.ToolTipMode = MarkerTooltipMode.Always;
+                    marker.ToolTipText = s.Naziv;
+                    marker.ToolTip.Fill = new SolidBrush(Color.WhiteSmoke);
+                    marker.ToolTip.Foreground = Brushes.Black;
+                    marker.ToolTip.Stroke = Pens.DarkGray;
+                    marker.ToolTip.Font = new Font("Arial", 9, FontStyle.Bold);
+
+                    markerOverlay.Markers.Add(marker);
+                }
+
+                GMapRoute ruta = new GMapRoute(tackeRute, "PutStanica");
+                ruta.Stroke = new Pen(Color.DarkBlue, 3);
+
+                routeOverlay.Routes.Add(ruta);
+
+                map.Overlays.Add(routeOverlay);
+                map.Overlays.Add(markerOverlay);
+
+                map.Position = tackeRute[0];
+
+                if (tackeRute.Count > 0)
+                {
+                    double minLat = tackeRute.Min(p => p.Lat);
+                    double maxLat = tackeRute.Max(p => p.Lat);
+                    double minLng = tackeRute.Min(p => p.Lng);
+                    double maxLng = tackeRute.Max(p => p.Lng);
+
+                    RectLatLng rect = RectLatLng.FromLTRB(maxLng, maxLat, minLng, minLat);
+                    map.SetZoomToFitRect(rect);
+                }
+
+                map.Refresh();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Greška pri iscrtavanju rute: " + ex.Message);
+            }
+        }
     }
 }
