@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            Syncfusion.Windows.Forms.Gauge.Range range7 = new Syncfusion.Windows.Forms.Gauge.Range();
-            Syncfusion.Windows.Forms.Gauge.Range range8 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range1 = new Syncfusion.Windows.Forms.Gauge.Range();
+            Syncfusion.Windows.Forms.Gauge.Range range2 = new Syncfusion.Windows.Forms.Gauge.Range();
             this.speedGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WaterTempGauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.eng1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
@@ -62,9 +62,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.tracForceGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.targetPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label19 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.activeFault2Gauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label18 = new System.Windows.Forms.Label();
@@ -108,6 +106,8 @@
             this.label30 = new System.Windows.Forms.Label();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.targetPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
+            this.label5 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.label27 = new System.Windows.Forms.Label();
             this.label25 = new System.Windows.Forms.Label();
@@ -118,8 +118,8 @@
             this.rpm2Gauge = new Syncfusion.Windows.Forms.Gauge.RadialGauge();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.label37 = new System.Windows.Forms.Label();
             this.label38 = new System.Windows.Forms.Label();
+            this.label37 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel2.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -642,17 +642,6 @@
             this.tracForceGauge.Size = new System.Drawing.Size(90, 90);
             this.tracForceGauge.TabIndex = 4;
             // 
-            // targetPowerGauge
-            // 
-            this.targetPowerGauge.CharacterCount = 5;
-            this.targetPowerGauge.DisplayRecordIndex = 0;
-            this.targetPowerGauge.Location = new System.Drawing.Point(122, 474);
-            this.targetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.targetPowerGauge.MinimumSize = new System.Drawing.Size(90, 90);
-            this.targetPowerGauge.Name = "targetPowerGauge";
-            this.targetPowerGauge.Size = new System.Drawing.Size(90, 90);
-            this.targetPowerGauge.TabIndex = 4;
-            // 
             // label19
             // 
             this.label19.AutoSize = true;
@@ -661,15 +650,6 @@
             this.label19.Size = new System.Drawing.Size(72, 15);
             this.label19.TabIndex = 7;
             this.label19.Text = "ActiveFault3";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(128, 456);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(77, 15);
-            this.label5.TabIndex = 2;
-            this.label5.Text = "TargetPower";
             // 
             // label15
             // 
@@ -751,14 +731,14 @@
             this.rpm1Gauge.Name = "rpm1Gauge";
             this.rpm1Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm1Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range7.Color = System.Drawing.Color.Red;
-            range7.EndValue = 5000F;
-            range7.Height = 5;
-            range7.InRange = false;
-            range7.Name = "GaugeRange1";
-            range7.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range7.StartValue = 3500F;
-            this.rpm1Gauge.Ranges.Add(range7);
+            range1.Color = System.Drawing.Color.Red;
+            range1.EndValue = 5000F;
+            range1.Height = 5;
+            range1.InRange = false;
+            range1.Name = "GaugeRange1";
+            range1.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range1.StartValue = 3500F;
+            this.rpm1Gauge.Ranges.Add(range1);
             this.rpm1Gauge.ShowGaugeValue = true;
             this.rpm1Gauge.ShowTicks = true;
             this.rpm1Gauge.Size = new System.Drawing.Size(215, 142);
@@ -813,6 +793,7 @@
             this.eng1StateGauge.ThemeStyle.ShowBackgroundFrame = true;
             this.eng1StateGauge.TickPlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.OutSide;
             this.eng1StateGauge.TransparentBackGround = true;
+            this.eng1StateGauge.Click += new System.EventHandler(this.eng1StateGauge_Click);
             // 
             // tracPowerGauge
             // 
@@ -1206,6 +1187,8 @@
             this.tabPage1.Controls.Add(this.WheelSlipGauge);
             this.tabPage1.Controls.Add(this.label13);
             this.tabPage1.Controls.Add(this.label12);
+            this.tabPage1.Controls.Add(this.targetPowerGauge);
+            this.tabPage1.Controls.Add(this.label5);
             this.tabPage1.Controls.Add(this.label3);
             this.tabPage1.Controls.Add(this.label4);
             this.tabPage1.Controls.Add(this.BrakePipePressGauge);
@@ -1221,8 +1204,6 @@
             this.tabPage1.Controls.Add(this.label10);
             this.tabPage1.Controls.Add(this.brakeCylPressGauge);
             this.tabPage1.Controls.Add(this.tracPowerGauge);
-            this.tabPage1.Controls.Add(this.targetPowerGauge);
-            this.tabPage1.Controls.Add(this.label5);
             this.tabPage1.Controls.Add(this.MainResPressGauge);
             this.tabPage1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
@@ -1231,6 +1212,27 @@
             this.tabPage1.Size = new System.Drawing.Size(322, 865);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Main info";
+            this.tabPage1.Click += new System.EventHandler(this.tabPage1_Click);
+            // 
+            // targetPowerGauge
+            // 
+            this.targetPowerGauge.CharacterCount = 5;
+            this.targetPowerGauge.DisplayRecordIndex = 0;
+            this.targetPowerGauge.Location = new System.Drawing.Point(122, 474);
+            this.targetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
+            this.targetPowerGauge.MinimumSize = new System.Drawing.Size(90, 90);
+            this.targetPowerGauge.Name = "targetPowerGauge";
+            this.targetPowerGauge.Size = new System.Drawing.Size(90, 90);
+            this.targetPowerGauge.TabIndex = 4;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(128, 456);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(77, 15);
+            this.label5.TabIndex = 2;
+            this.label5.Text = "TargetPower";
             // 
             // tabPage2
             // 
@@ -1342,14 +1344,14 @@
             this.rpm2Gauge.Name = "rpm2Gauge";
             this.rpm2Gauge.NeedleColor = System.Drawing.Color.Red;
             this.rpm2Gauge.NeedleStyle = Syncfusion.Windows.Forms.Gauge.NeedleStyle.Advanced;
-            range8.Color = System.Drawing.Color.Red;
-            range8.EndValue = 5000F;
-            range8.Height = 5;
-            range8.InRange = false;
-            range8.Name = "GaugeRange1";
-            range8.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
-            range8.StartValue = 3500F;
-            this.rpm2Gauge.Ranges.Add(range8);
+            range2.Color = System.Drawing.Color.Red;
+            range2.EndValue = 5000F;
+            range2.Height = 5;
+            range2.InRange = false;
+            range2.Name = "GaugeRange1";
+            range2.RangePlacement = Syncfusion.Windows.Forms.Gauge.TickPlacement.Inside;
+            range2.StartValue = 3500F;
+            this.rpm2Gauge.Ranges.Add(range2);
             this.rpm2Gauge.ShowGaugeValue = true;
             this.rpm2Gauge.ShowTicks = true;
             this.rpm2Gauge.Size = new System.Drawing.Size(215, 142);
@@ -1398,15 +1400,6 @@
             this.tabPage5.Text = "tabPage5";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
-            // label37
-            // 
-            this.label37.AutoSize = true;
-            this.label37.Location = new System.Drawing.Point(17, 19);
-            this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(41, 13);
-            this.label37.TabIndex = 0;
-            this.label37.Text = "label37";
-            // 
             // label38
             // 
             this.label38.AutoSize = true;
@@ -1415,6 +1408,15 @@
             this.label38.Size = new System.Drawing.Size(41, 13);
             this.label38.TabIndex = 1;
             this.label38.Text = "label38";
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Location = new System.Drawing.Point(17, 19);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(41, 13);
+            this.label37.TabIndex = 0;
+            this.label37.Text = "label37";
             // 
             // LocoTrack
             // 
@@ -1458,13 +1460,11 @@
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge eng2WorkHoursGauge;
         private Syncfusion.Windows.Forms.Gauge.RadialGauge eng2StateGauge;
         private Syncfusion.Windows.Forms.Gauge.LinearGauge eng2OilLevelGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge targetPowerGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge pwrGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge gStateGauge;
         private Syncfusion.Windows.Forms.Gauge.LinearGauge throttlePosGauge;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label5;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge tracForceGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge tracPowerGauge;
         private System.Windows.Forms.Label label7;
@@ -1536,5 +1536,7 @@
         private System.Windows.Forms.TabPage tabPage5;
         private System.Windows.Forms.Label label37;
         private System.Windows.Forms.Label label38;
+        private Syncfusion.Windows.Forms.Gauge.DigitalGauge targetPowerGauge;
+        private System.Windows.Forms.Label label5;
     }
 }

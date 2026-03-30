@@ -109,6 +109,16 @@ namespace Saobracaj.Dokumenta
          eng2WaterTemp, eng2OilTemp, eng2OilLevel, eng2FuelCons, activeFaultCnt, activeFault1,
          activeFault2, activeFault3, activeFault4, activeFault5, faultSync, faultAck;
         #endregion
+        private void tabPage1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void eng1StateGauge_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private async void ReadData()
         {
             try
@@ -127,6 +137,8 @@ namespace Saobracaj.Dokumenta
                     string responseText = await responseToken.Content.ReadAsStringAsync();
                     dynamic data = JsonConvert.DeserializeObject(responseText);
                     token = data.access_token;
+
+
                     string apiEndpoint = "http://85.25.177.168/gpstrackjourney/api/journey/records";
                     MessageBox.Show(fromDt.ToString());
                     MessageBox.Show(toDt.ToString());
@@ -185,14 +197,10 @@ namespace Saobracaj.Dokumenta
                         throw new HttpRequestException($"Failed to retrieve records. Status code: {response.StatusCode}");
                     }
                 }
-                else
-                {
-                    throw new HttpRequestException($"Failed to obtain access token. Status code: {responseToken.StatusCode}");
-                }
-            }
-            catch (Exception ex)
+                
+            }catch(Exception ex)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}");
+                MessageBox.Show("Error: " + ex.Message);    
             }
         }
         private void FillGV()
@@ -253,13 +261,6 @@ namespace Saobracaj.Dokumenta
             string fileUrl = new Uri(fullPath).AbsoluteUri;
             webBrowser1.Navigate(fileUrl);
         }
-
-
-
-
-
-
-
 
 
         private void AddMarker(decimal latitude, decimal longitude)

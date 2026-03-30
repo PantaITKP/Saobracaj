@@ -1321,6 +1321,12 @@
     <Compile Include="IMailRepository.cs" />
     <Compile Include="InsertLokomotiveNaTrasi.cs" />
     <Compile Include="InsertTeretnicaStavke.cs" />
+    <Compile Include="LokomotiveTechnodis.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LokomotiveTechnodis.Designer.cs">
+      <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
+    </Compile>
     <Compile Include="MailRepository.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
@@ -2418,6 +2424,9 @@
     <EmbeddedResource Include="Izvestaji\Teretnica.rdlc" />
     <EmbeddedResource Include="Izvestaji\TeretnicaKomercijalna.rdlc" />
     <EmbeddedResource Include="Izvestaji\ZaradeStavkePoZaposlenom.rdlc" />
+    <EmbeddedResource Include="LokomotiveTechnodis.resx">
+      <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
