@@ -90,7 +90,7 @@
             this.dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridView1.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             this.dataGridView1.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridView1.Size = new System.Drawing.Size(660, 463);
+            this.dataGridView1.Size = new System.Drawing.Size(666, 525);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
@@ -124,7 +124,7 @@
             this.flpThumbnails.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.flpThumbnails.Location = new System.Drawing.Point(3, 5);
             this.flpThumbnails.Name = "flpThumbnails";
-            this.flpThumbnails.Size = new System.Drawing.Size(634, 605);
+            this.flpThumbnails.Size = new System.Drawing.Size(634, 655);
             this.flpThumbnails.TabIndex = 55;
             // 
             // btnPickDirectory
@@ -183,7 +183,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.flpThumbnails);
-            this.splitContainer1.Size = new System.Drawing.Size(1342, 613);
+            this.splitContainer1.Size = new System.Drawing.Size(1342, 663);
             this.splitContainer1.SplitterDistance = 698;
             this.splitContainer1.TabIndex = 62;
             // 
