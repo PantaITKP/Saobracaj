@@ -658,11 +658,11 @@ namespace Saobracaj.Dokumenta
                 var stanice = new List<StanicaRuta>
         {
             new StanicaRuta("Jakovo", 44.751418600658795, 20.254923569636006),
-            new StanicaRuta("ŠID", 45.124416370313526, 19.222164225500624),
-            new StanicaRuta("Zagreb", 45.80517412003623, 15.977577696973462),
-            new StanicaRuta("Savski Marof", 45.87295439092795, 15.737627745007833),
-            new StanicaRuta("Sezana", 45.70341317673655, 13.8629912329809),
-            new StanicaRuta("Vila Opicina", 45.694700105408536, 13.791487170305157),
+            new StanicaRuta("Šid/Tovarnik", 45.124416370313526, 19.222164225500624),
+            new StanicaRuta("Savski Marof/Dobova", 45.87295439092795, 15.737627745007833),
+            new StanicaRuta("Sežana/Villa Opicina", 45.70341317673655, 13.8629912329809),
+            new StanicaRuta(" ", 45.80754433132379, 13.543291784031267),
+             new StanicaRuta(" ", 45.78128057624936, 12.832272028209417),
             new StanicaRuta("Venezia Porto Marghera", 45.472590254351054, 12.256132184016668)
         };
 
