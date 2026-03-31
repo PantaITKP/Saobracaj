@@ -137,7 +137,7 @@ namespace Saobracaj.Servis
             DateTime datOd = datDo.AddSeconds(-10);
             //fromDate = datOd.ToString("yyyy-MM-ddTHH:mm:ss");
             //toDate = datum.ToString("yyyy-MM-ddTHH:mm:ss");
-
+            //tesr
 
             string datumOd = "2025-06-13 11:14:00";
             string datumDo = "2025-06-13 11:14:10";
