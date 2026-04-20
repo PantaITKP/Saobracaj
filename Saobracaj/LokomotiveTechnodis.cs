@@ -60,7 +60,7 @@ namespace Saobracaj.Servis
             using (SqlConnection conn = new SqlConnection(connection))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand("Select Lokomotiva,IDLokomotive from LocoTechnodis order by IDLokomotive asc", conn))
+                using (SqlCommand cmd = new SqlCommand("Select Lokomotiva,IDLokomotive from LocoTechnodis order by Lokomotiva asc", conn))
                 {
                     using (SqlDataReader dr = cmd.ExecuteReader())
                     {
@@ -106,6 +106,7 @@ namespace Saobracaj.Servis
         DateTime recordTime;
         private async Task<List<Record>> ReadData(string lokomotivaId)
         {
+
             string apiEndpoint = "http://85.25.177.168/gpstrackjourney/api/journey/records";
 
             var resp = new MultipartFormDataContent
@@ -134,15 +135,10 @@ namespace Saobracaj.Servis
         private async Task VratiPodatke()
         {
             DateTime datDo = DateTime.Now;
-            DateTime datOd = datDo.AddSeconds(-10);
-            //fromDate = datOd.ToString("yyyy-MM-ddTHH:mm:ss");
-            //toDate = datum.ToString("yyyy-MM-ddTHH:mm:ss");
+            DateTime datOd = datDo.AddSeconds(-20);
+            fromDate = datOd.ToString("yyyy-MM-ddTHH:mm:ss");
+            toDate = datDo.ToString("yyyy-MM-ddTHH:mm:ss");
             //tesr
-
-            string datumOd = "2025-06-13 11:14:00";
-            string datumDo = "2025-06-13 11:14:10";
-            fromDate = datumOd;
-            toDate = datumDo;
 
             await ReadToken();
 
@@ -157,12 +153,17 @@ namespace Saobracaj.Servis
                 Record lastRecord = records
                                    .OrderByDescending(x => x.Recordtime)
                                    .FirstOrDefault();
-                LocoData data = ParseSs(lastRecord.SS, lokomotivaNaziv, lastRecord.Recordtime);
+                LocoData data = ParseSs(
+                    lastRecord?.SS,
+                    lokomotivaNaziv,
+                    lastRecord?.Recordtime,
+                    lastRecord?.Speed
+                );
 
                 if (count == 1)
                 {
                     lblPrva.Text = lokomotivaNaziv;
-                    lblVremePrva.Text = lastRecord.Recordtime.ToString();
+                    lblVremePrva.Text = lastRecord == null ? "Nema podataka" : lastRecord.Recordtime.ToString();
                     prvaThrottleGauge.Value= data.ThrottlePosition;
                     prvaTargetPowerGauge.Value = data.TargetPower;
                     prvaTracPowerGauge.Value=data.TracPower;
@@ -172,8 +173,6 @@ namespace Saobracaj.Servis
                     prva2WorkHoursGauge.Value = data.Engine2WorkHours;
                     prva1RPMGauge.Value = data.Engine1Rpm;
                     prva2RPMGauge.Value = data.Engine2Rpm;
-                    prva1OilTGauge.Value = data.Engine1OilTemp;
-                    prva2OilTGauge.Value = data.Engine2OilTemp;
                     prva1WaterTGauge.Value = data.Engine1WaterTemp;
                     prva2WaterTGauge.Value = data.Engine2WaterTemp;
                     lblPrvaFaultCount.Text = "Active faults count: " + data.ActiveFaultCount;
@@ -184,11 +183,12 @@ namespace Saobracaj.Servis
                     activeFault5GaugePrva.Value = data.ActiveFault5;
                     faultAckGaugePrva.Value = data.FaultAck;
                     faultSyncGaugePrva.Value = data.FaultSync;
+                    prvaSpeed.Value = data.Speed;
                 }
                 if(count == 2)
                 {
                     lblDruga.Text = lokomotivaNaziv;
-                    lblVremeDruga.Text = lastRecord.Recordtime.ToString();
+                    lblVremeDruga.Text = lastRecord == null ? "Nema podataka" : lastRecord.Recordtime.ToString();
                     drugaThrottleGauge.Value = data.ThrottlePosition;
                     drugaTargetPowerGauge.Value = data.TargetPower;
                     drugaTracPowerGauge.Value = data.TracPower;
@@ -198,8 +198,6 @@ namespace Saobracaj.Servis
                     druga2WorkHoursGauge.Value = data.Engine2WorkHours;
                     druga1RPMGauge.Value = data.Engine1Rpm;
                     druga2RPMGauge.Value = data.Engine2Rpm;
-                    druga1OilTGauge.Value = data.Engine1OilTemp;
-                    druga2OilTGauge.Value = data.Engine2OilTemp;
                     druga1WaterTGauge.Value = data.Engine1WaterTemp;
                     druga2WaterTGauge.Value = data.Engine2WaterTemp;
                     lblDrugaFaultCount.Text = "Active faults count: " + data.ActiveFaultCount;
@@ -210,11 +208,12 @@ namespace Saobracaj.Servis
                     activeFault5GaugeDruga.Value = data.ActiveFault5;
                     faultAckGaugeDruga.Value = data.FaultAck;
                     faultSyncGaugeDruga.Value = data.FaultSync;
+                    drugaSpeed.Value = data.Speed;
                 }
                 if(count==3)
                 {
                     lblTreca.Text = lokomotivaNaziv;
-                    lblVremeTreca.Text = lastRecord.Recordtime.ToString();
+                    lblVremeTreca.Text = lastRecord == null ? "Nema podataka" : lastRecord.Recordtime.ToString();
                     trecaThrottleGauge.Value = data.ThrottlePosition;
                     trecaTargetPowerGauge.Value = data.TargetPower;
                     trecaTracPowerGauge.Value = data.TracPower;
@@ -224,8 +223,6 @@ namespace Saobracaj.Servis
                     treca2WorkHoursGauge.Value = data.Engine2WorkHours;
                     treca1RPMGauge.Value = data.Engine1Rpm;
                     treca2RPMGauge.Value = data.Engine2Rpm;
-                    treca1OilTGauge.Value = data.Engine1OilTemp;
-                    treca2OilTGauge.Value = data.Engine2OilTemp;
                     treca1WaterTGauge.Value = data.Engine1WaterTemp;
                     treca2WaterTGauge.Value = data.Engine2WaterTemp;
                     lblTrecaFaultCount.Text = "Active faults count: " + data.ActiveFaultCount;
@@ -236,11 +233,12 @@ namespace Saobracaj.Servis
                     activeFault5GaugeTreca.Value = data.ActiveFault5;
                     faultAckGaugeTreca.Value = data.FaultAck;
                     faultSyncGaugeTreca.Value = data.FaultSync;
+                    trecaSpeed.Value = data.Speed;
                 }
                 if (count == 4)
                 {
                     lblCetvrta.Text = lokomotivaNaziv;
-                    lblVremeCetvrta.Text = lastRecord.Recordtime.ToString();
+                    lblVremeCetvrta.Text = lastRecord == null ? "Nema podataka" : lastRecord.Recordtime.ToString();
                     cetvrtaThrottleGauge.Value = data.ThrottlePosition;
                     cetvrtaTargetPowerGauge.Value = data.TargetPower;
                     cetvrtaTracPowerGauge.Value = data.TracPower;
@@ -250,8 +248,6 @@ namespace Saobracaj.Servis
                     cetvrta2WorkHoursGauge.Value = data.Engine2WorkHours;
                     cetvrta1RPMGauge.Value = data.Engine1Rpm;
                     cetvrta2RPMGauge.Value = data.Engine2Rpm;
-                    cetvrta1OilTGauge.Value = data.Engine1OilTemp;
-                    cetvrta2OilTGauge.Value = data.Engine2OilTemp;
                     cetvrta1WaterTGauge.Value = data.Engine1WaterTemp;
                     cetvrta2WaterTGauge.Value = data.Engine2WaterTemp;
                     lblCetvrtaFaultCount.Text = "Active faults count: " + data.ActiveFaultCount;
@@ -262,44 +258,69 @@ namespace Saobracaj.Servis
                     activeFault5GaugeCetvrta.Value = data.ActiveFault5;
                     faultAckGaugeCetvrta.Value = data.FaultAck;
                     faultSyncGaugeCetvrta.Value = data.FaultSync;
+                    cetvrtaSpeed.Value = data.Speed;
                 }
                 count++;
+                if (count > 4)
+                {
+                    count = 1;
+                }
 
             }
         }
-        private LocoData ParseSs(string ss, string nazivLokomotive, DateTime? recordTime)
+        private LocoData ParseSs(string ss, string nazivLokomotive, DateTime? recordTime, string speed)
         {
             if (string.IsNullOrWhiteSpace(ss))
-                return new LocoData { LokomotivaNaziv = nazivLokomotive, RecordTime = recordTime };
+            {
+                return new LocoData
+                {
+                    LokomotivaNaziv = nazivLokomotive,
+                    RecordTime = recordTime,
+                    Speed = string.IsNullOrWhiteSpace(speed) ? "0000" : speed,
+                    ThrottlePosition = "000",
+                    TargetPower = "00000",
+                    TracPower = "000000",
+                    Engine1State = "000",
+                    Engine2State = "000",
+                    Engine1Rpm = "00000",
+                    Engine2Rpm = "00000",
+                    Engine1WorkHours = "00000",
+                    Engine2WorkHours = "00000",
+                    Engine1WaterTemp = "000",
+                    Engine2WaterTemp = "000",
+                    ActiveFaultCount = "000",
+                    ActiveFault1 = "00000",
+                    ActiveFault2 = "00000",
+                    ActiveFault3 = "00000",
+                    ActiveFault4 = "00000",
+                    ActiveFault5 = "00000",
+                    FaultSync = "000",
+                    FaultAck = "000"
+                };
+            }
 
             return new LocoData
             {
                 LokomotivaNaziv = nazivLokomotive,
                 RecordTime = recordTime,
-
+                Speed = speed,
                 ThrottlePosition = ss.Substring(45, 3),
                 TargetPower = ss.Substring(53, 5),
                 TracPower = ss.Substring(58, 5),
-
                 Engine1State = ss.Substring(138, 3),
                 Engine1Rpm = ss.Substring(141, 5),
                 Engine1WorkHours = ss.Substring(146, 5),
                 Engine1WaterTemp = ss.Substring(151, 5),
-                Engine1OilTemp = ss.Substring(156, 5),
-
                 Engine2State = ss.Substring(171, 3),
                 Engine2Rpm = ss.Substring(174, 5),
                 Engine2WorkHours = ss.Substring(179, 5),
                 Engine2WaterTemp = ss.Substring(184, 5),
-                Engine2OilTemp = ss.Substring(189, 5),
-
                 ActiveFaultCount = ss.Substring(204, 3),
                 ActiveFault1 = ss.Substring(207, 5),
                 ActiveFault2 = ss.Substring(212, 5),
                 ActiveFault3 = ss.Substring(217, 5),
                 ActiveFault4 = ss.Substring(222, 5),
                 ActiveFault5 = ss.Substring(227, 5),
-
                 FaultSync = ss.Substring(232, 3),
                 FaultAck = ss.Substring(235, 3)
             };
@@ -316,6 +337,24 @@ namespace Saobracaj.Servis
                 case 5: return "Disabled";
                 default: return "Shutdown";
             }
+        }
+
+        private async void timer1_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                await VratiPodatke();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Greška pri osvežavanju: " + ex.Message);
+            }
+        }
+
+        private void arhivaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LokomotiveTechnodisArhiva frm = new LokomotiveTechnodisArhiva();
+            frm.Show();
         }
 
         /*
@@ -778,7 +817,7 @@ namespace Saobracaj.Servis
         public decimal Mainvoltage { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-        public decimal Speed { get; set; }
+        public string Speed { get; set; }
         public decimal Direction { get; set; }
         public string SS { get; set; }
     }
@@ -807,6 +846,7 @@ namespace Saobracaj.Servis
         public string ActiveFault5 { get; set; }
         public string FaultSync { get; set; }
         public string FaultAck { get; set; }
+        public string Speed { get; set; }
     }
     public class LocoColumnControls
     {

@@ -1327,6 +1327,12 @@
     <Compile Include="LokomotiveTechnodis.Designer.cs">
       <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
     </Compile>
+    <Compile Include="LokomotiveTechnodisArhiva.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LokomotiveTechnodisArhiva.Designer.cs">
+      <DependentUpon>LokomotiveTechnodisArhiva.cs</DependentUpon>
+    </Compile>
     <Compile Include="MailRepository.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
@@ -2427,6 +2433,9 @@
     <EmbeddedResource Include="LokomotiveTechnodis.resx">
       <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="LokomotiveTechnodisArhiva.resx">
+      <DependentUpon>LokomotiveTechnodisArhiva.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -2954,6 +2963,7 @@
     <EmbeddedResource Include="MLProd\MapML.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <Content Include="mapTechnodis.html" />
     <Content Include="SqlServerTypes\readme.htm" />
     <Content Include="SqlServerTypes\x64\msvcr120.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

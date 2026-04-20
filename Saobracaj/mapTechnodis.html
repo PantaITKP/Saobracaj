@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRailwayMap</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        var map = L.map('map').setView([44.7866, 20.4489], 13);
+
+        var osmTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            opacity: 0.7
+        }).addTo(map);
+
+        var defaultTileLayer = L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
+            attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>, Style: <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0</a> <a href="https://www.openrailwaymap.org/?layers=standard">OpenRailwayMap</a> and OpenStreetMap'
+        }).addTo(map);
+
+        var baseMaps = { "OpenStreetMap": osmTileLayer };
+        var overlayMaps = { "Railway Map": defaultTileLayer };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        var pins = [];
+        var polyline = null;
+        var selectedMarker = null;
+        var pointMarkers = [];
+
+        function updateLayer(Maplayer) {
+            var baseLayerUrl = 'https://{s}.tiles.openrailwaymap.org/';
+            map.removeLayer(defaultTileLayer);
+            var layerUrl = baseLayerUrl + Maplayer + '/{z}/{x}/{y}.png';
+
+            defaultTileLayer = L.tileLayer(layerUrl, {
+                attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>, Style: <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA 2.0</a> <a href="https://www.openrailwaymap.org/?layers=' + Maplayer + '">OpenRailwayMap</a> and OpenStreetMap'
+            }).addTo(map);
+        }
+
+        function addMarker(latitude, longitude) {
+            clearMap();
+
+            var marker = L.marker([latitude, longitude]).addTo(map);
+            map.setView([latitude, longitude], 15);
+        }
+
+        function addPin(latitude, longitude) {
+            var pin = L.circleMarker([latitude, longitude], {
+                color: '#0059FF',
+                fillColor: '#0059FF',
+                fillOpacity: 0.6,
+                radius: 5
+            }).addTo(map);
+
+            pointMarkers.push(pin);
+            pins.push([latitude, longitude]);
+
+            if (pins.length > 1) {
+                if (polyline) {
+                    map.removeLayer(polyline);
+                }
+
+                polyline = L.polyline(pins, {
+                    color: '#1565C0',
+                    weight: 4,
+                    opacity: 0.85
+                }).addTo(map);
+
+                map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+            } else {
+                map.setView([latitude, longitude], 14);
+            }
+        }
+
+        function drawRouteFromJson(jsonPoints) {
+            clearMap();
+
+            if (!jsonPoints)
+                return;
+
+            var points = JSON.parse(jsonPoints);
+            if (!points || points.length === 0)
+                return;
+
+            for (var i = 0; i < points.length; i++) {
+                var lat = parseFloat(points[i].Latitude);
+                var lng = parseFloat(points[i].Longitude);
+
+                if (isNaN(lat) || isNaN(lng))
+                    continue;
+
+                addPin(lat, lng);
+            }
+
+            if (pins.length === 1) {
+                map.setView(pins[0], 15);
+            } else if (polyline) {
+                map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+            }
+        }
+
+        function focusPoint(latitude, longitude) {
+            latitude = parseFloat(latitude);
+            longitude = parseFloat(longitude);
+
+            if (isNaN(latitude) || isNaN(longitude))
+                return;
+
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+            }
+
+            selectedMarker = L.circleMarker([latitude, longitude], {
+                color: '#D50000',
+                fillColor: '#FF1744',
+                fillOpacity: 0.95,
+                radius: 8,
+                weight: 2
+            }).addTo(map);
+
+            map.setView([latitude, longitude], 17);
+        }
+
+        function clearMap() {
+            if (polyline) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+                selectedMarker = null;
+            }
+
+            for (var i = 0; i < pointMarkers.length; i++) {
+                map.removeLayer(pointMarkers[i]);
+            }
+
+            pointMarkers = [];
+            pins = [];
+        }
+
+        function addLoco(latitude, longitude, id, trasa, locomotive) {
+            var loco = L.circleMarker([latitude, longitude], {
+                color: 'red',
+                fillColor: 'red',
+                fillOpacity: 0.6,
+                radius: 5
+            }).addTo(map);
+
+            var tooltipContent = '<strong>ID:</strong> ' + id + '<br><strong>Trasa:</strong> ' + trasa + '<br><strong>Locomotive:</strong> ' + locomotive;
+            loco.bindTooltip(tooltipContent, {
+                permanent: true,
+                direction: 'top'
+            }).openTooltip();
+
+            loco.on('click', function () {
+                clearMap();
+                window.external.ShowTrasa(trasa);
+            });
+
+            map.setView([latitude, longitude], 7);
+        }
+
+        function focusPin(latitude, longitude) {
+            focusPoint(latitude, longitude);
+        }
+
+        map.zoomControl.remove();
+        map.attributionControl.remove();
+    </script>
+</body>
+</html>
