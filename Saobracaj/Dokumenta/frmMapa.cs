@@ -657,6 +657,7 @@ namespace Saobracaj.Dokumenta
 
                 var stanice = new List<StanicaRuta>
         {
+            new StanicaRuta("Tent B", 44.56328097737093, 20.006201008599152),
             new StanicaRuta("Jakovo", 44.751418600658795, 20.254923569636006),
             new StanicaRuta("Šid/Tovarnik", 45.124416370313526, 19.222164225500624),
             new StanicaRuta("Savski Marof/Dobova", 45.87295439092795, 15.737627745007833),
@@ -680,7 +681,6 @@ namespace Saobracaj.Dokumenta
                     marker.ToolTip.Foreground = Brushes.Black;
                     marker.ToolTip.Stroke = Pens.DarkGray;
                     marker.ToolTip.Font = new Font("Arial", 9, FontStyle.Bold);
-
                     markerOverlay.Markers.Add(marker);
                 }
 

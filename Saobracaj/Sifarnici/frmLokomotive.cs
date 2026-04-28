@@ -1,19 +1,19 @@
-﻿using System;
+﻿using Microsoft.Reporting.WinForms;
+using Saobracaj.Servis;
+using Syncfusion.Windows.Forms;
+using Syncfusion.Windows.Forms.Grid.Grouping;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
+using System.Data.OleDb;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.OleDb;
-using System.Data.SqlClient;
-using System.Configuration;
-using Syncfusion.Windows.Forms.Grid.Grouping;
-using Syncfusion.Windows.Forms;
-
-using Microsoft.Reporting.WinForms;
 namespace Saobracaj.Sifarnici
 {
     public partial class frmLokomotive : Syncfusion.Windows.Forms.Office2010Form
@@ -420,6 +420,12 @@ namespace Saobracaj.Sifarnici
                 c.Close();
                 RefreshDataGridSva();
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            LokomotiveTechnodis lt = new LokomotiveTechnodis();
+            lt.Show();
         }
     }
 }

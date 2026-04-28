@@ -438,7 +438,7 @@
             // 
             // prvaThrottleGauge
             // 
-            this.prvaThrottleGauge.CharacterCount = 1;
+            this.prvaThrottleGauge.CharacterCount = 3;
             this.prvaThrottleGauge.DisplayRecordIndex = 0;
             this.prvaThrottleGauge.Location = new System.Drawing.Point(22, 33);
             this.prvaThrottleGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -584,7 +584,7 @@
             // 
             // prva2WaterTGauge
             // 
-            this.prva2WaterTGauge.CharacterCount = 3;
+            this.prva2WaterTGauge.CharacterCount = 5;
             this.prva2WaterTGauge.DisplayRecordIndex = 0;
             this.prva2WaterTGauge.Location = new System.Drawing.Point(291, 307);
             this.prva2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -595,7 +595,7 @@
             // 
             // prva2OilTGauge
             // 
-            this.prva2OilTGauge.CharacterCount = 3;
+            this.prva2OilTGauge.CharacterCount = 5;
             this.prva2OilTGauge.DisplayRecordIndex = 0;
             this.prva2OilTGauge.Location = new System.Drawing.Point(291, 208);
             this.prva2OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -606,7 +606,7 @@
             // 
             // prva1WaterTGauge
             // 
-            this.prva1WaterTGauge.CharacterCount = 3;
+            this.prva1WaterTGauge.CharacterCount = 5;
             this.prva1WaterTGauge.DisplayRecordIndex = 0;
             this.prva1WaterTGauge.Location = new System.Drawing.Point(8, 307);
             this.prva1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -617,7 +617,7 @@
             // 
             // prva1OilTGauge
             // 
-            this.prva1OilTGauge.CharacterCount = 3;
+            this.prva1OilTGauge.CharacterCount = 5;
             this.prva1OilTGauge.DisplayRecordIndex = 0;
             this.prva1OilTGauge.Location = new System.Drawing.Point(8, 208);
             this.prva1OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -2211,7 +2211,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Azure;
-            this.ClientSize = new System.Drawing.Size(1986, 1020);
+            this.ClientSize = new System.Drawing.Size(1924, 1020);
             this.Controls.Add(this.dockingClientPanel4);
             this.Controls.Add(this.dockingClientPanel3);
             this.Controls.Add(this.dockingClientPanel2);

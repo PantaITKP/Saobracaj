@@ -17,6 +17,7 @@ using Syncfusion.Windows.Forms;
 using MetroFramework.Forms;
 using Saobracaj.Dokumenta;
 using Saobracaj.MLProd;
+using Saobracaj.Servis;
 
 namespace Saobracaj.Sifarnici
 {
@@ -129,6 +130,11 @@ namespace Saobracaj.Sifarnici
         {
             Predict predict = new Predict();
             predict.Show();
+        }
+
+        private void sfButton1_Click(object sender, EventArgs e)
+        {
+          
         }
     }
 }

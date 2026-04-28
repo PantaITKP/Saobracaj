@@ -55,6 +55,7 @@
             this.cboLokomotiva = new System.Windows.Forms.CheckBox();
             this.button2 = new System.Windows.Forms.Button();
             this.cboVozilo = new System.Windows.Forms.CheckBox();
+            this.button3 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtMasa)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -66,29 +67,26 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 42);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(12, 34);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(80, 17);
+            this.label1.Size = new System.Drawing.Size(62, 13);
             this.label1.TabIndex = 13;
             this.label1.Text = "Lokomotiva";
             // 
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(894, 31);
-            this.comboBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.comboBox1.Location = new System.Drawing.Point(670, 25);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(70, 24);
+            this.comboBox1.Size = new System.Drawing.Size(54, 21);
             this.comboBox1.TabIndex = 3;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(759, 31);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(569, 25);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(127, 17);
+            this.label2.Size = new System.Drawing.Size(96, 13);
             this.label2.TabIndex = 15;
             this.label2.Text = "Tip voznog osoblja";
             // 
@@ -98,41 +96,37 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(7, 7);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(4);
+            this.dataGridView1.Location = new System.Drawing.Point(5, 6);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.Size = new System.Drawing.Size(943, 332);
+            this.dataGridView1.Size = new System.Drawing.Size(707, 270);
             this.dataGridView1.TabIndex = 18;
             this.dataGridView1.SelectionChanged += new System.EventHandler(this.dataGridView1_SelectionChanged);
             // 
             // comboBox2
             // 
             this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.Location = new System.Drawing.Point(867, 63);
-            this.comboBox2.Margin = new System.Windows.Forms.Padding(4);
+            this.comboBox2.Location = new System.Drawing.Point(650, 51);
             this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(97, 24);
+            this.comboBox2.Size = new System.Drawing.Size(74, 21);
             this.comboBox2.TabIndex = 2;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(759, 63);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label3.Location = new System.Drawing.Point(569, 51);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(56, 17);
+            this.label3.Size = new System.Drawing.Size(42, 13);
             this.label3.TabIndex = 19;
             this.label3.Text = "Osoblje";
             // 
             // chkAktivna
             // 
             this.chkAktivna.AutoSize = true;
-            this.chkAktivna.Location = new System.Drawing.Point(16, 118);
-            this.chkAktivna.Margin = new System.Windows.Forms.Padding(4);
+            this.chkAktivna.Location = new System.Drawing.Point(12, 96);
             this.chkAktivna.Name = "chkAktivna";
             this.chkAktivna.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkAktivna.Size = new System.Drawing.Size(76, 21);
+            this.chkAktivna.Size = new System.Drawing.Size(62, 17);
             this.chkAktivna.TabIndex = 188;
             this.chkAktivna.Text = "Aktivna";
             this.chkAktivna.UseVisualStyleBackColor = true;
@@ -140,11 +134,10 @@
             // chkDizel
             // 
             this.chkDizel.AutoSize = true;
-            this.chkDizel.Location = new System.Drawing.Point(16, 146);
-            this.chkDizel.Margin = new System.Windows.Forms.Padding(4);
+            this.chkDizel.Location = new System.Drawing.Point(12, 119);
             this.chkDizel.Name = "chkDizel";
             this.chkDizel.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.chkDizel.Size = new System.Drawing.Size(61, 21);
+            this.chkDizel.Size = new System.Drawing.Size(49, 17);
             this.chkDizel.TabIndex = 199;
             this.chkDizel.Text = "Dizel";
             this.chkDizel.UseVisualStyleBackColor = true;
@@ -152,39 +145,35 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(16, 79);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(12, 64);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(61, 17);
+            this.label5.Size = new System.Drawing.Size(47, 13);
             this.label5.TabIndex = 201;
             this.label5.Text = "Lozinka:";
             // 
             // txtPassword
             // 
             this.txtPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.txtPassword.Location = new System.Drawing.Point(107, 79);
-            this.txtPassword.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPassword.Location = new System.Drawing.Point(80, 64);
             this.txtPassword.Name = "txtPassword";
-            this.txtPassword.Size = new System.Drawing.Size(204, 22);
+            this.txtPassword.Size = new System.Drawing.Size(154, 20);
             this.txtPassword.TabIndex = 200;
             this.txtPassword.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // txtLokomotiva
             // 
             this.txtLokomotiva.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.txtLokomotiva.Location = new System.Drawing.Point(107, 42);
-            this.txtLokomotiva.Margin = new System.Windows.Forms.Padding(4);
+            this.txtLokomotiva.Location = new System.Drawing.Point(80, 34);
             this.txtLokomotiva.Name = "txtLokomotiva";
-            this.txtLokomotiva.Size = new System.Drawing.Size(204, 22);
+            this.txtLokomotiva.Size = new System.Drawing.Size(154, 20);
             this.txtLokomotiva.TabIndex = 202;
             this.txtLokomotiva.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // btnRacun
             // 
-            this.btnRacun.Location = new System.Drawing.Point(503, 112);
-            this.btnRacun.Margin = new System.Windows.Forms.Padding(4);
+            this.btnRacun.Location = new System.Drawing.Point(377, 91);
             this.btnRacun.Name = "btnRacun";
-            this.btnRacun.Size = new System.Drawing.Size(152, 33);
+            this.btnRacun.Size = new System.Drawing.Size(114, 27);
             this.btnRacun.TabIndex = 203;
             this.btnRacun.Text = "Promeni podatke";
             this.btnRacun.UseVisualStyleBackColor = true;
@@ -193,61 +182,57 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(168, 121);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(126, 98);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(143, 17);
+            this.label4.Size = new System.Drawing.Size(108, 13);
             this.label4.TabIndex = 205;
             this.label4.Text = "Masa teretnog vozila:";
             // 
             // txtMasa
             // 
-            this.txtMasa.Location = new System.Drawing.Point(320, 118);
-            this.txtMasa.Margin = new System.Windows.Forms.Padding(4);
+            this.txtMasa.Location = new System.Drawing.Point(240, 96);
             this.txtMasa.Maximum = new decimal(new int[] {
             1000000,
             0,
             0,
             0});
             this.txtMasa.Name = "txtMasa";
-            this.txtMasa.Size = new System.Drawing.Size(120, 22);
+            this.txtMasa.Size = new System.Drawing.Size(90, 20);
             this.txtMasa.TabIndex = 204;
             this.txtMasa.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(445, 122);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Location = new System.Drawing.Point(334, 99);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(28, 17);
+            this.label6.Size = new System.Drawing.Size(22, 13);
             this.label6.TabIndex = 206;
             this.label6.Text = "KG";
             // 
             // cboSerija
             // 
             this.cboSerija.FormattingEnabled = true;
-            this.cboSerija.Location = new System.Drawing.Point(320, 78);
-            this.cboSerija.Margin = new System.Windows.Forms.Padding(4);
+            this.cboSerija.Location = new System.Drawing.Point(240, 63);
             this.cboSerija.Name = "cboSerija";
-            this.cboSerija.Size = new System.Drawing.Size(189, 24);
+            this.cboSerija.Size = new System.Drawing.Size(143, 21);
             this.cboSerija.TabIndex = 207;
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(320, 58);
-            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Location = new System.Drawing.Point(240, 47);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(44, 17);
+            this.label7.Size = new System.Drawing.Size(33, 13);
             this.label7.TabIndex = 208;
             this.label7.Text = "Serija";
             // 
             // btn_Dokumenta
             // 
-            this.btn_Dokumenta.Location = new System.Drawing.Point(494, 12);
+            this.btn_Dokumenta.Location = new System.Drawing.Point(370, 10);
+            this.btn_Dokumenta.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btn_Dokumenta.Name = "btn_Dokumenta";
-            this.btn_Dokumenta.Size = new System.Drawing.Size(118, 45);
+            this.btn_Dokumenta.Size = new System.Drawing.Size(88, 37);
             this.btn_Dokumenta.TabIndex = 209;
             this.btn_Dokumenta.Text = "Dokumenta";
             this.btn_Dokumenta.UseVisualStyleBackColor = true;
@@ -260,19 +245,21 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Location = new System.Drawing.Point(19, 198);
+            this.tabControl1.Location = new System.Drawing.Point(14, 161);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(965, 375);
+            this.tabControl1.Size = new System.Drawing.Size(724, 305);
             this.tabControl1.TabIndex = 210;
             // 
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.dataGridView1);
-            this.tabPage1.Location = new System.Drawing.Point(4, 25);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(957, 346);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage1.Size = new System.Drawing.Size(716, 279);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Izmena lokomotive";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -280,10 +267,11 @@
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.dataGridView2);
-            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(957, 346);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabPage2.Size = new System.Drawing.Size(716, 279);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Mesta troška";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -294,20 +282,18 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(7, 7);
-            this.dataGridView2.Margin = new System.Windows.Forms.Padding(4);
+            this.dataGridView2.Location = new System.Drawing.Point(5, 6);
             this.dataGridView2.Name = "dataGridView2";
             this.dataGridView2.RowHeadersWidth = 51;
-            this.dataGridView2.Size = new System.Drawing.Size(943, 332);
+            this.dataGridView2.Size = new System.Drawing.Size(707, 270);
             this.dataGridView2.TabIndex = 19;
             this.dataGridView2.SelectionChanged += new System.EventHandler(this.dataGridView2_SelectionChanged);
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(503, 158);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Location = new System.Drawing.Point(377, 128);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(152, 33);
+            this.button1.Size = new System.Drawing.Size(114, 27);
             this.button1.TabIndex = 211;
             this.button1.Text = "Prikaži sva mesta";
             this.button1.UseVisualStyleBackColor = true;
@@ -316,21 +302,19 @@
             // cboLokomotiva
             // 
             this.cboLokomotiva.AutoSize = true;
-            this.cboLokomotiva.Location = new System.Drawing.Point(752, 122);
-            this.cboLokomotiva.Margin = new System.Windows.Forms.Padding(4);
+            this.cboLokomotiva.Location = new System.Drawing.Point(564, 99);
             this.cboLokomotiva.Name = "cboLokomotiva";
             this.cboLokomotiva.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.cboLokomotiva.Size = new System.Drawing.Size(102, 21);
+            this.cboLokomotiva.Size = new System.Drawing.Size(81, 17);
             this.cboLokomotiva.TabIndex = 212;
             this.cboLokomotiva.Text = "Lokomotiva";
             this.cboLokomotiva.UseVisualStyleBackColor = true;
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(663, 158);
-            this.button2.Margin = new System.Windows.Forms.Padding(4);
+            this.button2.Location = new System.Drawing.Point(497, 128);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(263, 33);
+            this.button2.Size = new System.Drawing.Size(197, 27);
             this.button2.TabIndex = 213;
             this.button2.Text = "Proglasi lokomotivu/Auto";
             this.button2.UseVisualStyleBackColor = true;
@@ -339,20 +323,32 @@
             // cboVozilo
             // 
             this.cboVozilo.AutoSize = true;
-            this.cboVozilo.Location = new System.Drawing.Point(867, 122);
-            this.cboVozilo.Margin = new System.Windows.Forms.Padding(4);
+            this.cboVozilo.Location = new System.Drawing.Point(650, 99);
             this.cboVozilo.Name = "cboVozilo";
             this.cboVozilo.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.cboVozilo.Size = new System.Drawing.Size(59, 21);
+            this.cboVozilo.Size = new System.Drawing.Size(48, 17);
             this.cboVozilo.TabIndex = 215;
             this.cboVozilo.Text = "Auto";
             this.cboVozilo.UseVisualStyleBackColor = true;
             // 
+            // button3
+            // 
+            this.button3.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.button3.ForeColor = System.Drawing.Color.Yellow;
+            this.button3.Location = new System.Drawing.Point(-1, -4);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(215, 23);
+            this.button3.TabIndex = 216;
+            this.button3.Text = "Pregled rada";
+            this.button3.UseVisualStyleBackColor = false;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // frmLokomotive
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(998, 585);
+            this.ClientSize = new System.Drawing.Size(750, 476);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.cboVozilo);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.cboLokomotiva);
@@ -376,7 +372,6 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmLokomotive";
             this.Text = "Lokomotive";
             this.Load += new System.EventHandler(this.frmLokomotive_Load);
@@ -418,5 +413,6 @@
         private System.Windows.Forms.CheckBox cboLokomotiva;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.CheckBox cboVozilo;
+        private System.Windows.Forms.Button button3;
     }
 }

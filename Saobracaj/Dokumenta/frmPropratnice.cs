@@ -464,7 +464,8 @@ namespace Saobracaj.Dokumenta
                     {
                         string cuvaj = "disp@kprevoz.co.rs";
                         mailMessage = new MailMessage("disp@kprevoz.co.rs", nizMail);
-                        mailMessage.CC.Add("priprema@kprevoz.co.rs");
+                        // mailMessage.CC.Add("priprema@kprevoz.co.rs");
+                        mailMessage.CC.Add("disp@kprevoz.co.rs");
                         mailMessage.Subject = "Zaduženje";
                         string body = "";
                         body = body + "Zaduženje broj: " + txt_ID.Text.ToString().TrimEnd() + "<br/>Za: " + combo_Zaduzen.Text.ToString().TrimEnd() + "<br/>";
@@ -494,7 +495,7 @@ namespace Saobracaj.Dokumenta
 
                         smtpClient.Port = 25;
                         smtpClient.UseDefaultCredentials = true;
-                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "D1$p.pele1616");
+                        smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "QmoqV}%Ep$0@");
 
                         smtpClient.EnableSsl = true;
                         smtpClient.Send(mailMessage);
@@ -554,7 +555,7 @@ namespace Saobracaj.Dokumenta
 
                     smtpClient.Port = 25;
                     smtpClient.UseDefaultCredentials = true;
-                    smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "D1$p.pele1616");
+                    smtpClient.Credentials = new NetworkCredential("disp@kprevoz.co.rs", "QmoqV}%Ep$0@");
 
                     smtpClient.EnableSsl = true;
                     smtpClient.Send(mailMessage);

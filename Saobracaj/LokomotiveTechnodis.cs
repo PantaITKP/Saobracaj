@@ -139,8 +139,8 @@ namespace Saobracaj.Servis
             //toDate = datum.ToString("yyyy-MM-ddTHH:mm:ss");
             //tesr
 
-            string datumOd = "2025-06-13 11:14:00";
-            string datumDo = "2025-06-13 11:14:10";
+            string datumOd = "2026-03-31 06:00:00";
+            string datumDo = "2026-03-31 06:01:00";
             fromDate = datumOd;
             toDate = datumDo;
 

@@ -1,4 +1,6 @@
 ﻿using Saobracaj.Mobile;
+using Saobracaj.Servis;
+
 //using Syncfusion.Windows.Forms.Grid.Grouping;
 using Syncfusion.Windows.Forms;
 using System;
@@ -956,6 +958,18 @@ namespace Saobracaj
         {
             MLProd.PonudaML pon = new MLProd.PonudaML();
             pon.Show();
+        }
+
+        private void toolStripButton135_Click(object sender, EventArgs e)
+        {
+            Saobracaj.Administracija.frmNotifikacije not = new Administracija.frmNotifikacije();
+            not.Show();
+        }
+
+        private void toolStripButton136_Click(object sender, EventArgs e)
+        {
+            LokomotiveTechnodis ltd = new LokomotiveTechnodis();
+            ltd.Show();
         }
     }
 }
