@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.dockingClientPanel1 = new Syncfusion.Windows.Forms.Tools.DockingClientPanel();
             this.panel4 = new System.Windows.Forms.Panel();
             this.faultSyncGaugePrva = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
@@ -46,7 +47,9 @@
             this.label16 = new System.Windows.Forms.Label();
             this.lblPrvaFaultCount = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.prvaSpeed = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prvaThrottleGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
+            this.label8 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.prvaTracPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label4 = new System.Windows.Forms.Label();
@@ -54,15 +57,12 @@
             this.label5 = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
             this.label9 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.prva2RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prva2WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prva2WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.prva2OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prva1WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.prva1OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prva1RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.prva1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -90,7 +90,9 @@
             this.label24 = new System.Windows.Forms.Label();
             this.lblDrugaFaultCount = new System.Windows.Forms.Label();
             this.panel6 = new System.Windows.Forms.Panel();
+            this.drugaSpeed = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.drugaThrottleGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
+            this.label10 = new System.Windows.Forms.Label();
             this.label27 = new System.Windows.Forms.Label();
             this.drugaTracPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label28 = new System.Windows.Forms.Label();
@@ -98,15 +100,12 @@
             this.label29 = new System.Windows.Forms.Label();
             this.panel7 = new System.Windows.Forms.Panel();
             this.label30 = new System.Windows.Forms.Label();
-            this.label31 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
             this.label33 = new System.Windows.Forms.Label();
             this.druga2RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.druga2WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.druga2WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.druga2OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.druga1WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.druga1OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.druga1RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.druga1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.panel8 = new System.Windows.Forms.Panel();
@@ -134,7 +133,9 @@
             this.label46 = new System.Windows.Forms.Label();
             this.lblTrecaFaultCount = new System.Windows.Forms.Label();
             this.panel10 = new System.Windows.Forms.Panel();
+            this.trecaSpeed = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.trecaThrottleGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
+            this.label25 = new System.Windows.Forms.Label();
             this.label49 = new System.Windows.Forms.Label();
             this.trecaTracPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label50 = new System.Windows.Forms.Label();
@@ -142,15 +143,12 @@
             this.label51 = new System.Windows.Forms.Label();
             this.panel11 = new System.Windows.Forms.Panel();
             this.label52 = new System.Windows.Forms.Label();
-            this.label53 = new System.Windows.Forms.Label();
             this.label54 = new System.Windows.Forms.Label();
             this.label55 = new System.Windows.Forms.Label();
             this.treca2RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.treca2WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.treca2WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.treca2OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.treca1WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.treca1OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.treca1RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.treca1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.panel12 = new System.Windows.Forms.Panel();
@@ -178,7 +176,9 @@
             this.label68 = new System.Windows.Forms.Label();
             this.lblCetvrtaFaultCount = new System.Windows.Forms.Label();
             this.panel14 = new System.Windows.Forms.Panel();
+            this.cetvrtaSpeed = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrtaThrottleGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
+            this.label26 = new System.Windows.Forms.Label();
             this.label71 = new System.Windows.Forms.Label();
             this.cetvrtaTracPowerGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.label72 = new System.Windows.Forms.Label();
@@ -186,15 +186,12 @@
             this.label73 = new System.Windows.Forms.Label();
             this.panel15 = new System.Windows.Forms.Panel();
             this.label74 = new System.Windows.Forms.Label();
-            this.label75 = new System.Windows.Forms.Label();
             this.label76 = new System.Windows.Forms.Label();
             this.label77 = new System.Windows.Forms.Label();
             this.cetvrta2RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrta2WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrta2WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.cetvrta2OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrta1WaterTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
-            this.cetvrta1OilTGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrta1RPMGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.cetvrta1WorkHoursGauge = new Syncfusion.Windows.Forms.Gauge.DigitalGauge();
             this.panel16 = new System.Windows.Forms.Panel();
@@ -204,6 +201,9 @@
             this.label81 = new System.Windows.Forms.Label();
             this.lblVremeCetvrta = new System.Windows.Forms.Label();
             this.lblCetvrta = new System.Windows.Forms.Label();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.arhivaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dockingClientPanel1.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -224,6 +224,7 @@
             this.panel14.SuspendLayout();
             this.panel15.SuspendLayout();
             this.panel16.SuspendLayout();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // dockingClientPanel1
@@ -236,7 +237,7 @@
             this.dockingClientPanel1.Controls.Add(this.panel1);
             this.dockingClientPanel1.Controls.Add(this.lblVremePrva);
             this.dockingClientPanel1.Controls.Add(this.lblPrva);
-            this.dockingClientPanel1.Location = new System.Drawing.Point(12, 12);
+            this.dockingClientPanel1.Location = new System.Drawing.Point(12, 42);
             this.dockingClientPanel1.Name = "dockingClientPanel1";
             this.dockingClientPanel1.Size = new System.Drawing.Size(460, 985);
             this.dockingClientPanel1.TabIndex = 0;
@@ -259,7 +260,7 @@
             this.panel4.Controls.Add(this.label11);
             this.panel4.Controls.Add(this.activeFault1GaugePrva);
             this.panel4.Controls.Add(this.label16);
-            this.panel4.Location = new System.Drawing.Point(3, 721);
+            this.panel4.Location = new System.Drawing.Point(3, 684);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(447, 261);
             this.panel4.TabIndex = 4;
@@ -415,7 +416,7 @@
             // 
             this.lblPrvaFaultCount.AutoSize = true;
             this.lblPrvaFaultCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPrvaFaultCount.Location = new System.Drawing.Point(3, 693);
+            this.lblPrvaFaultCount.Location = new System.Drawing.Point(4, 656);
             this.lblPrvaFaultCount.Name = "lblPrvaFaultCount";
             this.lblPrvaFaultCount.Size = new System.Drawing.Size(183, 25);
             this.lblPrvaFaultCount.TabIndex = 3;
@@ -425,7 +426,9 @@
             // 
             this.panel2.BackColor = System.Drawing.Color.Azure;
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel2.Controls.Add(this.prvaSpeed);
             this.panel2.Controls.Add(this.prvaThrottleGauge);
+            this.panel2.Controls.Add(this.label8);
             this.panel2.Controls.Add(this.label3);
             this.panel2.Controls.Add(this.prvaTracPowerGauge);
             this.panel2.Controls.Add(this.label4);
@@ -433,8 +436,19 @@
             this.panel2.Controls.Add(this.label5);
             this.panel2.Location = new System.Drawing.Point(3, 114);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(447, 129);
+            this.panel2.Size = new System.Drawing.Size(447, 200);
             this.panel2.TabIndex = 2;
+            // 
+            // prvaSpeed
+            // 
+            this.prvaSpeed.CharacterCount = 4;
+            this.prvaSpeed.DisplayRecordIndex = 0;
+            this.prvaSpeed.Location = new System.Drawing.Point(153, 119);
+            this.prvaSpeed.MaximumSize = new System.Drawing.Size(500, 180);
+            this.prvaSpeed.MinimumSize = new System.Drawing.Size(70, 70);
+            this.prvaSpeed.Name = "prvaSpeed";
+            this.prvaSpeed.Size = new System.Drawing.Size(151, 70);
+            this.prvaSpeed.TabIndex = 5;
             // 
             // prvaThrottleGauge
             // 
@@ -446,6 +460,16 @@
             this.prvaThrottleGauge.Name = "prvaThrottleGauge";
             this.prvaThrottleGauge.Size = new System.Drawing.Size(80, 80);
             this.prvaThrottleGauge.TabIndex = 0;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(81, 148);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(66, 24);
+            this.label8.TabIndex = 0;
+            this.label8.Text = "Speed";
             // 
             // label3
             // 
@@ -504,47 +528,34 @@
             this.panel3.BackColor = System.Drawing.Color.Azure;
             this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel3.Controls.Add(this.label9);
-            this.panel3.Controls.Add(this.label8);
             this.panel3.Controls.Add(this.label7);
             this.panel3.Controls.Add(this.label6);
             this.panel3.Controls.Add(this.prva2RPMGauge);
             this.panel3.Controls.Add(this.prva2WorkHoursGauge);
             this.panel3.Controls.Add(this.prva2WaterTGauge);
-            this.panel3.Controls.Add(this.prva2OilTGauge);
             this.panel3.Controls.Add(this.prva1WaterTGauge);
-            this.panel3.Controls.Add(this.prva1OilTGauge);
             this.panel3.Controls.Add(this.prva1RPMGauge);
             this.panel3.Controls.Add(this.prva1WorkHoursGauge);
-            this.panel3.Location = new System.Drawing.Point(3, 264);
+            this.panel3.Location = new System.Drawing.Point(3, 332);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(447, 414);
+            this.panel3.Size = new System.Drawing.Size(447, 321);
             this.panel3.TabIndex = 1;
             // 
             // label9
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(156, 330);
+            this.label9.Location = new System.Drawing.Point(163, 240);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(106, 24);
             this.label9.TabIndex = 0;
             this.label9.Text = "Water temp";
             // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(173, 238);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(80, 24);
-            this.label8.TabIndex = 0;
-            this.label8.Text = "Oil temp";
-            // 
             // label7
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(187, 137);
+            this.label7.Location = new System.Drawing.Point(195, 138);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(51, 24);
             this.label7.TabIndex = 0;
@@ -554,7 +565,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(155, 44);
+            this.label6.Location = new System.Drawing.Point(163, 45);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(107, 24);
             this.label6.TabIndex = 0;
@@ -564,7 +575,7 @@
             // 
             this.prva2RPMGauge.CharacterCount = 5;
             this.prva2RPMGauge.DisplayRecordIndex = 0;
-            this.prva2RPMGauge.Location = new System.Drawing.Point(291, 109);
+            this.prva2RPMGauge.Location = new System.Drawing.Point(299, 110);
             this.prva2RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2RPMGauge.Name = "prva2RPMGauge";
@@ -575,7 +586,7 @@
             // 
             this.prva2WorkHoursGauge.CharacterCount = 5;
             this.prva2WorkHoursGauge.DisplayRecordIndex = 0;
-            this.prva2WorkHoursGauge.Location = new System.Drawing.Point(291, 13);
+            this.prva2WorkHoursGauge.Location = new System.Drawing.Point(299, 14);
             this.prva2WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2WorkHoursGauge.Name = "prva2WorkHoursGauge";
@@ -586,51 +597,31 @@
             // 
             this.prva2WaterTGauge.CharacterCount = 5;
             this.prva2WaterTGauge.DisplayRecordIndex = 0;
-            this.prva2WaterTGauge.Location = new System.Drawing.Point(291, 307);
+            this.prva2WaterTGauge.Location = new System.Drawing.Point(298, 217);
             this.prva2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2WaterTGauge.Name = "prva2WaterTGauge";
             this.prva2WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.prva2WaterTGauge.TabIndex = 4;
             // 
-            // prva2OilTGauge
-            // 
-            this.prva2OilTGauge.CharacterCount = 5;
-            this.prva2OilTGauge.DisplayRecordIndex = 0;
-            this.prva2OilTGauge.Location = new System.Drawing.Point(291, 208);
-            this.prva2OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.prva2OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.prva2OilTGauge.Name = "prva2OilTGauge";
-            this.prva2OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.prva2OilTGauge.TabIndex = 4;
-            // 
+
             // prva1WaterTGauge
             // 
             this.prva1WaterTGauge.CharacterCount = 5;
             this.prva1WaterTGauge.DisplayRecordIndex = 0;
-            this.prva1WaterTGauge.Location = new System.Drawing.Point(8, 307);
+            this.prva1WaterTGauge.Location = new System.Drawing.Point(15, 217);
             this.prva1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva1WaterTGauge.Name = "prva1WaterTGauge";
             this.prva1WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.prva1WaterTGauge.TabIndex = 4;
             // 
-            // prva1OilTGauge
-            // 
-            this.prva1OilTGauge.CharacterCount = 5;
-            this.prva1OilTGauge.DisplayRecordIndex = 0;
-            this.prva1OilTGauge.Location = new System.Drawing.Point(8, 208);
-            this.prva1OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.prva1OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.prva1OilTGauge.Name = "prva1OilTGauge";
-            this.prva1OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.prva1OilTGauge.TabIndex = 4;
-            // 
+
             // prva1RPMGauge
             // 
             this.prva1RPMGauge.CharacterCount = 5;
             this.prva1RPMGauge.DisplayRecordIndex = 0;
-            this.prva1RPMGauge.Location = new System.Drawing.Point(7, 109);
+            this.prva1RPMGauge.Location = new System.Drawing.Point(15, 110);
             this.prva1RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva1RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva1RPMGauge.Name = "prva1RPMGauge";
@@ -641,7 +632,7 @@
             // 
             this.prva1WorkHoursGauge.CharacterCount = 5;
             this.prva1WorkHoursGauge.DisplayRecordIndex = 0;
-            this.prva1WorkHoursGauge.Location = new System.Drawing.Point(7, 13);
+            this.prva1WorkHoursGauge.Location = new System.Drawing.Point(15, 14);
             this.prva1WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva1WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva1WorkHoursGauge.Name = "prva1WorkHoursGauge";
@@ -731,7 +722,7 @@
             this.dockingClientPanel2.Controls.Add(this.panel8);
             this.dockingClientPanel2.Controls.Add(this.lblVremeDruga);
             this.dockingClientPanel2.Controls.Add(this.lblDruga);
-            this.dockingClientPanel2.Location = new System.Drawing.Point(494, 12);
+            this.dockingClientPanel2.Location = new System.Drawing.Point(495, 42);
             this.dockingClientPanel2.Name = "dockingClientPanel2";
             this.dockingClientPanel2.Size = new System.Drawing.Size(460, 985);
             this.dockingClientPanel2.TabIndex = 0;
@@ -754,7 +745,7 @@
             this.panel5.Controls.Add(this.label23);
             this.panel5.Controls.Add(this.activeFault1GaugeDruga);
             this.panel5.Controls.Add(this.label24);
-            this.panel5.Location = new System.Drawing.Point(3, 721);
+            this.panel5.Location = new System.Drawing.Point(3, 684);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(447, 261);
             this.panel5.TabIndex = 4;
@@ -910,7 +901,7 @@
             // 
             this.lblDrugaFaultCount.AutoSize = true;
             this.lblDrugaFaultCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDrugaFaultCount.Location = new System.Drawing.Point(3, 693);
+            this.lblDrugaFaultCount.Location = new System.Drawing.Point(4, 656);
             this.lblDrugaFaultCount.Name = "lblDrugaFaultCount";
             this.lblDrugaFaultCount.Size = new System.Drawing.Size(183, 25);
             this.lblDrugaFaultCount.TabIndex = 3;
@@ -920,7 +911,9 @@
             // 
             this.panel6.BackColor = System.Drawing.Color.Azure;
             this.panel6.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel6.Controls.Add(this.drugaSpeed);
             this.panel6.Controls.Add(this.drugaThrottleGauge);
+            this.panel6.Controls.Add(this.label10);
             this.panel6.Controls.Add(this.label27);
             this.panel6.Controls.Add(this.drugaTracPowerGauge);
             this.panel6.Controls.Add(this.label28);
@@ -928,8 +921,19 @@
             this.panel6.Controls.Add(this.label29);
             this.panel6.Location = new System.Drawing.Point(3, 114);
             this.panel6.Name = "panel6";
-            this.panel6.Size = new System.Drawing.Size(447, 129);
+            this.panel6.Size = new System.Drawing.Size(447, 200);
             this.panel6.TabIndex = 2;
+            // 
+            // drugaSpeed
+            // 
+            this.drugaSpeed.CharacterCount = 4;
+            this.drugaSpeed.DisplayRecordIndex = 0;
+            this.drugaSpeed.Location = new System.Drawing.Point(153, 119);
+            this.drugaSpeed.MaximumSize = new System.Drawing.Size(500, 180);
+            this.drugaSpeed.MinimumSize = new System.Drawing.Size(70, 70);
+            this.drugaSpeed.Name = "drugaSpeed";
+            this.drugaSpeed.Size = new System.Drawing.Size(151, 70);
+            this.drugaSpeed.TabIndex = 5;
             // 
             // drugaThrottleGauge
             // 
@@ -941,6 +945,16 @@
             this.drugaThrottleGauge.Name = "drugaThrottleGauge";
             this.drugaThrottleGauge.Size = new System.Drawing.Size(80, 80);
             this.drugaThrottleGauge.TabIndex = 0;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(81, 148);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(66, 24);
+            this.label10.TabIndex = 0;
+            this.label10.Text = "Speed";
             // 
             // label27
             // 
@@ -999,41 +1013,28 @@
             this.panel7.BackColor = System.Drawing.Color.Azure;
             this.panel7.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel7.Controls.Add(this.label30);
-            this.panel7.Controls.Add(this.label31);
             this.panel7.Controls.Add(this.label32);
             this.panel7.Controls.Add(this.label33);
             this.panel7.Controls.Add(this.druga2RPMGauge);
             this.panel7.Controls.Add(this.druga2WorkHoursGauge);
             this.panel7.Controls.Add(this.druga2WaterTGauge);
-            this.panel7.Controls.Add(this.druga2OilTGauge);
             this.panel7.Controls.Add(this.druga1WaterTGauge);
-            this.panel7.Controls.Add(this.druga1OilTGauge);
             this.panel7.Controls.Add(this.druga1RPMGauge);
             this.panel7.Controls.Add(this.druga1WorkHoursGauge);
-            this.panel7.Location = new System.Drawing.Point(3, 264);
+            this.panel7.Location = new System.Drawing.Point(3, 332);
             this.panel7.Name = "panel7";
-            this.panel7.Size = new System.Drawing.Size(447, 414);
+            this.panel7.Size = new System.Drawing.Size(447, 321);
             this.panel7.TabIndex = 1;
             // 
             // label30
             // 
             this.label30.AutoSize = true;
             this.label30.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label30.Location = new System.Drawing.Point(156, 330);
+            this.label30.Location = new System.Drawing.Point(156, 229);
             this.label30.Name = "label30";
             this.label30.Size = new System.Drawing.Size(106, 24);
             this.label30.TabIndex = 0;
             this.label30.Text = "Water temp";
-            // 
-            // label31
-            // 
-            this.label31.AutoSize = true;
-            this.label31.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label31.Location = new System.Drawing.Point(173, 238);
-            this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(80, 24);
-            this.label31.TabIndex = 0;
-            this.label31.Text = "Oil temp";
             // 
             // label32
             // 
@@ -1081,45 +1082,23 @@
             // 
             this.druga2WaterTGauge.CharacterCount = 3;
             this.druga2WaterTGauge.DisplayRecordIndex = 0;
-            this.druga2WaterTGauge.Location = new System.Drawing.Point(291, 307);
+            this.druga2WaterTGauge.Location = new System.Drawing.Point(291, 206);
             this.druga2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga2WaterTGauge.Name = "druga2WaterTGauge";
             this.druga2WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.druga2WaterTGauge.TabIndex = 4;
             // 
-            // druga2OilTGauge
-            // 
-            this.druga2OilTGauge.CharacterCount = 3;
-            this.druga2OilTGauge.DisplayRecordIndex = 0;
-            this.druga2OilTGauge.Location = new System.Drawing.Point(291, 208);
-            this.druga2OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.druga2OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.druga2OilTGauge.Name = "druga2OilTGauge";
-            this.druga2OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.druga2OilTGauge.TabIndex = 4;
-            // 
             // druga1WaterTGauge
             // 
             this.druga1WaterTGauge.CharacterCount = 3;
             this.druga1WaterTGauge.DisplayRecordIndex = 0;
-            this.druga1WaterTGauge.Location = new System.Drawing.Point(8, 307);
+            this.druga1WaterTGauge.Location = new System.Drawing.Point(8, 206);
             this.druga1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga1WaterTGauge.Name = "druga1WaterTGauge";
             this.druga1WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.druga1WaterTGauge.TabIndex = 4;
-            // 
-            // druga1OilTGauge
-            // 
-            this.druga1OilTGauge.CharacterCount = 3;
-            this.druga1OilTGauge.DisplayRecordIndex = 0;
-            this.druga1OilTGauge.Location = new System.Drawing.Point(8, 208);
-            this.druga1OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.druga1OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.druga1OilTGauge.Name = "druga1OilTGauge";
-            this.druga1OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.druga1OilTGauge.TabIndex = 4;
             // 
             // druga1RPMGauge
             // 
@@ -1226,7 +1205,7 @@
             this.dockingClientPanel3.Controls.Add(this.panel12);
             this.dockingClientPanel3.Controls.Add(this.lblVremeTreca);
             this.dockingClientPanel3.Controls.Add(this.lblTreca);
-            this.dockingClientPanel3.Location = new System.Drawing.Point(974, 12);
+            this.dockingClientPanel3.Location = new System.Drawing.Point(974, 42);
             this.dockingClientPanel3.Name = "dockingClientPanel3";
             this.dockingClientPanel3.Size = new System.Drawing.Size(460, 985);
             this.dockingClientPanel3.TabIndex = 0;
@@ -1249,7 +1228,7 @@
             this.panel9.Controls.Add(this.label45);
             this.panel9.Controls.Add(this.activeFault1GaugeTreca);
             this.panel9.Controls.Add(this.label46);
-            this.panel9.Location = new System.Drawing.Point(3, 721);
+            this.panel9.Location = new System.Drawing.Point(3, 684);
             this.panel9.Name = "panel9";
             this.panel9.Size = new System.Drawing.Size(447, 261);
             this.panel9.TabIndex = 4;
@@ -1405,7 +1384,7 @@
             // 
             this.lblTrecaFaultCount.AutoSize = true;
             this.lblTrecaFaultCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTrecaFaultCount.Location = new System.Drawing.Point(3, 693);
+            this.lblTrecaFaultCount.Location = new System.Drawing.Point(3, 656);
             this.lblTrecaFaultCount.Name = "lblTrecaFaultCount";
             this.lblTrecaFaultCount.Size = new System.Drawing.Size(183, 25);
             this.lblTrecaFaultCount.TabIndex = 3;
@@ -1415,7 +1394,9 @@
             // 
             this.panel10.BackColor = System.Drawing.Color.Azure;
             this.panel10.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel10.Controls.Add(this.trecaSpeed);
             this.panel10.Controls.Add(this.trecaThrottleGauge);
+            this.panel10.Controls.Add(this.label25);
             this.panel10.Controls.Add(this.label49);
             this.panel10.Controls.Add(this.trecaTracPowerGauge);
             this.panel10.Controls.Add(this.label50);
@@ -1423,8 +1404,19 @@
             this.panel10.Controls.Add(this.label51);
             this.panel10.Location = new System.Drawing.Point(3, 114);
             this.panel10.Name = "panel10";
-            this.panel10.Size = new System.Drawing.Size(447, 129);
+            this.panel10.Size = new System.Drawing.Size(447, 200);
             this.panel10.TabIndex = 2;
+            // 
+            // trecaSpeed
+            // 
+            this.trecaSpeed.CharacterCount = 4;
+            this.trecaSpeed.DisplayRecordIndex = 0;
+            this.trecaSpeed.Location = new System.Drawing.Point(153, 119);
+            this.trecaSpeed.MaximumSize = new System.Drawing.Size(500, 180);
+            this.trecaSpeed.MinimumSize = new System.Drawing.Size(70, 70);
+            this.trecaSpeed.Name = "trecaSpeed";
+            this.trecaSpeed.Size = new System.Drawing.Size(151, 70);
+            this.trecaSpeed.TabIndex = 5;
             // 
             // trecaThrottleGauge
             // 
@@ -1436,6 +1428,16 @@
             this.trecaThrottleGauge.Name = "trecaThrottleGauge";
             this.trecaThrottleGauge.Size = new System.Drawing.Size(80, 80);
             this.trecaThrottleGauge.TabIndex = 0;
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label25.Location = new System.Drawing.Point(81, 148);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(66, 24);
+            this.label25.TabIndex = 0;
+            this.label25.Text = "Speed";
             // 
             // label49
             // 
@@ -1494,41 +1496,28 @@
             this.panel11.BackColor = System.Drawing.Color.Azure;
             this.panel11.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel11.Controls.Add(this.label52);
-            this.panel11.Controls.Add(this.label53);
             this.panel11.Controls.Add(this.label54);
             this.panel11.Controls.Add(this.label55);
             this.panel11.Controls.Add(this.treca2RPMGauge);
             this.panel11.Controls.Add(this.treca2WorkHoursGauge);
             this.panel11.Controls.Add(this.treca2WaterTGauge);
-            this.panel11.Controls.Add(this.treca2OilTGauge);
             this.panel11.Controls.Add(this.treca1WaterTGauge);
-            this.panel11.Controls.Add(this.treca1OilTGauge);
             this.panel11.Controls.Add(this.treca1RPMGauge);
             this.panel11.Controls.Add(this.treca1WorkHoursGauge);
-            this.panel11.Location = new System.Drawing.Point(3, 264);
+            this.panel11.Location = new System.Drawing.Point(3, 332);
             this.panel11.Name = "panel11";
-            this.panel11.Size = new System.Drawing.Size(447, 414);
+            this.panel11.Size = new System.Drawing.Size(447, 321);
             this.panel11.TabIndex = 1;
             // 
             // label52
             // 
             this.label52.AutoSize = true;
             this.label52.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label52.Location = new System.Drawing.Point(156, 330);
+            this.label52.Location = new System.Drawing.Point(156, 229);
             this.label52.Name = "label52";
             this.label52.Size = new System.Drawing.Size(106, 24);
             this.label52.TabIndex = 0;
             this.label52.Text = "Water temp";
-            // 
-            // label53
-            // 
-            this.label53.AutoSize = true;
-            this.label53.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label53.Location = new System.Drawing.Point(173, 238);
-            this.label53.Name = "label53";
-            this.label53.Size = new System.Drawing.Size(80, 24);
-            this.label53.TabIndex = 0;
-            this.label53.Text = "Oil temp";
             // 
             // label54
             // 
@@ -1576,45 +1565,23 @@
             // 
             this.treca2WaterTGauge.CharacterCount = 3;
             this.treca2WaterTGauge.DisplayRecordIndex = 0;
-            this.treca2WaterTGauge.Location = new System.Drawing.Point(291, 307);
+            this.treca2WaterTGauge.Location = new System.Drawing.Point(291, 206);
             this.treca2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca2WaterTGauge.Name = "treca2WaterTGauge";
             this.treca2WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.treca2WaterTGauge.TabIndex = 4;
             // 
-            // treca2OilTGauge
-            // 
-            this.treca2OilTGauge.CharacterCount = 3;
-            this.treca2OilTGauge.DisplayRecordIndex = 0;
-            this.treca2OilTGauge.Location = new System.Drawing.Point(291, 208);
-            this.treca2OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.treca2OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.treca2OilTGauge.Name = "treca2OilTGauge";
-            this.treca2OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.treca2OilTGauge.TabIndex = 4;
-            // 
             // treca1WaterTGauge
             // 
             this.treca1WaterTGauge.CharacterCount = 3;
             this.treca1WaterTGauge.DisplayRecordIndex = 0;
-            this.treca1WaterTGauge.Location = new System.Drawing.Point(8, 307);
+            this.treca1WaterTGauge.Location = new System.Drawing.Point(8, 206);
             this.treca1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca1WaterTGauge.Name = "treca1WaterTGauge";
             this.treca1WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.treca1WaterTGauge.TabIndex = 4;
-            // 
-            // treca1OilTGauge
-            // 
-            this.treca1OilTGauge.CharacterCount = 3;
-            this.treca1OilTGauge.DisplayRecordIndex = 0;
-            this.treca1OilTGauge.Location = new System.Drawing.Point(8, 208);
-            this.treca1OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.treca1OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.treca1OilTGauge.Name = "treca1OilTGauge";
-            this.treca1OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.treca1OilTGauge.TabIndex = 4;
             // 
             // treca1RPMGauge
             // 
@@ -1721,7 +1688,7 @@
             this.dockingClientPanel4.Controls.Add(this.panel16);
             this.dockingClientPanel4.Controls.Add(this.lblVremeCetvrta);
             this.dockingClientPanel4.Controls.Add(this.lblCetvrta);
-            this.dockingClientPanel4.Location = new System.Drawing.Point(1458, 12);
+            this.dockingClientPanel4.Location = new System.Drawing.Point(1461, 42);
             this.dockingClientPanel4.Name = "dockingClientPanel4";
             this.dockingClientPanel4.Size = new System.Drawing.Size(460, 985);
             this.dockingClientPanel4.TabIndex = 0;
@@ -1744,7 +1711,7 @@
             this.panel13.Controls.Add(this.label67);
             this.panel13.Controls.Add(this.activeFault1GaugeCetvrta);
             this.panel13.Controls.Add(this.label68);
-            this.panel13.Location = new System.Drawing.Point(3, 721);
+            this.panel13.Location = new System.Drawing.Point(3, 684);
             this.panel13.Name = "panel13";
             this.panel13.Size = new System.Drawing.Size(447, 261);
             this.panel13.TabIndex = 4;
@@ -1900,7 +1867,7 @@
             // 
             this.lblCetvrtaFaultCount.AutoSize = true;
             this.lblCetvrtaFaultCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCetvrtaFaultCount.Location = new System.Drawing.Point(3, 693);
+            this.lblCetvrtaFaultCount.Location = new System.Drawing.Point(3, 656);
             this.lblCetvrtaFaultCount.Name = "lblCetvrtaFaultCount";
             this.lblCetvrtaFaultCount.Size = new System.Drawing.Size(183, 25);
             this.lblCetvrtaFaultCount.TabIndex = 3;
@@ -1910,7 +1877,9 @@
             // 
             this.panel14.BackColor = System.Drawing.Color.Azure;
             this.panel14.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel14.Controls.Add(this.cetvrtaSpeed);
             this.panel14.Controls.Add(this.cetvrtaThrottleGauge);
+            this.panel14.Controls.Add(this.label26);
             this.panel14.Controls.Add(this.label71);
             this.panel14.Controls.Add(this.cetvrtaTracPowerGauge);
             this.panel14.Controls.Add(this.label72);
@@ -1918,8 +1887,19 @@
             this.panel14.Controls.Add(this.label73);
             this.panel14.Location = new System.Drawing.Point(3, 114);
             this.panel14.Name = "panel14";
-            this.panel14.Size = new System.Drawing.Size(447, 129);
+            this.panel14.Size = new System.Drawing.Size(447, 200);
             this.panel14.TabIndex = 2;
+            // 
+            // cetvrtaSpeed
+            // 
+            this.cetvrtaSpeed.CharacterCount = 4;
+            this.cetvrtaSpeed.DisplayRecordIndex = 0;
+            this.cetvrtaSpeed.Location = new System.Drawing.Point(148, 119);
+            this.cetvrtaSpeed.MaximumSize = new System.Drawing.Size(500, 180);
+            this.cetvrtaSpeed.MinimumSize = new System.Drawing.Size(70, 70);
+            this.cetvrtaSpeed.Name = "cetvrtaSpeed";
+            this.cetvrtaSpeed.Size = new System.Drawing.Size(151, 70);
+            this.cetvrtaSpeed.TabIndex = 5;
             // 
             // cetvrtaThrottleGauge
             // 
@@ -1931,6 +1911,16 @@
             this.cetvrtaThrottleGauge.Name = "cetvrtaThrottleGauge";
             this.cetvrtaThrottleGauge.Size = new System.Drawing.Size(80, 80);
             this.cetvrtaThrottleGauge.TabIndex = 0;
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label26.Location = new System.Drawing.Point(76, 148);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(66, 24);
+            this.label26.TabIndex = 0;
+            this.label26.Text = "Speed";
             // 
             // label71
             // 
@@ -1989,41 +1979,28 @@
             this.panel15.BackColor = System.Drawing.Color.Azure;
             this.panel15.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel15.Controls.Add(this.label74);
-            this.panel15.Controls.Add(this.label75);
             this.panel15.Controls.Add(this.label76);
             this.panel15.Controls.Add(this.label77);
             this.panel15.Controls.Add(this.cetvrta2RPMGauge);
             this.panel15.Controls.Add(this.cetvrta2WorkHoursGauge);
             this.panel15.Controls.Add(this.cetvrta2WaterTGauge);
-            this.panel15.Controls.Add(this.cetvrta2OilTGauge);
             this.panel15.Controls.Add(this.cetvrta1WaterTGauge);
-            this.panel15.Controls.Add(this.cetvrta1OilTGauge);
             this.panel15.Controls.Add(this.cetvrta1RPMGauge);
             this.panel15.Controls.Add(this.cetvrta1WorkHoursGauge);
-            this.panel15.Location = new System.Drawing.Point(3, 264);
+            this.panel15.Location = new System.Drawing.Point(3, 332);
             this.panel15.Name = "panel15";
-            this.panel15.Size = new System.Drawing.Size(447, 414);
+            this.panel15.Size = new System.Drawing.Size(447, 321);
             this.panel15.TabIndex = 1;
             // 
             // label74
             // 
             this.label74.AutoSize = true;
             this.label74.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label74.Location = new System.Drawing.Point(156, 330);
+            this.label74.Location = new System.Drawing.Point(155, 229);
             this.label74.Name = "label74";
             this.label74.Size = new System.Drawing.Size(106, 24);
             this.label74.TabIndex = 0;
             this.label74.Text = "Water temp";
-            // 
-            // label75
-            // 
-            this.label75.AutoSize = true;
-            this.label75.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label75.Location = new System.Drawing.Point(173, 238);
-            this.label75.Name = "label75";
-            this.label75.Size = new System.Drawing.Size(80, 24);
-            this.label75.TabIndex = 0;
-            this.label75.Text = "Oil temp";
             // 
             // label76
             // 
@@ -2071,45 +2048,23 @@
             // 
             this.cetvrta2WaterTGauge.CharacterCount = 3;
             this.cetvrta2WaterTGauge.DisplayRecordIndex = 0;
-            this.cetvrta2WaterTGauge.Location = new System.Drawing.Point(291, 307);
+            this.cetvrta2WaterTGauge.Location = new System.Drawing.Point(290, 206);
             this.cetvrta2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrta2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrta2WaterTGauge.Name = "cetvrta2WaterTGauge";
             this.cetvrta2WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.cetvrta2WaterTGauge.TabIndex = 4;
             // 
-            // cetvrta2OilTGauge
-            // 
-            this.cetvrta2OilTGauge.CharacterCount = 3;
-            this.cetvrta2OilTGauge.DisplayRecordIndex = 0;
-            this.cetvrta2OilTGauge.Location = new System.Drawing.Point(291, 208);
-            this.cetvrta2OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.cetvrta2OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.cetvrta2OilTGauge.Name = "cetvrta2OilTGauge";
-            this.cetvrta2OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.cetvrta2OilTGauge.TabIndex = 4;
-            // 
             // cetvrta1WaterTGauge
             // 
             this.cetvrta1WaterTGauge.CharacterCount = 3;
             this.cetvrta1WaterTGauge.DisplayRecordIndex = 0;
-            this.cetvrta1WaterTGauge.Location = new System.Drawing.Point(8, 307);
+            this.cetvrta1WaterTGauge.Location = new System.Drawing.Point(7, 206);
             this.cetvrta1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrta1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrta1WaterTGauge.Name = "cetvrta1WaterTGauge";
             this.cetvrta1WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.cetvrta1WaterTGauge.TabIndex = 4;
-            // 
-            // cetvrta1OilTGauge
-            // 
-            this.cetvrta1OilTGauge.CharacterCount = 3;
-            this.cetvrta1OilTGauge.DisplayRecordIndex = 0;
-            this.cetvrta1OilTGauge.Location = new System.Drawing.Point(8, 208);
-            this.cetvrta1OilTGauge.MaximumSize = new System.Drawing.Size(500, 180);
-            this.cetvrta1OilTGauge.MinimumSize = new System.Drawing.Size(80, 80);
-            this.cetvrta1OilTGauge.Name = "cetvrta1OilTGauge";
-            this.cetvrta1OilTGauge.Size = new System.Drawing.Size(124, 80);
-            this.cetvrta1OilTGauge.TabIndex = 4;
             // 
             // cetvrta1RPMGauge
             // 
@@ -2206,16 +2161,42 @@
             this.lblCetvrta.TabIndex = 0;
             this.lblCetvrta.Text = "label1";
             // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Interval = 30000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.arhivaToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(1986, 28);
+            this.menuStrip1.TabIndex = 1;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // arhivaToolStripMenuItem
+            // 
+            this.arhivaToolStripMenuItem.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.arhivaToolStripMenuItem.Name = "arhivaToolStripMenuItem";
+            this.arhivaToolStripMenuItem.Size = new System.Drawing.Size(78, 24);
+            this.arhivaToolStripMenuItem.Text = "Detaljno";
+            this.arhivaToolStripMenuItem.Click += new System.EventHandler(this.arhivaToolStripMenuItem_Click);
+            // 
             // LokomotiveTechnodis
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Azure;
-            this.ClientSize = new System.Drawing.Size(1924, 1020);
+
             this.Controls.Add(this.dockingClientPanel4);
             this.Controls.Add(this.dockingClientPanel3);
             this.Controls.Add(this.dockingClientPanel2);
             this.Controls.Add(this.dockingClientPanel1);
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "LokomotiveTechnodis";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "LokomotiveTechnodis";
@@ -2261,7 +2242,10 @@
             this.panel15.PerformLayout();
             this.panel16.ResumeLayout(false);
             this.panel16.PerformLayout();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -2289,12 +2273,9 @@
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva1WorkHoursGauge;
         private System.Windows.Forms.Label lblPrvaFaultCount;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label8;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva2RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva2WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva2OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva1WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva1OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge prva1RPMGauge;
         private System.Windows.Forms.Panel panel4;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge faultSyncGaugePrva;
@@ -2337,15 +2318,12 @@
         private System.Windows.Forms.Label label29;
         private System.Windows.Forms.Panel panel7;
         private System.Windows.Forms.Label label30;
-        private System.Windows.Forms.Label label31;
         private System.Windows.Forms.Label label32;
         private System.Windows.Forms.Label label33;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga2RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga2WorkHoursGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga2WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga2OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga1WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga1OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga1RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge druga1WorkHoursGauge;
         private System.Windows.Forms.Panel panel8;
@@ -2381,15 +2359,12 @@
         private System.Windows.Forms.Label label51;
         private System.Windows.Forms.Panel panel11;
         private System.Windows.Forms.Label label52;
-        private System.Windows.Forms.Label label53;
         private System.Windows.Forms.Label label54;
         private System.Windows.Forms.Label label55;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca2RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca2WorkHoursGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca2WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca2OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca1WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca1OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca1RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge treca1WorkHoursGauge;
         private System.Windows.Forms.Panel panel12;
@@ -2425,15 +2400,12 @@
         private System.Windows.Forms.Label label73;
         private System.Windows.Forms.Panel panel15;
         private System.Windows.Forms.Label label74;
-        private System.Windows.Forms.Label label75;
         private System.Windows.Forms.Label label76;
         private System.Windows.Forms.Label label77;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta2RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta2WorkHoursGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta2WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta2OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta1WaterTGauge;
-        private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta1OilTGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta1RPMGauge;
         private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrta1WorkHoursGauge;
         private System.Windows.Forms.Panel panel16;
@@ -2443,5 +2415,16 @@
         private System.Windows.Forms.Label label81;
         private System.Windows.Forms.Label lblVremeCetvrta;
         private System.Windows.Forms.Label lblCetvrta;
+        private System.Windows.Forms.Timer timer1;
+        private Syncfusion.Windows.Forms.Gauge.DigitalGauge prvaSpeed;
+        private System.Windows.Forms.Label label8;
+        private Syncfusion.Windows.Forms.Gauge.DigitalGauge drugaSpeed;
+        private System.Windows.Forms.Label label10;
+        private Syncfusion.Windows.Forms.Gauge.DigitalGauge trecaSpeed;
+        private System.Windows.Forms.Label label25;
+        private Syncfusion.Windows.Forms.Gauge.DigitalGauge cetvrtaSpeed;
+        private System.Windows.Forms.Label label26;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem arhivaToolStripMenuItem;
     }
 }
