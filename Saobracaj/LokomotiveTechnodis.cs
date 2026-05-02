@@ -140,7 +140,6 @@ namespace Saobracaj.Servis
             toDate = datDo.ToString("yyyy-MM-ddTHH:mm:ss");
             //tesr
 
-
             await ReadToken();
 
             int count = 1;
