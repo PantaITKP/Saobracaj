@@ -1467,6 +1467,21 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>NedraDataSet2.xsd</DependentUpon>
     </Compile>
+    <Compile Include="Pepeo\InsertPepeo.cs" />
+    <Compile Include="Pepeo\PepeoKalkulatorVremena.cs" />
+    <Compile Include="Pepeo\PepeoModeliVremena.cs" />
+    <Compile Include="Pepeo\PlaniranjeVremena.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pepeo\PlaniranjeVremena.Designer.cs">
+      <DependentUpon>PlaniranjeVremena.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pepeo\Trase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pepeo\Trase.Designer.cs">
+      <DependentUpon>Trase.cs</DependentUpon>
+    </Compile>
     <Compile Include="Perftech_BeogradDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -2482,6 +2497,13 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Mobile\frmZavrsnaDokumentacija.resx">
       <DependentUpon>frmZavrsnaDokumentacija.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pepeo\PlaniranjeVremena.resx">
+      <DependentUpon>PlaniranjeVremena.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pepeo\Trase.resx">
+      <DependentUpon>Trase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
