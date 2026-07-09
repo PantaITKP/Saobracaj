@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
@@ -137,7 +138,7 @@ namespace Saobracaj.Administracija
         private void FillGV()
         {
             var query = "Select ID,Kreirao,RTrim(Korisnici.Korisnik) as KorisnikKreirao,RTrim(Poruka) as Poruka,Notifikacije.Korisnik,(RTrim(Delavci.DePriimek)+' '+RTrim(Delavci.DeIme)) as Zaposleni," +
-                "DatumSlanja,Procitao,DatumCitanja " +
+                "DatumSlanja,Procitao,DatumCitanja, VrstaObavestenja, Putanja " +
                 "From Notifikacije " +
                 "Inner join Delavci on Notifikacije.Korisnik = Delavci.DeSifra " +
                 "inner join Korisnici on Notifikacije.Kreirao = Korisnici.DeSifra " +
@@ -158,9 +159,35 @@ namespace Saobracaj.Administracija
             dataGridView1.Columns[5].Width = 120;
             dataGridView1.Columns[7].Width = 50;
         }
+
+        private void FillGVByUser()
+        {
+            var query = "Select ID,Kreirao,RTrim(Korisnici.Korisnik) as KorisnikKreirao,RTrim(Poruka) as Poruka,Notifikacije.Korisnik,(RTrim(Delavci.DePriimek)+' '+RTrim(Delavci.DeIme)) as Zaposleni," +
+                "DatumSlanja,Procitao,DatumCitanja, VrstaObavestenja, Putanja " +
+                "From Notifikacije " +
+                "Inner join Delavci on Notifikacije.Korisnik = Delavci.DeSifra " +
+                "inner join Korisnici on Notifikacije.Kreirao = Korisnici.DeSifra" +
+                " where Korisnici.Korisnik =  '" + txtKreirao.Text + "'"+ 
+                " order by ID desc";
+            SqlConnection conn = new SqlConnection(connect);
+            var da = new SqlDataAdapter(query, conn);
+            var ds = new DataSet();
+            da.Fill(ds);
+            dataGridView1.ReadOnly = true;
+            dataGridView1.DataSource = ds.Tables[0];
+
+            dataGridView1.Columns[0].Width = 50;
+            dataGridView1.Columns[1].Visible = false;
+            dataGridView1.Columns[2].HeaderText = "Kreirao";
+            dataGridView1.Columns[2].Width = 90;
+            dataGridView1.Columns[3].Width = 180;
+            dataGridView1.Columns[4].Visible = false;
+            dataGridView1.Columns[5].Width = 120;
+            dataGridView1.Columns[7].Width = 50;
+        }
         private void FillCheck()
         {
-            var query = "Select DeSifra,Korisnik From Korisnici order by Korisnik";
+            var query = "Select Distinct DeSifra,Korisnik From Korisnici where Korisnik <> '' order by Korisnik";
             SqlConnection conn = new SqlConnection(connect);
             var da = new SqlDataAdapter(query, conn);
             var ds = new DataSet();
@@ -179,6 +206,8 @@ namespace Saobracaj.Administracija
             combo_RadnoMesto.DataSource = ds.Tables[0];
             combo_RadnoMesto.DisplayMember = "DmNaziv";
             combo_RadnoMesto.ValueMember = "DmNaziv";
+
+            cboTipNotifikacije.SelectedIndex = 0;
         }
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
         {
@@ -212,6 +241,8 @@ namespace Saobracaj.Administracija
                             }
 
                         }
+                        cboTipNotifikacije.Text = row.Cells[9].Value.ToString();
+                            txt_putanja.Text = row.Cells[10].Value.ToString();
                     }
 
                 }
@@ -223,7 +254,9 @@ namespace Saobracaj.Administracija
 
         private void frmNotifikacije_Load(object sender, EventArgs e)
         {
-
+            txtKreirao.Text = Sifarnici.frmLogovanje.user;
+            InsertObavestenje obavestenja = new InsertObavestenje();
+            obavestenja.ArhivirajObavestenje();
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -234,21 +267,86 @@ namespace Saobracaj.Administracija
         private void tsNew_Click(object sender, EventArgs e)
         {
             status = true;
+            txt_ID.Text = "";
+        }
+
+        private void KopirajFajlPoTipu(string putanja, string FolderDestinacije)
+        {
+            string fileName = ofd1.FileName; //Ovde ce trebati promena
+            fileName = fileName.Replace(" ", "_");
+            string sourcePath = fbd1.SelectedPath.ToString();
+            string result = Path.GetFileName(fileName);
+            string targetPath = "";
+
+            targetPath = @"\\192.168.1.6\Notifikacije\"   + FolderDestinacije;
+
+            string sourceFile = putanja;
+            string destFile = System.IO.Path.Combine(targetPath, result);
+
+            if (!System.IO.Directory.Exists(targetPath))
+            {
+                System.IO.Directory.CreateDirectory(targetPath);
+            }
+
+            var remote = Path.Combine(targetPath, result);
+            File.Copy(sourceFile, remote);
+            txt_putanja.Text = remote;
+
+            if (System.IO.Directory.Exists(sourcePath))
+            {
+                string[] files = System.IO.Directory.GetFiles(sourcePath);
+                // Copy the files and overwrite destination files if they already exist.
+                foreach (string s in files)
+                {
+                    // Use static Path methods to extract only the file name from the path.
+                    fileName = System.IO.Path.GetFileName(s);
+                    destFile = System.IO.Path.Combine(targetPath, fileName);
+                    System.IO.File.Copy(s, destFile, true);
+                }
+            }
+        }
+
+      int VratiMax1()
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            SqlConnection con = new SqlConnection(s_connection);
+
+            con.Open();
+
+            SqlCommand cmd = new SqlCommand(" Select Max(ID) +1  as ID from Notifikacije ", con);
+
+
+            SqlDataReader dr = cmd.ExecuteReader();
+            int SledeciBroj = 0;
+            while (dr.Read())
+            {
+                SledeciBroj = Convert.ToInt32(dr["ID"].ToString());
+
+            }
+            con.Close();
+            return SledeciBroj;
         }
 
         private void tsSave_Click(object sender, EventArgs e)
         {
-
+           
             InsertObavestenje obavestenja = new InsertObavestenje();
             if (status == true)
             {
+                txt_ID.Text = VratiMax1().ToString();
+                if (txt_putanja.Text != "")
+                { 
+                 KopirajFajlPoTipu(txt_putanja.Text, txt_ID.Text);
+                
+                }
+               
                 for (int i = 0; i < cbList_Korisnici.Items.Count; i++)
                 {
                     if (cbList_Korisnici.GetItemCheckState(i) == CheckState.Checked)
                     {
                         cbList_Korisnici.SetSelected(i, true);
                         int PaSifra = Convert.ToInt32(cbList_Korisnici.SelectedValue);
-                        obavestenja.InsObavestenje(kreirao, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()), false, Convert.ToDateTime(dt_Citanje.Value.ToString()));
+                        obavestenja.InsObavestenje(kreirao, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()), false, Convert.ToDateTime(dt_Citanje.Value.ToString()), cboTipNotifikacije.Text, txt_putanja.Text, Convert.ToDateTime(dtpDatumVazenja.Value.ToString()));
                     }
                 }
                 for (int i = 0; i < cbList_Korisnici.Items.Count; i++)
@@ -266,7 +364,7 @@ namespace Saobracaj.Administracija
                 int PaSifra = Convert.ToInt32(cbList_Korisnici.SelectedValue);
                 if (cb_Procitan.Checked == true) { procitan = true; } else { procitan = false; }
                 obavestenja.UpdObavestenje(Convert.ToInt32(txt_ID.Text), kreirao, PaSifra, txt_Obavestenje.Text.ToString().TrimEnd(), Convert.ToDateTime(dt_Slanje.Value.ToString()),
-                    procitan, Convert.ToDateTime(dt_Citanje.Value.ToString()));
+                    procitan, Convert.ToDateTime(dt_Citanje.Value.ToString()),  cboTipNotifikacije.Text, txt_putanja.Text, Convert.ToDateTime(dtpDatumVazenja.Value.ToString()));
             }
             FillGV();
         }
@@ -284,7 +382,7 @@ namespace Saobracaj.Administracija
                 "From Korisnici " +
                 "Inner join Delavci on Korisnici.DeSifra = Delavci.DeSifra " +
                 "Inner join DelovnaMesta on Delavci.DeSifDelMes = DelovnaMesta.DmSifra " +
-                "Where DmNaziv ='"+combo_RadnoMesto.SelectedValue+"' order by Korisnici.DeSifra";
+                "Where Korisnici.Korisnik <> '' and DmNaziv ='"+combo_RadnoMesto.SelectedValue+"' order by Korisnici.DeSifra";
             SqlConnection conn = new SqlConnection(connect);
             var da = new SqlDataAdapter(query, conn);
             var ds = new DataSet();
@@ -297,6 +395,27 @@ namespace Saobracaj.Administracija
         private void btnOsvezi_Click(object sender, EventArgs e)
         {
             FillGV();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string PictureFolder = txt_putanja.Text;
+            ofd1.InitialDirectory = PictureFolder;
+
+            if (ofd1.ShowDialog() == DialogResult.OK)
+            {
+                txt_putanja.Text = fbd1.SelectedPath.ToString() + ofd1.FileName;
+            }
+        }
+
+        private void btn_Otvori_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(txt_putanja.Text);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            FillGVByUser();
         }
     }
 }

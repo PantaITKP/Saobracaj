@@ -2393,9 +2393,7 @@
       <DependentUpon>frmTeretnicaTerenIzmena.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\map.html" />
-    <Content Include="Dokumenta\rptregistrator2019.rdlc">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Dokumenta\rptRegistrator2019.rdlc" />
     <EmbeddedResource Include="Dokumenta\Troskovi.rdlc" />
     <EmbeddedResource Include="Dokumenta\WebMapa.resx">
       <DependentUpon>WebMapa.cs</DependentUpon>

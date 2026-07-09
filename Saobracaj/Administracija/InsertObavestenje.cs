@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Saobracaj.Testiranje;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -14,7 +15,7 @@ namespace Saobracaj.Administracija
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
 
-        public void InsObavestenje(int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+        public void InsObavestenje(int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja, string TipObavestenja, string Putanja, DateTime DatumVazenja)
 
         {
 
@@ -66,6 +67,30 @@ namespace Saobracaj.Administracija
             datumC.Value = DatumCitanja;
             cmd.Parameters.Add(datumC);
 
+
+            SqlParameter tipobavestenja = new SqlParameter();
+            tipobavestenja.ParameterName = "@VrstaObavestenja";
+            tipobavestenja.SqlDbType = SqlDbType.NVarChar;
+            tipobavestenja.Size = 50;
+            tipobavestenja.Direction = ParameterDirection.Input;
+            tipobavestenja.Value = TipObavestenja;
+            cmd.Parameters.Add(tipobavestenja);
+
+            SqlParameter putanja = new SqlParameter();
+            putanja.ParameterName = "@Putanja";
+            putanja.SqlDbType = SqlDbType.NVarChar;
+            putanja.Size = 300;
+            putanja.Direction = ParameterDirection.Input;
+            putanja.Value = Putanja;
+            cmd.Parameters.Add(putanja);
+
+            SqlParameter datumvazenja = new SqlParameter();
+            datumvazenja.ParameterName = "@DatumVazenja";
+            datumvazenja.SqlDbType = SqlDbType.DateTime;
+            datumvazenja.Direction = ParameterDirection.Input;
+            datumvazenja.Value = DatumVazenja;
+            cmd.Parameters.Add(datumvazenja);
+
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();
             cmd.Transaction = tran;
@@ -97,7 +122,7 @@ namespace Saobracaj.Administracija
             }
         }
 
-        public void UpdObavestenje(int ID, int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja)
+        public void UpdObavestenje(int ID, int Kreirao, int Korisnik, string Poruka, DateTime DatumSlanja, bool Procitao, DateTime DatumCitanja, string TipObavestenja, string Putanja, DateTime DatumVazenja)
 
         {
 
@@ -156,6 +181,30 @@ namespace Saobracaj.Administracija
             datumC.Value = DatumCitanja;
             cmd.Parameters.Add(datumC);
 
+            SqlParameter tipobavestenja = new SqlParameter();
+            tipobavestenja.ParameterName = "@VrstaObavestenja";
+            tipobavestenja.SqlDbType = SqlDbType.NVarChar;
+            tipobavestenja.Size = 50;
+            tipobavestenja.Direction = ParameterDirection.Input;
+            tipobavestenja.Value = TipObavestenja;
+            cmd.Parameters.Add(tipobavestenja);
+
+            SqlParameter putanja = new SqlParameter();
+            putanja.ParameterName = "@Putanja";
+            putanja.SqlDbType = SqlDbType.NVarChar;
+            putanja.Size = 300;
+            putanja.Direction = ParameterDirection.Input;
+            putanja.Value = Putanja;
+            cmd.Parameters.Add(putanja);
+
+
+            SqlParameter datumvazenja = new SqlParameter();
+            datumvazenja.ParameterName = "@DatumVazenja";
+            datumvazenja.SqlDbType = SqlDbType.DateTime;
+            datumvazenja.Direction = ParameterDirection.Input;
+            datumvazenja.Value = DatumVazenja;
+            cmd.Parameters.Add(datumvazenja);
+
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();
             cmd.Transaction = tran;
@@ -200,6 +249,46 @@ namespace Saobracaj.Administracija
             id.Direction = ParameterDirection.Input;
             id.Value = ID;
             cmd.Parameters.Add(id);
+
+            conn.Open();
+            SqlTransaction tran = conn.BeginTransaction();
+            cmd.Transaction = tran;
+            bool error = true;
+            try
+            {
+                cmd.ExecuteNonQuery();
+                tran.Commit();
+                tran = conn.BeginTransaction();
+                cmd.Transaction = tran;
+            }
+            catch (SqlException ex)
+            {
+                throw new Exception("Neuspešan upis");
+            }
+            finally
+            {
+                if (!error)
+                {
+                    tran.Commit();
+                    MessageBox.Show("Unos NHM broja je uspešno završena", "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                conn.Close();
+            }
+            if (error)
+            {
+
+            }
+        }
+        public void ArhivirajObavestenje()
+        {
+
+            SqlConnection conn = new SqlConnection(connect);
+            SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "NotifikacijeArhiviranje";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            
 
             conn.Open();
             SqlTransaction tran = conn.BeginTransaction();

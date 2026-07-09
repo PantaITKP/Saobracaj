@@ -239,7 +239,7 @@
             this.dockingClientPanel1.Controls.Add(this.lblPrva);
             this.dockingClientPanel1.Location = new System.Drawing.Point(12, 42);
             this.dockingClientPanel1.Name = "dockingClientPanel1";
-            this.dockingClientPanel1.Size = new System.Drawing.Size(460, 985);
+            this.dockingClientPanel1.Size = new System.Drawing.Size(409, 973);
             this.dockingClientPanel1.TabIndex = 0;
             // 
             // panel4
@@ -262,14 +262,14 @@
             this.panel4.Controls.Add(this.label16);
             this.panel4.Location = new System.Drawing.Point(3, 684);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(447, 261);
+            this.panel4.Size = new System.Drawing.Size(400, 261);
             this.panel4.TabIndex = 4;
             // 
             // faultSyncGaugePrva
             // 
             this.faultSyncGaugePrva.CharacterCount = 5;
             this.faultSyncGaugePrva.DisplayRecordIndex = 0;
-            this.faultSyncGaugePrva.Location = new System.Drawing.Point(298, 154);
+            this.faultSyncGaugePrva.Location = new System.Drawing.Point(248, 154);
             this.faultSyncGaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultSyncGaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultSyncGaugePrva.Name = "faultSyncGaugePrva";
@@ -280,7 +280,7 @@
             // 
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(307, 133);
+            this.label17.Location = new System.Drawing.Point(257, 133);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(81, 18);
             this.label17.TabIndex = 7;
@@ -290,7 +290,7 @@
             // 
             this.faultAckGaugePrva.CharacterCount = 5;
             this.faultAckGaugePrva.DisplayRecordIndex = 0;
-            this.faultAckGaugePrva.Location = new System.Drawing.Point(181, 154);
+            this.faultAckGaugePrva.Location = new System.Drawing.Point(131, 154);
             this.faultAckGaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultAckGaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultAckGaugePrva.Name = "faultAckGaugePrva";
@@ -301,7 +301,7 @@
             // 
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(192, 133);
+            this.label15.Location = new System.Drawing.Point(142, 133);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(70, 18);
             this.label15.TabIndex = 7;
@@ -311,7 +311,7 @@
             // 
             this.activeFault5GaugePrva.CharacterCount = 5;
             this.activeFault5GaugePrva.DisplayRecordIndex = 0;
-            this.activeFault5GaugePrva.Location = new System.Drawing.Point(57, 154);
+            this.activeFault5GaugePrva.Location = new System.Drawing.Point(7, 154);
             this.activeFault5GaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault5GaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault5GaugePrva.Name = "activeFault5GaugePrva";
@@ -322,7 +322,7 @@
             // 
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.Location = new System.Drawing.Point(60, 133);
+            this.label14.Location = new System.Drawing.Point(10, 133);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(87, 18);
             this.label14.TabIndex = 7;
@@ -332,7 +332,7 @@
             // 
             this.activeFault4GaugePrva.CharacterCount = 5;
             this.activeFault4GaugePrva.DisplayRecordIndex = 0;
-            this.activeFault4GaugePrva.Location = new System.Drawing.Point(337, 33);
+            this.activeFault4GaugePrva.Location = new System.Drawing.Point(298, 33);
             this.activeFault4GaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault4GaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault4GaugePrva.Name = "activeFault4GaugePrva";
@@ -343,7 +343,7 @@
             // 
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(340, 8);
+            this.label13.Location = new System.Drawing.Point(298, 8);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(87, 18);
             this.label13.TabIndex = 7;
@@ -353,7 +353,7 @@
             // 
             this.activeFault3GaugePrva.CharacterCount = 5;
             this.activeFault3GaugePrva.DisplayRecordIndex = 0;
-            this.activeFault3GaugePrva.Location = new System.Drawing.Point(229, 33);
+            this.activeFault3GaugePrva.Location = new System.Drawing.Point(196, 33);
             this.activeFault3GaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault3GaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault3GaugePrva.Name = "activeFault3GaugePrva";
@@ -364,7 +364,7 @@
             // 
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(232, 8);
+            this.label12.Location = new System.Drawing.Point(199, 8);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(87, 18);
             this.label12.TabIndex = 7;
@@ -374,7 +374,7 @@
             // 
             this.activeFault2GaugePrva.CharacterCount = 5;
             this.activeFault2GaugePrva.DisplayRecordIndex = 0;
-            this.activeFault2GaugePrva.Location = new System.Drawing.Point(113, 33);
+            this.activeFault2GaugePrva.Location = new System.Drawing.Point(100, 33);
             this.activeFault2GaugePrva.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault2GaugePrva.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault2GaugePrva.Name = "activeFault2GaugePrva";
@@ -385,7 +385,7 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(116, 8);
+            this.label11.Location = new System.Drawing.Point(103, 8);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(87, 18);
             this.label11.TabIndex = 7;
@@ -436,7 +436,7 @@
             this.panel2.Controls.Add(this.label5);
             this.panel2.Location = new System.Drawing.Point(3, 114);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(447, 200);
+            this.panel2.Size = new System.Drawing.Size(400, 200);
             this.panel2.TabIndex = 2;
             // 
             // prvaSpeed
@@ -465,7 +465,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(81, 148);
+            this.label8.Location = new System.Drawing.Point(64, 148);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(66, 24);
             this.label8.TabIndex = 0;
@@ -485,7 +485,7 @@
             // 
             this.prvaTracPowerGauge.CharacterCount = 5;
             this.prvaTracPowerGauge.DisplayRecordIndex = 0;
-            this.prvaTracPowerGauge.Location = new System.Drawing.Point(335, 33);
+            this.prvaTracPowerGauge.Location = new System.Drawing.Point(298, 33);
             this.prvaTracPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prvaTracPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prvaTracPowerGauge.Name = "prvaTracPowerGauge";
@@ -496,7 +496,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(321, 6);
+            this.label4.Location = new System.Drawing.Point(282, 6);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(106, 24);
             this.label4.TabIndex = 2;
@@ -506,7 +506,7 @@
             // 
             this.prvaTargetPowerGauge.CharacterCount = 5;
             this.prvaTargetPowerGauge.DisplayRecordIndex = 0;
-            this.prvaTargetPowerGauge.Location = new System.Drawing.Point(191, 33);
+            this.prvaTargetPowerGauge.Location = new System.Drawing.Point(167, 33);
             this.prvaTargetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prvaTargetPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prvaTargetPowerGauge.Name = "prvaTargetPowerGauge";
@@ -517,7 +517,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(164, 6);
+            this.label5.Location = new System.Drawing.Point(153, 6);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(122, 24);
             this.label5.TabIndex = 2;
@@ -538,14 +538,14 @@
             this.panel3.Controls.Add(this.prva1WorkHoursGauge);
             this.panel3.Location = new System.Drawing.Point(3, 332);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(447, 321);
+            this.panel3.Size = new System.Drawing.Size(400, 321);
             this.panel3.TabIndex = 1;
             // 
             // label9
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(163, 240);
+            this.label9.Location = new System.Drawing.Point(146, 240);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(106, 24);
             this.label9.TabIndex = 0;
@@ -555,7 +555,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(195, 138);
+            this.label7.Location = new System.Drawing.Point(163, 137);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(51, 24);
             this.label7.TabIndex = 0;
@@ -565,7 +565,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(163, 45);
+            this.label6.Location = new System.Drawing.Point(145, 44);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(107, 24);
             this.label6.TabIndex = 0;
@@ -575,7 +575,7 @@
             // 
             this.prva2RPMGauge.CharacterCount = 5;
             this.prva2RPMGauge.DisplayRecordIndex = 0;
-            this.prva2RPMGauge.Location = new System.Drawing.Point(299, 110);
+            this.prva2RPMGauge.Location = new System.Drawing.Point(261, 110);
             this.prva2RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2RPMGauge.Name = "prva2RPMGauge";
@@ -586,7 +586,7 @@
             // 
             this.prva2WorkHoursGauge.CharacterCount = 5;
             this.prva2WorkHoursGauge.DisplayRecordIndex = 0;
-            this.prva2WorkHoursGauge.Location = new System.Drawing.Point(299, 14);
+            this.prva2WorkHoursGauge.Location = new System.Drawing.Point(261, 14);
             this.prva2WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2WorkHoursGauge.Name = "prva2WorkHoursGauge";
@@ -597,14 +597,13 @@
             // 
             this.prva2WaterTGauge.CharacterCount = 5;
             this.prva2WaterTGauge.DisplayRecordIndex = 0;
-            this.prva2WaterTGauge.Location = new System.Drawing.Point(298, 217);
+            this.prva2WaterTGauge.Location = new System.Drawing.Point(260, 217);
             this.prva2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.prva2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.prva2WaterTGauge.Name = "prva2WaterTGauge";
             this.prva2WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.prva2WaterTGauge.TabIndex = 4;
             // 
-
             // prva1WaterTGauge
             // 
             this.prva1WaterTGauge.CharacterCount = 5;
@@ -616,7 +615,6 @@
             this.prva1WaterTGauge.Size = new System.Drawing.Size(124, 80);
             this.prva1WaterTGauge.TabIndex = 4;
             // 
-
             // prva1RPMGauge
             // 
             this.prva1RPMGauge.CharacterCount = 5;
@@ -649,16 +647,16 @@
             this.panel1.Controls.Add(this.label1);
             this.panel1.Location = new System.Drawing.Point(3, 41);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(447, 67);
+            this.panel1.Size = new System.Drawing.Size(400, 67);
             this.panel1.TabIndex = 1;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(283, 9);
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(244, 9);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(132, 24);
+            this.label2.Size = new System.Drawing.Size(115, 20);
             this.label2.TabIndex = 0;
             this.label2.Text = "Engine 2 State";
             // 
@@ -666,7 +664,7 @@
             // 
             this.lblPrva2State.AutoSize = true;
             this.lblPrva2State.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPrva2State.Location = new System.Drawing.Point(283, 33);
+            this.lblPrva2State.Location = new System.Drawing.Point(244, 33);
             this.lblPrva2State.Name = "lblPrva2State";
             this.lblPrva2State.Size = new System.Drawing.Size(153, 25);
             this.lblPrva2State.TabIndex = 0;
@@ -685,10 +683,10 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(3, 9);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(132, 24);
+            this.label1.Size = new System.Drawing.Size(115, 20);
             this.label1.TabIndex = 0;
             this.label1.Text = "Engine 1 State";
             // 
@@ -696,7 +694,7 @@
             // 
             this.lblVremePrva.AutoSize = true;
             this.lblVremePrva.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblVremePrva.Location = new System.Drawing.Point(288, 17);
+            this.lblVremePrva.Location = new System.Drawing.Point(267, 17);
             this.lblVremePrva.Name = "lblVremePrva";
             this.lblVremePrva.Size = new System.Drawing.Size(57, 20);
             this.lblVremePrva.TabIndex = 0;
@@ -722,9 +720,9 @@
             this.dockingClientPanel2.Controls.Add(this.panel8);
             this.dockingClientPanel2.Controls.Add(this.lblVremeDruga);
             this.dockingClientPanel2.Controls.Add(this.lblDruga);
-            this.dockingClientPanel2.Location = new System.Drawing.Point(495, 42);
+            this.dockingClientPanel2.Location = new System.Drawing.Point(427, 42);
             this.dockingClientPanel2.Name = "dockingClientPanel2";
-            this.dockingClientPanel2.Size = new System.Drawing.Size(460, 985);
+            this.dockingClientPanel2.Size = new System.Drawing.Size(432, 957);
             this.dockingClientPanel2.TabIndex = 0;
             // 
             // panel5
@@ -747,14 +745,14 @@
             this.panel5.Controls.Add(this.label24);
             this.panel5.Location = new System.Drawing.Point(3, 684);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(447, 261);
+            this.panel5.Size = new System.Drawing.Size(412, 261);
             this.panel5.TabIndex = 4;
             // 
             // faultSyncGaugeDruga
             // 
             this.faultSyncGaugeDruga.CharacterCount = 5;
             this.faultSyncGaugeDruga.DisplayRecordIndex = 0;
-            this.faultSyncGaugeDruga.Location = new System.Drawing.Point(298, 154);
+            this.faultSyncGaugeDruga.Location = new System.Drawing.Point(252, 154);
             this.faultSyncGaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultSyncGaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultSyncGaugeDruga.Name = "faultSyncGaugeDruga";
@@ -765,7 +763,7 @@
             // 
             this.label18.AutoSize = true;
             this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label18.Location = new System.Drawing.Point(307, 133);
+            this.label18.Location = new System.Drawing.Point(261, 133);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(81, 18);
             this.label18.TabIndex = 7;
@@ -775,7 +773,7 @@
             // 
             this.faultAckGaugeDruga.CharacterCount = 5;
             this.faultAckGaugeDruga.DisplayRecordIndex = 0;
-            this.faultAckGaugeDruga.Location = new System.Drawing.Point(181, 154);
+            this.faultAckGaugeDruga.Location = new System.Drawing.Point(135, 154);
             this.faultAckGaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultAckGaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultAckGaugeDruga.Name = "faultAckGaugeDruga";
@@ -786,7 +784,7 @@
             // 
             this.label19.AutoSize = true;
             this.label19.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label19.Location = new System.Drawing.Point(192, 133);
+            this.label19.Location = new System.Drawing.Point(146, 133);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(70, 18);
             this.label19.TabIndex = 7;
@@ -796,7 +794,7 @@
             // 
             this.activeFault5GaugeDruga.CharacterCount = 5;
             this.activeFault5GaugeDruga.DisplayRecordIndex = 0;
-            this.activeFault5GaugeDruga.Location = new System.Drawing.Point(57, 154);
+            this.activeFault5GaugeDruga.Location = new System.Drawing.Point(11, 154);
             this.activeFault5GaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault5GaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault5GaugeDruga.Name = "activeFault5GaugeDruga";
@@ -807,7 +805,7 @@
             // 
             this.label20.AutoSize = true;
             this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.Location = new System.Drawing.Point(60, 133);
+            this.label20.Location = new System.Drawing.Point(14, 133);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(87, 18);
             this.label20.TabIndex = 7;
@@ -817,7 +815,7 @@
             // 
             this.activeFault4GaugeDruga.CharacterCount = 5;
             this.activeFault4GaugeDruga.DisplayRecordIndex = 0;
-            this.activeFault4GaugeDruga.Location = new System.Drawing.Point(337, 33);
+            this.activeFault4GaugeDruga.Location = new System.Drawing.Point(298, 33);
             this.activeFault4GaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault4GaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault4GaugeDruga.Name = "activeFault4GaugeDruga";
@@ -828,7 +826,7 @@
             // 
             this.label21.AutoSize = true;
             this.label21.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label21.Location = new System.Drawing.Point(340, 8);
+            this.label21.Location = new System.Drawing.Point(301, 8);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(87, 18);
             this.label21.TabIndex = 7;
@@ -838,7 +836,7 @@
             // 
             this.activeFault3GaugeDruga.CharacterCount = 5;
             this.activeFault3GaugeDruga.DisplayRecordIndex = 0;
-            this.activeFault3GaugeDruga.Location = new System.Drawing.Point(229, 33);
+            this.activeFault3GaugeDruga.Location = new System.Drawing.Point(196, 33);
             this.activeFault3GaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault3GaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault3GaugeDruga.Name = "activeFault3GaugeDruga";
@@ -849,7 +847,7 @@
             // 
             this.label22.AutoSize = true;
             this.label22.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label22.Location = new System.Drawing.Point(232, 8);
+            this.label22.Location = new System.Drawing.Point(199, 8);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(87, 18);
             this.label22.TabIndex = 7;
@@ -859,7 +857,7 @@
             // 
             this.activeFault2GaugeDruga.CharacterCount = 5;
             this.activeFault2GaugeDruga.DisplayRecordIndex = 0;
-            this.activeFault2GaugeDruga.Location = new System.Drawing.Point(113, 33);
+            this.activeFault2GaugeDruga.Location = new System.Drawing.Point(100, 33);
             this.activeFault2GaugeDruga.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault2GaugeDruga.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault2GaugeDruga.Name = "activeFault2GaugeDruga";
@@ -870,7 +868,7 @@
             // 
             this.label23.AutoSize = true;
             this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label23.Location = new System.Drawing.Point(116, 8);
+            this.label23.Location = new System.Drawing.Point(100, 8);
             this.label23.Name = "label23";
             this.label23.Size = new System.Drawing.Size(87, 18);
             this.label23.TabIndex = 7;
@@ -921,7 +919,7 @@
             this.panel6.Controls.Add(this.label29);
             this.panel6.Location = new System.Drawing.Point(3, 114);
             this.panel6.Name = "panel6";
-            this.panel6.Size = new System.Drawing.Size(447, 200);
+            this.panel6.Size = new System.Drawing.Size(412, 200);
             this.panel6.TabIndex = 2;
             // 
             // drugaSpeed
@@ -970,7 +968,7 @@
             // 
             this.drugaTracPowerGauge.CharacterCount = 5;
             this.drugaTracPowerGauge.DisplayRecordIndex = 0;
-            this.drugaTracPowerGauge.Location = new System.Drawing.Point(335, 33);
+            this.drugaTracPowerGauge.Location = new System.Drawing.Point(297, 33);
             this.drugaTracPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.drugaTracPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.drugaTracPowerGauge.Name = "drugaTracPowerGauge";
@@ -981,7 +979,7 @@
             // 
             this.label28.AutoSize = true;
             this.label28.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label28.Location = new System.Drawing.Point(321, 6);
+            this.label28.Location = new System.Drawing.Point(282, 6);
             this.label28.Name = "label28";
             this.label28.Size = new System.Drawing.Size(106, 24);
             this.label28.TabIndex = 2;
@@ -991,7 +989,7 @@
             // 
             this.drugaTargetPowerGauge.CharacterCount = 5;
             this.drugaTargetPowerGauge.DisplayRecordIndex = 0;
-            this.drugaTargetPowerGauge.Location = new System.Drawing.Point(191, 33);
+            this.drugaTargetPowerGauge.Location = new System.Drawing.Point(160, 33);
             this.drugaTargetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.drugaTargetPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.drugaTargetPowerGauge.Name = "drugaTargetPowerGauge";
@@ -1002,7 +1000,7 @@
             // 
             this.label29.AutoSize = true;
             this.label29.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label29.Location = new System.Drawing.Point(164, 6);
+            this.label29.Location = new System.Drawing.Point(149, 6);
             this.label29.Name = "label29";
             this.label29.Size = new System.Drawing.Size(122, 24);
             this.label29.TabIndex = 2;
@@ -1023,14 +1021,14 @@
             this.panel7.Controls.Add(this.druga1WorkHoursGauge);
             this.panel7.Location = new System.Drawing.Point(3, 332);
             this.panel7.Name = "panel7";
-            this.panel7.Size = new System.Drawing.Size(447, 321);
+            this.panel7.Size = new System.Drawing.Size(412, 321);
             this.panel7.TabIndex = 1;
             // 
             // label30
             // 
             this.label30.AutoSize = true;
             this.label30.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label30.Location = new System.Drawing.Point(156, 229);
+            this.label30.Location = new System.Drawing.Point(137, 240);
             this.label30.Name = "label30";
             this.label30.Size = new System.Drawing.Size(106, 24);
             this.label30.TabIndex = 0;
@@ -1040,7 +1038,7 @@
             // 
             this.label32.AutoSize = true;
             this.label32.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label32.Location = new System.Drawing.Point(187, 137);
+            this.label32.Location = new System.Drawing.Point(152, 137);
             this.label32.Name = "label32";
             this.label32.Size = new System.Drawing.Size(51, 24);
             this.label32.TabIndex = 0;
@@ -1050,7 +1048,7 @@
             // 
             this.label33.AutoSize = true;
             this.label33.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label33.Location = new System.Drawing.Point(155, 44);
+            this.label33.Location = new System.Drawing.Point(137, 44);
             this.label33.Name = "label33";
             this.label33.Size = new System.Drawing.Size(107, 24);
             this.label33.TabIndex = 0;
@@ -1060,7 +1058,7 @@
             // 
             this.druga2RPMGauge.CharacterCount = 5;
             this.druga2RPMGauge.DisplayRecordIndex = 0;
-            this.druga2RPMGauge.Location = new System.Drawing.Point(291, 109);
+            this.druga2RPMGauge.Location = new System.Drawing.Point(253, 110);
             this.druga2RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga2RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga2RPMGauge.Name = "druga2RPMGauge";
@@ -1071,7 +1069,7 @@
             // 
             this.druga2WorkHoursGauge.CharacterCount = 5;
             this.druga2WorkHoursGauge.DisplayRecordIndex = 0;
-            this.druga2WorkHoursGauge.Location = new System.Drawing.Point(291, 13);
+            this.druga2WorkHoursGauge.Location = new System.Drawing.Point(253, 14);
             this.druga2WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga2WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga2WorkHoursGauge.Name = "druga2WorkHoursGauge";
@@ -1080,9 +1078,9 @@
             // 
             // druga2WaterTGauge
             // 
-            this.druga2WaterTGauge.CharacterCount = 3;
+            this.druga2WaterTGauge.CharacterCount = 5;
             this.druga2WaterTGauge.DisplayRecordIndex = 0;
-            this.druga2WaterTGauge.Location = new System.Drawing.Point(291, 206);
+            this.druga2WaterTGauge.Location = new System.Drawing.Point(253, 217);
             this.druga2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga2WaterTGauge.Name = "druga2WaterTGauge";
@@ -1091,9 +1089,9 @@
             // 
             // druga1WaterTGauge
             // 
-            this.druga1WaterTGauge.CharacterCount = 3;
+            this.druga1WaterTGauge.CharacterCount = 5;
             this.druga1WaterTGauge.DisplayRecordIndex = 0;
-            this.druga1WaterTGauge.Location = new System.Drawing.Point(8, 206);
+            this.druga1WaterTGauge.Location = new System.Drawing.Point(8, 217);
             this.druga1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.druga1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.druga1WaterTGauge.Name = "druga1WaterTGauge";
@@ -1130,18 +1128,18 @@
             this.panel8.Controls.Add(this.lblDruga2State);
             this.panel8.Controls.Add(this.lblDruga1State);
             this.panel8.Controls.Add(this.label37);
-            this.panel8.Location = new System.Drawing.Point(3, 41);
+            this.panel8.Location = new System.Drawing.Point(8, 41);
             this.panel8.Name = "panel8";
-            this.panel8.Size = new System.Drawing.Size(447, 67);
+            this.panel8.Size = new System.Drawing.Size(407, 67);
             this.panel8.TabIndex = 1;
             // 
             // label34
             // 
             this.label34.AutoSize = true;
-            this.label34.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label34.Location = new System.Drawing.Point(283, 9);
+            this.label34.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label34.Location = new System.Drawing.Point(205, 9);
             this.label34.Name = "label34";
-            this.label34.Size = new System.Drawing.Size(132, 24);
+            this.label34.Size = new System.Drawing.Size(115, 20);
             this.label34.TabIndex = 0;
             this.label34.Text = "Engine 2 State";
             // 
@@ -1149,7 +1147,7 @@
             // 
             this.lblDruga2State.AutoSize = true;
             this.lblDruga2State.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDruga2State.Location = new System.Drawing.Point(283, 33);
+            this.lblDruga2State.Location = new System.Drawing.Point(205, 33);
             this.lblDruga2State.Name = "lblDruga2State";
             this.lblDruga2State.Size = new System.Drawing.Size(153, 25);
             this.lblDruga2State.TabIndex = 0;
@@ -1168,10 +1166,10 @@
             // label37
             // 
             this.label37.AutoSize = true;
-            this.label37.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label37.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label37.Location = new System.Drawing.Point(3, 9);
             this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(132, 24);
+            this.label37.Size = new System.Drawing.Size(115, 20);
             this.label37.TabIndex = 0;
             this.label37.Text = "Engine 1 State";
             // 
@@ -1179,7 +1177,7 @@
             // 
             this.lblVremeDruga.AutoSize = true;
             this.lblVremeDruga.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblVremeDruga.Location = new System.Drawing.Point(288, 17);
+            this.lblVremeDruga.Location = new System.Drawing.Point(252, 18);
             this.lblVremeDruga.Name = "lblVremeDruga";
             this.lblVremeDruga.Size = new System.Drawing.Size(57, 20);
             this.lblVremeDruga.TabIndex = 0;
@@ -1205,9 +1203,9 @@
             this.dockingClientPanel3.Controls.Add(this.panel12);
             this.dockingClientPanel3.Controls.Add(this.lblVremeTreca);
             this.dockingClientPanel3.Controls.Add(this.lblTreca);
-            this.dockingClientPanel3.Location = new System.Drawing.Point(974, 42);
+            this.dockingClientPanel3.Location = new System.Drawing.Point(865, 42);
             this.dockingClientPanel3.Name = "dockingClientPanel3";
-            this.dockingClientPanel3.Size = new System.Drawing.Size(460, 985);
+            this.dockingClientPanel3.Size = new System.Drawing.Size(427, 957);
             this.dockingClientPanel3.TabIndex = 0;
             // 
             // panel9
@@ -1230,14 +1228,14 @@
             this.panel9.Controls.Add(this.label46);
             this.panel9.Location = new System.Drawing.Point(3, 684);
             this.panel9.Name = "panel9";
-            this.panel9.Size = new System.Drawing.Size(447, 261);
+            this.panel9.Size = new System.Drawing.Size(413, 261);
             this.panel9.TabIndex = 4;
             // 
             // faultSyncGaugeTreca
             // 
             this.faultSyncGaugeTreca.CharacterCount = 5;
             this.faultSyncGaugeTreca.DisplayRecordIndex = 0;
-            this.faultSyncGaugeTreca.Location = new System.Drawing.Point(298, 154);
+            this.faultSyncGaugeTreca.Location = new System.Drawing.Point(252, 154);
             this.faultSyncGaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultSyncGaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultSyncGaugeTreca.Name = "faultSyncGaugeTreca";
@@ -1248,7 +1246,7 @@
             // 
             this.label40.AutoSize = true;
             this.label40.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label40.Location = new System.Drawing.Point(307, 133);
+            this.label40.Location = new System.Drawing.Point(261, 133);
             this.label40.Name = "label40";
             this.label40.Size = new System.Drawing.Size(81, 18);
             this.label40.TabIndex = 7;
@@ -1258,7 +1256,7 @@
             // 
             this.faultAckGaugeTreca.CharacterCount = 5;
             this.faultAckGaugeTreca.DisplayRecordIndex = 0;
-            this.faultAckGaugeTreca.Location = new System.Drawing.Point(181, 154);
+            this.faultAckGaugeTreca.Location = new System.Drawing.Point(135, 154);
             this.faultAckGaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultAckGaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultAckGaugeTreca.Name = "faultAckGaugeTreca";
@@ -1269,7 +1267,7 @@
             // 
             this.label41.AutoSize = true;
             this.label41.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label41.Location = new System.Drawing.Point(192, 133);
+            this.label41.Location = new System.Drawing.Point(146, 133);
             this.label41.Name = "label41";
             this.label41.Size = new System.Drawing.Size(70, 18);
             this.label41.TabIndex = 7;
@@ -1279,7 +1277,7 @@
             // 
             this.activeFault5GaugeTreca.CharacterCount = 5;
             this.activeFault5GaugeTreca.DisplayRecordIndex = 0;
-            this.activeFault5GaugeTreca.Location = new System.Drawing.Point(57, 154);
+            this.activeFault5GaugeTreca.Location = new System.Drawing.Point(11, 154);
             this.activeFault5GaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault5GaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault5GaugeTreca.Name = "activeFault5GaugeTreca";
@@ -1290,7 +1288,7 @@
             // 
             this.label42.AutoSize = true;
             this.label42.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label42.Location = new System.Drawing.Point(60, 133);
+            this.label42.Location = new System.Drawing.Point(14, 133);
             this.label42.Name = "label42";
             this.label42.Size = new System.Drawing.Size(87, 18);
             this.label42.TabIndex = 7;
@@ -1300,7 +1298,7 @@
             // 
             this.activeFault4GaugeTreca.CharacterCount = 5;
             this.activeFault4GaugeTreca.DisplayRecordIndex = 0;
-            this.activeFault4GaugeTreca.Location = new System.Drawing.Point(337, 33);
+            this.activeFault4GaugeTreca.Location = new System.Drawing.Point(298, 33);
             this.activeFault4GaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault4GaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault4GaugeTreca.Name = "activeFault4GaugeTreca";
@@ -1311,7 +1309,7 @@
             // 
             this.label43.AutoSize = true;
             this.label43.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label43.Location = new System.Drawing.Point(340, 8);
+            this.label43.Location = new System.Drawing.Point(301, 8);
             this.label43.Name = "label43";
             this.label43.Size = new System.Drawing.Size(87, 18);
             this.label43.TabIndex = 7;
@@ -1321,7 +1319,7 @@
             // 
             this.activeFault3GaugeTreca.CharacterCount = 5;
             this.activeFault3GaugeTreca.DisplayRecordIndex = 0;
-            this.activeFault3GaugeTreca.Location = new System.Drawing.Point(229, 33);
+            this.activeFault3GaugeTreca.Location = new System.Drawing.Point(196, 33);
             this.activeFault3GaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault3GaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault3GaugeTreca.Name = "activeFault3GaugeTreca";
@@ -1332,7 +1330,7 @@
             // 
             this.label44.AutoSize = true;
             this.label44.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label44.Location = new System.Drawing.Point(232, 8);
+            this.label44.Location = new System.Drawing.Point(199, 8);
             this.label44.Name = "label44";
             this.label44.Size = new System.Drawing.Size(87, 18);
             this.label44.TabIndex = 7;
@@ -1342,7 +1340,7 @@
             // 
             this.activeFault2GaugeTreca.CharacterCount = 5;
             this.activeFault2GaugeTreca.DisplayRecordIndex = 0;
-            this.activeFault2GaugeTreca.Location = new System.Drawing.Point(113, 33);
+            this.activeFault2GaugeTreca.Location = new System.Drawing.Point(100, 33);
             this.activeFault2GaugeTreca.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault2GaugeTreca.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault2GaugeTreca.Name = "activeFault2GaugeTreca";
@@ -1353,7 +1351,7 @@
             // 
             this.label45.AutoSize = true;
             this.label45.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label45.Location = new System.Drawing.Point(116, 8);
+            this.label45.Location = new System.Drawing.Point(103, 8);
             this.label45.Name = "label45";
             this.label45.Size = new System.Drawing.Size(87, 18);
             this.label45.TabIndex = 7;
@@ -1404,7 +1402,7 @@
             this.panel10.Controls.Add(this.label51);
             this.panel10.Location = new System.Drawing.Point(3, 114);
             this.panel10.Name = "panel10";
-            this.panel10.Size = new System.Drawing.Size(447, 200);
+            this.panel10.Size = new System.Drawing.Size(402, 200);
             this.panel10.TabIndex = 2;
             // 
             // trecaSpeed
@@ -1453,7 +1451,7 @@
             // 
             this.trecaTracPowerGauge.CharacterCount = 5;
             this.trecaTracPowerGauge.DisplayRecordIndex = 0;
-            this.trecaTracPowerGauge.Location = new System.Drawing.Point(335, 33);
+            this.trecaTracPowerGauge.Location = new System.Drawing.Point(298, 33);
             this.trecaTracPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.trecaTracPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.trecaTracPowerGauge.Name = "trecaTracPowerGauge";
@@ -1464,7 +1462,7 @@
             // 
             this.label50.AutoSize = true;
             this.label50.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label50.Location = new System.Drawing.Point(321, 6);
+            this.label50.Location = new System.Drawing.Point(294, 6);
             this.label50.Name = "label50";
             this.label50.Size = new System.Drawing.Size(106, 24);
             this.label50.TabIndex = 2;
@@ -1474,7 +1472,7 @@
             // 
             this.trecaTargetPowerGauge.CharacterCount = 5;
             this.trecaTargetPowerGauge.DisplayRecordIndex = 0;
-            this.trecaTargetPowerGauge.Location = new System.Drawing.Point(191, 33);
+            this.trecaTargetPowerGauge.Location = new System.Drawing.Point(168, 33);
             this.trecaTargetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.trecaTargetPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.trecaTargetPowerGauge.Name = "trecaTargetPowerGauge";
@@ -1485,7 +1483,7 @@
             // 
             this.label51.AutoSize = true;
             this.label51.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label51.Location = new System.Drawing.Point(164, 6);
+            this.label51.Location = new System.Drawing.Point(153, 6);
             this.label51.Name = "label51";
             this.label51.Size = new System.Drawing.Size(122, 24);
             this.label51.TabIndex = 2;
@@ -1506,14 +1504,14 @@
             this.panel11.Controls.Add(this.treca1WorkHoursGauge);
             this.panel11.Location = new System.Drawing.Point(3, 332);
             this.panel11.Name = "panel11";
-            this.panel11.Size = new System.Drawing.Size(447, 321);
+            this.panel11.Size = new System.Drawing.Size(402, 321);
             this.panel11.TabIndex = 1;
             // 
             // label52
             // 
             this.label52.AutoSize = true;
             this.label52.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label52.Location = new System.Drawing.Point(156, 229);
+            this.label52.Location = new System.Drawing.Point(137, 229);
             this.label52.Name = "label52";
             this.label52.Size = new System.Drawing.Size(106, 24);
             this.label52.TabIndex = 0;
@@ -1523,7 +1521,7 @@
             // 
             this.label54.AutoSize = true;
             this.label54.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label54.Location = new System.Drawing.Point(187, 137);
+            this.label54.Location = new System.Drawing.Point(149, 137);
             this.label54.Name = "label54";
             this.label54.Size = new System.Drawing.Size(51, 24);
             this.label54.TabIndex = 0;
@@ -1533,7 +1531,7 @@
             // 
             this.label55.AutoSize = true;
             this.label55.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label55.Location = new System.Drawing.Point(155, 44);
+            this.label55.Location = new System.Drawing.Point(137, 44);
             this.label55.Name = "label55";
             this.label55.Size = new System.Drawing.Size(107, 24);
             this.label55.TabIndex = 0;
@@ -1543,7 +1541,7 @@
             // 
             this.treca2RPMGauge.CharacterCount = 5;
             this.treca2RPMGauge.DisplayRecordIndex = 0;
-            this.treca2RPMGauge.Location = new System.Drawing.Point(291, 109);
+            this.treca2RPMGauge.Location = new System.Drawing.Point(264, 110);
             this.treca2RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca2RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca2RPMGauge.Name = "treca2RPMGauge";
@@ -1554,7 +1552,7 @@
             // 
             this.treca2WorkHoursGauge.CharacterCount = 5;
             this.treca2WorkHoursGauge.DisplayRecordIndex = 0;
-            this.treca2WorkHoursGauge.Location = new System.Drawing.Point(291, 13);
+            this.treca2WorkHoursGauge.Location = new System.Drawing.Point(264, 14);
             this.treca2WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca2WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca2WorkHoursGauge.Name = "treca2WorkHoursGauge";
@@ -1563,9 +1561,9 @@
             // 
             // treca2WaterTGauge
             // 
-            this.treca2WaterTGauge.CharacterCount = 3;
+            this.treca2WaterTGauge.CharacterCount = 5;
             this.treca2WaterTGauge.DisplayRecordIndex = 0;
-            this.treca2WaterTGauge.Location = new System.Drawing.Point(291, 206);
+            this.treca2WaterTGauge.Location = new System.Drawing.Point(264, 217);
             this.treca2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca2WaterTGauge.Name = "treca2WaterTGauge";
@@ -1574,9 +1572,9 @@
             // 
             // treca1WaterTGauge
             // 
-            this.treca1WaterTGauge.CharacterCount = 3;
+            this.treca1WaterTGauge.CharacterCount = 5;
             this.treca1WaterTGauge.DisplayRecordIndex = 0;
-            this.treca1WaterTGauge.Location = new System.Drawing.Point(8, 206);
+            this.treca1WaterTGauge.Location = new System.Drawing.Point(8, 217);
             this.treca1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.treca1WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.treca1WaterTGauge.Name = "treca1WaterTGauge";
@@ -1615,16 +1613,16 @@
             this.panel12.Controls.Add(this.label59);
             this.panel12.Location = new System.Drawing.Point(3, 41);
             this.panel12.Name = "panel12";
-            this.panel12.Size = new System.Drawing.Size(447, 67);
+            this.panel12.Size = new System.Drawing.Size(402, 67);
             this.panel12.TabIndex = 1;
             // 
             // label56
             // 
             this.label56.AutoSize = true;
-            this.label56.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label56.Location = new System.Drawing.Point(283, 9);
+            this.label56.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label56.Location = new System.Drawing.Point(227, 9);
             this.label56.Name = "label56";
-            this.label56.Size = new System.Drawing.Size(132, 24);
+            this.label56.Size = new System.Drawing.Size(115, 20);
             this.label56.TabIndex = 0;
             this.label56.Text = "Engine 2 State";
             // 
@@ -1632,7 +1630,7 @@
             // 
             this.lblTreca2State.AutoSize = true;
             this.lblTreca2State.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTreca2State.Location = new System.Drawing.Point(283, 33);
+            this.lblTreca2State.Location = new System.Drawing.Point(227, 33);
             this.lblTreca2State.Name = "lblTreca2State";
             this.lblTreca2State.Size = new System.Drawing.Size(153, 25);
             this.lblTreca2State.TabIndex = 0;
@@ -1651,10 +1649,10 @@
             // label59
             // 
             this.label59.AutoSize = true;
-            this.label59.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label59.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label59.Location = new System.Drawing.Point(3, 9);
             this.label59.Name = "label59";
-            this.label59.Size = new System.Drawing.Size(132, 24);
+            this.label59.Size = new System.Drawing.Size(115, 20);
             this.label59.TabIndex = 0;
             this.label59.Text = "Engine 1 State";
             // 
@@ -1662,7 +1660,7 @@
             // 
             this.lblVremeTreca.AutoSize = true;
             this.lblVremeTreca.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblVremeTreca.Location = new System.Drawing.Point(288, 17);
+            this.lblVremeTreca.Location = new System.Drawing.Point(252, 18);
             this.lblVremeTreca.Name = "lblVremeTreca";
             this.lblVremeTreca.Size = new System.Drawing.Size(57, 20);
             this.lblVremeTreca.TabIndex = 0;
@@ -1688,9 +1686,9 @@
             this.dockingClientPanel4.Controls.Add(this.panel16);
             this.dockingClientPanel4.Controls.Add(this.lblVremeCetvrta);
             this.dockingClientPanel4.Controls.Add(this.lblCetvrta);
-            this.dockingClientPanel4.Location = new System.Drawing.Point(1461, 42);
+            this.dockingClientPanel4.Location = new System.Drawing.Point(1298, 42);
             this.dockingClientPanel4.Name = "dockingClientPanel4";
-            this.dockingClientPanel4.Size = new System.Drawing.Size(460, 985);
+            this.dockingClientPanel4.Size = new System.Drawing.Size(399, 957);
             this.dockingClientPanel4.TabIndex = 0;
             // 
             // panel13
@@ -1711,16 +1709,16 @@
             this.panel13.Controls.Add(this.label67);
             this.panel13.Controls.Add(this.activeFault1GaugeCetvrta);
             this.panel13.Controls.Add(this.label68);
-            this.panel13.Location = new System.Drawing.Point(3, 684);
+            this.panel13.Location = new System.Drawing.Point(3, 694);
             this.panel13.Name = "panel13";
-            this.panel13.Size = new System.Drawing.Size(447, 261);
+            this.panel13.Size = new System.Drawing.Size(396, 251);
             this.panel13.TabIndex = 4;
             // 
             // faultSyncGaugeCetvrta
             // 
             this.faultSyncGaugeCetvrta.CharacterCount = 5;
             this.faultSyncGaugeCetvrta.DisplayRecordIndex = 0;
-            this.faultSyncGaugeCetvrta.Location = new System.Drawing.Point(298, 154);
+            this.faultSyncGaugeCetvrta.Location = new System.Drawing.Point(249, 154);
             this.faultSyncGaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultSyncGaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultSyncGaugeCetvrta.Name = "faultSyncGaugeCetvrta";
@@ -1731,7 +1729,7 @@
             // 
             this.label62.AutoSize = true;
             this.label62.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label62.Location = new System.Drawing.Point(307, 133);
+            this.label62.Location = new System.Drawing.Point(258, 133);
             this.label62.Name = "label62";
             this.label62.Size = new System.Drawing.Size(81, 18);
             this.label62.TabIndex = 7;
@@ -1741,7 +1739,7 @@
             // 
             this.faultAckGaugeCetvrta.CharacterCount = 5;
             this.faultAckGaugeCetvrta.DisplayRecordIndex = 0;
-            this.faultAckGaugeCetvrta.Location = new System.Drawing.Point(181, 154);
+            this.faultAckGaugeCetvrta.Location = new System.Drawing.Point(132, 154);
             this.faultAckGaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.faultAckGaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.faultAckGaugeCetvrta.Name = "faultAckGaugeCetvrta";
@@ -1752,7 +1750,7 @@
             // 
             this.label63.AutoSize = true;
             this.label63.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label63.Location = new System.Drawing.Point(192, 133);
+            this.label63.Location = new System.Drawing.Point(143, 133);
             this.label63.Name = "label63";
             this.label63.Size = new System.Drawing.Size(70, 18);
             this.label63.TabIndex = 7;
@@ -1762,7 +1760,7 @@
             // 
             this.activeFault5GaugeCetvrta.CharacterCount = 5;
             this.activeFault5GaugeCetvrta.DisplayRecordIndex = 0;
-            this.activeFault5GaugeCetvrta.Location = new System.Drawing.Point(57, 154);
+            this.activeFault5GaugeCetvrta.Location = new System.Drawing.Point(8, 154);
             this.activeFault5GaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault5GaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault5GaugeCetvrta.Name = "activeFault5GaugeCetvrta";
@@ -1773,7 +1771,7 @@
             // 
             this.label64.AutoSize = true;
             this.label64.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label64.Location = new System.Drawing.Point(60, 133);
+            this.label64.Location = new System.Drawing.Point(11, 133);
             this.label64.Name = "label64";
             this.label64.Size = new System.Drawing.Size(87, 18);
             this.label64.TabIndex = 7;
@@ -1783,7 +1781,7 @@
             // 
             this.activeFault4GaugeCetvrta.CharacterCount = 5;
             this.activeFault4GaugeCetvrta.DisplayRecordIndex = 0;
-            this.activeFault4GaugeCetvrta.Location = new System.Drawing.Point(337, 33);
+            this.activeFault4GaugeCetvrta.Location = new System.Drawing.Point(292, 33);
             this.activeFault4GaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault4GaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault4GaugeCetvrta.Name = "activeFault4GaugeCetvrta";
@@ -1794,7 +1792,7 @@
             // 
             this.label65.AutoSize = true;
             this.label65.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label65.Location = new System.Drawing.Point(340, 8);
+            this.label65.Location = new System.Drawing.Point(295, 8);
             this.label65.Name = "label65";
             this.label65.Size = new System.Drawing.Size(87, 18);
             this.label65.TabIndex = 7;
@@ -1804,7 +1802,7 @@
             // 
             this.activeFault3GaugeCetvrta.CharacterCount = 5;
             this.activeFault3GaugeCetvrta.DisplayRecordIndex = 0;
-            this.activeFault3GaugeCetvrta.Location = new System.Drawing.Point(229, 33);
+            this.activeFault3GaugeCetvrta.Location = new System.Drawing.Point(196, 33);
             this.activeFault3GaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault3GaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault3GaugeCetvrta.Name = "activeFault3GaugeCetvrta";
@@ -1815,7 +1813,7 @@
             // 
             this.label66.AutoSize = true;
             this.label66.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label66.Location = new System.Drawing.Point(232, 8);
+            this.label66.Location = new System.Drawing.Point(193, 8);
             this.label66.Name = "label66";
             this.label66.Size = new System.Drawing.Size(87, 18);
             this.label66.TabIndex = 7;
@@ -1825,7 +1823,7 @@
             // 
             this.activeFault2GaugeCetvrta.CharacterCount = 5;
             this.activeFault2GaugeCetvrta.DisplayRecordIndex = 0;
-            this.activeFault2GaugeCetvrta.Location = new System.Drawing.Point(113, 33);
+            this.activeFault2GaugeCetvrta.Location = new System.Drawing.Point(100, 33);
             this.activeFault2GaugeCetvrta.MaximumSize = new System.Drawing.Size(500, 180);
             this.activeFault2GaugeCetvrta.MinimumSize = new System.Drawing.Size(90, 90);
             this.activeFault2GaugeCetvrta.Name = "activeFault2GaugeCetvrta";
@@ -1836,7 +1834,7 @@
             // 
             this.label67.AutoSize = true;
             this.label67.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label67.Location = new System.Drawing.Point(116, 8);
+            this.label67.Location = new System.Drawing.Point(103, 8);
             this.label67.Name = "label67";
             this.label67.Size = new System.Drawing.Size(87, 18);
             this.label67.TabIndex = 7;
@@ -1887,7 +1885,7 @@
             this.panel14.Controls.Add(this.label73);
             this.panel14.Location = new System.Drawing.Point(3, 114);
             this.panel14.Name = "panel14";
-            this.panel14.Size = new System.Drawing.Size(447, 200);
+            this.panel14.Size = new System.Drawing.Size(390, 191);
             this.panel14.TabIndex = 2;
             // 
             // cetvrtaSpeed
@@ -1936,7 +1934,7 @@
             // 
             this.cetvrtaTracPowerGauge.CharacterCount = 5;
             this.cetvrtaTracPowerGauge.DisplayRecordIndex = 0;
-            this.cetvrtaTracPowerGauge.Location = new System.Drawing.Point(335, 33);
+            this.cetvrtaTracPowerGauge.Location = new System.Drawing.Point(286, 33);
             this.cetvrtaTracPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrtaTracPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrtaTracPowerGauge.Name = "cetvrtaTracPowerGauge";
@@ -1947,7 +1945,7 @@
             // 
             this.label72.AutoSize = true;
             this.label72.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label72.Location = new System.Drawing.Point(321, 6);
+            this.label72.Location = new System.Drawing.Point(276, 6);
             this.label72.Name = "label72";
             this.label72.Size = new System.Drawing.Size(106, 24);
             this.label72.TabIndex = 2;
@@ -1957,7 +1955,7 @@
             // 
             this.cetvrtaTargetPowerGauge.CharacterCount = 5;
             this.cetvrtaTargetPowerGauge.DisplayRecordIndex = 0;
-            this.cetvrtaTargetPowerGauge.Location = new System.Drawing.Point(191, 33);
+            this.cetvrtaTargetPowerGauge.Location = new System.Drawing.Point(169, 33);
             this.cetvrtaTargetPowerGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrtaTargetPowerGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrtaTargetPowerGauge.Name = "cetvrtaTargetPowerGauge";
@@ -1968,7 +1966,7 @@
             // 
             this.label73.AutoSize = true;
             this.label73.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label73.Location = new System.Drawing.Point(164, 6);
+            this.label73.Location = new System.Drawing.Point(149, 6);
             this.label73.Name = "label73";
             this.label73.Size = new System.Drawing.Size(122, 24);
             this.label73.TabIndex = 2;
@@ -1989,14 +1987,14 @@
             this.panel15.Controls.Add(this.cetvrta1WorkHoursGauge);
             this.panel15.Location = new System.Drawing.Point(3, 332);
             this.panel15.Name = "panel15";
-            this.panel15.Size = new System.Drawing.Size(447, 321);
+            this.panel15.Size = new System.Drawing.Size(390, 321);
             this.panel15.TabIndex = 1;
             // 
             // label74
             // 
             this.label74.AutoSize = true;
             this.label74.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label74.Location = new System.Drawing.Point(155, 229);
+            this.label74.Location = new System.Drawing.Point(137, 229);
             this.label74.Name = "label74";
             this.label74.Size = new System.Drawing.Size(106, 24);
             this.label74.TabIndex = 0;
@@ -2006,7 +2004,7 @@
             // 
             this.label76.AutoSize = true;
             this.label76.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label76.Location = new System.Drawing.Point(187, 137);
+            this.label76.Location = new System.Drawing.Point(149, 137);
             this.label76.Name = "label76";
             this.label76.Size = new System.Drawing.Size(51, 24);
             this.label76.TabIndex = 0;
@@ -2016,7 +2014,7 @@
             // 
             this.label77.AutoSize = true;
             this.label77.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label77.Location = new System.Drawing.Point(155, 44);
+            this.label77.Location = new System.Drawing.Point(137, 44);
             this.label77.Name = "label77";
             this.label77.Size = new System.Drawing.Size(107, 24);
             this.label77.TabIndex = 0;
@@ -2026,7 +2024,7 @@
             // 
             this.cetvrta2RPMGauge.CharacterCount = 5;
             this.cetvrta2RPMGauge.DisplayRecordIndex = 0;
-            this.cetvrta2RPMGauge.Location = new System.Drawing.Point(291, 109);
+            this.cetvrta2RPMGauge.Location = new System.Drawing.Point(250, 109);
             this.cetvrta2RPMGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrta2RPMGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrta2RPMGauge.Name = "cetvrta2RPMGauge";
@@ -2037,7 +2035,7 @@
             // 
             this.cetvrta2WorkHoursGauge.CharacterCount = 5;
             this.cetvrta2WorkHoursGauge.DisplayRecordIndex = 0;
-            this.cetvrta2WorkHoursGauge.Location = new System.Drawing.Point(291, 13);
+            this.cetvrta2WorkHoursGauge.Location = new System.Drawing.Point(250, 13);
             this.cetvrta2WorkHoursGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrta2WorkHoursGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrta2WorkHoursGauge.Name = "cetvrta2WorkHoursGauge";
@@ -2046,9 +2044,9 @@
             // 
             // cetvrta2WaterTGauge
             // 
-            this.cetvrta2WaterTGauge.CharacterCount = 3;
+            this.cetvrta2WaterTGauge.CharacterCount = 5;
             this.cetvrta2WaterTGauge.DisplayRecordIndex = 0;
-            this.cetvrta2WaterTGauge.Location = new System.Drawing.Point(290, 206);
+            this.cetvrta2WaterTGauge.Location = new System.Drawing.Point(249, 206);
             this.cetvrta2WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
             this.cetvrta2WaterTGauge.MinimumSize = new System.Drawing.Size(80, 80);
             this.cetvrta2WaterTGauge.Name = "cetvrta2WaterTGauge";
@@ -2057,7 +2055,7 @@
             // 
             // cetvrta1WaterTGauge
             // 
-            this.cetvrta1WaterTGauge.CharacterCount = 3;
+            this.cetvrta1WaterTGauge.CharacterCount = 5;
             this.cetvrta1WaterTGauge.DisplayRecordIndex = 0;
             this.cetvrta1WaterTGauge.Location = new System.Drawing.Point(7, 206);
             this.cetvrta1WaterTGauge.MaximumSize = new System.Drawing.Size(500, 180);
@@ -2098,16 +2096,16 @@
             this.panel16.Controls.Add(this.label81);
             this.panel16.Location = new System.Drawing.Point(3, 41);
             this.panel16.Name = "panel16";
-            this.panel16.Size = new System.Drawing.Size(447, 67);
+            this.panel16.Size = new System.Drawing.Size(390, 67);
             this.panel16.TabIndex = 1;
             // 
             // label78
             // 
             this.label78.AutoSize = true;
-            this.label78.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label78.Location = new System.Drawing.Point(283, 9);
+            this.label78.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label78.Location = new System.Drawing.Point(242, 9);
             this.label78.Name = "label78";
-            this.label78.Size = new System.Drawing.Size(132, 24);
+            this.label78.Size = new System.Drawing.Size(115, 20);
             this.label78.TabIndex = 0;
             this.label78.Text = "Engine 2 State";
             // 
@@ -2115,7 +2113,7 @@
             // 
             this.lblCetvrta2State.AutoSize = true;
             this.lblCetvrta2State.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCetvrta2State.Location = new System.Drawing.Point(283, 33);
+            this.lblCetvrta2State.Location = new System.Drawing.Point(235, 33);
             this.lblCetvrta2State.Name = "lblCetvrta2State";
             this.lblCetvrta2State.Size = new System.Drawing.Size(153, 25);
             this.lblCetvrta2State.TabIndex = 0;
@@ -2134,10 +2132,10 @@
             // label81
             // 
             this.label81.AutoSize = true;
-            this.label81.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label81.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label81.Location = new System.Drawing.Point(3, 9);
             this.label81.Name = "label81";
-            this.label81.Size = new System.Drawing.Size(132, 24);
+            this.label81.Size = new System.Drawing.Size(115, 20);
             this.label81.TabIndex = 0;
             this.label81.Text = "Engine 1 State";
             // 
@@ -2145,7 +2143,7 @@
             // 
             this.lblVremeCetvrta.AutoSize = true;
             this.lblVremeCetvrta.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblVremeCetvrta.Location = new System.Drawing.Point(288, 17);
+            this.lblVremeCetvrta.Location = new System.Drawing.Point(248, 18);
             this.lblVremeCetvrta.Name = "lblVremeCetvrta";
             this.lblVremeCetvrta.Size = new System.Drawing.Size(57, 20);
             this.lblVremeCetvrta.TabIndex = 0;
@@ -2173,7 +2171,7 @@
             this.arhivaToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1986, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1697, 28);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -2189,8 +2187,9 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScroll = true;
             this.BackColor = System.Drawing.Color.Azure;
-
+            this.ClientSize = new System.Drawing.Size(1697, 1015);
             this.Controls.Add(this.dockingClientPanel4);
             this.Controls.Add(this.dockingClientPanel3);
             this.Controls.Add(this.dockingClientPanel2);

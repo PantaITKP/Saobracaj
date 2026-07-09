@@ -241,7 +241,7 @@ namespace Saobracaj.Dokumenta
  " CenaSata, OsnovnaZarada1, OsnovnaZarada2, IznosPraznik, IznosPrekovremeno, IznosBolovanje65, IznosBolovanje100, ObracunZaposleni.Regres, ObracunZaposleni.TopliObrok, GoSati, GOIznos, RedovnoSati,RedovnoSatiIznos,  [BrutoCSata] "+
   "    ,[MesecniFondSati]       ,[PrekovremeneoSati]       ,[RedovanRadSati]       ,[UcinakSati] "+
    "   ,[RedovanRadIZ]      ,[GodOSati]       ,[GodIZNOS]      ,[BOL100Sati]      ,[BOL100IZNOS]      ,[BOL65Sati] "+
-    " ,[BOL65IZNOS] , Bonusi.Iznos as Bonus  from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni " +
+    " ,[BOL65IZNOS] , Bonusi.Iznos as Bonus, (UkupnoDIN + Zarada.Prevoz + Zarada.Regres + Zarada.TopliObrok) as Ivan  from ObracunZaposleni inner join Zarada on ObracunZaposleni.ID = Zarada.Zaposleni " +
     " left join Bonusi on Bonusi.DeSifra = ObracunZaposleni.ID " +
     " where Zarada.Fiksna = 0  ";
 
