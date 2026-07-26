@@ -136,5 +136,11 @@ namespace Saobracaj.Sifarnici
         {
           
         }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Pepeo.PlaniranjeVremena frm = new Pepeo.PlaniranjeVremena();
+            frm.Show();
+        }
     }
 }

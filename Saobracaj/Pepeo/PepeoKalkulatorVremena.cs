@@ -45,8 +45,10 @@ namespace Saobracaj.Pepeo
             izmenjeni.StvarnoVreme = novoStvarnoVreme;
             izmenjeni.RucnoIzmenjeno = true;
             izmenjeni.KasnjenjeMin = Convert.ToInt32((novoStvarnoVreme - izmenjeni.PlaniranoVreme).TotalMinutes);
+            // Napomena je iskljucivo ono sto je korisnik uneo.
+            // Ako korisnik nije uneo napomenu, ostaje prazna.
             izmenjeni.Napomena = string.IsNullOrWhiteSpace(napomena)
-                ? "Rucna izmena vremena. Sledeci koraci su preracunati."
+                ? string.Empty
                 : napomena.Trim();
 
             DateTime prethodniKraj = novoStvarnoVreme;
@@ -67,7 +69,10 @@ namespace Saobracaj.Pepeo
                 stari.StvarnoVreme = null;
                 stari.RucnoIzmenjeno = false;
                 stari.KasnjenjeMin = 0;
-                stari.Napomena = "Preracunato zbog prethodne rucne izmene.";
+                stari.RazlogKasnjenjaID = null;
+                stari.RazlogKasnjenja = string.Empty;
+                // Ne upisujemo tehnicke poruke o nacinu preracunavanja.
+                stari.Napomena = string.Empty;
 
                 prethodniKraj = kraj;
             }
@@ -100,7 +105,11 @@ namespace Saobracaj.Pepeo
                     StvarnoVreme = null,
                     RucnoIzmenjeno = false,
                     KasnjenjeMin = 0,
-                    Napomena = sablon.Napomena
+                    RazlogKasnjenjaID = null,
+                    RazlogKasnjenja = string.Empty,
+                    // Napomena iz sablona se ne prenosi na plan.
+                    // U planu se cuva samo napomena koju korisnik naknadno unese.
+                    Napomena = string.Empty
                 });
 
                 prethodniKraj = kraj;
@@ -274,37 +283,47 @@ namespace Saobracaj.Pepeo
         private DateTime PodesiPocetakAlesdIstovara(DateTime vrednost)
         {
             TimeSpan pocetakDana = VratiVreme("AlesdUnloadingStart", "08:00");
-            TimeSpan poslednjiStartRadnimDanom = VratiVreme("AlesdUnloadingWeekdayLastStart", "16:00");
-            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "10:00");
+            TimeSpan preskokPosle = VratiVreme("AlesdUnloadingSkipAfter", "18:00");
+            TimeSpan krajRadnimDanom = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
+            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
+
             DateTime trenutno = vrednost;
 
             while (true)
             {
+                // Nedelja je neradna.
                 if (trenutno.DayOfWeek == DayOfWeek.Sunday)
                 {
                     trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
                     continue;
                 }
 
+                // Pre 08:00 pocetak se postavlja na 08:00.
                 if (trenutno.TimeOfDay < pocetakDana)
                     trenutno = trenutno.Date.Add(pocetakDana);
 
                 if (trenutno.DayOfWeek == DayOfWeek.Saturday)
                 {
-                    // Operacija traje 2h; subotom mora da se zavrsi do 10:00.
-                    if (trenutno.AddMinutes(120).TimeOfDay <= krajSubotom)
-                        return trenutno;
+                    // Subotom se radi 08:00-15:00.
+                    if (trenutno.TimeOfDay >= krajSubotom)
+                    {
+                        trenutno = SledeciPonedeljak(trenutno).Add(pocetakDana);
+                        continue;
+                    }
 
-                    trenutno = SledeciPonedeljak(trenutno).Add(pocetakDana);
-                    continue;
+                    return trenutno;
                 }
 
-                if (trenutno.TimeOfDay > poslednjiStartRadnimDanom)
+                // Radnim danom se radi do 20:00, ali ako je voz stigao
+                // posle 18:00, istovar pocinje sledeceg radnog dana u 08:00.
+                if (trenutno.TimeOfDay > preskokPosle || trenutno.TimeOfDay >= krajRadnimDanom)
                 {
                     trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
                     continue;
                 }
 
+                // Ako je dolazak posle 12:00, prakticno ostaje samo druga smena
+                // do 20:00. Pocetak ipak ne moze biti pre stvarnog dolaska voza.
                 return trenutno;
             }
         }
@@ -312,8 +331,9 @@ namespace Saobracaj.Pepeo
         private DateTime DodajRadneMinuteAlesdIstovar(DateTime pocetak, int ukupnoMinuta)
         {
             TimeSpan pocetakDana = VratiVreme("AlesdUnloadingStart", "08:00");
-            TimeSpan krajRadnimDanom = VratiVreme("AlesdUnloadingWeekdayEnd", "18:00");
-            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "10:00");
+            TimeSpan krajRadnimDanom = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
+            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
+            int maksimumDnevno = VratiInt("AlesdUnloadingMaxDailyMinutes", 720);
 
             DateTime trenutno = PodesiPocetakAlesdIstovara(pocetak);
             int preostalo = ukupnoMinuta;
@@ -321,10 +341,19 @@ namespace Saobracaj.Pepeo
             while (preostalo > 0)
             {
                 trenutno = PodesiPocetakAlesdIstovara(trenutno);
-                TimeSpan krajDana = trenutno.DayOfWeek == DayOfWeek.Saturday ? krajSubotom : krajRadnimDanom;
-                DateTime dozvoljeniKraj = trenutno.Date.Add(krajDana);
+
+                TimeSpan krajDana = trenutno.DayOfWeek == DayOfWeek.Saturday
+                    ? krajSubotom
+                    : krajRadnimDanom;
+
+                DateTime krajRadnogDana = trenutno.Date.Add(krajDana);
+                DateTime krajPoDnevnomLimitu = trenutno.AddMinutes(maksimumDnevno);
+                DateTime dozvoljeniKraj = krajPoDnevnomLimitu < krajRadnogDana
+                    ? krajPoDnevnomLimitu
+                    : krajRadnogDana;
 
                 int dostupno = Convert.ToInt32((dozvoljeniKraj - trenutno).TotalMinutes);
+
                 if (dostupno <= 0)
                 {
                     trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
