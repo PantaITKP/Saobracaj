@@ -1,4 +1,5 @@
 ﻿using Saobracaj.Mobile;
+using Saobracaj.Pepeo;
 using Saobracaj.Servis;
 
 //using Syncfusion.Windows.Forms.Grid.Grouping;
@@ -970,6 +971,12 @@ namespace Saobracaj
         {
             LokomotiveTechnodis ltd = new LokomotiveTechnodis();
             ltd.Show();
+        }
+
+        private void toolStripButton137_Click(object sender, EventArgs e)
+        {
+            PlaniranjeVremena pv = new PlaniranjeVremena();
+            pv.Show();
         }
     }
 }
