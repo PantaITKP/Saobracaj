@@ -7,108 +7,51 @@ namespace Saobracaj.Pepeo
 {
     public class PepeoKalkulatorVremena
     {
-        private readonly List<PepeoSablonOperacije> _sabloni;
+        private readonly List<PepeoOperacijaDefinicija> _operacije;
         private readonly Dictionary<string, string> _parametri;
 
-        public PepeoKalkulatorVremena(List<PepeoSablonOperacije> sabloni, Dictionary<string, string> parametri)
+        public PepeoKalkulatorVremena(
+            List<PepeoOperacijaDefinicija> operacije,
+            Dictionary<string, string> parametri)
         {
-            _sabloni = (sabloni ?? new List<PepeoSablonOperacije>()).OrderBy(x => x.RedosledKoraka).ToList();
+            _operacije = (operacije ?? new List<PepeoOperacijaDefinicija>())
+                .OrderBy(x => x.Redosled)
+                .ToList();
+
             _parametri = parametri ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
-        public List<PepeoKorakVremena> Izracunaj(DateTime prviPocetak, int brojCiklusa, int idTrase, int najava)
+        public List<PepeoKorakVremena> IzracunajCiklus(DateTime pocetnoVreme)
         {
             var rezultat = new List<PepeoKorakVremena>();
-            DateTime pocetakCiklusa = prviPocetak;
+            DateTime prethodniKraj = pocetnoVreme;
 
-            if (brojCiklusa <= 0)
-                brojCiklusa = 1;
-
-            for (int ciklus = 1; ciklus <= brojCiklusa; ciklus++)
-            {
-                var koraciCiklusa = IzracunajJedanCiklus(pocetakCiklusa, ciklus, idTrase, najava);
-                rezultat.AddRange(koraciCiklusa);
-
-                if (koraciCiklusa.Count > 0)
-                    pocetakCiklusa = koraciCiklusa[koraciCiklusa.Count - 1].PlaniranoVreme;
-            }
-
-            return rezultat;
-        }
-
-        public void PreracunajPosleRucneIzmene(List<PepeoKorakVremena> koraci, int indeksIzmenjenogReda, DateTime novoStvarnoVreme, string napomena)
-        {
-            if (koraci == null || indeksIzmenjenogReda < 0 || indeksIzmenjenogReda >= koraci.Count)
-                return;
-
-            PepeoKorakVremena izmenjeni = koraci[indeksIzmenjenogReda];
-            izmenjeni.StvarnoVreme = novoStvarnoVreme;
-            izmenjeni.RucnoIzmenjeno = true;
-            izmenjeni.KasnjenjeMin = Convert.ToInt32((novoStvarnoVreme - izmenjeni.PlaniranoVreme).TotalMinutes);
-            // Napomena je iskljucivo ono sto je korisnik uneo.
-            // Ako korisnik nije uneo napomenu, ostaje prazna.
-            izmenjeni.Napomena = string.IsNullOrWhiteSpace(napomena)
-                ? string.Empty
-                : napomena.Trim();
-
-            DateTime prethodniKraj = novoStvarnoVreme;
-
-            for (int i = indeksIzmenjenogReda + 1; i < koraci.Count; i++)
-            {
-                PepeoKorakVremena stari = koraci[i];
-                PepeoSablonOperacije sablon = _sabloni.FirstOrDefault(x => string.Equals(x.SifraKoraka, stari.SifraKoraka, StringComparison.OrdinalIgnoreCase));
-                if (sablon == null)
-                    continue;
-
-                DateTime pocetak;
-                DateTime kraj;
-                IzracunajKorak(sablon, prethodniKraj, out pocetak, out kraj);
-
-                stari.PlaniraniPocetak = pocetak;
-                stari.PlaniranoVreme = kraj;
-                stari.StvarnoVreme = null;
-                stari.RucnoIzmenjeno = false;
-                stari.KasnjenjeMin = 0;
-                stari.RazlogKasnjenjaID = null;
-                stari.RazlogKasnjenja = string.Empty;
-                // Ne upisujemo tehnicke poruke o nacinu preracunavanja.
-                stari.Napomena = string.Empty;
-
-                prethodniKraj = kraj;
-            }
-        }
-
-        private List<PepeoKorakVremena> IzracunajJedanCiklus(DateTime pocetakCiklusa, int ciklus, int idTrase, int najava)
-        {
-            var rezultat = new List<PepeoKorakVremena>();
-            DateTime prethodniKraj = pocetakCiklusa;
-
-            foreach (PepeoSablonOperacije sablon in _sabloni)
+            foreach (PepeoOperacijaDefinicija operacija in _operacije)
             {
                 DateTime pocetak;
                 DateTime kraj;
-                IzracunajKorak(sablon, prethodniKraj, out pocetak, out kraj);
+
+                IzracunajKorak(operacija, prethodniKraj, out pocetak, out kraj);
 
                 rezultat.Add(new PepeoKorakVremena
                 {
-                    IDTrase = idTrase,
-                    Najava = najava,
-                    Ciklus = ciklus,
-                    RB = ((ciklus - 1) * _sabloni.Count) + sablon.RedosledKoraka,
-                    SifraKoraka = sablon.SifraKoraka,
-                    Stanica = sablon.StanicaID,
-                    StanicaOpis = sablon.StanicaOpis,
-                    Operacija = sablon.NazivKoraka,
-                    UlazakUStanicu = sablon.UlazakUStanicu,
+                    ID = 0,
+                    CiklusID = 0,
+                    Redosled = operacija.Redosled,
+                    OperacijaID = operacija.OperacijaID,
+                    SifraOperacije = operacija.Sifra,
+                    Operacija = operacija.Naziv,
+                    Drzava = operacija.Drzava,
+                    TipPravila = operacija.TipPravila,
+                    TrajanjeMinuta = operacija.TrajanjeMinuta,
                     PlaniraniPocetak = pocetak,
-                    PlaniranoVreme = kraj,
-                    StvarnoVreme = null,
-                    RucnoIzmenjeno = false,
-                    KasnjenjeMin = 0,
+                    PlaniraniKraj = kraj,
+                    StvarniPocetak = null,
+                    StvarniKraj = null,
+                    OdstupanjeMinuta = 0,
                     RazlogKasnjenjaID = null,
-                    RazlogKasnjenja = string.Empty,
-                    // Napomena iz sablona se ne prenosi na plan.
-                    // U planu se cuva samo napomena koju korisnik naknadno unese.
+                    RazlogOdstupanja = string.Empty,
+                    Partner = string.Empty,
                     Napomena = string.Empty
                 });
 
@@ -118,257 +61,327 @@ namespace Saobracaj.Pepeo
             return rezultat;
         }
 
-        private void IzracunajKorak(PepeoSablonOperacije sablon, DateTime prethodniKraj, out DateTime pocetak, out DateTime kraj)
+        /// <summary>
+        /// Izmenjeni korak zadrzava svoj planirani interval i dobija stvarni kraj.
+        /// Svi naredni koraci, ukljucujuci naredne cikluse u prosledjenom lancu,
+        /// ponovo se racunaju po poslovnim pravilima.
+        /// Ako neki naredni korak vec ima potvrdeno stvarno vreme, ono ostaje fiksna tacka.
+        /// </summary>
+        public void PreracunajLanacPosleStvarnogVremena(
+            List<PepeoKorakVremena> lanac,
+            int indeksIzmenjenog,
+            DateTime stvarniKraj,
+            int razlogKasnjenjaID,
+            string razlog,
+            string partner,
+            string napomena)
         {
-            string pravilo = (sablon.TipPravila ?? string.Empty).Trim().ToUpperInvariant();
+            if (lanac == null || indeksIzmenjenog < 0 || indeksIzmenjenog >= lanac.Count)
+                throw new ArgumentException("Neispravan korak za preracunavanje.");
 
-            if (pravilo == "INPUT_EVENT" || pravilo == "EVENT_AFTER_PREVIOUS")
+            PepeoKorakVremena izmenjeni = lanac[indeksIzmenjenog];
+
+            DateTime stvarniPocetak = izmenjeni.PlaniraniPocetak;
+            if (indeksIzmenjenog > 0)
             {
-                pocetak = prethodniKraj;
-                kraj = prethodniKraj;
-                return;
+                PepeoKorakVremena prethodni = lanac[indeksIzmenjenog - 1];
+                stvarniPocetak = prethodni.StvarniKraj.HasValue
+                    ? prethodni.StvarniKraj.Value
+                    : prethodni.PlaniraniKraj;
             }
 
-            if (pravilo == "JAKOVO_DELIVERY")
-            {
-                pocetak = IzracunajPocetakJakovoIsporuke(prethodniKraj);
-                kraj = pocetak.AddMinutes(sablon.TrajanjeMinuta);
-                return;
-            }
+            izmenjeni.StvarniPocetak = stvarniPocetak;
+            izmenjeni.StvarniKraj = stvarniKraj;
+            izmenjeni.OdstupanjeMinuta = Convert.ToInt32(
+                Math.Round((stvarniKraj - izmenjeni.PlaniraniKraj).TotalMinutes, MidpointRounding.AwayFromZero));
+            izmenjeni.RazlogKasnjenjaID = razlogKasnjenjaID;
+            izmenjeni.RazlogOdstupanja = razlog ?? string.Empty;
+            izmenjeni.Partner = partner ?? string.Empty;
+            izmenjeni.Napomena = string.IsNullOrWhiteSpace(napomena) ? string.Empty : napomena.Trim();
 
-            if (pravilo == "JAKOVO_LOADING")
+            DateTime prethodniKraj = stvarniKraj;
+
+            for (int i = indeksIzmenjenog + 1; i < lanac.Count; i++)
             {
-                pocetak = PodesiPocetakJakovoUtovara(prethodniKraj);
-                kraj = DodajRadneMinuteJakovoUtovar(pocetak, sablon.TrajanjeMinuta);
+                PepeoKorakVremena korak = lanac[i];
+                PepeoOperacijaDefinicija definicija = PronadjiDefiniciju(korak.OperacijaID, korak.SifraOperacije);
+
+                DateTime noviPocetak;
+                DateTime noviKraj;
+                IzracunajKorak(definicija, prethodniKraj, out noviPocetak, out noviKraj);
+
+                korak.PlaniraniPocetak = noviPocetak;
+                korak.PlaniraniKraj = noviKraj;
+
+                // Vec potvrdena stvarna vremena ostaju stvarna istorija.
+                if (korak.StvarniKraj.HasValue)
+                {
+                    if (!korak.StvarniPocetak.HasValue)
+                        korak.StvarniPocetak = noviPocetak;
+
+                    korak.OdstupanjeMinuta = Convert.ToInt32(
+                        Math.Round((korak.StvarniKraj.Value - noviKraj).TotalMinutes, MidpointRounding.AwayFromZero));
+
+                    prethodniKraj = korak.StvarniKraj.Value;
+                }
+                else
+                {
+                    korak.OdstupanjeMinuta = 0;
+                    korak.RazlogKasnjenjaID = null;
+                    korak.RazlogOdstupanja = string.Empty;
+                    korak.Partner = string.Empty;
+                    korak.Napomena = string.Empty;
+                    prethodniKraj = noviKraj;
+                }
+            }
+        }
+
+        private PepeoOperacijaDefinicija PronadjiDefiniciju(int operacijaID, string sifra)
+        {
+            PepeoOperacijaDefinicija d = _operacije.FirstOrDefault(x => x.OperacijaID == operacijaID);
+            if (d == null && !string.IsNullOrWhiteSpace(sifra))
+                d = _operacije.FirstOrDefault(x => string.Equals(x.Sifra, sifra, StringComparison.OrdinalIgnoreCase));
+
+            if (d == null)
+                throw new Exception("Nije pronadjena definicija operacije: " + sifra);
+
+            return d;
+        }
+
+        private void IzracunajKorak(
+            PepeoOperacijaDefinicija operacija,
+            DateTime prethodniKraj,
+            out DateTime pocetak,
+            out DateTime kraj)
+        {
+            string pravilo = (operacija.TipPravila ?? string.Empty).Trim().ToUpperInvariant();
+
+            if (pravilo == "SURCIN_LOADING")
+            {
+                // Surcin Loading je spoj stare Jakovo delivery + Jakovo loading logike.
+                // Vidljivi pocetak operacije je trenutak pocetka delivery dela,
+                // zatim se racuna 30 min delivery-a, pa 30 radnih sati loading-a.
+                pocetak = IzracunajPocetakSurcinLoading(prethodniKraj);
+
+                int deliveryMinuta = VratiInt("SurcinLoadingDeliveryDurationMinutes", 30);
+                DateTime pocetakUtovara = PodesiPocetakSurcinRadnogDana(
+                    pocetak.AddMinutes(deliveryMinuta));
+
+                kraj = DodajRadneMinuteSurcinLoading(
+                    pocetakUtovara,
+                    operacija.TrajanjeMinuta);
+
                 return;
             }
 
             if (pravilo == "CUSTOMS")
             {
                 pocetak = IzracunajPocetakCarine(prethodniKraj);
-                kraj = pocetak.AddMinutes(sablon.TrajanjeMinuta);
+                kraj = pocetak.AddMinutes(operacija.TrajanjeMinuta);
                 return;
             }
 
             if (pravilo == "ALESD_UNLOADING")
             {
                 pocetak = PodesiPocetakAlesdIstovara(prethodniKraj);
-                kraj = DodajRadneMinuteAlesdIstovar(pocetak, sablon.TrajanjeMinuta);
+                kraj = DodajRadneMinuteAlesdIstovar(pocetak, operacija.TrajanjeMinuta);
                 return;
             }
 
-            // TRAVEL_FIXED, FIXED_DURATION i ostali jednostavni koraci.
+            // Sve spojene transportne operacije imaju fiksno trajanje 24/7.
             pocetak = prethodniKraj;
-            kraj = prethodniKraj.AddMinutes(sablon.TrajanjeMinuta);
+            kraj = prethodniKraj.AddMinutes(operacija.TrajanjeMinuta);
         }
 
-        private DateTime IzracunajPocetakJakovoIsporuke(DateTime dolazak)
+        private DateTime IzracunajPocetakSurcinLoading(DateTime dolazak)
         {
-            TimeSpan vremeDolaska = dolazak.TimeOfDay;
-            TimeSpan granica1 = VratiVreme("JakovoDeliveryCutoff1", "07:30");
-            TimeSpan granica2 = VratiVreme("JakovoDeliveryCutoff2", "14:00");
-            TimeSpan pocetakDana = VratiVreme("JakovoDeliveryStart", "08:00");
-            int minutaPosleDolaska = VratiInt("JakovoDeliveryAfterArrivalMinutes", 30);
+            TimeSpan granica1 = VratiVreme("SurcinLoadingDeliveryCutoff1", "07:30");
+            TimeSpan granica2 = VratiVreme("SurcinLoadingDeliveryCutoff2", "14:00");
+            TimeSpan jutarnjiStart = VratiVreme("SurcinLoadingDeliveryStart", "08:00");
+            int posleDolaska = VratiInt("SurcinLoadingAfterArrivalMinutes", 30);
 
-            DateTime pocetak;
+            DateTime kandidat;
 
-            if (vremeDolaska < granica1)
-                pocetak = dolazak.Date.Add(pocetakDana);
-            else if (vremeDolaska >= granica1 && vremeDolaska <= granica2)
-                pocetak = dolazak.AddMinutes(minutaPosleDolaska);
+            if (dolazak.TimeOfDay < granica1)
+                kandidat = dolazak.Date.Add(jutarnjiStart);
+            else if (dolazak.TimeOfDay <= granica2)
+                kandidat = dolazak.AddMinutes(posleDolaska);
             else
-                pocetak = dolazak.Date.AddDays(1).Add(pocetakDana);
+                kandidat = dolazak.Date.AddDays(1).Add(jutarnjiStart);
 
-            return PomeriNedeljuNaPonedeljak(pocetak, pocetakDana);
+            kandidat = PomeriNedeljuNaPonedeljak(kandidat, jutarnjiStart);
+            return PodesiPocetakSurcinRadnogDana(kandidat);
         }
 
-        private DateTime PodesiPocetakJakovoUtovara(DateTime vrednost)
+        private DateTime PodesiPocetakSurcinRadnogDana(DateTime vrednost)
         {
-            TimeSpan pocetakDana = VratiVreme("JakovoLoadingDefaultStart", "08:00");
-            TimeSpan krajRadnimDanom = VratiVreme("JakovoLoadingWeekdayCutoff", "21:00");
-            TimeSpan krajSubotom = VratiVreme("JakovoLoadingSaturdayCutoff", "15:00");
-            DateTime trenutno = vrednost;
+            TimeSpan start = VratiVreme("SurcinLoadingWorkStart", "08:00");
+            TimeSpan weekdayEnd = VratiVreme("SurcinLoadingWeekdayEnd", "21:00");
+            TimeSpan saturdayEnd = VratiVreme("SurcinLoadingSaturdayEnd", "15:00");
+            DateTime t = vrednost;
 
             while (true)
             {
-                if (trenutno.DayOfWeek == DayOfWeek.Sunday)
+                if (t.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                TimeSpan krajDana = trenutno.DayOfWeek == DayOfWeek.Saturday ? krajSubotom : krajRadnimDanom;
+                if (t.TimeOfDay < start)
+                    t = t.Date.Add(start);
 
-                if (trenutno.TimeOfDay < pocetakDana)
-                    trenutno = trenutno.Date.Add(pocetakDana);
-
-                if (trenutno.TimeOfDay >= krajDana)
+                TimeSpan end = t.DayOfWeek == DayOfWeek.Saturday ? saturdayEnd : weekdayEnd;
+                if (t.TimeOfDay >= end)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                return trenutno;
+                return t;
             }
         }
 
-        private DateTime DodajRadneMinuteJakovoUtovar(DateTime pocetak, int ukupnoMinuta)
+        private DateTime DodajRadneMinuteSurcinLoading(DateTime pocetak, int ukupnoMinuta)
         {
-            TimeSpan pocetakDana = VratiVreme("JakovoLoadingDefaultStart", "08:00");
-            TimeSpan krajRadnimDanom = VratiVreme("JakovoLoadingWeekdayCutoff", "21:00");
-            TimeSpan krajSubotom = VratiVreme("JakovoLoadingSaturdayCutoff", "15:00");
-            int maksimumDnevno = VratiInt("JakovoLoadingMaxDailyMinutes", 600);
+            TimeSpan start = VratiVreme("SurcinLoadingWorkStart", "08:00");
+            TimeSpan weekdayEnd = VratiVreme("SurcinLoadingWeekdayEnd", "21:00");
+            TimeSpan saturdayEnd = VratiVreme("SurcinLoadingSaturdayEnd", "15:00");
+            int maxDnevno = VratiInt("SurcinLoadingMaxDailyMinutes", 600);
 
-            DateTime trenutno = PodesiPocetakJakovoUtovara(pocetak);
+            DateTime t = PodesiPocetakSurcinRadnogDana(pocetak);
             int preostalo = ukupnoMinuta;
 
             while (preostalo > 0)
             {
-                trenutno = PodesiPocetakJakovoUtovara(trenutno);
+                t = PodesiPocetakSurcinRadnogDana(t);
 
-                TimeSpan krajDana = trenutno.DayOfWeek == DayOfWeek.Saturday ? krajSubotom : krajRadnimDanom;
-                DateTime krajRadnogDana = trenutno.Date.Add(krajDana);
-                DateTime krajPoDnevnomLimitu = trenutno.AddMinutes(maksimumDnevno);
-                DateTime dozvoljeniKraj = krajPoDnevnomLimitu < krajRadnogDana ? krajPoDnevnomLimitu : krajRadnogDana;
+                TimeSpan end = t.DayOfWeek == DayOfWeek.Saturday ? saturdayEnd : weekdayEnd;
+                DateTime krajDana = t.Date.Add(end);
+                DateTime krajPoLimitu = t.AddMinutes(maxDnevno);
+                DateTime dozvoljeniKraj = krajPoLimitu < krajDana ? krajPoLimitu : krajDana;
 
-                int dostupno = Convert.ToInt32((dozvoljeniKraj - trenutno).TotalMinutes);
+                int dostupno = Convert.ToInt32((dozvoljeniKraj - t).TotalMinutes);
                 if (dostupno <= 0)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                int iskorisceno = Math.Min(preostalo, dostupno);
-                trenutno = trenutno.AddMinutes(iskorisceno);
-                preostalo -= iskorisceno;
+                int rad = Math.Min(preostalo, dostupno);
+                t = t.AddMinutes(rad);
+                preostalo -= rad;
 
                 if (preostalo > 0)
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
             }
 
-            return trenutno;
+            return t;
         }
 
         private DateTime IzracunajPocetakCarine(DateTime prethodniKraj)
         {
-            TimeSpan pocetakDana = VratiVreme("CustomsStart", "08:00");
-            TimeSpan granica = VratiVreme("CustomsCutoff", "14:00");
-            TimeSpan subotnjaGranica = VratiVreme("CustomsSaturdayCutoff", "10:00");
-            DateTime trenutno = prethodniKraj;
+            TimeSpan start = VratiVreme("CustomsStart", "08:00");
+            TimeSpan cutoff = VratiVreme("CustomsCutoff", "14:00");
+            TimeSpan saturdayCutoff = VratiVreme("CustomsSaturdayCutoff", "10:00");
+            DateTime t = prethodniKraj;
 
             while (true)
             {
-                if (trenutno.DayOfWeek == DayOfWeek.Sunday)
+                if (t.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                if (trenutno.DayOfWeek == DayOfWeek.Saturday && trenutno.TimeOfDay > subotnjaGranica)
-                {
-                    trenutno = SledeciPonedeljak(trenutno).Add(pocetakDana);
-                    continue;
-                }
+                if (t.DayOfWeek == DayOfWeek.Saturday && t.TimeOfDay > saturdayCutoff)
+                    return SledeciPonedeljak(t).Add(start);
 
-                if (trenutno.TimeOfDay < pocetakDana)
-                    return trenutno.Date.Add(pocetakDana);
+                if (t.TimeOfDay < start)
+                    return t.Date.Add(start);
 
-                if (trenutno.TimeOfDay <= granica)
-                    return trenutno;
+                if (t.TimeOfDay <= cutoff)
+                    return t;
 
-                trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                t = t.Date.AddDays(1).Add(start);
             }
         }
 
         private DateTime PodesiPocetakAlesdIstovara(DateTime vrednost)
         {
-            TimeSpan pocetakDana = VratiVreme("AlesdUnloadingStart", "08:00");
-            TimeSpan preskokPosle = VratiVreme("AlesdUnloadingSkipAfter", "18:00");
-            TimeSpan krajRadnimDanom = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
-            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
-
-            DateTime trenutno = vrednost;
+            TimeSpan start = VratiVreme("AlesdUnloadingStart", "08:00");
+            TimeSpan skipAfter = VratiVreme("AlesdUnloadingSkipAfter", "18:00");
+            TimeSpan weekdayEnd = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
+            TimeSpan saturdayEnd = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
+            DateTime t = vrednost;
 
             while (true)
             {
-                // Nedelja je neradna.
-                if (trenutno.DayOfWeek == DayOfWeek.Sunday)
+                if (t.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                // Pre 08:00 pocetak se postavlja na 08:00.
-                if (trenutno.TimeOfDay < pocetakDana)
-                    trenutno = trenutno.Date.Add(pocetakDana);
+                if (t.TimeOfDay < start)
+                    t = t.Date.Add(start);
 
-                if (trenutno.DayOfWeek == DayOfWeek.Saturday)
+                if (t.DayOfWeek == DayOfWeek.Saturday)
                 {
-                    // Subotom se radi 08:00-15:00.
-                    if (trenutno.TimeOfDay >= krajSubotom)
+                    if (t.TimeOfDay >= saturdayEnd)
                     {
-                        trenutno = SledeciPonedeljak(trenutno).Add(pocetakDana);
+                        t = SledeciPonedeljak(t).Add(start);
                         continue;
                     }
 
-                    return trenutno;
+                    return t;
                 }
 
-                // Radnim danom se radi do 20:00, ali ako je voz stigao
-                // posle 18:00, istovar pocinje sledeceg radnog dana u 08:00.
-                if (trenutno.TimeOfDay > preskokPosle || trenutno.TimeOfDay >= krajRadnimDanom)
+                if (t.TimeOfDay > skipAfter || t.TimeOfDay >= weekdayEnd)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                // Ako je dolazak posle 12:00, prakticno ostaje samo druga smena
-                // do 20:00. Pocetak ipak ne moze biti pre stvarnog dolaska voza.
-                return trenutno;
+                return t;
             }
         }
 
         private DateTime DodajRadneMinuteAlesdIstovar(DateTime pocetak, int ukupnoMinuta)
         {
-            TimeSpan pocetakDana = VratiVreme("AlesdUnloadingStart", "08:00");
-            TimeSpan krajRadnimDanom = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
-            TimeSpan krajSubotom = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
-            int maksimumDnevno = VratiInt("AlesdUnloadingMaxDailyMinutes", 720);
+            TimeSpan start = VratiVreme("AlesdUnloadingStart", "08:00");
+            TimeSpan weekdayEnd = VratiVreme("AlesdUnloadingWeekdayEnd", "20:00");
+            TimeSpan saturdayEnd = VratiVreme("AlesdUnloadingSaturdayEnd", "15:00");
+            int maxDnevno = VratiInt("AlesdUnloadingMaxDailyMinutes", 720);
 
-            DateTime trenutno = PodesiPocetakAlesdIstovara(pocetak);
+            DateTime t = PodesiPocetakAlesdIstovara(pocetak);
             int preostalo = ukupnoMinuta;
 
             while (preostalo > 0)
             {
-                trenutno = PodesiPocetakAlesdIstovara(trenutno);
+                t = PodesiPocetakAlesdIstovara(t);
 
-                TimeSpan krajDana = trenutno.DayOfWeek == DayOfWeek.Saturday
-                    ? krajSubotom
-                    : krajRadnimDanom;
+                TimeSpan end = t.DayOfWeek == DayOfWeek.Saturday ? saturdayEnd : weekdayEnd;
+                DateTime krajDana = t.Date.Add(end);
+                DateTime krajPoDnevnomLimitu = t.AddMinutes(maxDnevno);
+                DateTime dozvoljeniKraj = krajPoDnevnomLimitu < krajDana ? krajPoDnevnomLimitu : krajDana;
 
-                DateTime krajRadnogDana = trenutno.Date.Add(krajDana);
-                DateTime krajPoDnevnomLimitu = trenutno.AddMinutes(maksimumDnevno);
-                DateTime dozvoljeniKraj = krajPoDnevnomLimitu < krajRadnogDana
-                    ? krajPoDnevnomLimitu
-                    : krajRadnogDana;
-
-                int dostupno = Convert.ToInt32((dozvoljeniKraj - trenutno).TotalMinutes);
-
+                int dostupno = Convert.ToInt32((dozvoljeniKraj - t).TotalMinutes);
                 if (dostupno <= 0)
                 {
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
                     continue;
                 }
 
-                int iskorisceno = Math.Min(preostalo, dostupno);
-                trenutno = trenutno.AddMinutes(iskorisceno);
-                preostalo -= iskorisceno;
+                int rad = Math.Min(preostalo, dostupno);
+                t = t.AddMinutes(rad);
+                preostalo -= rad;
 
                 if (preostalo > 0)
-                    trenutno = trenutno.Date.AddDays(1).Add(pocetakDana);
+                    t = t.Date.AddDays(1).Add(start);
             }
 
-            return trenutno;
+            return t;
         }
 
         private DateTime PomeriNedeljuNaPonedeljak(DateTime vrednost, TimeSpan vreme)
@@ -382,8 +395,11 @@ namespace Saobracaj.Pepeo
         private DateTime SledeciPonedeljak(DateTime vrednost)
         {
             DateTime dan = vrednost.Date;
-            while (dan.DayOfWeek != DayOfWeek.Monday)
+            do
+            {
                 dan = dan.AddDays(1);
+            }
+            while (dan.DayOfWeek != DayOfWeek.Monday);
 
             return dan;
         }
@@ -394,12 +410,11 @@ namespace Saobracaj.Pepeo
             if (!_parametri.TryGetValue(kljuc, out vrednost) || string.IsNullOrWhiteSpace(vrednost))
                 vrednost = podrazumevano;
 
-            TimeSpan result;
-            if (TimeSpan.TryParseExact(vrednost.Trim(), @"hh\:mm", CultureInfo.InvariantCulture, out result))
-                return result;
-
-            if (TimeSpan.TryParse(vrednost.Trim(), out result))
-                return result;
+            TimeSpan parsed;
+            if (TimeSpan.TryParseExact(vrednost.Trim(), @"hh\:mm", CultureInfo.InvariantCulture, out parsed))
+                return parsed;
+            if (TimeSpan.TryParse(vrednost.Trim(), out parsed))
+                return parsed;
 
             return TimeSpan.Parse(podrazumevano, CultureInfo.InvariantCulture);
         }
@@ -410,11 +425,8 @@ namespace Saobracaj.Pepeo
             if (!_parametri.TryGetValue(kljuc, out vrednost) || string.IsNullOrWhiteSpace(vrednost))
                 return podrazumevano;
 
-            int result;
-            if (int.TryParse(vrednost.Trim(), out result))
-                return result;
-
-            return podrazumevano;
+            int parsed;
+            return int.TryParse(vrednost.Trim(), out parsed) ? parsed : podrazumevano;
         }
     }
 }

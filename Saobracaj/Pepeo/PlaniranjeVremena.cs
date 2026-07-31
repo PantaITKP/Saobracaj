@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -9,13 +10,11 @@ namespace Saobracaj.Pepeo
     public partial class PlaniranjeVremena : Form
     {
         private readonly InsertPepeo insert = new InsertPepeo();
-        private readonly List<PepeoKorakVremena> trenutniKoraci = new List<PepeoKorakVremena>();
-
-        private DataTable trenutnaTabelaKoraka;
-        private PepeoGanttChart gantt;
-        private int trenutniIDPrevoza = 0;
-        private bool sinhronizacijaSelekcije = false;
-        private bool sinhronizacijaCiklusa = false;
+        private bool prikaziZavrsene = false;
+        private bool dogadjajiPovezani = false;
+        private bool sinhronizujemSelekciju = false;
+        private List<PepeoCiklusInfo> trenutniCiklusi = new List<PepeoCiklusInfo>();
+        private List<PepeoKorakVremena> trenutniKoraci = new List<PepeoKorakVremena>();
 
         public PlaniranjeVremena()
         {
@@ -24,706 +23,247 @@ namespace Saobracaj.Pepeo
 
         private void PlaniranjeVremena_Load(object sender, EventArgs e)
         {
-            dtpPocetakPrevoza.CustomFormat = "dd.MM.yyyy HH:mm:ss";
-            dtpPocetakPrevoza.Format = DateTimePickerFormat.Custom;
+            PoveziDogadjaje();
+
             dtpPocetakPrevoza.Value = DateTime.Now;
-
-            dtpKasnjenje.CustomFormat = "dd.MM.yyyy HH:mm:ss";
-            dtpKasnjenje.Format = DateTimePickerFormat.Custom;
             dtpKasnjenje.Value = DateTime.Now;
-
             txtBrojCiklusa.Text = "3";
 
-            PripremiTaboveCiklusa();
-            PripremiGrid();
-            PoveziDogadjaje();
-            FillCombo();
+            UcitajSifarnike();
+            prikaziZavrsene = false;
+            OsveziPrikaz();
         }
 
         private void PoveziDogadjaje()
         {
-            dgvVremena.SelectionChanged -= dgvVremena_SelectionChanged;
+            if (dogadjajiPovezani)
+                return;
+
+            btnGenerisiPlan.Click += btnGenerisiPlan_Click;
+            btnUcitajPlan.Click += btnUcitajPlan_Click;
+            btnPoveziNajavu.Click += btnPoveziNajavu_Click;
+            btnPotvrdiKasnjenje.Click += btnPotvrdiKasnjenje_Click;
+            btnZavrsiCiklus.Click += btnZavrsiCiklus_Click;
+            btnAktivniPrevozi.Click += btnAktivniPrevozi_Click;
+            btnZavrseniPrevozi.Click += btnZavrseniPrevozi_Click;
+
+            cboTrasa.SelectedIndexChanged += cboTrasa_SelectedIndexChanged;
+            cboCiklus.SelectedIndexChanged += cboCiklus_SelectedIndexChanged;
+            tabCiklusi.SelectedIndexChanged += tabCiklusi_SelectedIndexChanged;
             dgvVremena.SelectionChanged += dgvVremena_SelectionChanged;
 
-            tabCiklusi.SelectedIndexChanged -= tabCiklusi_SelectedIndexChanged;
-            tabCiklusi.SelectedIndexChanged += tabCiklusi_SelectedIndexChanged;
-
-            cboCiklus.SelectedIndexChanged -= cboCiklus_SelectedIndexChanged;
-            cboCiklus.SelectedIndexChanged += cboCiklus_SelectedIndexChanged;
-
-            btnGenerisiPlan.Click -= btnGenerisiPlan_Click;
-            btnGenerisiPlan.Click += btnGenerisiPlan_Click;
-
-            btnUcitajPlan.Click -= btnUcitajPlan_Click;
-            btnUcitajPlan.Click += btnUcitajPlan_Click;
-
-            btnPotvrdiKasnjenje.Click -= btnPotvrdiKasnjenje_Click;
-            btnPotvrdiKasnjenje.Click += btnPotvrdiKasnjenje_Click;
-
-            btnPoveziNajavu.Click -= btnPoveziNajavu_Click;
-            btnPoveziNajavu.Click += btnPoveziNajavu_Click;
-
-            btnZavrsiCiklus.Click -= btnZavrsiCiklus_Click;
-            btnZavrsiCiklus.Click += btnZavrsiCiklus_Click;
+            dogadjajiPovezani = true;
         }
 
-        private void PripremiTaboveCiklusa()
-        {
-            tabCiklusi.TabPages.Clear();
-            tabCiklusi.Alignment = TabAlignment.Bottom;
-            tabCiklusi.Multiline = true;
-            tabCiklusi.SizeMode = TabSizeMode.Normal;
-            tabCiklusi.Padding = new System.Drawing.Point(18, 5);
-        }
-
-        private void PripremiGrid()
-        {
-            dgvVremena.AutoGenerateColumns = true;
-            dgvVremena.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvVremena.MultiSelect = false;
-            dgvVremena.AllowUserToAddRows = false;
-            dgvVremena.AllowUserToDeleteRows = false;
-            dgvVremena.ReadOnly = true;
-            dgvVremena.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
-            dgvVremena.RowHeadersVisible = false;
-        }
-
-        private void FillCombo()
+        private void UcitajSifarnike()
         {
             try
             {
-                DataTable dtTrase = insert.UcitajTrase();
-                cboTrasa.DataSource = dtTrase;
-                cboTrasa.DisplayMember = "Stanice";
+                DataTable trase = insert.UcitajTrase();
+                cboTrasa.DataSource = trase;
+                cboTrasa.DisplayMember = "Naziv";
                 cboTrasa.ValueMember = "ID";
 
-                DataTable dtNajave = insert.UcitajNajave();
-                cboNajava.DataSource = dtNajave;
+                DataTable najave = insert.UcitajNajave();
+                cboNajava.DataSource = najave;
                 cboNajava.DisplayMember = "Put";
                 cboNajava.ValueMember = "ID";
-                cboNajava.SelectedIndex = -1;
 
-                DataTable dtKasnjenja = insert.UcitajSifarnikKasnjenja();
-                DataRow prazanRazlog = dtKasnjenja.NewRow();
-                prazanRazlog["ID"] = 0;
-                prazanRazlog["Razlog"] = "-- izaberite razlog kašnjenja --";
-                dtKasnjenja.Rows.InsertAt(prazanRazlog, 0);
-
-                cboKasnjenje.DropDownStyle = ComboBoxStyle.DropDownList;
-                cboKasnjenje.DataSource = dtKasnjenja;
+                DataTable razlozi = insert.UcitajSifarnikKasnjenja();
+                cboKasnjenje.DataSource = razlozi;
                 cboKasnjenje.DisplayMember = "Razlog";
                 cboKasnjenje.ValueMember = "ID";
-                cboKasnjenje.SelectedValue = 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    "Greška pri učitavanju trasa/najava/šifarnika kašnjenja:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show("Greška pri učitavanju šifarnika:" + Environment.NewLine + ex.Message,
+                    "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private PepeoKalkulatorVremena NapraviKalkulator(int trasaID)
+        {
+            return new PepeoKalkulatorVremena(
+                insert.UcitajOperacijeZaTrasu(trasaID),
+                insert.UcitajParametrePravila());
         }
 
         private void btnGenerisiPlan_Click(object sender, EventArgs e)
         {
-            int idTrase = VratiIntIzCombo(cboTrasa.SelectedValue);
-            if (idTrase <= 0)
+            int trasaID = VratiInt(cboTrasa.SelectedValue);
+            if (trasaID <= 0)
             {
                 MessageBox.Show("Izaberite trasu.");
                 return;
             }
 
             int brojCiklusa;
-            if (!int.TryParse(txtBrojCiklusa.Text.Trim(), out brojCiklusa) || brojCiklusa <= 0)
+            if (!int.TryParse(txtBrojCiklusa.Text.Trim(), out brojCiklusa) || brojCiklusa <= 0 || brojCiklusa > 20)
             {
-                MessageBox.Show("Unesite ispravan broj ciklusa.");
+                MessageBox.Show("Unesite broj ciklusa od 1 do 20.");
                 return;
             }
 
             try
             {
-                List<PepeoSablonOperacije> sabloni = insert.UcitajSabloneOperacija();
-                Dictionary<string, string> parametri = insert.UcitajParametrePravila();
+                PepeoKalkulatorVremena kalkulator = NapraviKalkulator(trasaID);
+                insert.GenerisiPocetneCikluse(trasaID, dtpPocetakPrevoza.Value, brojCiklusa, kalkulator);
 
-                if (sabloni == null || sabloni.Count == 0)
-                {
-                    MessageBox.Show("Nije pronađen šablon operacija. Pokrenite SQL skriptu za pepeo vremena.");
-                    return;
-                }
-
-                PepeoKalkulatorVremena kalkulator = new PepeoKalkulatorVremena(sabloni, parametri);
-
-                // Najava se ne vezuje prilikom generisanja, zato se prosleđuje 0.
-                List<PepeoKorakVremena> koraci = kalkulator.Izracunaj(
-                    dtpPocetakPrevoza.Value,
-                    brojCiklusa,
-                    idTrase,
-                    0);
-
-                trenutniIDPrevoza = insert.KreirajNoviPrevozSaCiklusima(
-                    idTrase,
-                    dtpPocetakPrevoza.Value,
-                    koraci);
-
-                UcitajPrevoz(trenutniIDPrevoza, null, null);
-
-                MessageBox.Show(
-                    "Kreiran je novi prevoz i generisano je " + brojCiklusa.ToString() + " ciklusa.");
+                prikaziZavrsene = false;
+                OsveziPrikaz();
+                MessageBox.Show("Generisano je " + brojCiklusa + " ciklusa. Broj ciklusa je njegov jedinstveni ID.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    "Greška pri generisanju plana:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show("Greška pri generisanju:" + Environment.NewLine + ex.Message,
+                    "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void btnUcitajPlan_Click(object sender, EventArgs e)
         {
-            int idTrase = VratiIntIzCombo(cboTrasa.SelectedValue);
-            if (idTrase <= 0)
-            {
-                MessageBox.Show("Izaberite trasu.");
+            OsveziPrikaz();
+        }
+
+        private void btnAktivniPrevozi_Click(object sender, EventArgs e)
+        {
+            prikaziZavrsene = false;
+            OsveziPrikaz();
+        }
+
+        private void btnZavrseniPrevozi_Click(object sender, EventArgs e)
+        {
+            prikaziZavrsene = true;
+            OsveziPrikaz();
+        }
+
+        private void cboTrasa_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (IsHandleCreated)
+                OsveziPrikaz();
+        }
+
+        private void OsveziPrikaz()
+        {
+            int trasaID = VratiInt(cboTrasa.SelectedValue);
+            if (trasaID <= 0)
                 return;
-            }
 
             try
             {
-                int idPrevoza = insert.UcitajAktivniPrevozZaTrasu(idTrase);
-                if (idPrevoza <= 0)
-                {
-                    MessageBox.Show("Za izabranu trasu ne postoji aktivan prevoz. Prvo generišite novi plan.");
-                    return;
-                }
-
-                trenutniIDPrevoza = idPrevoza;
-                UcitajPrevoz(trenutniIDPrevoza, null, null);
+                trenutniCiklusi = insert.UcitajCikluse(prikaziZavrsene, trasaID);
+                NapuniCiklusCombo();
+                NapuniTabove();
+                PostaviRezimKontrola();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    "Greška pri učitavanju plana:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                MessageBox.Show("Greška pri učitavanju ciklusa:" + Environment.NewLine + ex.Message,
+                    "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btnPotvrdiKasnjenje_Click(object sender, EventArgs e)
+        private void NapuniCiklusCombo()
         {
-            PepeoKorakVremena selektovaniKorak = VratiSelektovaniKorak();
-            if (selektovaniKorak == null)
-            {
-                MessageBox.Show("Izaberite red/operaciju za koju upisujete kašnjenje.");
-                return;
-            }
-
-            int razlogKasnjenjaId = VratiIntIzCombo(cboKasnjenje.SelectedValue);
-            if (razlogKasnjenjaId <= 0)
-            {
-                MessageBox.Show("Izaberite razlog kašnjenja iz šifarnika.");
-                cboKasnjenje.Focus();
-                return;
-            }
-
-            try
-            {
-                OsveziListuKoraka();
-
-                int indeks = trenutniKoraci.FindIndex(x => x.ID == selektovaniKorak.ID);
-                if (indeks < 0)
-                {
-                    MessageBox.Show("Selektovana operacija nije pronađena u trenutnom planu.");
-                    return;
-                }
-
-                DateTime novoVreme = dtpKasnjenje.Value;
-                string napomena = txtNapomena.Text.Trim();
-
-                PepeoKalkulatorVremena kalkulator = NapraviKalkulator();
-                kalkulator.PreracunajPosleRucneIzmene(
-                    trenutniKoraci,
-                    indeks,
-                    novoVreme,
-                    napomena);
-
-                trenutniKoraci[indeks].RazlogKasnjenjaID = razlogKasnjenjaId;
-                trenutniKoraci[indeks].RazlogKasnjenja = cboKasnjenje.Text.Trim();
-
-                insert.AzurirajKorakePosleIzmene(
-                    trenutniKoraci,
-                    indeks,
-                    selektovaniKorak.ID,
-                    novoVreme,
-                    razlogKasnjenjaId,
-                    napomena);
-
-                UcitajPrevoz(
-                    trenutniIDPrevoza,
-                    selektovaniKorak.CiklusID,
-                    selektovaniKorak.ID);
-
-                cboKasnjenje.SelectedValue = 0;
-
-                MessageBox.Show("Kašnjenje je upisano i svi naredni koraci su preračunati.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Greška pri upisu kašnjenja:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
+            cboCiklus.DataSource = null;
+            cboCiklus.DisplayMember = "TekstZaCombo";
+            cboCiklus.ValueMember = "CiklusID";
+            cboCiklus.DataSource = trenutniCiklusi.ToList();
         }
 
-        private void btnPoveziNajavu_Click(object sender, EventArgs e)
+        private void NapuniTabove()
         {
-            int ciklusId = VratiIntIzCombo(cboCiklus.SelectedValue);
-            int najavaId = VratiIntIzCombo(cboNajava.SelectedValue);
-
-            if (ciklusId <= 0)
-            {
-                MessageBox.Show("Izaberite ciklus.");
-                return;
-            }
-
-            if (najavaId <= 0)
-            {
-                MessageBox.Show("Izaberite najavu.");
-                return;
-            }
-
-            try
-            {
-                insert.PoveziNajavuSaCiklusom(ciklusId, najavaId);
-                UcitajPrevoz(trenutniIDPrevoza, ciklusId, null);
-                MessageBox.Show("Najava je povezana sa izabranim ciklusom.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Greška pri povezivanju najave:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
-        }
-
-        private void btnZavrsiCiklus_Click(object sender, EventArgs e)
-        {
-            int ciklusId = VratiIntIzCombo(cboCiklus.SelectedValue);
-            if (ciklusId <= 0)
-            {
-                MessageBox.Show("Izaberite ciklus koji završavate.");
-                return;
-            }
-
-            if (trenutniIDPrevoza <= 0)
-            {
-                MessageBox.Show("Nije učitan prevoz.");
-                return;
-            }
-
-            try
-            {
-                OsveziListuKoraka();
-
-                List<PepeoKorakVremena> koraciCiklusa = trenutniKoraci
-                    .Where(x => x.CiklusID == ciklusId)
-                    .OrderBy(x => x.RB)
-                    .ToList();
-
-                if (koraciCiklusa.Count == 0)
-                {
-                    MessageBox.Show("Nema koraka za izabrani ciklus.");
-                    return;
-                }
-
-                if (string.Equals(
-                    koraciCiklusa[0].StatusCiklusa,
-                    "ZAVRSEN",
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox.Show("Izabrani ciklus je već završen.");
-                    return;
-                }
-
-                PepeoKorakVremena poslednjiKorakCiklusa = koraciCiklusa[koraciCiklusa.Count - 1];
-                int indeks = trenutniKoraci.FindIndex(x => x.ID == poslednjiKorakCiklusa.ID);
-
-                DateTime stvarniKraj = dtpKasnjenje.Value;
-                string napomena = txtNapomena.Text.Trim();
-
-                int? razlogKasnjenjaId = null;
-                bool vremeJePromenjeno = Math.Abs(
-                    (stvarniKraj - poslednjiKorakCiklusa.PlaniranoVreme).TotalMinutes) >= 1.0;
-
-                if (vremeJePromenjeno)
-                {
-                    int izabraniRazlog = VratiIntIzCombo(cboKasnjenje.SelectedValue);
-                    if (izabraniRazlog <= 0)
-                    {
-                        MessageBox.Show(
-                            "Pošto se stvarno vreme razlikuje od planiranog, izaberite razlog kašnjenja.");
-                        cboKasnjenje.Focus();
-                        return;
-                    }
-
-                    razlogKasnjenjaId = izabraniRazlog;
-                }
-
-                PepeoKalkulatorVremena kalkulator = NapraviKalkulator();
-                kalkulator.PreracunajPosleRucneIzmene(
-                    trenutniKoraci,
-                    indeks,
-                    stvarniKraj,
-                    napomena);
-
-                trenutniKoraci[indeks].RazlogKasnjenjaID = razlogKasnjenjaId;
-                trenutniKoraci[indeks].RazlogKasnjenja = razlogKasnjenjaId.HasValue
-                    ? cboKasnjenje.Text.Trim()
-                    : string.Empty;
-
-                insert.AzurirajKorakePosleIzmene(
-                    trenutniKoraci,
-                    indeks,
-                    poslednjiKorakCiklusa.ID,
-                    stvarniKraj,
-                    razlogKasnjenjaId,
-                    napomena);
-
-                insert.ZavrsiCiklus(
-                    ciklusId,
-                    stvarniKraj,
-                    razlogKasnjenjaId,
-                    napomena);
-
-                // Kada se završi jedan ciklus, dodaje se novi na kraj postojećeg plana.
-                DodajSledeciCiklus();
-
-                // Ostani na sheet-u upravo završenog ciklusa.
-                UcitajPrevoz(trenutniIDPrevoza, ciklusId, poslednjiKorakCiklusa.ID);
-                cboKasnjenje.SelectedValue = 0;
-
-                MessageBox.Show("Ciklus je završen i automatski je dodat novi sledeći ciklus.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Greška pri završetku ciklusa:" + Environment.NewLine + ex.Message,
-                    "Greška",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
-        }
-
-        private void DodajSledeciCiklus()
-        {
-            if (trenutniIDPrevoza <= 0)
-                return;
-
-            OsveziListuKoraka();
-
-            if (trenutniKoraci.Count == 0)
-                return;
-
-            int idTrase = trenutniKoraci[0].IDTrase;
-            int sledeciRedniBroj = trenutniKoraci.Max(x => x.Ciklus) + 1;
-
-            PepeoKorakVremena poslednjiKorak = trenutniKoraci
-                .OrderBy(x => x.Ciklus)
-                .ThenBy(x => x.RB)
-                .Last();
-
-            DateTime pocetakNovogCiklusa = poslednjiKorak.StvarnoVreme.HasValue
-                ? poslednjiKorak.StvarnoVreme.Value
-                : poslednjiKorak.PlaniranoVreme;
-
-            PepeoKalkulatorVremena kalkulator = NapraviKalkulator();
-            List<PepeoKorakVremena> noviKoraci = kalkulator.Izracunaj(
-                pocetakNovogCiklusa,
-                1,
-                idTrase,
-                0);
-
-            foreach (PepeoKorakVremena korak in noviKoraci)
-            {
-                korak.Ciklus = sledeciRedniBroj;
-                korak.IDTrase = idTrase;
-            }
-
-            insert.DodajCiklusPrevozu(
-                trenutniIDPrevoza,
-                idTrase,
-                sledeciRedniBroj,
-                noviKoraci);
-        }
-
-        private void UcitajPrevoz(
-            int idPrevoza,
-            int? preferiraniCiklusId,
-            int? preferiraniKorakId)
-        {
-            if (idPrevoza <= 0)
-                return;
-
-            trenutniIDPrevoza = idPrevoza;
-
-            if (!preferiraniCiklusId.HasValue)
-            {
-                int trenutnoIzabranCiklus = VratiIzabraniCiklusIdIzTaba();
-                if (trenutnoIzabranCiklus > 0)
-                    preferiraniCiklusId = trenutnoIzabranCiklus;
-            }
-
-            trenutnaTabelaKoraka = insert.UcitajKorakePrevozaTabela(idPrevoza);
-            OsveziListuKoraka();
-            UcitajCikluseCombo(preferiraniCiklusId);
-            NapraviTaboveCiklusa(preferiraniCiklusId);
-            PrikaziIzabraniCiklus();
-            UrediGrid();
-
-            if (preferiraniKorakId.HasValue && preferiraniKorakId.Value > 0)
-                SelektujKorakPoId(preferiraniKorakId.Value);
-        }
-
-        private void OsveziListuKoraka()
-        {
+            tabCiklusi.TabPages.Clear();
             trenutniKoraci.Clear();
+            dgvVremena.DataSource = null;
 
-            if (trenutniIDPrevoza > 0)
-                trenutniKoraci.AddRange(insert.UcitajKorakePrevoza(trenutniIDPrevoza));
-        }
-
-        private void UcitajCikluseCombo(int? preferiraniCiklusId)
-        {
-            sinhronizacijaCiklusa = true;
-            try
+            foreach (PepeoCiklusInfo ciklus in trenutniCiklusi)
             {
-                DataTable dt = insert.UcitajCiklusePrevoza(trenutniIDPrevoza);
-                cboCiklus.DataSource = dt;
-                cboCiklus.DisplayMember = "Prikaz";
-                cboCiklus.ValueMember = "CiklusID";
+                List<PepeoKorakVremena> koraci = insert.UcitajKorakeCiklusa(ciklus.CiklusID);
+                trenutniKoraci.AddRange(koraci);
 
-                if (preferiraniCiklusId.HasValue && preferiraniCiklusId.Value > 0)
-                    cboCiklus.SelectedValue = preferiraniCiklusId.Value;
-                else if (dt.Rows.Count > 0)
-                    cboCiklus.SelectedIndex = 0;
-            }
-            finally
-            {
-                sinhronizacijaCiklusa = false;
-            }
-        }
+                string najava = ciklus.NajavaID.HasValue ? " | N" + ciklus.NajavaID.Value : "";
+                string naziv = "C" + ciklus.CiklusID + najava;
+                if (string.Equals(ciklus.StatusCiklusa, "ZAVRSEN", StringComparison.OrdinalIgnoreCase))
+                    naziv += " ✓";
 
-        private void NapraviTaboveCiklusa(int? preferiraniCiklusId)
-        {
-            sinhronizacijaCiklusa = true;
-            tabCiklusi.SuspendLayout();
+                var page = new TabPage(naziv);
+                page.Tag = ciklus;
 
-            try
-            {
-                while (tabCiklusi.TabPages.Count > 0)
-                {
-                    TabPage stariTab = tabCiklusi.TabPages[0];
-                    tabCiklusi.TabPages.RemoveAt(0);
-                    stariTab.Dispose();
-                }
-                gantt = null;
+                var gantt = new PepeoGanttChart();
+                gantt.Dock = DockStyle.Fill;
+                gantt.Tag = ciklus.CiklusID;
+                gantt.SelectionChanged += gantt_SelectionChanged;
+                gantt.Prikazi(koraci);
 
-                List<IGrouping<int, PepeoKorakVremena>> grupe = trenutniKoraci
-                    .GroupBy(x => x.CiklusID)
-                    .OrderBy(x => x.Min(k => k.Ciklus))
-                    .ToList();
-
-                int indeksZaIzbor = 0;
-
-                for (int i = 0; i < grupe.Count; i++)
-                {
-                    IGrouping<int, PepeoKorakVremena> grupa = grupe[i];
-                    List<PepeoKorakVremena> koraciCiklusa = grupa
-                        .OrderBy(x => x.RB)
-                        .ToList();
-
-                    if (koraciCiklusa.Count == 0)
-                        continue;
-
-                    TabPage tab = new TabPage();
-                    tab.Name = "tabCiklus_" + grupa.Key.ToString();
-                    tab.Tag = grupa.Key;
-                    tab.Text = NapraviNazivTaba(koraciCiklusa);
-                    tab.Padding = new Padding(0);
-                    tab.UseVisualStyleBackColor = true;
-
-                    PepeoGanttChart chart = new PepeoGanttChart();
-                    chart.Name = "ganttCiklus_" + grupa.Key.ToString();
-                    chart.Dock = DockStyle.Fill;
-                    chart.BrojDanaPrikaza = 14;
-                    chart.SelectionChanged += gantt_SelectionChanged;
-                    chart.Prikazi(koraciCiklusa);
-
-                    tab.Controls.Add(chart);
-                    tabCiklusi.TabPages.Add(tab);
-
-                    if (preferiraniCiklusId.HasValue && grupa.Key == preferiraniCiklusId.Value)
-                        indeksZaIzbor = tabCiklusi.TabPages.Count - 1;
-                }
-
-                if (tabCiklusi.TabPages.Count > 0)
-                    tabCiklusi.SelectedIndex = indeksZaIzbor;
-            }
-            finally
-            {
-                tabCiklusi.ResumeLayout();
-                sinhronizacijaCiklusa = false;
-            }
-        }
-
-        private string NapraviNazivTaba(List<PepeoKorakVremena> koraciCiklusa)
-        {
-            PepeoKorakVremena prvi = koraciCiklusa[0];
-
-            string najava = prvi.Najava.HasValue && prvi.Najava.Value > 0
-                ? prvi.Najava.Value.ToString()
-                : "bez najave";
-
-            string status = string.Equals(
-                prvi.StatusCiklusa,
-                "ZAVRSEN",
-                StringComparison.OrdinalIgnoreCase)
-                ? "  ✓"
-                : string.Empty;
-
-            return "C" + prvi.Ciklus.ToString() + " - " + najava + status;
-        }
-
-        private void PrikaziIzabraniCiklus()
-        {
-            if (tabCiklusi.SelectedTab == null)
-            {
-                dgvVremena.DataSource = null;
-                gantt = null;
-                return;
+                page.Controls.Add(gantt);
+                tabCiklusi.TabPages.Add(page);
             }
 
-            int ciklusId = VratiInt(tabCiklusi.SelectedTab.Tag);
-            if (ciklusId <= 0)
-                return;
-
-            gantt = tabCiklusi.SelectedTab.Controls
-                .OfType<PepeoGanttChart>()
-                .FirstOrDefault();
-
-            FiltrirajGridNaCiklus(ciklusId);
-            PostaviCiklusCombo(ciklusId);
-            PostaviNajavuAktivnogCiklusa(ciklusId);
-        }
-
-        private void FiltrirajGridNaCiklus(int ciklusId)
-        {
-            if (trenutnaTabelaKoraka == null ||
-                !trenutnaTabelaKoraka.Columns.Contains("CiklusID"))
+            if (tabCiklusi.TabPages.Count > 0)
             {
-                dgvVremena.DataSource = null;
-                return;
+                tabCiklusi.SelectedIndex = 0;
+                PrikaziSelektovaniCiklus();
             }
-
-            DataView pregled = new DataView(trenutnaTabelaKoraka);
-            pregled.RowFilter = "CiklusID = " + ciklusId.ToString();
-
-            if (trenutnaTabelaKoraka.Columns.Contains("RB"))
-                pregled.Sort = "RB ASC";
-
-            sinhronizacijaSelekcije = true;
-            try
-            {
-                dgvVremena.DataSource = pregled;
-                UrediGrid();
-                dgvVremena.ClearSelection();
-
-                if (dgvVremena.Rows.Count > 0)
-                {
-                    dgvVremena.Rows[0].Selected = true;
-                    DataGridViewColumn prvaKolona = VratiPrvuVidljivuKolonu();
-                    if (prvaKolona != null)
-                        dgvVremena.CurrentCell = dgvVremena.Rows[0].Cells[prvaKolona.Index];
-                }
-            }
-            finally
-            {
-                sinhronizacijaSelekcije = false;
-            }
-        }
-
-        private void PostaviCiklusCombo(int ciklusId)
-        {
-            if (cboCiklus.DataSource == null)
-                return;
-
-            sinhronizacijaCiklusa = true;
-            try
-            {
-                cboCiklus.SelectedValue = ciklusId;
-            }
-            finally
-            {
-                sinhronizacijaCiklusa = false;
-            }
-        }
-
-        private void PostaviNajavuAktivnogCiklusa(int ciklusId)
-        {
-            PepeoKorakVremena prvi = trenutniKoraci
-                .Where(x => x.CiklusID == ciklusId)
-                .OrderBy(x => x.RB)
-                .FirstOrDefault();
-
-            if (prvi == null || !prvi.Najava.HasValue || prvi.Najava.Value <= 0)
-            {
-                cboNajava.SelectedIndex = -1;
-                return;
-            }
-
-            cboNajava.SelectedValue = prvi.Najava.Value;
         }
 
         private void tabCiklusi_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (sinhronizacijaCiklusa)
-                return;
-
-            PrikaziIzabraniCiklus();
+            PrikaziSelektovaniCiklus();
         }
 
         private void cboCiklus_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (sinhronizacijaCiklusa)
-                return;
-
-            int ciklusId = VratiIntIzCombo(cboCiklus.SelectedValue);
-            if (ciklusId <= 0)
+            int ciklusID = VratiInt(cboCiklus.SelectedValue);
+            if (ciklusID <= 0)
                 return;
 
             for (int i = 0; i < tabCiklusi.TabPages.Count; i++)
             {
-                if (VratiInt(tabCiklusi.TabPages[i].Tag) == ciklusId)
+                PepeoCiklusInfo info = tabCiklusi.TabPages[i].Tag as PepeoCiklusInfo;
+                if (info != null && info.CiklusID == ciklusID)
                 {
-                    tabCiklusi.SelectedIndex = i;
+                    if (tabCiklusi.SelectedIndex != i)
+                        tabCiklusi.SelectedIndex = i;
                     break;
                 }
             }
         }
 
-        private int VratiIzabraniCiklusIdIzTaba()
+        private void PrikaziSelektovaniCiklus()
         {
             if (tabCiklusi.SelectedTab == null)
-                return 0;
+            {
+                dgvVremena.DataSource = null;
+                return;
+            }
 
-            return VratiInt(tabCiklusi.SelectedTab.Tag);
+            PepeoCiklusInfo info = tabCiklusi.SelectedTab.Tag as PepeoCiklusInfo;
+            if (info == null)
+                return;
+
+            if (VratiInt(cboCiklus.SelectedValue) != info.CiklusID)
+                cboCiklus.SelectedValue = info.CiklusID;
+
+            List<PepeoKorakVremena> koraci = trenutniKoraci
+                .Where(x => x.CiklusID == info.CiklusID)
+                .OrderBy(x => x.Redosled)
+                .ToList();
+
+            dgvVremena.AutoGenerateColumns = true;
+            dgvVremena.DataSource = koraci;
+            UrediGrid();
+
+            if (info.NajavaID.HasValue)
+            {
+                try { cboNajava.SelectedValue = info.NajavaID.Value; } catch { }
+            }
+
+            if (koraci.Count > 0)
+            {
+                PepeoKorakVremena poslednji = koraci[koraci.Count - 1];
+                dtpKasnjenje.Value = poslednji.StvarniKraj ?? poslednji.PlaniraniKraj;
+            }
         }
 
         private void UrediGrid()
@@ -731,222 +271,346 @@ namespace Saobracaj.Pepeo
             if (dgvVremena.Columns.Count == 0)
                 return;
 
-            SakrijKolonu("ID");
-            SakrijKolonu("IDPrevoza");
-            SakrijKolonu("CiklusID");
-            SakrijKolonu("IDTrase");
-            SakrijKolonu("SifraKoraka");
-            SakrijKolonu("Stanica");
-            SakrijKolonu("UlazakUStanicu");
-            SakrijKolonu("RazlogKasnjenjaID");
-
-            PromeniHeader("Ciklus", "Ciklus");
-            PromeniHeader("Najava", "Najava");
-            PromeniHeader("StatusCiklusa", "Status");
-            PromeniHeader("RB", "RB");
-            PromeniHeader("StanicaOpis", "Stanica");
-            PromeniHeader("Operacija", "Operacija");
-            PromeniHeader("TipDogadjaja", "Tip");
-            PromeniHeader("PlaniraniPocetak", "Plan. početak");
-            PromeniHeader("PlaniranoVreme", "Plan. kraj");
-            PromeniHeader("StvarnoVreme", "Stvarno vreme");
-            PromeniHeader("RucnoIzmenjeno", "Ručno");
-            PromeniHeader("KasnjenjeMin", "Kašnjenje min");
-            PromeniHeader("RazlogKasnjenja", "Razlog kašnjenja");
-            PromeniHeader("Napomena", "Napomena");
-        }
-
-        private void SakrijKolonu(string naziv)
-        {
-            if (dgvVremena.Columns.Contains(naziv))
-                dgvVremena.Columns[naziv].Visible = false;
-        }
-
-        private void PromeniHeader(string naziv, string header)
-        {
-            if (dgvVremena.Columns.Contains(naziv))
-                dgvVremena.Columns[naziv].HeaderText = header;
-        }
-
-        private DataGridViewColumn VratiPrvuVidljivuKolonu()
-        {
-            foreach (DataGridViewColumn kolona in dgvVremena.Columns)
+            string[] vidljive =
             {
-                if (kolona.Visible)
-                    return kolona;
-            }
+                "Redosled", "Operacija", "Drzava", "PlaniraniPocetak", "PlaniraniKraj",
+                "StvarniKraj", "OdstupanjeMinuta", "RazlogOdstupanja", "Napomena"
+            };
 
-            return null;
+            foreach (DataGridViewColumn c in dgvVremena.Columns)
+                c.Visible = vidljive.Contains(c.Name);
+
+            PostaviHeader("Redosled", "RB", 45);
+            PostaviHeader("Operacija", "Operacija", 175);
+            PostaviHeader("Drzava", "Država", 55);
+            PostaviHeader("PlaniraniPocetak", "Planirani početak", 130);
+            PostaviHeader("PlaniraniKraj", "Planirani kraj", 130);
+            PostaviHeader("StvarniKraj", "Stvarni kraj", 130);
+            PostaviHeader("OdstupanjeMinuta", "Odstupanje min", 90);
+            PostaviHeader("RazlogOdstupanja", "Razlog odstupanja", 170);
+            PostaviHeader("Napomena", "Napomena", 180);
+
+            dgvVremena.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvVremena.MultiSelect = false;
+            dgvVremena.ReadOnly = true;
+            dgvVremena.AllowUserToAddRows = false;
         }
 
-        private PepeoKalkulatorVremena NapraviKalkulator()
+        private void PostaviHeader(string name, string text, int width)
         {
-            List<PepeoSablonOperacije> sabloni = insert.UcitajSabloneOperacija();
-            Dictionary<string, string> parametri = insert.UcitajParametrePravila();
-            return new PepeoKalkulatorVremena(sabloni, parametri);
-        }
-
-        private PepeoKorakVremena VratiSelektovaniKorak()
-        {
-            if (dgvVremena.CurrentRow != null &&
-                dgvVremena.Columns.Contains("ID") &&
-                dgvVremena.CurrentRow.Cells["ID"] != null)
+            if (dgvVremena.Columns.Contains(name))
             {
-                int id = VratiInt(dgvVremena.CurrentRow.Cells["ID"].Value);
-                PepeoKorakVremena izGrida = trenutniKoraci.FirstOrDefault(x => x.ID == id);
-
-                if (izGrida != null)
-                    return izGrida;
-            }
-
-            if (gantt != null && gantt.SelectedItem != null)
-                return gantt.SelectedItem;
-
-            return null;
-        }
-
-        private void dgvVremena_SelectionChanged(object sender, EventArgs e)
-        {
-            if (sinhronizacijaSelekcije)
-                return;
-
-            if (dgvVremena.CurrentRow == null || !dgvVremena.Columns.Contains("ID"))
-                return;
-
-            int id = VratiInt(dgvVremena.CurrentRow.Cells["ID"].Value);
-            if (id <= 0)
-                return;
-
-            PepeoKorakVremena korak = trenutniKoraci.FirstOrDefault(x => x.ID == id);
-            if (korak == null)
-                return;
-
-            sinhronizacijaSelekcije = true;
-            try
-            {
-                if (gantt != null)
-                    gantt.SelektujPoId(id);
-
-                dtpKasnjenje.Value = korak.StvarnoVreme.HasValue
-                    ? korak.StvarnoVreme.Value
-                    : korak.PlaniranoVreme;
-
-                txtNapomena.Text = korak.Napomena ?? string.Empty;
-                PostaviRazlogKasnjenja(korak.RazlogKasnjenjaID);
-            }
-            finally
-            {
-                sinhronizacijaSelekcije = false;
+                dgvVremena.Columns[name].HeaderText = text;
+                dgvVremena.Columns[name].Width = width;
             }
         }
 
         private void gantt_SelectionChanged(object sender, EventArgs e)
         {
-            if (sinhronizacijaSelekcije)
-                return;
-
             PepeoGanttChart chart = sender as PepeoGanttChart;
             if (chart == null || chart.SelectedItem == null)
                 return;
 
-            gantt = chart;
             PepeoKorakVremena korak = chart.SelectedItem;
 
-            sinhronizacijaSelekcije = true;
+            SelektujRedUGRidu(korak.ID);
+            PopuniVremeIzKoraka(korak);
+        }
+
+        private void dgvVremena_SelectionChanged(object sender, EventArgs e)
+        {
+            if (sinhronizujemSelekciju)
+                return;
+
+            PepeoKorakVremena k = VratiSelektovaniKorak();
+            if (k == null)
+                return;
+
+            PopuniVremeIzKoraka(k);
+
+            if (tabCiklusi.SelectedTab != null && tabCiklusi.SelectedTab.Controls.Count > 0)
+            {
+                PepeoGanttChart chart = tabCiklusi.SelectedTab.Controls[0] as PepeoGanttChart;
+                if (chart != null)
+                    chart.SelektujPoID(k.ID);
+            }
+        }
+
+        private void PopuniVremeIzKoraka(PepeoKorakVremena k)
+        {
+            dtpKasnjenje.Value = k.StvarniKraj ?? k.PlaniraniKraj;
+            txtNapomena.Text = k.Napomena ?? string.Empty;
+            if (k.RazlogKasnjenjaID.HasValue)
+            {
+                try { cboKasnjenje.SelectedValue = k.RazlogKasnjenjaID.Value; } catch { }
+            }
+        }
+
+        private void SelektujRedUGRidu(int korakID)
+        {
+            if (dgvVremena.Rows.Count == 0)
+                return;
+
+            sinhronizujemSelekciju = true;
+
             try
             {
-                dtpKasnjenje.Value = korak.StvarnoVreme.HasValue
-                    ? korak.StvarnoVreme.Value
-                    : korak.PlaniranoVreme;
+                dgvVremena.ClearSelection();
 
-                txtNapomena.Text = korak.Napomena ?? string.Empty;
-                PostaviRazlogKasnjenja(korak.RazlogKasnjenjaID);
-
-                SelektujRedGridaPoId(korak.ID);
-            }
-            finally
-            {
-                sinhronizacijaSelekcije = false;
-            }
-        }
-
-        private void SelektujKorakPoId(int id)
-        {
-            if (id <= 0)
-                return;
-
-            PepeoKorakVremena korak = trenutniKoraci.FirstOrDefault(x => x.ID == id);
-            if (korak == null)
-                return;
-
-            if (VratiIzabraniCiklusIdIzTaba() != korak.CiklusID)
-            {
-                for (int i = 0; i < tabCiklusi.TabPages.Count; i++)
+                foreach (DataGridViewRow row in dgvVremena.Rows)
                 {
-                    if (VratiInt(tabCiklusi.TabPages[i].Tag) == korak.CiklusID)
-                    {
-                        tabCiklusi.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
+                    PepeoKorakVremena k = row.DataBoundItem as PepeoKorakVremena;
+                    if (k == null || k.ID != korakID)
+                        continue;
 
-            if (gantt != null)
-                gantt.SelektujPoId(id);
-
-            SelektujRedGridaPoId(id);
-        }
-
-        private void SelektujRedGridaPoId(int id)
-        {
-            if (dgvVremena.Rows.Count == 0 || !dgvVremena.Columns.Contains("ID"))
-                return;
-
-            foreach (DataGridViewRow row in dgvVremena.Rows)
-            {
-                if (VratiInt(row.Cells["ID"].Value) == id)
-                {
-                    dgvVremena.ClearSelection();
                     row.Selected = true;
 
-                    DataGridViewColumn prvaKolona = VratiPrvuVidljivuKolonu();
-                    if (prvaKolona != null)
-                        dgvVremena.CurrentCell = row.Cells[prvaKolona.Index];
+                    DataGridViewCell prvaVidljivaCelija = row.Cells
+                        .Cast<DataGridViewCell>()
+                        .Where(x => x.Visible)
+                        .OrderBy(x => x.OwningColumn.DisplayIndex)
+                        .FirstOrDefault();
+
+                    if (prvaVidljivaCelija != null)
+                        dgvVremena.CurrentCell = prvaVidljivaCelija;
+
+                    if (row.Index >= 0)
+                    {
+                        try
+                        {
+                            dgvVremena.FirstDisplayedScrollingRowIndex = Math.Max(0, row.Index - 1);
+                        }
+                        catch
+                        {
+                            // Nije kriticno ako grid u tom trenutku jos nije potpuno iscrtan.
+                        }
+                    }
 
                     break;
                 }
             }
+            finally
+            {
+                sinhronizujemSelekciju = false;
+            }
         }
 
-        private void PostaviRazlogKasnjenja(int? razlogKasnjenjaId)
+        private PepeoKorakVremena VratiSelektovaniKorak()
         {
-            if (cboKasnjenje.DataSource == null)
+            if (dgvVremena.SelectedRows.Count == 0)
+                return null;
+
+            return dgvVremena.SelectedRows[0].DataBoundItem as PepeoKorakVremena;
+        }
+
+        private void btnPotvrdiKasnjenje_Click(object sender, EventArgs e)
+        {
+            if (prikaziZavrsene)
+            {
+                MessageBox.Show("Završeni ciklusi su samo za pregled.");
                 return;
+            }
 
-            if (razlogKasnjenjaId.HasValue && razlogKasnjenjaId.Value > 0)
-                cboKasnjenje.SelectedValue = razlogKasnjenjaId.Value;
-            else
-                cboKasnjenje.SelectedValue = 0;
+            PepeoKorakVremena selectedGrid = VratiSelektovaniKorak();
+            if (selectedGrid == null)
+            {
+                MessageBox.Show("Izaberite operaciju kojoj menjate stvarno vreme.");
+                return;
+            }
+
+            DateTime stvarniKraj = dtpKasnjenje.Value;
+            int odstupanje = Convert.ToInt32(Math.Round((stvarniKraj - selectedGrid.PlaniraniKraj).TotalMinutes));
+            if (odstupanje == 0)
+            {
+                MessageBox.Show("Novo vreme je isto kao planirano vreme. Nema odstupanja za upis.");
+                return;
+            }
+
+            int razlogID = VratiInt(cboKasnjenje.SelectedValue);
+            if (razlogID <= 0)
+            {
+                MessageBox.Show("Izaberite razlog odstupanja. Razlog je obavezan i za kašnjenje i za raniji dolazak.");
+                cboKasnjenje.Focus();
+                return;
+            }
+
+            int trasaID = selectedGrid.TrasaID;
+
+            try
+            {
+                List<PepeoKorakVremena> lanac = insert.UcitajOtvoreniLanacZaTrasu(trasaID);
+                int indeks = lanac.FindIndex(x => x.ID == selectedGrid.ID);
+                if (indeks < 0)
+                    throw new Exception("Selektovani korak nije pronađen u aktivnom lancu.");
+
+                DateTime stariPlaniraniKraj = lanac[indeks].PlaniraniKraj;
+                string razlog = cboKasnjenje.Text.Trim();
+                string partner = VratiPartnerIzRazloga();
+                string napomena = txtNapomena.Text.Trim();
+
+                PepeoKalkulatorVremena kalkulator = NapraviKalkulator(trasaID);
+                kalkulator.PreracunajLanacPosleStvarnogVremena(
+                    lanac, indeks, stvarniKraj, razlogID, razlog, partner, napomena);
+
+                insert.SacuvajIzmenuILanac(
+                    lanac,
+                    indeks,
+                    stariPlaniraniKraj,
+                    Environment.UserName);
+
+                OsveziPrikaz();
+
+                string tekst = odstupanje > 0
+                    ? "Kašnjenje je upisano i naredni raspored je preračunat."
+                    : "Raniji dolazak je upisan i naredni raspored je preračunat.";
+                MessageBox.Show(tekst);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Greška pri promeni vremena:" + Environment.NewLine + ex.Message,
+                    "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private int VratiIntIzCombo(object value)
+        private void btnPoveziNajavu_Click(object sender, EventArgs e)
         {
-            if (value == null || value == DBNull.Value || value is DataRowView)
-                return 0;
+            int ciklusID = VratiInt(cboCiklus.SelectedValue);
+            int najavaID = VratiInt(cboNajava.SelectedValue);
 
-            return VratiInt(value);
+            if (ciklusID <= 0 || najavaID <= 0)
+            {
+                MessageBox.Show("Izaberite ciklus i najavu.");
+                return;
+            }
+
+            try
+            {
+                insert.PoveziNajavuSaCiklusom(ciklusID, najavaID);
+                OsveziPrikaz();
+                MessageBox.Show("Najava je povezana sa ciklusom C" + ciklusID + ".");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Greška pri povezivanju najave:" + Environment.NewLine + ex.Message);
+            }
+        }
+
+        private void btnZavrsiCiklus_Click(object sender, EventArgs e)
+        {
+            if (prikaziZavrsene)
+            {
+                MessageBox.Show("Prebacite se na aktivne prevoze.");
+                return;
+            }
+
+            int ciklusID = VratiInt(cboCiklus.SelectedValue);
+            PepeoCiklusInfo ciklus = trenutniCiklusi.FirstOrDefault(x => x.CiklusID == ciklusID);
+            if (ciklus == null)
+            {
+                MessageBox.Show("Izaberite ciklus.");
+                return;
+            }
+
+            if (!string.Equals(ciklus.StatusCiklusa, "TEKUCI", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Može se završiti samo tekući ciklus.");
+                return;
+            }
+
+            try
+            {
+                List<PepeoKorakVremena> ciklusKoraci = insert.UcitajKorakeCiklusa(ciklusID);
+                PepeoKorakVremena poslednji = ciklusKoraci.OrderBy(x => x.Redosled).Last();
+                DateTime stvarniKraj = dtpKasnjenje.Value;
+
+                // Ako je poslednji korak vec ranije potvrden, ne trazimo isti razlog ponovo.
+                bool koristiVecPotvrdjeno = poslednji.StvarniKraj.HasValue &&
+                    Math.Abs((stvarniKraj - poslednji.StvarniKraj.Value).TotalSeconds) < 1.0;
+
+                if (koristiVecPotvrdjeno)
+                {
+                    stvarniKraj = poslednji.StvarniKraj.Value;
+                }
+                else
+                {
+                    int odstupanje = Convert.ToInt32(Math.Round((stvarniKraj - poslednji.PlaniraniKraj).TotalMinutes));
+                    if (odstupanje != 0)
+                    {
+                        int razlogID = VratiInt(cboKasnjenje.SelectedValue);
+                        if (razlogID <= 0)
+                        {
+                            MessageBox.Show("Konačno vreme odstupa od planiranog. Izaberite razlog odstupanja.");
+                            return;
+                        }
+
+                        List<PepeoKorakVremena> lanac = insert.UcitajOtvoreniLanacZaTrasu(ciklus.TrasaID);
+                        int indeks = lanac.FindIndex(x => x.ID == poslednji.ID);
+                        if (indeks < 0)
+                            throw new Exception("Poslednji korak ciklusa nije pronadjen u aktivnom lancu.");
+
+                        DateTime stariPlan = lanac[indeks].PlaniraniKraj;
+
+                        PepeoKalkulatorVremena kalkulator = NapraviKalkulator(ciklus.TrasaID);
+                        kalkulator.PreracunajLanacPosleStvarnogVremena(
+                            lanac,
+                            indeks,
+                            stvarniKraj,
+                            razlogID,
+                            cboKasnjenje.Text.Trim(),
+                            VratiPartnerIzRazloga(),
+                            txtNapomena.Text.Trim());
+
+                        insert.SacuvajIzmenuILanac(lanac, indeks, stariPlan, Environment.UserName);
+                    }
+                }
+
+                insert.ZavrsiCiklus(ciklusID, stvarniKraj);
+
+                // Svaki zavrseni ciklus automatski dodaje jedan novi na kraj lanca.
+                PepeoKalkulatorVremena noviKalkulator = NapraviKalkulator(ciklus.TrasaID);
+                int noviCiklusID = insert.DodajSledeciCiklus(ciklus.TrasaID, noviKalkulator);
+
+                prikaziZavrsene = false;
+                OsveziPrikaz();
+                MessageBox.Show("Ciklus C" + ciklusID + " je završen. Automatski je generisan novi ciklus C" + noviCiklusID + ".");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Greška pri završavanju ciklusa:" + Environment.NewLine + ex.Message,
+                    "Greška", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void PostaviRezimKontrola()
+        {
+            btnAktivniPrevozi.Enabled = prikaziZavrsene;
+            btnZavrseniPrevozi.Enabled = !prikaziZavrsene;
+
+            btnPotvrdiKasnjenje.Enabled = !prikaziZavrsene;
+            btnZavrsiCiklus.Enabled = !prikaziZavrsene;
+            dtpKasnjenje.Enabled = !prikaziZavrsene;
+            cboKasnjenje.Enabled = !prikaziZavrsene;
+            txtNapomena.Enabled = !prikaziZavrsene;
+
+            // Najava se sme povezati i naknadno, cak i sa zavrsenim ciklusom.
+            btnPoveziNajavu.Enabled = trenutniCiklusi.Count > 0;
+        }
+
+        private string VratiPartnerIzRazloga()
+        {
+            DataRowView drv = cboKasnjenje.SelectedItem as DataRowView;
+            if (drv != null && drv.Row.Table.Columns.Contains("Partner"))
+                return Convert.ToString(drv["Partner"]).Trim();
+            return string.Empty;
         }
 
         private int VratiInt(object value)
         {
-            if (value == null || value == DBNull.Value)
+            if (value == null || value == DBNull.Value || value is DataRowView)
                 return 0;
 
             int result;
-            if (int.TryParse(value.ToString(), out result))
-                return result;
-
-            return 0;
+            return int.TryParse(value.ToString(), out result) ? result : 0;
         }
     }
 }
