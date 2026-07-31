@@ -53,6 +53,8 @@
             this.tabCiklusi = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.btnAktivniPrevozi = new System.Windows.Forms.Button();
+            this.btnZavrseniPrevozi = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvVremena)).BeginInit();
             this.tabCiklusi.SuspendLayout();
             this.SuspendLayout();
@@ -163,7 +165,7 @@
             // 
             // btnPotvrdiKasnjenje
             // 
-            this.btnPotvrdiKasnjenje.Location = new System.Drawing.Point(800, 21);
+            this.btnPotvrdiKasnjenje.Location = new System.Drawing.Point(810, 8);
             this.btnPotvrdiKasnjenje.Name = "btnPotvrdiKasnjenje";
             this.btnPotvrdiKasnjenje.Size = new System.Drawing.Size(96, 38);
             this.btnPotvrdiKasnjenje.TabIndex = 4;
@@ -285,6 +287,24 @@
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // btnAktivniPrevozi
+            // 
+            this.btnAktivniPrevozi.Location = new System.Drawing.Point(12, 122);
+            this.btnAktivniPrevozi.Name = "btnAktivniPrevozi";
+            this.btnAktivniPrevozi.Size = new System.Drawing.Size(96, 38);
+            this.btnAktivniPrevozi.TabIndex = 4;
+            this.btnAktivniPrevozi.Text = "Aktivni";
+            this.btnAktivniPrevozi.UseVisualStyleBackColor = true;
+            // 
+            // btnZavrseniPrevozi
+            // 
+            this.btnZavrseniPrevozi.Location = new System.Drawing.Point(114, 122);
+            this.btnZavrseniPrevozi.Name = "btnZavrseniPrevozi";
+            this.btnZavrseniPrevozi.Size = new System.Drawing.Size(96, 38);
+            this.btnZavrseniPrevozi.TabIndex = 4;
+            this.btnZavrseniPrevozi.Text = "Završeni";
+            this.btnZavrseniPrevozi.UseVisualStyleBackColor = true;
+            // 
             // PlaniranjeVremena
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -296,6 +316,8 @@
             this.Controls.Add(this.btnZavrsiCiklus);
             this.Controls.Add(this.btnPoveziNajavu);
             this.Controls.Add(this.btnPotvrdiKasnjenje);
+            this.Controls.Add(this.btnZavrseniPrevozi);
+            this.Controls.Add(this.btnAktivniPrevozi);
             this.Controls.Add(this.btnGenerisiPlan);
             this.Controls.Add(this.txtNapomena);
             this.Controls.Add(this.txtBrojCiklusa);
@@ -351,5 +373,7 @@
         private System.Windows.Forms.TabControl tabCiklusi;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Button btnAktivniPrevozi;
+        private System.Windows.Forms.Button btnZavrseniPrevozi;
     }
 }
