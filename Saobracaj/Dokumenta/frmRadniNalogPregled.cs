@@ -785,7 +785,7 @@ namespace Saobracaj.Dokumenta
        
 
             select = select + "where RN.StatusRN in ( 'ZA' ) and d1.DatumPolaskaReal>'" + dtpVremeOd2.Value.ToString("yyyy-MM-dd") +
-                "' and d1.DatumDolaskaReal<'" + dtpVremeDo2.Value.ToString("yyyy-MM-dd") + "'";
+                "' and d1.DatumPolaskaReal<'" + dtpVremeDo2.Value.ToString("yyyy-MM-dd") + "'";
 
 
             var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
