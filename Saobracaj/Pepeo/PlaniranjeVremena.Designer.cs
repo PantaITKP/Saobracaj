@@ -55,6 +55,9 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.btnAktivniPrevozi = new System.Windows.Forms.Button();
             this.btnZavrseniPrevozi = new System.Windows.Forms.Button();
+            this.label9 = new System.Windows.Forms.Label();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
+            this.btnPomeraj = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvVremena)).BeginInit();
             this.tabCiklusi.SuspendLayout();
             this.SuspendLayout();
@@ -305,6 +308,33 @@
             this.btnZavrseniPrevozi.Text = "Završeni";
             this.btnZavrseniPrevozi.UseVisualStyleBackColor = true;
             // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(435, 113);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(122, 13);
+            this.label9.TabIndex = 0;
+            this.label9.Text = "Pomeri početak prevoza";
+            // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.CustomFormat = "dd.MM.yyyy HH:mm";
+            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dateTimePicker1.Location = new System.Drawing.Point(438, 129);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(136, 20);
+            this.dateTimePicker1.TabIndex = 2;
+            // 
+            // btnPomeraj
+            // 
+            this.btnPomeraj.Location = new System.Drawing.Point(587, 113);
+            this.btnPomeraj.Name = "btnPomeraj";
+            this.btnPomeraj.Size = new System.Drawing.Size(96, 38);
+            this.btnPomeraj.TabIndex = 4;
+            this.btnPomeraj.Text = "Potvrdi pomeraj";
+            this.btnPomeraj.UseVisualStyleBackColor = true;
+            // 
             // PlaniranjeVremena
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -315,12 +345,14 @@
             this.Controls.Add(this.btnUcitajPlan);
             this.Controls.Add(this.btnZavrsiCiklus);
             this.Controls.Add(this.btnPoveziNajavu);
+            this.Controls.Add(this.btnPomeraj);
             this.Controls.Add(this.btnPotvrdiKasnjenje);
             this.Controls.Add(this.btnZavrseniPrevozi);
             this.Controls.Add(this.btnAktivniPrevozi);
             this.Controls.Add(this.btnGenerisiPlan);
             this.Controls.Add(this.txtNapomena);
             this.Controls.Add(this.txtBrojCiklusa);
+            this.Controls.Add(this.dateTimePicker1);
             this.Controls.Add(this.dtpKasnjenje);
             this.Controls.Add(this.dtpPocetakPrevoza);
             this.Controls.Add(this.cboNajava);
@@ -332,6 +364,7 @@
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label8);
+            this.Controls.Add(this.label9);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -375,5 +408,8 @@
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.Button btnAktivniPrevozi;
         private System.Windows.Forms.Button btnZavrseniPrevozi;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.DateTimePicker dateTimePicker1;
+        private System.Windows.Forms.Button btnPomeraj;
     }
 }

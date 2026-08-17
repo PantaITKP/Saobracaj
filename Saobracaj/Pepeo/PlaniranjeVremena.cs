@@ -27,6 +27,11 @@ namespace Saobracaj.Pepeo
 
             dtpPocetakPrevoza.Value = DateTime.Now;
             dtpKasnjenje.Value = DateTime.Now;
+
+            dateTimePicker1.CustomFormat = "dd.MM.yyyy HH:mm:ss";
+            dateTimePicker1.Format = DateTimePickerFormat.Custom;
+            dateTimePicker1.Value = DateTime.Now;
+
             txtBrojCiklusa.Text = "3";
 
             UcitajSifarnike();
@@ -46,6 +51,7 @@ namespace Saobracaj.Pepeo
             btnZavrsiCiklus.Click += btnZavrsiCiklus_Click;
             btnAktivniPrevozi.Click += btnAktivniPrevozi_Click;
             btnZavrseniPrevozi.Click += btnZavrseniPrevozi_Click;
+            btnPomeraj.Click += btnPomeraj_Click;
 
             cboTrasa.SelectedIndexChanged += cboTrasa_SelectedIndexChanged;
             cboCiklus.SelectedIndexChanged += cboCiklus_SelectedIndexChanged;
@@ -264,6 +270,10 @@ namespace Saobracaj.Pepeo
                 PepeoKorakVremena poslednji = koraci[koraci.Count - 1];
                 dtpKasnjenje.Value = poslednji.StvarniKraj ?? poslednji.PlaniraniKraj;
             }
+
+            // dateTimePicker1 sluzi iskljucivo za plansko pomeranje pocetka ciklusa.
+            // Ovo nije stvarno vreme i ne predstavlja kasnjenje/rani dolazak.
+            dateTimePicker1.Value = info.PocetakCiklusa;
         }
 
         private void UrediGrid()
@@ -472,6 +482,89 @@ namespace Saobracaj.Pepeo
             }
         }
 
+        private void btnPomeraj_Click(object sender, EventArgs e)
+        {
+            if (prikaziZavrsene)
+            {
+                MessageBox.Show("Zavrseni ciklusi se ne mogu planski pomerati.");
+                return;
+            }
+
+            int ciklusID = VratiInt(cboCiklus.SelectedValue);
+            PepeoCiklusInfo ciklus = trenutniCiklusi.FirstOrDefault(x => x.CiklusID == ciklusID);
+
+            if (ciklus == null)
+            {
+                MessageBox.Show("Izaberite ciklus koji zelite da pomerite.");
+                return;
+            }
+
+            if (string.Equals(ciklus.StatusCiklusa, "ZAVRSEN", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Zavrseni ciklus se ne moze planski pomerati.");
+                return;
+            }
+
+            DateTime noviPocetak = dateTimePicker1.Value;
+
+            if (Math.Abs((noviPocetak - ciklus.PocetakCiklusa).TotalMinutes) < 1.0)
+            {
+                MessageBox.Show("Novi pocetak je isti kao trenutni planirani pocetak ciklusa.");
+                return;
+            }
+
+            DialogResult potvrda = MessageBox.Show(
+                "Ciklus C" + ciklusID + " bice planski pomeren." + Environment.NewLine + Environment.NewLine +
+                "Od izabranog ciklusa pa nadalje svi aktivni/planirani ciklusi bice ponovo preracunati po pravilima." + Environment.NewLine + Environment.NewLine +
+                "Ovo se NE evidentira kao kasnjenje ili raniji dolazak." + Environment.NewLine + Environment.NewLine +
+                "Novi ulazni pocetak: " + noviPocetak.ToString("dd.MM.yyyy HH:mm:ss") + Environment.NewLine + Environment.NewLine +
+                "Nastaviti?",
+                "Pomeranje pocetka ciklusa",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (potvrda != DialogResult.Yes)
+                return;
+
+            try
+            {
+                PepeoKalkulatorVremena kalkulator = NapraviKalkulator(ciklus.TrasaID);
+
+                insert.PomeriPocetakCiklusaILanac(
+                    ciklus.CiklusID,
+                    ciklus.TrasaID,
+                    noviPocetak,
+                    kalkulator);
+
+                prikaziZavrsene = false;
+                OsveziPrikaz();
+
+                // Posle refresh-a vrati korisnika na ciklus koji je pomerio.
+                try
+                {
+                    cboCiklus.SelectedValue = ciklusID;
+                }
+                catch
+                {
+                }
+
+                PepeoCiklusInfo osvezeni = trenutniCiklusi.FirstOrDefault(x => x.CiklusID == ciklusID);
+                if (osvezeni != null)
+                    dateTimePicker1.Value = osvezeni.PocetakCiklusa;
+
+                MessageBox.Show(
+                    "Pocetak ciklusa C" + ciklusID + " je pomeren i svi naredni ciklusi su ponovo preracunati.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Greska pri pomeranju pocetka ciklusa:" + Environment.NewLine + ex.Message,
+                    "Greska",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
         private void btnPoveziNajavu_Click(object sender, EventArgs e)
         {
             int ciklusID = VratiInt(cboCiklus.SelectedValue);
@@ -588,6 +681,8 @@ namespace Saobracaj.Pepeo
 
             btnPotvrdiKasnjenje.Enabled = !prikaziZavrsene;
             btnZavrsiCiklus.Enabled = !prikaziZavrsene;
+            btnPomeraj.Enabled = !prikaziZavrsene && trenutniCiklusi.Count > 0;
+            dateTimePicker1.Enabled = !prikaziZavrsene && trenutniCiklusi.Count > 0;
             dtpKasnjenje.Enabled = !prikaziZavrsene;
             cboKasnjenje.Enabled = !prikaziZavrsene;
             txtNapomena.Enabled = !prikaziZavrsene;

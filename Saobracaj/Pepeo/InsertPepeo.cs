@@ -228,6 +228,139 @@ namespace Saobracaj.Pepeo
             return noviID;
         }
 
+        /// <summary>
+        /// Planski pomera pocetak izabranog ciklusa i ponovo racuna sve otvorene
+        /// cikluse od tog ciklusa pa nadalje. Ovo nije odstupanje i ne upisuje se
+        /// u PepeoIzmenaVremena.
+        ///
+        /// Zbog konzistentnosti nije dozvoljeno planski pomerati deo lanca koji
+        /// vec ima potvrdjena stvarna vremena. Takva promena ide kroz standardnu
+        /// funkcionalnost za stvarno vreme/odstupanje.
+        /// </summary>
+        public void PomeriPocetakCiklusaILanac(
+            int ciklusID,
+            int trasaID,
+            DateTime noviPocetak,
+            PepeoKalkulatorVremena kalkulator)
+        {
+            if (ciklusID <= 0)
+                throw new Exception("Neispravan ciklus.");
+
+            if (trasaID <= 0)
+                throw new Exception("Neispravna trasa.");
+
+            if (kalkulator == null)
+                throw new Exception("Kalkulator vremena nije inicijalizovan.");
+
+            List<PepeoCiklusInfo> otvoreniCiklusi = UcitajCikluse(false, trasaID)
+                .OrderBy(x => x.CiklusID)
+                .ToList();
+
+            int indeksCiklusa = otvoreniCiklusi.FindIndex(x => x.CiklusID == ciklusID);
+            if (indeksCiklusa < 0)
+                throw new Exception("Izabrani ciklus nije pronadjen medju aktivnim/planiranim ciklusima.");
+
+            List<PepeoCiklusInfo> ciklusiZaPomeranje = otvoreniCiklusi
+                .Skip(indeksCiklusa)
+                .ToList();
+
+            // Sve korake unapred ucitamo pre transakcije.
+            var postojeciKoraciPoCiklusu = new Dictionary<int, List<PepeoKorakVremena>>();
+
+            foreach (PepeoCiklusInfo c in ciklusiZaPomeranje)
+            {
+                List<PepeoKorakVremena> koraci = UcitajKorakeCiklusa(c.CiklusID)
+                    .OrderBy(x => x.Redosled)
+                    .ToList();
+
+                if (koraci.Count == 0)
+                    throw new Exception("Ciklus C" + c.CiklusID + " nema korake.");
+
+                bool imaStvarnoVreme = koraci.Any(x =>
+                    x.StvarniPocetak.HasValue ||
+                    x.StvarniKraj.HasValue ||
+                    x.RazlogKasnjenjaID.HasValue ||
+                    x.OdstupanjeMinuta != 0);
+
+                if (imaStvarnoVreme)
+                {
+                    throw new Exception(
+                        "Ciklus C" + c.CiklusID +
+                        " vec ima evidentirano stvarno vreme/odstupanje. " +
+                        "Plansko pomeranje nije dozvoljeno preko vec realizovanih podataka.");
+                }
+
+                postojeciKoraciPoCiklusu[c.CiklusID] = koraci;
+            }
+
+            using (SqlConnection conn = OtvoriKonekciju())
+            using (SqlTransaction tran = conn.BeginTransaction())
+            {
+                try
+                {
+                    DateTime pocetakZaRacunanje = noviPocetak;
+
+                    foreach (PepeoCiklusInfo c in ciklusiZaPomeranje)
+                    {
+                        List<PepeoKorakVremena> stariKoraci = postojeciKoraciPoCiklusu[c.CiklusID];
+                        List<PepeoKorakVremena> noviKoraci = kalkulator.IzracunajCiklus(pocetakZaRacunanje)
+                            .OrderBy(x => x.Redosled)
+                            .ToList();
+
+                        if (stariKoraci.Count != noviKoraci.Count)
+                        {
+                            throw new Exception(
+                                "Broj koraka u ciklusu C" + c.CiklusID +
+                                " se ne poklapa sa trenutnom definicijom trase.");
+                        }
+
+                        foreach (PepeoKorakVremena stari in stariKoraci)
+                        {
+                            PepeoKorakVremena novi = noviKoraci.FirstOrDefault(x =>
+                                x.Redosled == stari.Redosled &&
+                                x.OperacijaID == stari.OperacijaID);
+
+                            if (novi == null)
+                            {
+                                throw new Exception(
+                                    "Nije pronadjena nova kalkulacija za operaciju '" +
+                                    stari.Operacija + "' u ciklusu C" + c.CiklusID + ".");
+                            }
+
+                            Pozovi(conn, tran, "dbo.Pepeo_AzurirajKorakPlanIOdstupanje", new[]
+                            {
+                                P("@KorakID", SqlDbType.Int, stari.ID),
+                                P("@PlaniraniPocetak", SqlDbType.DateTime, novi.PlaniraniPocetak),
+                                P("@PlaniraniKraj", SqlDbType.DateTime, novi.PlaniraniKraj),
+                                P("@OdstupanjeMinuta", SqlDbType.Int, 0)
+                            });
+                        }
+
+                        Pozovi(conn, tran, "dbo.Pepeo_OsveziZaglavljeCiklusa", new[]
+                        {
+                            P("@CiklusID", SqlDbType.Int, c.CiklusID)
+                        });
+
+                        pocetakZaRacunanje = noviKoraci
+                            .OrderBy(x => x.Redosled)
+                            .Last()
+                            .PlaniraniKraj;
+                    }
+
+                    tran.Commit();
+                }
+                catch
+                {
+                    try { tran.Rollback(); } catch { }
+                    throw;
+                }
+            }
+
+            // Statusi se i dalje odredjuju po istoj logici kao i do sada:
+            // prvi otvoreni ciklus = TEKUCI, ostali = PLANIRAN.
+            IzvrsiNonQuery("dbo.Pepeo_OsveziStatuse", null);
+        }
+
         public void SacuvajIzmenuILanac(
             List<PepeoKorakVremena> lanac,
             int indeksIzmenjenog,
