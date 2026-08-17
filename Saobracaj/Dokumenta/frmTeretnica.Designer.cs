@@ -48,6 +48,9 @@
             this.toolStripButton8 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton9 = new System.Windows.Forms.ToolStripButton();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.button10 = new System.Windows.Forms.Button();
+            this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.txtRBRN = new System.Windows.Forms.TextBox();
             this.chkCARINSKA = new System.Windows.Forms.CheckBox();
             this.label37 = new System.Windows.Forms.Label();
@@ -146,16 +149,17 @@
             this.reportViewer4 = new Microsoft.Reporting.WinForms.ReportViewer();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.reportViewer5 = new Microsoft.Reporting.WinForms.ReportViewer();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.reportViewer6 = new Microsoft.Reporting.WinForms.ReportViewer();
             this.button5 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.button10 = new System.Windows.Forms.Button();
-            this.dataGridView2 = new System.Windows.Forms.DataGridView();
-            this.tabPage7 = new System.Windows.Forms.TabPage();
-            this.reportViewer6 = new Microsoft.Reporting.WinForms.ReportViewer();
+            this.btnUpdateOtpravna = new System.Windows.Forms.Button();
+            this.btnUpdateUputna = new System.Windows.Forms.Button();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
+            this.panel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtBrojOsovina)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.txtRucKoc)).BeginInit();
@@ -174,8 +178,6 @@
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.tabPage6.SuspendLayout();
-            this.panel3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
             this.tabPage7.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -392,6 +394,33 @@
             this.panel1.Size = new System.Drawing.Size(1230, 71);
             this.panel1.TabIndex = 8;
             // 
+            // panel3
+            // 
+            this.panel3.Controls.Add(this.button10);
+            this.panel3.Controls.Add(this.dataGridView2);
+            this.panel3.Location = new System.Drawing.Point(11, 6);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(1045, 243);
+            this.panel3.TabIndex = 125;
+            // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(11, 9);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(89, 29);
+            this.button10.TabIndex = 1;
+            this.button10.Text = "Zavrsi proveru";
+            this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
+            // 
+            // dataGridView2
+            // 
+            this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView2.Location = new System.Drawing.Point(12, 44);
+            this.dataGridView2.Name = "dataGridView2";
+            this.dataGridView2.Size = new System.Drawing.Size(1024, 199);
+            this.dataGridView2.TabIndex = 0;
+            // 
             // txtRBRN
             // 
             this.txtRBRN.Location = new System.Drawing.Point(1192, 5);
@@ -604,6 +633,8 @@
             this.panel2.Controls.Add(this.button11);
             this.panel2.Controls.Add(this.txtNeispravnost);
             this.panel2.Controls.Add(this.label38);
+            this.panel2.Controls.Add(this.btnUpdateUputna);
+            this.panel2.Controls.Add(this.btnUpdateOtpravna);
             this.panel2.Controls.Add(this.button9);
             this.panel2.Controls.Add(this.txtDokument);
             this.panel2.Controls.Add(this.label36);
@@ -1429,6 +1460,28 @@
             this.reportViewer5.Size = new System.Drawing.Size(1294, 244);
             this.reportViewer5.TabIndex = 3;
             // 
+            // tabPage7
+            // 
+            this.tabPage7.Controls.Add(this.reportViewer6);
+            this.tabPage7.Location = new System.Drawing.Point(4, 22);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage7.TabIndex = 6;
+            this.tabPage7.Text = "Štampaj komercijalnu";
+            this.tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // reportViewer6
+            // 
+            this.reportViewer6.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.reportViewer6.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
+            this.reportViewer6.Location = new System.Drawing.Point(-3, 16);
+            this.reportViewer6.Name = "reportViewer6";
+            this.reportViewer6.ServerReport.BearerToken = null;
+            this.reportViewer6.Size = new System.Drawing.Size(1294, 286);
+            this.reportViewer6.TabIndex = 1;
+            // 
             // button5
             // 
             this.button5.Location = new System.Drawing.Point(1249, 28);
@@ -1461,54 +1514,25 @@
             this.button8.UseVisualStyleBackColor = false;
             this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
-            // panel3
+            // btnUpdateOtpravna
             // 
-            this.panel3.Controls.Add(this.button10);
-            this.panel3.Controls.Add(this.dataGridView2);
-            this.panel3.Location = new System.Drawing.Point(11, 6);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(1045, 243);
-            this.panel3.TabIndex = 125;
+            this.btnUpdateOtpravna.Location = new System.Drawing.Point(918, 107);
+            this.btnUpdateOtpravna.Name = "btnUpdateOtpravna";
+            this.btnUpdateOtpravna.Size = new System.Drawing.Size(114, 37);
+            this.btnUpdateOtpravna.TabIndex = 174;
+            this.btnUpdateOtpravna.Text = "Promeni sve - Otpravna";
+            this.btnUpdateOtpravna.UseVisualStyleBackColor = true;
+            this.btnUpdateOtpravna.Click += new System.EventHandler(this.btnUpdateOtpravna_Click);
             // 
-            // button10
+            // btnUpdateUputna
             // 
-            this.button10.Location = new System.Drawing.Point(11, 9);
-            this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(89, 29);
-            this.button10.TabIndex = 1;
-            this.button10.Text = "Zavrsi proveru";
-            this.button10.UseVisualStyleBackColor = true;
-            this.button10.Click += new System.EventHandler(this.button10_Click);
-            // 
-            // dataGridView2
-            // 
-            this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView2.Location = new System.Drawing.Point(12, 44);
-            this.dataGridView2.Name = "dataGridView2";
-            this.dataGridView2.Size = new System.Drawing.Size(1024, 199);
-            this.dataGridView2.TabIndex = 0;
-            // 
-            // tabPage7
-            // 
-            this.tabPage7.Controls.Add(this.reportViewer6);
-            this.tabPage7.Location = new System.Drawing.Point(4, 22);
-            this.tabPage7.Name = "tabPage7";
-            this.tabPage7.Size = new System.Drawing.Size(1289, 318);
-            this.tabPage7.TabIndex = 6;
-            this.tabPage7.Text = "Štampaj komercijalnu";
-            this.tabPage7.UseVisualStyleBackColor = true;
-            // 
-            // reportViewer6
-            // 
-            this.reportViewer6.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.reportViewer6.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
-            this.reportViewer6.Location = new System.Drawing.Point(-3, 16);
-            this.reportViewer6.Name = "reportViewer6";
-            this.reportViewer6.ServerReport.BearerToken = null;
-            this.reportViewer6.Size = new System.Drawing.Size(1294, 286);
-            this.reportViewer6.TabIndex = 1;
+            this.btnUpdateUputna.Location = new System.Drawing.Point(1038, 107);
+            this.btnUpdateUputna.Name = "btnUpdateUputna";
+            this.btnUpdateUputna.Size = new System.Drawing.Size(114, 37);
+            this.btnUpdateUputna.TabIndex = 174;
+            this.btnUpdateUputna.Text = "Promeni sve - Uputna";
+            this.btnUpdateUputna.UseVisualStyleBackColor = true;
+            this.btnUpdateUputna.Click += new System.EventHandler(this.btnUpdateUputna_Click);
             // 
             // frmTeretnica
             // 
@@ -1531,6 +1555,8 @@
             this.toolStrip1.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            this.panel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtBrojOsovina)).EndInit();
@@ -1550,8 +1576,6 @@
             this.tabPage4.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
             this.tabPage7.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -1685,5 +1709,7 @@
         private System.Windows.Forms.Button button11;
         private System.Windows.Forms.TabPage tabPage7;
         private Microsoft.Reporting.WinForms.ReportViewer reportViewer6;
+        private System.Windows.Forms.Button btnUpdateUputna;
+        private System.Windows.Forms.Button btnUpdateOtpravna;
     }
 }

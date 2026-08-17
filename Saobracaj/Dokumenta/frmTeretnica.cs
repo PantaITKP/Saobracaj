@@ -1,18 +1,19 @@
-﻿using System;
+﻿using Microsoft.Reporting.WinForms;
+using Org.BouncyCastle.Ocsp;
+using Saobracaj.Uvoz;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
+using System.Data.OleDb;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.OleDb;
-using System.Data.SqlClient;
-using System.Configuration;
-
-using Microsoft.Reporting.WinForms;
-using Saobracaj.Uvoz;
+using static System.Data.Entity.Infrastructure.Design.Executor;
 
 namespace Saobracaj.Dokumenta
 {
@@ -24,6 +25,7 @@ namespace Saobracaj.Dokumenta
         int pomPrevozna = 0;
         int pomCarinska = 0;
         string Korisnik = "";
+        int Teretnica;
         public frmTeretnica()
         {
             InitializeComponent();
@@ -39,6 +41,7 @@ namespace Saobracaj.Dokumenta
             RefreshDataGrid();
             panel3.Visible = false;
             ProveriTeren();
+            Teretnica = Convert.ToInt32(IdTeretnice);
         }
 
         private void VratiPodatke(string IdTeretnice)
@@ -925,6 +928,45 @@ namespace Saobracaj.Dokumenta
         {
             InsertTeretnica naj = new InsertTeretnica();
             naj.PromeniIDNajaveSvimStavkama(Convert.ToInt32(txtSifra.Text), Convert.ToInt32(txtBrojNajave.Text));
+            RefreshDataGrid();
+        }
+
+        private void btnUpdateOtpravna_Click(object sender, EventArgs e)
+        {            
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(s_connection))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("Update TeretnicaStavke Set Otpravna=@otpravna Where BrojTeretnice=@teretnica", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@otpravna", SqlDbType.Int) { Value = Convert.ToInt32(cboOtpravna.SelectedValue) });
+                    cmd.Parameters.Add(new SqlParameter("@teretnica", SqlDbType.Int) { Value = Teretnica });
+
+                    cmd.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+
+            RefreshDataGrid();
+            
+        }
+
+        private void btnUpdateUputna_Click(object sender, EventArgs e)
+        {
+            var s_connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(s_connection))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("Update TeretnicaStavke Set Uputna=@uputna Where BrojTeretnice=@teretnica", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@uputna", SqlDbType.Int) { Value = Convert.ToInt32(cboUputna.SelectedValue) });
+                    cmd.Parameters.Add(new SqlParameter("@teretnica", SqlDbType.Int) { Value = Teretnica });
+
+                    cmd.ExecuteNonQuery();
+                }
+                conn.Close();
+            }
+
             RefreshDataGrid();
         }
     }
