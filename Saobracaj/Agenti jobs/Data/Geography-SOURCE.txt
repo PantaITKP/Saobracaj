@@ -1,0 +1,8 @@
+﻿Geographic coordinates derived from GeoNames, https://www.geonames.org/
+Country gazetteer extracts: https://download.geonames.org/export/dump/{RS,ME,HU,RO,BG,HR,BA,MK}.zip
+Retrieved 2026-10-15. Features: railway stations/stops and populated places.
+License: Creative Commons Attribution 4.0, https://creativecommons.org/licenses/by/4.0/
+Format and attribution: https://download.geonames.org/export/dump/readme.txt
+Normalization, station-name aliases and selection of regional candidates added for RailPlannerDemo.
+Railway coordinates are preferred where available; otherwise geographic position of the locality is used.
+Data is supplied as-is by GeoNames. Unmatched station names are reported; no invented latitude is assigned.
