@@ -75,9 +75,13 @@
             this.txtSifra = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.button13 = new System.Windows.Forms.Button();
+            this.button12 = new System.Windows.Forms.Button();
             this.button11 = new System.Windows.Forms.Button();
             this.txtNeispravnost = new System.Windows.Forms.TextBox();
             this.label38 = new System.Windows.Forms.Label();
+            this.btnUpdateUputna = new System.Windows.Forms.Button();
+            this.btnUpdateOtpravna = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
             this.txtDokument = new System.Windows.Forms.TextBox();
             this.label36 = new System.Windows.Forms.Label();
@@ -154,8 +158,8 @@
             this.button5 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.btnUpdateOtpravna = new System.Windows.Forms.Button();
-            this.btnUpdateUputna = new System.Windows.Forms.Button();
+            this.tabPage8 = new System.Windows.Forms.TabPage();
+            this.reportViewer7 = new Microsoft.Reporting.WinForms.ReportViewer();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -179,6 +183,7 @@
             this.tabPage5.SuspendLayout();
             this.tabPage6.SuspendLayout();
             this.tabPage7.SuspendLayout();
+            this.tabPage8.SuspendLayout();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -630,6 +635,8 @@
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.button13);
+            this.panel2.Controls.Add(this.button12);
             this.panel2.Controls.Add(this.button11);
             this.panel2.Controls.Add(this.txtNeispravnost);
             this.panel2.Controls.Add(this.label38);
@@ -698,6 +705,26 @@
             this.panel2.TabIndex = 9;
             this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
+            // button13
+            // 
+            this.button13.Location = new System.Drawing.Point(793, 107);
+            this.button13.Name = "button13";
+            this.button13.Size = new System.Drawing.Size(114, 37);
+            this.button13.TabIndex = 179;
+            this.button13.Text = "Promeni sve - izvozna";
+            this.button13.UseVisualStyleBackColor = true;
+            this.button13.Click += new System.EventHandler(this.button13_Click);
+            // 
+            // button12
+            // 
+            this.button12.Location = new System.Drawing.Point(673, 107);
+            this.button12.Name = "button12";
+            this.button12.Size = new System.Drawing.Size(114, 37);
+            this.button12.TabIndex = 178;
+            this.button12.Text = "Promeni sve - Uvozna";
+            this.button12.UseVisualStyleBackColor = true;
+            this.button12.Click += new System.EventHandler(this.button12_Click);
+            // 
             // button11
             // 
             this.button11.Location = new System.Drawing.Point(75, 103);
@@ -723,6 +750,26 @@
             this.label38.Size = new System.Drawing.Size(72, 13);
             this.label38.TabIndex = 175;
             this.label38.Text = "Neispravnost:";
+            // 
+            // btnUpdateUputna
+            // 
+            this.btnUpdateUputna.Location = new System.Drawing.Point(1038, 107);
+            this.btnUpdateUputna.Name = "btnUpdateUputna";
+            this.btnUpdateUputna.Size = new System.Drawing.Size(114, 37);
+            this.btnUpdateUputna.TabIndex = 174;
+            this.btnUpdateUputna.Text = "Promeni sve - Uputna";
+            this.btnUpdateUputna.UseVisualStyleBackColor = true;
+            this.btnUpdateUputna.Click += new System.EventHandler(this.btnUpdateUputna_Click);
+            // 
+            // btnUpdateOtpravna
+            // 
+            this.btnUpdateOtpravna.Location = new System.Drawing.Point(918, 107);
+            this.btnUpdateOtpravna.Name = "btnUpdateOtpravna";
+            this.btnUpdateOtpravna.Size = new System.Drawing.Size(114, 37);
+            this.btnUpdateOtpravna.TabIndex = 174;
+            this.btnUpdateOtpravna.Text = "Promeni sve - Otpravna";
+            this.btnUpdateOtpravna.UseVisualStyleBackColor = true;
+            this.btnUpdateOtpravna.Click += new System.EventHandler(this.btnUpdateOtpravna_Click);
             // 
             // button9
             // 
@@ -1306,6 +1353,7 @@
             this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Controls.Add(this.tabPage7);
+            this.tabControl1.Controls.Add(this.tabPage8);
             this.tabControl1.Location = new System.Drawing.Point(24, 250);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -1514,25 +1562,27 @@
             this.button8.UseVisualStyleBackColor = false;
             this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
-            // btnUpdateOtpravna
+            // tabPage8
             // 
-            this.btnUpdateOtpravna.Location = new System.Drawing.Point(918, 107);
-            this.btnUpdateOtpravna.Name = "btnUpdateOtpravna";
-            this.btnUpdateOtpravna.Size = new System.Drawing.Size(114, 37);
-            this.btnUpdateOtpravna.TabIndex = 174;
-            this.btnUpdateOtpravna.Text = "Promeni sve - Otpravna";
-            this.btnUpdateOtpravna.UseVisualStyleBackColor = true;
-            this.btnUpdateOtpravna.Click += new System.EventHandler(this.btnUpdateOtpravna_Click);
+            this.tabPage8.Controls.Add(this.reportViewer7);
+            this.tabPage8.Location = new System.Drawing.Point(4, 22);
+            this.tabPage8.Name = "tabPage8";
+            this.tabPage8.Size = new System.Drawing.Size(1289, 318);
+            this.tabPage8.TabIndex = 7;
+            this.tabPage8.Text = "Stampaj zaokruzenu";
+            this.tabPage8.UseVisualStyleBackColor = true;
             // 
-            // btnUpdateUputna
+            // reportViewer7
             // 
-            this.btnUpdateUputna.Location = new System.Drawing.Point(1038, 107);
-            this.btnUpdateUputna.Name = "btnUpdateUputna";
-            this.btnUpdateUputna.Size = new System.Drawing.Size(114, 37);
-            this.btnUpdateUputna.TabIndex = 174;
-            this.btnUpdateUputna.Text = "Promeni sve - Uputna";
-            this.btnUpdateUputna.UseVisualStyleBackColor = true;
-            this.btnUpdateUputna.Click += new System.EventHandler(this.btnUpdateUputna_Click);
+            this.reportViewer7.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.reportViewer7.LocalReport.ReportEmbeddedResource = "Saobracaj.Izvestaji.Teretnica.rdlc";
+            this.reportViewer7.Location = new System.Drawing.Point(-3, 16);
+            this.reportViewer7.Name = "reportViewer7";
+            this.reportViewer7.ServerReport.BearerToken = null;
+            this.reportViewer7.Size = new System.Drawing.Size(1294, 286);
+            this.reportViewer7.TabIndex = 1;
             // 
             // frmTeretnica
             // 
@@ -1577,6 +1627,7 @@
             this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             this.tabPage7.ResumeLayout(false);
+            this.tabPage8.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1711,5 +1762,9 @@
         private Microsoft.Reporting.WinForms.ReportViewer reportViewer6;
         private System.Windows.Forms.Button btnUpdateUputna;
         private System.Windows.Forms.Button btnUpdateOtpravna;
+        private System.Windows.Forms.Button button13;
+        private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.TabPage tabPage8;
+        private Microsoft.Reporting.WinForms.ReportViewer reportViewer7;
     }
 }

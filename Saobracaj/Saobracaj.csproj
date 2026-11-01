@@ -583,6 +583,68 @@
     <Compile Include="Administracija\frmNotifikacije.Designer.cs">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </Compile>
+    <Compile Include="Agenti jobs\CenovnikPravila.cs" />
+    <Compile Include="Agenti jobs\Db.cs" />
+    <Compile Include="Agenti jobs\DispMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\DispMain.Designer.cs">
+      <DependentUpon>DispMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\DopunaRadnogNaloga.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\DopunaRadnogNaloga.Designer.cs">
+      <DependentUpon>DopunaRadnogNaloga.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\ExcelRoutes.cs" />
+    <Compile Include="Agenti jobs\GridSupport.cs" />
+    <Compile Include="Agenti jobs\IskoriscenjeInfrastruktura.cs" />
+    <Compile Include="Agenti jobs\IskoriscenjeTrasa.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\IskoriscenjeTrasa.Designer.cs">
+      <DependentUpon>IskoriscenjeTrasa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\IskoriscenjeTrasaObracun.cs" />
+    <Compile Include="Agenti jobs\IskoriscenjeTrasaPodaci.cs" />
+    <Compile Include="Agenti jobs\IzborStaniceCenovnika.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\IzborStaniceCenovnika.Designer.cs">
+      <DependentUpon>IzborStaniceCenovnika.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\MailPreview.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\MailPreview.Designer.cs">
+      <DependentUpon>MailPreview.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\OperationsRepository.cs" />
+    <Compile Include="Agenti jobs\PeriodCenovnika.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\PeriodCenovnika.Designer.cs">
+      <DependentUpon>PeriodCenovnika.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\Planer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Agenti jobs\Planer.Designer.cs">
+      <DependentUpon>Planer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\PlanRepository.cs" />
+    <Compile Include="Agenti jobs\PlanTextView.cs" />
+    <Compile Include="Agenti jobs\PretragaStanica.cs" />
+    <Compile Include="Agenti jobs\RadniNalogDopuna.cs" />
+    <Compile Include="Agenti jobs\RadniNalogPravila.cs" />
+    <Compile Include="Agenti jobs\RNautomatskiIzbor.cs" />
+    <Compile Include="Agenti jobs\RouteRules.cs" />
+    <Compile Include="Agenti jobs\ShiftNoteRepository.cs" />
+    <Compile Include="Agenti jobs\SifarnikTrasaServis.cs" />
+    <Compile Include="Agenti jobs\StaniceCenovnika.cs" />
+    <Compile Include="Agenti jobs\StationGeography.cs" />
+    <Compile Include="Agenti jobs\TextRangeMapper.cs" />
     <Compile Include="Dokumenta\frmBonusi.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2069,6 +2131,18 @@
     <EmbeddedResource Include="Administracija\frmNotifikacije.resx">
       <DependentUpon>frmNotifikacije.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Agenti jobs\DispMain.resx">
+      <DependentUpon>DispMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agenti jobs\IskoriscenjeTrasa.resx">
+      <DependentUpon>IskoriscenjeTrasa.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agenti jobs\MailPreview.resx">
+      <DependentUpon>MailPreview.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Agenti jobs\Planer.resx">
+      <DependentUpon>Planer.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dokumenta\frmBonusi.resx">
       <DependentUpon>frmBonusi.cs</DependentUpon>
     </EmbeddedResource>
@@ -2439,6 +2513,7 @@
     <EmbeddedResource Include="Izvestaji\rptUkupnoZaPeriod.rdlc" />
     <EmbeddedResource Include="Izvestaji\Teretnica.rdlc" />
     <EmbeddedResource Include="Izvestaji\TeretnicaKomercijalna.rdlc" />
+    <EmbeddedResource Include="Izvestaji\TeretnicaZaokruzena.rdlc" />
     <EmbeddedResource Include="Izvestaji\ZaradeStavkePoZaposlenom.rdlc" />
     <EmbeddedResource Include="LokomotiveTechnodis.resx">
       <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
@@ -2728,6 +2803,7 @@
     <EmbeddedResource Include="Uvoz\UvozKonacna.resx">
       <DependentUpon>UvozKonacna.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Agenti jobs\Data\Geography.json" />
     <None Include="NedraDataSet.xsc">
       <DependentUpon>NedraDataSet.xsd</DependentUpon>
     </None>
@@ -2971,6 +3047,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Agenti jobs\Data\Geography-SOURCE.txt" />
     <Content Include="itextsharp.dll" />
     <EmbeddedResource Include="ML Training\map.html" />
     <EmbeddedResource Include="MLProd\MapML.html">
