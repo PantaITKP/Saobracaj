@@ -79,6 +79,7 @@ namespace Saobracaj
             this.toolStripButton27 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton88 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton94 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton137 = new System.Windows.Forms.ToolStripButton();
             this.toolStripEx11 = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
             this.toolStripButton28 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton29 = new System.Windows.Forms.ToolStripButton();
@@ -210,7 +211,9 @@ namespace Saobracaj
             this.toolStripEx27 = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
             this.toolStripButton89 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton90 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton137 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton138 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton139 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton140 = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.ribbonControlAdv1)).BeginInit();
             this.ribbonControlAdv1.SuspendLayout();
             this.toolStripTabItem1.Panel.SuspendLayout();
@@ -888,7 +891,10 @@ namespace Saobracaj
             this.toolStripButton27,
             this.toolStripButton88,
             this.toolStripButton94,
-            this.toolStripButton137});
+            this.toolStripButton137,
+            this.toolStripButton138,
+            this.toolStripButton139,
+            this.toolStripButton140});
             this.toolStripEx10.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
             this.toolStripEx10.Location = new System.Drawing.Point(0, 1);
             this.toolStripEx10.Name = "toolStripEx10";
@@ -934,6 +940,16 @@ namespace Saobracaj
             this.toolStripButton94.Size = new System.Drawing.Size(138, 17);
             this.toolStripButton94.Text = "CT Čpajak";
             this.toolStripButton94.Click += new System.EventHandler(this.toolStripButton94_Click);
+            // 
+            // toolStripButton137
+            // 
+            this.toolStripButton137.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton137.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton137.Image")));
+            this.toolStripButton137.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton137.Name = "toolStripButton137";
+            this.toolStripButton137.Size = new System.Drawing.Size(138, 17);
+            this.toolStripButton137.Text = "Garnitura pracenje";
+            this.toolStripButton137.Click += new System.EventHandler(this.toolStripButton137_Click);
             // 
             // toolStripEx11
             // 
@@ -2601,15 +2617,35 @@ namespace Saobracaj
             this.toolStripButton90.Size = new System.Drawing.Size(24, 36);
             this.toolStripButton90.Text = "Popis pregled 2";
             // 
-            // toolStripButton137
+            // toolStripButton138
             // 
-            this.toolStripButton137.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton137.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton137.Image")));
-            this.toolStripButton137.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton137.Name = "toolStripButton137";
-            this.toolStripButton137.Size = new System.Drawing.Size(138, 17);
-            this.toolStripButton137.Text = "Garnitura pracenje";
-            this.toolStripButton137.Click += new System.EventHandler(this.toolStripButton137_Click);
+            this.toolStripButton138.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton138.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton138.Image")));
+            this.toolStripButton138.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton138.Name = "toolStripButton138";
+            this.toolStripButton138.Size = new System.Drawing.Size(138, 17);
+            this.toolStripButton138.Text = "Planer";
+            this.toolStripButton138.Click += new System.EventHandler(this.toolStripButton138_Click);
+            // 
+            // toolStripButton139
+            // 
+            this.toolStripButton139.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton139.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton139.Image")));
+            this.toolStripButton139.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton139.Name = "toolStripButton139";
+            this.toolStripButton139.Size = new System.Drawing.Size(138, 17);
+            this.toolStripButton139.Text = "DispMain";
+            this.toolStripButton139.Click += new System.EventHandler(this.toolStripButton139_Click);
+            // 
+            // toolStripButton140
+            // 
+            this.toolStripButton140.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton140.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton140.Image")));
+            this.toolStripButton140.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton140.Name = "toolStripButton140";
+            this.toolStripButton140.Size = new System.Drawing.Size(138, 17);
+            this.toolStripButton140.Text = "Iskoriscenje trasa";
+            this.toolStripButton140.Click += new System.EventHandler(this.toolStripButton140_Click);
             // 
             // MainP
             // 
@@ -2889,5 +2925,8 @@ namespace Saobracaj
         private System.Windows.Forms.ToolStripButton toolStripButton135;
         private System.Windows.Forms.ToolStripButton toolStripButton136;
         private System.Windows.Forms.ToolStripButton toolStripButton137;
+        private System.Windows.Forms.ToolStripButton toolStripButton138;
+        private System.Windows.Forms.ToolStripButton toolStripButton139;
+        private System.Windows.Forms.ToolStripButton toolStripButton140;
     }
 }

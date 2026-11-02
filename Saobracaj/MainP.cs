@@ -1,4 +1,5 @@
-﻿using Saobracaj.Mobile;
+﻿using Saobracaj.Agenti_jobs;
+using Saobracaj.Mobile;
 using Saobracaj.Pepeo;
 using Saobracaj.Servis;
 
@@ -977,6 +978,24 @@ namespace Saobracaj
         {
             PlaniranjeVremena pv = new PlaniranjeVremena();
             pv.Show();
+        }
+
+        private void toolStripButton138_Click(object sender, EventArgs e)
+        {
+           Planer pv = new Planer();
+            pv.Show();
+        }
+
+        private void toolStripButton139_Click(object sender, EventArgs e)
+        {
+            DispMain disp = new DispMain();
+            disp.Show();
+        }
+
+        private void toolStripButton140_Click(object sender, EventArgs e)
+        {
+           IskoriscenjeTrasa drn = new IskoriscenjeTrasa();  
+            drn.Show();
         }
     }
 }
