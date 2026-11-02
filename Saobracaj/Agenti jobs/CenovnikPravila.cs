@@ -103,6 +103,9 @@ namespace Saobracaj.Agenti_jobs
     public sealed class SifarnikPrevoz
     {
         public long ID;
+        public long GlavniPrevozID;
+        public DateTime? KrajDeonice;
+        public string NapomenaDeonice;
         public byte[] Verzija;
         public string Broj, BrojVoznje;
         public int Godina;

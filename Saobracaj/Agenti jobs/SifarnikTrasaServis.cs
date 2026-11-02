@@ -62,6 +62,9 @@ namespace Saobracaj.Agenti_jobs
                     var p = new SifarnikPrevoz
                     {
                         ID = Convert.ToInt64(row["ID"]),
+                        GlavniPrevozID = RaspustanjeVoza.Glavni(row),
+                        KrajDeonice = row.IsNull("CompletedAtLocal") ? (DateTime?)null : Convert.ToDateTime(row["CompletedAtLocal"]),
+                        NapomenaDeonice = Db.Text(row, "Note"),
                         Verzija = ((byte[])row["VerzijaReda"]).ToArray(),
                         Broj = excel.Train.Trim(),
                         BrojVoznje = Db.Text(row, "Train").Trim(),
@@ -139,19 +142,26 @@ namespace Saobracaj.Agenti_jobs
                     Db.Lock(c, tx, "OperativniPlanRouteCatalog");
                     Db.Lock(c, tx, "SifarnikTrasaGodina");
                     Db.Lock(c, tx, "OperativniPlanDopunaRN");
-                    using (var check = Db.Command(c, tx, "SELECT CASE WHEN OBJECT_ID('dbo.OperativniPlanRNRealizacija','U') IS NOT NULL AND OBJECT_ID('dbo.OperativniPlanRNNajava','U') IS NOT NULL AND COL_LENGTH('dbo.RadniNalogLokNaTrasi','RBTrase') IS NOT NULL THEN 1 ELSE 0 END"))
+                    using (var check = Db.Command(c, tx, "SELECT CASE WHEN OBJECT_ID('dbo.OperativniPlanRNRealizacija','U') IS NOT NULL AND OBJECT_ID('dbo.OperativniPlanRNNajava','U') IS NOT NULL AND COL_LENGTH('dbo.RadniNalogLokNaTrasi','RBTrase') IS NOT NULL AND COL_LENGTH('dbo.OperativniPlanVozovi','Dissolved') IS NOT NULL AND COL_LENGTH('dbo.OperativniPlanRNRealizacija','GlavniPrevozID') IS NOT NULL THEN 1 ELSE 0 END"))
                         if (Convert.ToInt32(check.ExecuteScalar()) != 1)
-                            throw new InvalidOperationException("Najpre pokrenite SQL skripte za dopunu RN i OperativniPlan-RNAuto.sql.");
+                            throw new InvalidOperationException("Najpre pokrenite OperativniPlan-Raspustanje.sql i prethodne SQL skripte za dopunu RN.");
                     foreach (var p in plans)
                     {
                         if (!p.Od.HasValue || !p.Do.HasValue) throw new InvalidOperationException("Nije unet period cenovnika.");
                         if (CenovnikPravila.Godina(p.Od.Value, p.Do.Value) != p.Godina)
                             throw new InvalidOperationException("Godina ne odgovara krajnjem datumu cenovnika.");
                         var current = Db.Table(c, tx, @"SELECT ID FROM dbo.OperativniPlanVozovi WITH(UPDLOCK,HOLDLOCK)
-WHERE ID=@id AND VerzijaReda=@rv AND Completed=1 AND CompletedAtLocal IS NOT NULL AND CompletionRecorded=0",
+WHERE ID=@id AND VerzijaReda=@rv AND (ParentTrainID IS NOT NULL OR (Completed=1 AND CompletedAtLocal IS NOT NULL)) AND CompletionRecorded=0",
                             "@id", p.ID, "@rv", p.Verzija);
                         if (current.Rows.Count != 1)
                             throw new DBConcurrencyException("Neki prevoz je promenjen na drugom računaru. Nijedan prevoz nije evidentiran.");
+                    }
+                    foreach (var group in plans.GroupBy(x => x.GlavniPrevozID))
+                    {
+                        var chain = Db.Table(c, tx, "SELECT * FROM dbo.OperativniPlanVozovi WITH(UPDLOCK,HOLDLOCK) WHERE (ID=@root OR RootTrainID=@root) AND CompletionRecorded=0 ORDER BY SegmentNo", "@root", group.Key);
+                        if (!chain.Rows.Cast<DataRow>().Select(x => Convert.ToInt64(x["ID"])).OrderBy(x => x).SequenceEqual(group.Select(x => x.ID).OrderBy(x => x)))
+                            throw new DBConcurrencyException("Lanac voznje je promenjen. Ponovite evidentiranje.");
+                        RaspustanjeVoza.ProveriLanac(chain.Rows.Cast<DataRow>().ToList());
                     }
                     foreach (var doc in plans.Where(p => p.Dokument != null && p.Dokument.NedostajaoPeriod)
                         .Select(p => p.Dokument).Distinct())
@@ -172,10 +182,11 @@ WHERE ID=@id AND VerzijaReda=@rv AND Completed=1 AND CompletedAtLocal IS NOT NUL
                         int legacy = ObezbediTrasu(c, tx, p);
                         RadniNalogDopuna.Upisi(c, tx, p, legacy);
                         using (var cmd = Db.Command(c, tx, @"UPDATE dbo.OperativniPlanVozovi SET
-CompletionRecorded=1,CompletedRecordedAtLocal=@now,IzmenjenoUtc=GETUTCDATE(),
+CompletionRecorded=1,Completed=1,CompletedAtLocal=CASE WHEN ParentTrainID IS NULL THEN CompletedAtLocal ELSE @kraj END,
+CompletedRecordedAtLocal=@now,IzmenjenoUtc=GETUTCDATE(),
 CenovnikDokumentID=@document,CenovnikVaziOd=@od,CenovnikVaziDo=@do,CenovnikGodina=@year,SifarnikTrasaID=@legacy
 WHERE ID=@id AND VerzijaReda=@rv AND CompletionRecorded=0",
-                            "@now", DateTime.Now, "@document", p.Dokument == null ? (object)null : p.Dokument.ID,
+                            "@now", DateTime.Now, "@kraj", p.KrajDeonice, "@document", p.Dokument == null ? (object)null : p.Dokument.ID,
                             "@od", p.Od.Value, "@do", p.Do.Value, "@year", p.Godina, "@legacy", legacy, "@id", p.ID, "@rv", p.Verzija))
                             if (cmd.ExecuteNonQuery() != 1) throw new DBConcurrencyException("Prevoz je promenjen; ceo upis je poništen.");
                     }

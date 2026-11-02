@@ -23,11 +23,14 @@ ORDER BY VremePokretanja,BrojTrase,ID",
             {
                 var features = Db.Table(c, null, @"SELECT
 CASE WHEN OBJECT_ID('dbo.OperativniPlanRNRealizacija','U') IS NULL THEN 0 ELSE 1 END AS ImaRN,
-CASE WHEN COL_LENGTH('dbo.RadniNalogLokNaTrasi','RBTrase') IS NULL THEN 0 ELSE 1 END AS ImaRB").Rows[0];
+CASE WHEN COL_LENGTH('dbo.RadniNalogLokNaTrasi','RBTrase') IS NULL THEN 0 ELSE 1 END AS ImaRB,
+CASE WHEN COL_LENGTH('dbo.OperativniPlanVozovi','RootTrainID') IS NULL THEN 0 ELSE 1 END AS ImaLanac").Rows[0];
                 bool imaRN = Convert.ToInt32(features["ImaRN"]) == 1;
                 bool imaRB = Convert.ToInt32(features["ImaRB"]) == 1;
-                var vozovi = Db.Table(c, null, @"SELECT ID,Train,OriginalTrain,[From],[To],LocomotiveNumber,
-StartedAtLocal,CompletedAtLocal,PokretanjeID FROM dbo.OperativniPlanVozovi
+                bool imaLanac = Convert.ToInt32(features["ImaLanac"]) == 1;
+                string cilj = imaLanac ? "CASE WHEN Dissolved=1 THEN DissolveStation ELSE [To] END AS [To]" : "[To]";
+                string kraj = imaLanac ? "CASE WHEN Dissolved=1 THEN DissolvedAtLocal ELSE CompletedAtLocal END AS CompletedAtLocal" : "CompletedAtLocal";
+                var vozovi = Db.Table(c, null, "SELECT " + (imaLanac ? "RootTrainID," : "CAST(NULL AS bigint) AS RootTrainID,") + "ID,Train,OriginalTrain,[From]," + cilj + ",LocomotiveNumber,StartedAtLocal," + kraj + @",PokretanjeID FROM dbo.OperativniPlanVozovi
 WHERE Started=1 AND StartedAtLocal>=@od AND StartedAtLocal<@do ORDER BY StartedAtLocal,ID",
                     "@od", od, "@do", doIskljucivo);
                 var realizacije = new DataTable();

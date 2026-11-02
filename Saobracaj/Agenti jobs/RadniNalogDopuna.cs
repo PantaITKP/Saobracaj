@@ -91,12 +91,12 @@ WHERE r.IDRadnogNaloga=@rn AND LTRIM(RTRIM(t.Voz))=@broj ORDER BY r.RB", "@rn", 
             int primary = int.Parse(Db.Text(v, "AnnouncementFullId"), CultureInfo.InvariantCulture);
             bool rezi = Convert.ToBoolean(v["Rezi"]);
             RadniNalogPravila.ProveriRaspodelu(p.RNStavke, rezi, primary);
-            if (!Convert.ToBoolean(v["Started"]) || v.IsNull("StartedAtLocal") || v.IsNull("CompletedAtLocal"))
+            if (!Convert.ToBoolean(v["Started"]) || v.IsNull("StartedAtLocal") || !p.KrajDeonice.HasValue)
                 throw new InvalidOperationException("Voz mora biti pokrenut i zavrsen sa upisanim lokalnim datumima.");
-            DateTime od = Convert.ToDateTime(v["StartedAtLocal"]), kraj = Convert.ToDateTime(v["CompletedAtLocal"]);
+            DateTime od = Convert.ToDateTime(v["StartedAtLocal"]), kraj = p.KrajDeonice.Value;
             int minutes = RadniNalogPravila.Trajanje(od, kraj);
             decimal weight = Convert.ToDecimal(v["Weight"]);
-            string note = Db.Text(v, "Note");
+            string note = p.NapomenaDeonice ?? Db.Text(v, "Note");
             if (note.Length > 500) throw new InvalidOperationException("Napomena za radni nalog moze imati najvise 500 znakova.");
             if (p.RNStanicaOd <= 0 || p.RNStanicaDo <= 0) throw new InvalidOperationException("Nedostaju stanice realizacije.");
             var stations = Db.Table(c, tx, "SELECT ID,Opis FROM dbo.stanice WITH(HOLDLOCK) WHERE ID IN (@od,@do)", "@od", p.RNStanicaOd, "@do", p.RNStanicaDo);
@@ -152,11 +152,11 @@ VALUES(@rn,@rb,@trasa,@od,@do,@prazno,@prazno,@min,@min,@masa,0,0,@bruto,@note,@
                 }
                 long realization;
                 using (var cmd = Db.Command(c, tx, @"INSERT dbo.OperativniPlanRNRealizacija
-(PrevozID,IDRadnogNaloga,RB,IDTrase,BrojVoznje,BrojIzvorneTrase,StanicaOd,StanicaDo,Polazak,Dolazak,Rezi,BrutoMasa,Kreirao,KreiranoLokalno)
-VALUES(@id,@rn,@rb,@trasa,@voz,@izvor,@sod,@sdo,@od,@do,@rezi,@bruto,@user,@now); SELECT CAST(SCOPE_IDENTITY() AS bigint)",
+(PrevozID,IDRadnogNaloga,RB,IDTrase,BrojVoznje,BrojIzvorneTrase,StanicaOd,StanicaDo,Polazak,Dolazak,Rezi,BrutoMasa,Kreirao,KreiranoLokalno,GlavniPrevozID)
+VALUES(@id,@rn,@rb,@trasa,@voz,@izvor,@sod,@sdo,@od,@do,@rezi,@bruto,@user,@now,@root); SELECT CAST(SCOPE_IDENTITY() AS bigint)",
                     "@id", p.ID, "@rn", a.RadniNalog, "@rb", rb, "@trasa", legacy, "@voz", p.BrojVoznje, "@izvor", p.Broj,
                     "@sod", p.RNStanicaOd, "@sdo", p.RNStanicaDo, "@od", od, "@do", kraj, "@rezi", rezi,
-                    "@bruto", weight, "@user", OperationalSession.UserName, "@now", DateTime.Now)) realization = Db.ScalarId(cmd);
+                    "@bruto", weight, "@user", OperationalSession.UserName, "@now", DateTime.Now, "@root", p.GlavniPrevozID)) realization = Db.ScalarId(cmd);
                 if (p.RNLokomotive == null) throw new InvalidOperationException("Nisu proverene lokomotive.");
                 foreach (string lok in p.RNLokomotive)
                 {

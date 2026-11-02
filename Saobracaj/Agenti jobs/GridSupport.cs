@@ -138,7 +138,10 @@ namespace Saobracaj.Agenti_jobs
 
         public void Header(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (e.ColumnIndex < 0 || table == null)
+            // Isti handler moze greskom biti vezan i za CellMouseClick u Designer-u.
+            // Filter pripada iskljucivo zaglavlju kolone (RowIndex == -1).
+            if (e == null || e.RowIndex != -1 || e.ColumnIndex < 0 ||
+                e.ColumnIndex >= grid.Columns.Count || table == null)
                 return;
             if (!grid.EndEdit())
                 return;
@@ -367,9 +370,12 @@ namespace Saobracaj.Agenti_jobs
             foreach (DataGridViewColumn col in grid.Columns)
             {
                 var key = col.DataPropertyName;
+                if (key == "Dissolved") col.HeaderText = "Raspusten";
+                if (key == "DissolveStation") col.HeaderText = "Stanica raspustanja";
+                if (key == "DissolvedAtLocal" || key == "DissolvedAtLocation") col.HeaderText = "Vreme raspustanja";
                 if (Names.ContainsKey(key))
                     col.HeaderText = Names[key];
-                if (key == "CenovnikDokumentID" || key == "CenovnikVaziOd" || key == "CenovnikVaziDo" || key == "CenovnikGodina" || key == "SifarnikTrasaID" || key == "PokretanjeID" || key == "StartedAtUtc" || key == "CompletionRecorded" || key == "CompletedRecordedAtLocal" || key == "AnnouncementWagons" || key == "ID" || key == "DocumentID" || key == "RouteID" || key == "OriginalTrain" || key == "FullId" || key == "AnnouncementFullId" || key == "VerzijaReda" || key == "CreatedUtc" || key == "CreatedBy" || key == "IzmenjenoUtc" || key.StartsWith("__filter_"))
+                if (key == "RootTrainID" || key == "ParentTrainID" || key == "SegmentNo" || key == "CenovnikDokumentID" || key == "CenovnikVaziOd" || key == "CenovnikVaziDo" || key == "CenovnikGodina" || key == "SifarnikTrasaID" || key == "PokretanjeID" || key == "StartedAtUtc" || key == "CompletionRecorded" || key == "CompletedRecordedAtLocal" || key == "AnnouncementWagons" || key == "ID" || key == "DocumentID" || key == "RouteID" || key == "OriginalTrain" || key == "FullId" || key == "AnnouncementFullId" || key == "VerzijaReda" || key == "CreatedUtc" || key == "CreatedBy" || key == "IzmenjenoUtc" || key.StartsWith("__filter_"))
                     col.Visible = false;
             }
         }
@@ -402,6 +408,15 @@ namespace Saobracaj.Agenti_jobs
             name = table;
             GridTitles.Configure(g, true);
             saveTimer.Tick += saveTimer_Tick;
+            if (name == "OperativniPlanVozovi") grid.CellFormatting += VozoviCellFormatting;
+        }
+
+        private void VozoviCellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || grid.Columns[e.ColumnIndex].DataPropertyName != "Train") return;
+            var row = grid.Rows[e.RowIndex].DataBoundItem as DataRowView;
+            if (row != null && row.Row.RowState != DataRowState.Deleted && RaspustanjeVoza.Podred(row.Row))
+            { e.Value = ""; e.FormattingApplied = true; }
         }
 
         private void saveTimer_Tick(object sender, EventArgs e)
@@ -458,6 +473,7 @@ namespace Saobracaj.Agenti_jobs
                 Data = data;
                 GridColumnFilters.Prepare(Data);
                 grid.DataSource = Data;
+                GridTitles.Apply(grid);
                 ConfigureTrainColumns();
                 ConfigureWidths();
             }
@@ -489,7 +505,7 @@ namespace Saobracaj.Agenti_jobs
                 foreach (DataGridViewColumn c in grid.Columns)
                 {
                     c.ReadOnly = !OperationsRepository.EditableTables[name].Contains(c.DataPropertyName);
-                    if (c.DataPropertyName == "StartedAtLocal" || c.DataPropertyName == "StartedAtUtc")
+                    if (c.DataPropertyName == "StartedAtUtc")
                         c.ReadOnly = true;
                     if (c.DataPropertyName.StartsWith("Cenovnik") || c.DataPropertyName == "SifarnikTrasaID" || c.DataPropertyName == "PokretanjeID" || c.DataPropertyName == "Price" || c.DataPropertyName == "StartedAtUtc" ||
                         c.DataPropertyName == "CompletionRecorded" || c.DataPropertyName == "CompletedRecordedAtLocal" ||
@@ -498,7 +514,34 @@ namespace Saobracaj.Agenti_jobs
                     if (c.DataPropertyName == "StartedAtLocal")
                     {
                         c.HeaderText = "Vreme pokretanja";
+                        c.ReadOnly = false;
                         c.DefaultCellStyle.Format = "dd.MM.yyyy HH:mm:ss";
+                        c.ToolTipText = "Unesite datum i vreme polaska dd.MM.yyyy HH:mm:ss ili samo vreme. Izmena se cuva i u evidenciji pokretanja.";
+                    }
+                }
+                if (grid.Columns.Contains("Dissolved"))
+                {
+                    grid.Columns["Dissolved"].HeaderText = "Raspusten";
+                    grid.Columns["DissolveStation"].HeaderText = "Stanica raspustanja";
+                    grid.Columns["DissolveStation"].Width = 200;
+                    grid.Columns["DissolvedAtLocal"].HeaderText = "Vreme raspustanja";
+                    grid.Columns["DissolvedAtLocal"].DefaultCellStyle.Format = "dd.MM.yyyy HH:mm:ss";
+                    grid.Columns["DissolvedAtLocal"].Width = 180;
+                    grid.Columns["Deonica"].HeaderText = "Deonica";
+                    grid.Columns["Deonica"].Visible = false;
+                    foreach (DataGridViewRow row in grid.Rows)
+                    {
+                        var data = row.DataBoundItem as DataRowView;
+                        if (data == null) continue;
+                        bool child = RaspustanjeVoza.Podred(data.Row);
+                        row.Cells["Completed"].ReadOnly = child;
+                        row.Cells["CompletedAtLocal"].ReadOnly = child;
+                        if (child)
+                        {
+                            row.DefaultCellStyle.BackColor = Color.FromArgb(240, 247, 255);
+                            row.Cells["From"].Style.Font = new Font(grid.Font, FontStyle.Bold);
+                            row.Cells["To"].Style.Font = new Font(grid.Font, FontStyle.Bold);
+                        }
                     }
                 }
                 grid.Columns["Completed"].HeaderText = "Završen";
@@ -533,6 +576,7 @@ namespace Saobracaj.Agenti_jobs
                     try
                     {
                         grid.DataSource = Data;
+                        GridTitles.Apply(grid);
                         ConfigureTrainColumns();
                         ConfigureWidths();
                     }

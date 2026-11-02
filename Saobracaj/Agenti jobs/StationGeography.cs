@@ -1,9 +1,8 @@
-﻿using MindFusion.Text;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 
 namespace Saobracaj.Agenti_jobs
@@ -115,17 +114,20 @@ namespace Saobracaj.Agenti_jobs
             Action<PlannedTrain> block = r =>
             {
                 text.Append(r.Train).Append(' ').Append(r.From).Append(" – ").Append(r.To);
-                if (r.Started && !r.Stopped && !r.Completed)
+                if (r.Started && !r.Stopped && !r.Completed && !r.Dissolved)
                     text.Append(" (u putu)");
+                if (r.Dissolved) text.Append(" (raspusten)");
                 text.AppendLine();
-                string note = TrainText.MailNote(r.Note, r.AnnouncementNumber);
+                string note = r.Rezi
+                    ? TrainText.ReziNapomena(r.Note, r.AnnouncementWagons, r.AnnouncementNumber, r.AnnouncementFullId)
+                    : TrainText.MailNote(r.Note, r.AnnouncementNumber);
                 if (!string.IsNullOrWhiteSpace(note))
                     text.AppendLine(note.Replace("\n", Environment.NewLine));
-                if (r.Stopped)
-                    text.Append("Zaustavljen u stanici: ").AppendLine(string.IsNullOrWhiteSpace(r.StopStation) ? "[unesite stanicu]" : r.StopStation.Trim());
                 text.Append(r.Rezi ? "Reži lok. " : "lok. ").AppendLine(string.IsNullOrWhiteSpace(r.LocomotiveNumber) ? "[unesite broj lokomotive]" : r.LocomotiveNumber.Trim());
                 if (r.IsAdHoc)
                     text.AppendLine("AD HOC");
+                if (!string.IsNullOrWhiteSpace(r.StopStation))
+                    text.Append("Voz je potrebno privremeno zaustaviti u stanici ").Append(r.StopStation.Trim().TrimEnd('.')).AppendLine(".");
                 text.AppendLine();
             };
             foreach (var r in sorted.Where(x => !x.Train.Stopped))

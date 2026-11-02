@@ -638,6 +638,8 @@
     <Compile Include="Agenti jobs\PretragaStanica.cs" />
     <Compile Include="Agenti jobs\RadniNalogDopuna.cs" />
     <Compile Include="Agenti jobs\RadniNalogPravila.cs" />
+    <Compile Include="Agenti jobs\RaspustanjeVoza.cs" />
+    <Compile Include="Agenti jobs\RaspustanjeVoza.Pravila.cs" />
     <Compile Include="Agenti jobs\RNautomatskiIzbor.cs" />
     <Compile Include="Agenti jobs\RouteRules.cs" />
     <Compile Include="Agenti jobs\ShiftNoteRepository.cs" />

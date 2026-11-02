@@ -39,6 +39,8 @@ namespace Saobracaj.Agenti_jobs
         public string Note { get; set; } = "";
         public string LocomotiveNumber { get; set; } = "";
         public string AnnouncementNumber { get; set; } = "";
+        public string AnnouncementWagons { get; set; } = "";
+        public string AnnouncementFullId { get; set; } = "";
         public bool Rezi { get; set; }
         public bool IsAdHoc { get; set; }
         public bool Started { get; set; }
@@ -46,6 +48,9 @@ namespace Saobracaj.Agenti_jobs
         public DateTime? StartedAtLocal { get; set; }
         public bool Completed { get; set; }
         public DateTime? CompletedAtLocal { get; set; }
+        public bool Dissolved { get; set; }
+        public string DissolveStation { get; set; } = "";
+        public DateTime? DissolvedAtLocal { get; set; }
         public bool Stopped { get; set; }
         public string StopStation { get; set; } = "";
     }
@@ -79,10 +84,10 @@ namespace Saobracaj.Agenti_jobs
         {
             if (weight <= 0)
                 throw new InvalidOperationException("Unesite težinu veću od nule.");
-            if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
-                throw new InvalidOperationException("Unesite otpravnu i uputnu stanicu.");
-            return routes.Where(r => PretragaStanica.Poklapa(r.From, from) &&
-                PretragaStanica.Poklapa(r.To, to) && r.MaxWeight.HasValue &&
+            if (string.IsNullOrWhiteSpace(from) && string.IsNullOrWhiteSpace(to))
+                throw new InvalidOperationException("Unesite bar jednu stanicu i tezinu voza.");
+            return routes.Where(r => (string.IsNullOrWhiteSpace(from) || PretragaStanica.Poklapa(r.From, from)) &&
+                (string.IsNullOrWhiteSpace(to) || PretragaStanica.Poklapa(r.To, to)) && r.MaxWeight.HasValue &&
                 r.MaxWeight.Value >= weight).OrderBy(r => r.Price ?? decimal.MaxValue).ToList();
         }
 
@@ -168,6 +173,15 @@ namespace Saobracaj.Agenti_jobs
                  text.Length > prefix.Length && char.IsWhiteSpace(text[prefix.Length])))
                 return text;
             return prefix + (text.Length == 0 ? "" : " " + text);
+        }
+
+        public static string ReziNapomena(string note, string wagons, string announcement, string fullId)
+        {
+            string text = WithWagons(note, wagons, null);
+            foreach (var id in new[] { fullId, announcement }.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct())
+                text = Regex.Replace(text, @"\bID\s*:?\s*" + Regex.Escape(id) + @"(?![0-9])", "", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"[ \t]+", " ");
+            return text.Trim();
         }
 
         public static string MailNote(string note, string announcement)

@@ -39,13 +39,14 @@ namespace Saobracaj.Agenti_jobs
         {
             var sections = new List<Deonica>();
             var usedPrevozi = new HashSet<long>();
-            foreach (var group in realizacije.Rows.Cast<DataRow>().GroupBy(r => Convert.ToInt64(r["PrevozID"])))
+            foreach (var group in realizacije.Rows.Cast<DataRow>().GroupBy(r => r.Table.Columns.Contains("GlavniPrevozID") && !r.IsNull("GlavniPrevozID") ? Convert.ToInt64(r["GlavniPrevozID"]) : Convert.ToInt64(r["PrevozID"])))
             {
                 long id = group.Key;
-                usedPrevozi.Add(id);
+                foreach (DataRow part in group) usedPrevozi.Add(Convert.ToInt64(part["PrevozID"]));
                 // Samo izricito povezana realizacija sme deliti identitet izmedju vise RN.
                 // Ne spajamo istorijske voznje samo zato sto imaju isti broj i datum.
                 foreach (var same in group.GroupBy(r => new {
+                    Segment = Convert.ToInt64(r["PrevozID"]),
                     Broj = Broj(r),
                     Od = Tekst(r, "StanicaOd"),
                     Do = Tekst(r, "StanicaDo"),
@@ -80,7 +81,7 @@ namespace Saobracaj.Agenti_jobs
                 string original = Tekst(r, "OriginalTrain"), actual = Tekst(r, "Train");
                 sections.Add(new Deonica
                 {
-                    Grupa = "V" + id,
+                    Grupa = "V" + (r.Table.Columns.Contains("RootTrainID") && !r.IsNull("RootTrainID") ? Convert.ToInt64(r["RootTrainID"]) : id),
                     Broj = original.Length > 0 && original != actual ? actual + " (" + original + ")" : actual,
                     Relacija = Tekst(r, "From") + " – " + Tekst(r, "To"),
                     Polazak = start,

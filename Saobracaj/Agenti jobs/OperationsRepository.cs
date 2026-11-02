@@ -80,7 +80,10 @@ namespace Saobracaj.Agenti_jobs
                     "Completed",
                     "CompletedAtLocal",
                     "Stopped",
-                    "StopStation"
+                    "StopStation",
+                    "Dissolved",
+                    "DissolveStation",
+                    "DissolvedAtLocal"
                 }
             }
         };
@@ -92,8 +95,7 @@ namespace Saobracaj.Agenti_jobs
             {
                 if (table == "OperativniPlanVozovi" && synchronizeStarts)
                     SynchronizeStartHistory(c);
-                return Db.Table(c, null, "SELECT * FROM dbo.[" + table + "]" +
-                    (table == "OperativniPlanVozovi" ? " WHERE CompletionRecorded=0" : "") + " ORDER BY ID");
+                return Db.Table(c, null, (table == "OperativniPlanVozovi" ? "SELECT *,CASE WHEN ParentTrainID IS NULL THEN N'Glavna' ELSE N'    Podred '+CAST(SegmentNo AS nvarchar(10)) END AS Deonica FROM dbo.OperativniPlanVozovi WHERE CompletionRecorded=0 ORDER BY COALESCE(RootTrainID,ID),SegmentNo,ID" : "SELECT * FROM dbo.[" + table + "] ORDER BY ID"));
             }
         }
 
@@ -130,8 +132,23 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
                 {
                     if (table == "OperativniPlanVozovi")
                         Db.Lock(c, tx, "OperativniPlanTrainNumbers");
+                    var removedTrainIds = new HashSet<long>();
+                    if (table == "OperativniPlanVozovi")
+                    {
+                        // Obrade brisanja prethode izmenama; kaskadno obrisani redovi se ne cuvaju ponovo.
+                        foreach (DataRow deleted in changes.Rows.Cast<DataRow>().Where(x => x.RowState == DataRowState.Deleted).OrderBy(x => Convert.ToInt32(x["SegmentNo", DataRowVersion.Original])))
+                        {
+                            long deletedId = Convert.ToInt64(deleted["ID", DataRowVersion.Original]);
+                            if (removedTrainIds.Contains(deletedId)) continue;
+                            using (var check = Db.Command(c, tx, "SELECT COUNT(*) FROM dbo.OperativniPlanVozovi WITH(UPDLOCK,HOLDLOCK) WHERE ID=@id AND VerzijaReda=@rv", "@id", deletedId, "@rv", deleted["VerzijaReda", DataRowVersion.Original]))
+                                if (Convert.ToInt32(check.ExecuteScalar()) != 1) throw new DBConcurrencyException("Red je promenjen. Ponovo ucitajte tabelu.");
+                            removedTrainIds.UnionWith(RaspustanjeVoza.ObrisiDeonicu(c, tx, deletedId, true));
+                        }
+                    }
                     foreach (DataRow r in changes.Rows)
                     {
+                        if (table == "OperativniPlanVozovi" && (r.RowState == DataRowState.Deleted ||
+                            (r.RowState != DataRowState.Added && removedTrainIds.Contains(Convert.ToInt64(r["ID"]))))) continue;
                         if (r.RowState == DataRowState.Added)
                         {
                             if (table == "OperativniPlanVozovi")
@@ -151,11 +168,17 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
                             var rv = r["VerzijaReda", DataRowVersion.Original];
                             string sql;
                             if (r.RowState == DataRowState.Deleted)
+                            {
                                 sql = "DELETE FROM dbo.[" + table + "] WHERE ID=@id AND VerzijaReda=@rv";
+                            }
                             else
                             {
                                 if (table == "OperativniPlanVozovi")
                                 {
+                                    if (Convert.ToBoolean(r["Rezi"]))
+                                        r["Note"] = TrainText.WithWagons(Db.Text(r, "Note"), Db.Text(r, "AnnouncementWagons"), null);
+                                    else if (Convert.ToBoolean(r["Rezi", DataRowVersion.Original]))
+                                        r["Note"] = TrainText.WithWagons(Db.Text(r, "Note"), Db.Text(r, "AnnouncementWagons"), Db.Text(r, "AnnouncementWagons"));
                                     if (Convert.ToBoolean(r["Completed"])) RadniNalogDopuna.ProveriNajavuZaZavrsetak(r);
                                     bool after = Convert.ToBoolean(r["Started"]);
                                     if (!after)
@@ -165,9 +188,18 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
                                     }
                                     else
                                     {
-                                        if (r.IsNull("StartedAtUtc")) r["StartedAtUtc"] = DateTime.UtcNow;
-                                        if (r.IsNull("StartedAtLocal")) r["StartedAtLocal"] = DateTime.Now;
+                                        bool localChanged = !Equals(r["StartedAtLocal"], r["StartedAtLocal", DataRowVersion.Original]);
+                                        if (r.IsNull("StartedAtLocal"))
+                                        {
+                                            if (localChanged) throw new InvalidOperationException("Pokrenuti voz mora imati vreme polaska.");
+                                            r["StartedAtLocal"] = DateTime.Now;
+                                        }
+                                        DateTime polazak = Convert.ToDateTime(r["StartedAtLocal"]);
+                                        if (polazak < new DateTime(1900, 1, 2)) throw new InvalidOperationException("Unesite ispravan datum polaska.");
+                                        if (localChanged || r.IsNull("StartedAtUtc"))
+                                            r["StartedAtUtc"] = DateTime.SpecifyKind(polazak, DateTimeKind.Local).ToUniversalTime();
                                     }
+                                    RaspustanjeVoza.ProveriRed(r);
                                     if (Convert.ToBoolean(r["Completed"]) && r.IsNull("CompletedAtLocal"))
                                         r["CompletedAtLocal"] = DateTime.Now;
                                     if (!Convert.ToBoolean(r["Completed"]))
@@ -187,10 +219,9 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
                             }
                             if (table == "OperativniPlanVozovi" && r.RowState != DataRowState.Deleted)
                             {
-                                bool before = Convert.ToBoolean(r["Started", DataRowVersion.Original]);
+                                RaspustanjeVoza.PosleCuvanja(c, tx, r);
                                 bool after = Convert.ToBoolean(r["Started"]);
-                                bool restarted = before && after && !Equals(r["StartedAtUtc"], r["StartedAtUtc", DataRowVersion.Original]);
-                                if (!after || restarted)
+                                if (!after)
                                     DeleteStart(c, tx, Convert.ToInt64(id));
                                 if (after)
                                     InsertStart(c, tx, Convert.ToInt64(id), Db.Text(r, "Train"),
@@ -287,7 +318,7 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
 
         public static List<PlannedTrain> Plans(DataTable data)
         {
-            return data.Rows.Cast<DataRow>().Where(r => r.RowState != DataRowState.Deleted).Select(r => new PlannedTrain { ID = Convert.ToInt64(r["ID"]), Train = Db.Text(r, "Train"), From = Db.Text(r, "From"), To = Db.Text(r, "To"), Weight = Convert.ToDecimal(r["Weight"]), MaxWeight = r.IsNull("MaxWeight") ? (decimal?)null : Convert.ToDecimal(r["MaxWeight"]), Price = r.IsNull("Price") ? (decimal?)null : Convert.ToDecimal(r["Price"]), Note = Db.Text(r, "Note"), LocomotiveNumber = Db.Text(r, "LocomotiveNumber"), AnnouncementNumber = Db.Text(r, "AnnouncementNumber"), Rezi = Convert.ToBoolean(r["Rezi"]), IsAdHoc = Convert.ToBoolean(r["IsAdHoc"]), Started = Convert.ToBoolean(r["Started"]), StartedAtUtc = r.IsNull("StartedAtUtc") ? (DateTime?)null : Convert.ToDateTime(r["StartedAtUtc"]), StartedAtLocal = r.IsNull("StartedAtLocal") ? (DateTime?)null : Convert.ToDateTime(r["StartedAtLocal"]), Completed = Convert.ToBoolean(r["Completed"]), CompletedAtLocal = r.IsNull("CompletedAtLocal") ? (DateTime?)null : Convert.ToDateTime(r["CompletedAtLocal"]), Stopped = Convert.ToBoolean(r["Stopped"]), StopStation = Db.Text(r, "StopStation") }).ToList();
+            return data.Rows.Cast<DataRow>().Where(r => r.RowState != DataRowState.Deleted).Select(r => new PlannedTrain { ID = Convert.ToInt64(r["ID"]), Train = Db.Text(r, "Train"), From = Db.Text(r, "From"), To = Convert.ToBoolean(r["Dissolved"]) ? Db.Text(r, "DissolveStation") : Db.Text(r, "To"), Weight = Convert.ToDecimal(r["Weight"]), MaxWeight = r.IsNull("MaxWeight") ? (decimal?)null : Convert.ToDecimal(r["MaxWeight"]), Price = r.IsNull("Price") ? (decimal?)null : Convert.ToDecimal(r["Price"]), Note = Db.Text(r, "Note"), LocomotiveNumber = Db.Text(r, "LocomotiveNumber"), AnnouncementNumber = Db.Text(r, "AnnouncementNumber"), AnnouncementWagons = Db.Text(r, "AnnouncementWagons"), AnnouncementFullId = Db.Text(r, "AnnouncementFullId"), Rezi = Convert.ToBoolean(r["Rezi"]), IsAdHoc = Convert.ToBoolean(r["IsAdHoc"]), Started = Convert.ToBoolean(r["Started"]), StartedAtUtc = r.IsNull("StartedAtUtc") ? (DateTime?)null : Convert.ToDateTime(r["StartedAtUtc"]), StartedAtLocal = r.IsNull("StartedAtLocal") ? (DateTime?)null : Convert.ToDateTime(r["StartedAtLocal"]), Completed = Convert.ToBoolean(r["Completed"]), CompletedAtLocal = r.IsNull("CompletedAtLocal") ? (DateTime?)null : Convert.ToDateTime(r["CompletedAtLocal"]), Dissolved = Convert.ToBoolean(r["Dissolved"]), DissolveStation = Db.Text(r, "DissolveStation"), DissolvedAtLocal = r.IsNull("DissolvedAtLocal") ? (DateTime?)null : Convert.ToDateTime(r["DissolvedAtLocal"]), Stopped = Convert.ToBoolean(r["Stopped"]), StopStation = Db.Text(r, "StopStation") }).ToList();
         }
 
         public static long AddTrain(RouteInfo route, string from, string to, string number, decimal weight, bool adhoc)
@@ -313,7 +344,7 @@ order by Najava.ID desc", "@previous", years[0], "@current", years[1]);
                     }
 
                     // Istorija pokretanja nije rezervacija za narednu vožnju.
-                    var reservations = Plans(Db.Table(c, tx, "SELECT * FROM dbo.OperativniPlanVozovi WHERE CompletionRecorded=0 AND Started=0"));
+                    var reservations = Plans(Db.Table(c, tx, "SELECT * FROM dbo.OperativniPlanVozovi WHERE CompletionRecorded=0 AND Started=0 AND ParentTrainID IS NULL"));
                     number = RouteRules.Allocate(number.Trim(), reservations, DateTime.UtcNow);
                     if (adhoc) Db.Lock(c, tx, "OperativniPlanRouteCatalog");
                     var document = Db.Table(c, tx, @"SELECT d.ID,d.VaziOd,d.VaziDo,d.Godina
@@ -344,13 +375,13 @@ FROM dbo.OperativniPlanPodesavanje p JOIN dbo.OperativniPlanTraseDokument d ON d
             {
                 try
                 {
-                    var rows = Db.Table(c, tx, "SELECT Note,AnnouncementWagons FROM dbo.OperativniPlanVozovi WHERE ID=@id AND VerzijaReda=@rv AND CompletionRecorded=0",
+                    var rows = Db.Table(c, tx, "SELECT Note,AnnouncementWagons,Rezi FROM dbo.OperativniPlanVozovi WHERE ID=@id AND VerzijaReda=@rv AND CompletionRecorded=0",
                         "@id", id, "@rv", rowVersion);
                     if (rows.Rows.Count != 1)
                         throw new DBConcurrencyException("Voz je u međuvremenu promenjen. Ponovo učitajte spisak.");
                     var old = rows.Rows[0];
                     string composition = fullId == null ? null : wagons;
-                    string note = TrainText.WithWagons(Db.Text(old, "Note"), Db.Text(old, "AnnouncementWagons"), composition);
+                    string note = TrainText.WithWagons(Db.Text(old, "Note"), Db.Text(old, "AnnouncementWagons"), Convert.ToBoolean(old["Rezi"]) ? null : composition);
                     using (var cmd = Db.Command(c, tx, @"UPDATE dbo.OperativniPlanVozovi SET
 AnnouncementFullId=@full,AnnouncementNumber=@short,AnnouncementPayer=@payer,AnnouncementWagons=@wagons,Note=@note,IzmenjenoUtc=GETUTCDATE()
 WHERE ID=@id AND VerzijaReda=@rv AND CompletionRecorded=0", "@id", id, "@rv", rowVersion, "@full", fullId,
@@ -366,13 +397,24 @@ WHERE ID=@id AND VerzijaReda=@rv AND CompletionRecorded=0", "@id", id, "@rv", ro
 
         private static void InsertStart(SqlConnection c, SqlTransaction tx, long id, string train, DateTime local, decimal? price, bool adhoc)
         {
+            using (var segment = Db.Command(c, tx, "SELECT ParentTrainID FROM dbo.OperativniPlanVozovi WHERE ID=@id", "@id", id))
+            {
+                object parent = segment.ExecuteScalar();
+                if (parent != null && parent != DBNull.Value) return; // Nastavak nije novo koriscenje trase.
+            }
             // The relationship is on the train, keeping the history table at the requested six columns.
             using (var existing = Db.Command(c, tx, @"SELECT p.ID
 FROM dbo.OperativniPlanVozovi v JOIN dbo.OperativniPlanPokretanja p ON p.ID=v.PokretanjeID
 WHERE v.ID=@id", "@id", id))
             {
                 object value = existing.ExecuteScalar();
-                if (value != null && value != DBNull.Value) return;
+                if (value != null && value != DBNull.Value)
+                {
+                    // Ispravka vremena cuva isti ID i vec unetu cenu (ukljucujuci AdHoc cenu).
+                    using (var update = Db.Command(c, tx, "UPDATE dbo.OperativniPlanPokretanja SET VremePokretanja=@local WHERE ID=@history AND VremePokretanja<>@local",
+                        "@local", local, "@history", Convert.ToInt64(value))) update.ExecuteNonQuery();
+                    return;
+                }
             }
 
             long history;
@@ -401,7 +443,7 @@ UPDATE dbo.OperativniPlanVozovi SET PokretanjeID=NULL WHERE ID=@id;", "@id", id)
         private static void SynchronizeStartHistory(SqlConnection c)
         {
             using (var check = Db.Command(c, null, @"SELECT TOP 1 v.ID
-FROM dbo.OperativniPlanVozovi v WHERE v.Started=1 AND v.StartedAtUtc IS NOT NULL AND
+FROM dbo.OperativniPlanVozovi v WHERE v.ParentTrainID IS NULL AND v.Started=1 AND v.StartedAtUtc IS NOT NULL AND
 (v.StartedAtLocal IS NULL OR NOT EXISTS(SELECT 1 FROM dbo.OperativniPlanPokretanja p WHERE p.ID=v.PokretanjeID))"))
                 if (check.ExecuteScalar() == null) return;
             using (var tx = c.BeginTransaction())
@@ -410,7 +452,7 @@ FROM dbo.OperativniPlanVozovi v WHERE v.Started=1 AND v.StartedAtUtc IS NOT NULL
                 {
                     Db.Lock(c, tx, "OperativniPlanTrainNumbers");
                     var rows = Db.Table(c, tx, @"SELECT v.ID,v.Train,v.Price,v.IsAdHoc,v.StartedAtUtc,v.StartedAtLocal
-FROM dbo.OperativniPlanVozovi v WHERE v.Started=1 AND v.StartedAtUtc IS NOT NULL AND
+FROM dbo.OperativniPlanVozovi v WHERE v.ParentTrainID IS NULL AND v.Started=1 AND v.StartedAtUtc IS NOT NULL AND
 (v.StartedAtLocal IS NULL OR NOT EXISTS(SELECT 1 FROM dbo.OperativniPlanPokretanja p WHERE p.ID=v.PokretanjeID))");
                     foreach (DataRow row in rows.Rows)
                     {

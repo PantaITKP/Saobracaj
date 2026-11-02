@@ -70,6 +70,12 @@ namespace Saobracaj.Agenti_jobs
                 OperationalSession.UserName = user;
             numericUpDown1.Maximum = 100000;
             numericUpDown1.Minimum = 0;
+            numericUpDown2.Minimum = 0;
+            numericUpDown2.Maximum = 100000;
+            numericUpDown2.DecimalPlaces = 3;
+            AdhocPolje.CheckedChanged -= chkAdhock_CheckedChanged;
+            AdhocPolje.CheckedChanged -= chkAdhoc_CheckedChanged;
+            AdhocPolje.CheckedChanged += chkAdhoc_CheckedChanged;
             richTextBox1.ReadOnly = true;
             richTextBox1.HideSelection = false;
 
@@ -219,15 +225,29 @@ namespace Saobracaj.Agenti_jobs
             }
         }
 
+        private CheckBox AdhocPolje
+        {
+            get
+            {
+                var control = Controls.Find("chkAdhoc", true).FirstOrDefault() as CheckBox;
+                control = control ?? Controls.Find("chkAdhock", true).FirstOrDefault() as CheckBox;
+                if (control == null) throw new InvalidOperationException("Nedostaje AdHoc checkbox chkAdhoc ili chkAdhock.");
+                return control;
+            }
+        }
+        private void chkAdhoc_CheckedChanged(object sender, EventArgs e) { SetAdhoc(); }
+        private void numericUpDown2_ValueChanged(object sender, EventArgs e) { /* Tezina AdHoc voznje cita se pri dodavanju. */ }
+
         private void SetAdhoc()
         {
-            txtOtpravnaAH.Enabled = chkAdhock.Checked;
-            txtUputnaAH.Enabled = chkAdhock.Checked;
-            txtTrasa.Enabled = chkAdhock.Checked;
-            btnAdhoc.Enabled = chkAdhock.Checked;
-            txtOtpravna.Enabled = !chkAdhock.Checked;
-            txtUputna.Enabled = !chkAdhock.Checked;
-            btnPredloziTrase.Enabled = !chkAdhock.Checked;
+            txtOtpravnaAH.Enabled = AdhocPolje.Checked;
+            txtUputnaAH.Enabled = AdhocPolje.Checked;
+            txtTrasa.Enabled = AdhocPolje.Checked;
+            btnAdhoc.Enabled = AdhocPolje.Checked;
+            numericUpDown2.Enabled = AdhocPolje.Checked;
+            txtOtpravna.Enabled = !AdhocPolje.Checked;
+            txtUputna.Enabled = !AdhocPolje.Checked;
+            btnPredloziTrase.Enabled = !AdhocPolje.Checked;
             ClearProposal();
         }
 
@@ -309,7 +329,7 @@ namespace Saobracaj.Agenti_jobs
             var train = Selected(dgvVozovi);
             DataRow announcement = remove ? null : Selected(dgvNajava);
             string full = remove ? null : Db.Text(announcement, "FullId");
-            if (MessageBox.Show(this, remove ? "Ukloniti vezu sa najavom?" : "Povezati voz " + train["Train"] + " sa najavom " + Db.Text(announcement, "BrojNajave") + "?", "Potvrda", MessageBoxButtons.YesNo) != DialogResult.Yes)
+            if (remove && MessageBox.Show(this, "Ukloniti vezu sa najavom?", "Potvrda", MessageBoxButtons.YesNo) != DialogResult.Yes)
                 return;
             long id = Convert.ToInt64(train["ID"]);
             OperationsRepository.LinkNajava(id, (byte[])train["VerzijaReda"], full, remove ? null : Db.Text(announcement, "Platilac"), remove ? null : Db.Text(announcement, "Kola"));
@@ -436,8 +456,8 @@ namespace Saobracaj.Agenti_jobs
 
         private void dgvMreza_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
         {
-            if (MessageBox.Show(this, "Obrisati označeni red?", "Potvrda", MessageBoxButtons.YesNo) != DialogResult.Yes)
-                e.Cancel = true;
+            // Brisanje podreda ne zahteva potvrdu ni proveru pokretanja.
+            // Glavni red uklanja ceo lanac; podred uklanja sebe i naredne nastavke.
         }
 
         private void dgvMreza_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
@@ -639,6 +659,30 @@ namespace Saobracaj.Agenti_jobs
             var view = dgvVozovi.Rows[e.RowIndex].DataBoundItem as DataRowView;
             if (view == null) return;
             string column = dgvVozovi.Columns[e.ColumnIndex].DataPropertyName;
+            if (column == "Dissolved")
+            {
+                changingTrainStatus = true;
+                try
+                {
+                    RaspustanjeVoza.ProveriRed(view.Row);
+                }
+                catch (Exception ex)
+                {
+                    view["Dissolved"] = view.Row.HasVersion(DataRowVersion.Original) && Convert.ToBoolean(view.Row["Dissolved", DataRowVersion.Original]);
+                    MessageBox.Show(this, ex.Message, "Raspustanje");
+                }
+                finally { changingTrainStatus = false; }
+                QueueVozoviStatus();
+                return;
+            }
+            if (column == "Rezi")
+            {
+                string composition = Db.Text(view.Row, "AnnouncementWagons");
+                view["Note"] = TrainText.WithWagons(Db.Text(view.Row, "Note"), composition,
+                    Convert.ToBoolean(view["Rezi"]) ? null : composition);
+                gridVozovi.Schedule();
+                return;
+            }
             if (column == "Started" || column == "Completed")
             {
                 changingTrainStatus = true;
@@ -747,7 +791,7 @@ namespace Saobracaj.Agenti_jobs
             // U rezultatima su stvarne stanice i dozvoljene trase iz Excel-a.
             try
             {
-                if (chkAdhock.Checked)
+                if (AdhocPolje.Checked)
                     throw new InvalidOperationException("Za ad hoc koristite ručna polja i Dodaj Ad hoc.");
                 catalog = OperationsRepository.LoadCatalog();
                 if (catalog.Routes.Count == 0)
@@ -760,7 +804,7 @@ namespace Saobracaj.Agenti_jobs
                 GridColumnFilters.Reset(dgvTrase);
                 btnDodeliTrasu.Enabled = proposed.Count > 0;
                 if (proposed.Count == 0)
-                    MessageBox.Show(this, "Nema trase za zadatu relaciju, smer i težinu.");
+                    MessageBox.Show(this, "Nema trase za zadatu stanicu/relaciju, smer i tezinu.");
             }
             catch (Exception ex)
             {
@@ -773,7 +817,7 @@ namespace Saobracaj.Agenti_jobs
             //izabranu trasu iz dgvTrase upisuje u dgvVozovi
             try
             {
-                if (chkAdhock.Checked)
+                if (AdhocPolje.Checked)
                     throw new InvalidOperationException("Ad hoc se dodaje ručnim unosom.");
                 var selected = Selected(dgvTrase);
                 var route = proposed.Single(r => r.ID == Convert.ToInt64(selected["ID"]));
@@ -794,10 +838,17 @@ namespace Saobracaj.Agenti_jobs
             //u dgvVozovi upisuje adhoc trasu sa rucno unetim nazivom pocetne,krajnje  stanice, tezine i broja trase
             try
             {
-                if (!chkAdhock.Checked)
+                if (!AdhocPolje.Checked)
                     throw new InvalidOperationException("Prvo označite Ad hoc.");
                 gridVozovi.Save();
-                var id = OperationsRepository.AddTrain(null, txtOtpravnaAH.Text, txtUputnaAH.Text, txtTrasa.Text.Trim(), numericUpDown1.Value, true);
+                var id = OperationsRepository.AddTrain(null, txtOtpravnaAH.Text, txtUputnaAH.Text, txtTrasa.Text.Trim(), numericUpDown2.Value, true);
+                // Ciscenje tek nakon uspesnog upisa; redovna tezina ostaje sacuvana.
+                txtOtpravnaAH.Clear();
+                txtUputnaAH.Clear();
+                txtTrasa.Clear();
+                numericUpDown2.Value = 0;
+                AdhocPolje.Checked = false;
+                SetAdhoc();
                 FillDGVVozovi(id);
             }
             catch (Exception ex)
@@ -1009,35 +1060,44 @@ namespace Saobracaj.Agenti_jobs
             BeginInvoke(new Action(SaveVozoviStatus));
         }
 
-        private DateTime CompletionDate(int row)
+        private DateTime ReferentniDatumVoznje(int row, string column)
         {
             var view = dgvVozovi.Rows[row].DataBoundItem as DataRowView;
-            return view == null || view.Row.IsNull("CompletedAtLocal") ? DateTime.Today : Convert.ToDateTime(view["CompletedAtLocal"]).Date;
+            return view == null || view.Row.IsNull(column) ? DateTime.Today : Convert.ToDateTime(view[column]).Date;
         }
-
         private void dgvVozovi_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
-            if (e.RowIndex < 0 || dgvVozovi.Columns[e.ColumnIndex].DataPropertyName != "CompletedAtLocal") return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            string column = dgvVozovi.Columns[e.ColumnIndex].DataPropertyName;
+            if (column != "CompletedAtLocal" && column != "StartedAtLocal" && column != "DissolvedAtLocal") return;
             try
             {
-                TrainText.ParseCompletionTime(Convert.ToString(e.FormattedValue), CompletionDate(e.RowIndex));
+                var value = TrainText.ParseCompletionTime(Convert.ToString(e.FormattedValue), ReferentniDatumVoznje(e.RowIndex, column));
+                var view = dgvVozovi.Rows[e.RowIndex].DataBoundItem as DataRowView;
+                if (column == "StartedAtLocal" && view != null && !Convert.ToBoolean(view["Started"]) && value.HasValue)
+                    throw new FormatException("Najpre oznacite da je voz pokrenut.");
+                if (column == "StartedAtLocal" && view != null && Convert.ToBoolean(view["Started"]) && !value.HasValue)
+                    throw new FormatException("Pokrenuti voz mora imati vreme polaska.");
+                if (column == "DissolvedAtLocal" && view != null && Convert.ToBoolean(view["Dissolved"]) && Convert.ToBoolean(view["Started"]) && !value.HasValue)
+                    throw new FormatException("Raspusteni voz mora imati vreme raspustanja.");
                 dgvVozovi.Rows[e.RowIndex].ErrorText = "";
             }
             catch (FormatException)
             {
                 e.Cancel = true;
-                dgvVozovi.Rows[e.RowIndex].ErrorText = "Unesite vreme kao 14:30 ili pun datum i vreme.";
-                MessageBox.Show(this, "Unesite vreme kao 14:30. Možete uneti i pun datum i vreme, u obliku dd.MM.yyyy HH:mm.", "Vreme završetka");
+                dgvVozovi.Rows[e.RowIndex].ErrorText = "Unesite datum i vreme ili samo vreme (14:30).";
+                MessageBox.Show(this, "Unesite vreme kao 14:30 ili datum i vreme dd.MM.yyyy HH:mm:ss. Pokrenuti voz mora imati vreme polaska; za izmenu najpre oznacite da je pokrenut.", "Vreme voznje");
             }
         }
-
         private void dgvVozovi_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
         {
-            if (e.RowIndex < 0 || dgvVozovi.Columns[e.ColumnIndex].DataPropertyName != "CompletedAtLocal") return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            string column = dgvVozovi.Columns[e.ColumnIndex].DataPropertyName;
+            if (column != "CompletedAtLocal" && column != "StartedAtLocal" && column != "DissolvedAtLocal") return;
             if (e.Value is DateTime) { e.ParsingApplied = true; return; }
             try
             {
-                e.Value = (object)TrainText.ParseCompletionTime(Convert.ToString(e.Value), CompletionDate(e.RowIndex)) ?? DBNull.Value;
+                e.Value = (object)TrainText.ParseCompletionTime(Convert.ToString(e.Value), ReferentniDatumVoznje(e.RowIndex, column)) ?? DBNull.Value;
                 e.ParsingApplied = true;
             }
             catch (FormatException) { e.ParsingApplied = false; }
@@ -1052,7 +1112,8 @@ namespace Saobracaj.Agenti_jobs
             try
             {
                 gridVozovi.Save();
-                var snapshot = gridVozovi.Data.Copy();
+                var originalSnapshot = gridVozovi.Data.Copy();
+                var snapshot = await Task.Run(() => RaspustanjeVoza.Pripremi(originalSnapshot));
                 var plans = await Task.Run(() => SifarnikTrasaServis.Ucitaj(snapshot));
                 if (IsDisposed || Disposing) return;
                 if (plans.Count == 0)
@@ -1067,7 +1128,7 @@ namespace Saobracaj.Agenti_jobs
                     return;
                 }
                 if (MessageBox.Show(this, "Evidentirati " + plans.Count +
-                    " završenih prevoza i proveriti godišnji šifarnik trasa? Uključeni su i označeni redovi skriveni filterom.",
+                    " deonica zavrsenih voznji i proveriti godisnji sifarnik trasa? Uključeni su i označeni redovi skriveni filterom.",
                     "Završeni prevozi", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
                 foreach (var p in plans)
                 {
@@ -1158,7 +1219,7 @@ namespace Saobracaj.Agenti_jobs
                     MessageBox.Show(this, "Prevozi su evidentirani (" + count + "), ali prikaz nije osvežen. Ponovo otvorite formu.\n" + ex.Message);
                     return;
                 }
-                MessageBox.Show(this, "Evidentirano prevoza: " + count);
+                MessageBox.Show(this, "Evidentirano deonica: " + count);
             }
             catch (Exception ex)
             {

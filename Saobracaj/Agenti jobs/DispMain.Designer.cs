@@ -31,7 +31,9 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabTrase = new System.Windows.Forms.TabPage();
             this.btnEvidentiraj = new System.Windows.Forms.Button();
+            this.txtUputna = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
+            this.txtOtpravna = new System.Windows.Forms.TextBox();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
@@ -66,8 +68,8 @@
             this.dgvLokomotive = new System.Windows.Forms.DataGridView();
             this.tabNapomenaSmene = new System.Windows.Forms.TabPage();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.txtOtpravna = new System.Windows.Forms.TextBox();
-            this.txtUputna = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.numericUpDown2 = new System.Windows.Forms.NumericUpDown();
             this.tabControl1.SuspendLayout();
             this.tabTrase.SuspendLayout();
             this.tabControl2.SuspendLayout();
@@ -85,6 +87,7 @@
             this.tabLokomotive.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvLokomotive)).BeginInit();
             this.tabNapomenaSmene.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -143,6 +146,13 @@
             this.btnEvidentiraj.UseVisualStyleBackColor = false;
             this.btnEvidentiraj.Click += new System.EventHandler(this.btnEvidentiraj_Click);
             // 
+            // txtUputna
+            // 
+            this.txtUputna.Location = new System.Drawing.Point(366, 34);
+            this.txtUputna.Name = "txtUputna";
+            this.txtUputna.Size = new System.Drawing.Size(262, 22);
+            this.txtUputna.TabIndex = 1;
+            // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.SystemColors.ControlLightLight;
@@ -153,6 +163,13 @@
             this.button1.Text = "Očisti stanice";
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // txtOtpravna
+            // 
+            this.txtOtpravna.Location = new System.Drawing.Point(11, 35);
+            this.txtOtpravna.Name = "txtOtpravna";
+            this.txtOtpravna.Size = new System.Drawing.Size(262, 22);
+            this.txtOtpravna.TabIndex = 1;
             // 
             // tabControl2
             // 
@@ -317,7 +334,7 @@
             // btnAdhoc
             // 
             this.btnAdhoc.BackColor = System.Drawing.SystemColors.Info;
-            this.btnAdhoc.Location = new System.Drawing.Point(815, 63);
+            this.btnAdhoc.Location = new System.Drawing.Point(952, 68);
             this.btnAdhoc.Name = "btnAdhoc";
             this.btnAdhoc.Size = new System.Drawing.Size(107, 43);
             this.btnAdhoc.TabIndex = 4;
@@ -346,9 +363,11 @@
             this.panelAdhock.Controls.Add(this.label4);
             this.panelAdhock.Controls.Add(this.label6);
             this.panelAdhock.Controls.Add(this.label5);
+            this.panelAdhock.Controls.Add(this.numericUpDown2);
+            this.panelAdhock.Controls.Add(this.label7);
             this.panelAdhock.Location = new System.Drawing.Point(11, 63);
             this.panelAdhock.Name = "panelAdhock";
-            this.panelAdhock.Size = new System.Drawing.Size(775, 89);
+            this.panelAdhock.Size = new System.Drawing.Size(911, 89);
             this.panelAdhock.TabIndex = 3;
             // 
             // txtTrasa
@@ -557,19 +576,24 @@
             this.richTextBox2.Text = "";
             this.richTextBox2.TextChanged += new System.EventHandler(this.richTextBox2_TextChanged);
             // 
-            // txtOtpravna
+            // label7
             // 
-            this.txtOtpravna.Location = new System.Drawing.Point(11, 35);
-            this.txtOtpravna.Name = "txtOtpravna";
-            this.txtOtpravna.Size = new System.Drawing.Size(262, 22);
-            this.txtOtpravna.TabIndex = 1;
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(768, 33);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(68, 16);
+            this.label7.TabIndex = 0;
+            this.label7.Text = "Težina (T)";
             // 
-            // txtUputna
+            // numericUpDown2
             // 
-            this.txtUputna.Location = new System.Drawing.Point(366, 34);
-            this.txtUputna.Name = "txtUputna";
-            this.txtUputna.Size = new System.Drawing.Size(262, 22);
-            this.txtUputna.TabIndex = 1;
+            this.numericUpDown2.DecimalPlaces = 2;
+            this.numericUpDown2.Location = new System.Drawing.Point(771, 54);
+            this.numericUpDown2.Name = "numericUpDown2";
+            this.numericUpDown2.Size = new System.Drawing.Size(85, 22);
+            this.numericUpDown2.TabIndex = 2;
+            this.numericUpDown2.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
             // 
             // DispMain
             // 
@@ -604,6 +628,7 @@
             this.tabLokomotive.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dgvLokomotive)).EndInit();
             this.tabNapomenaSmene.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -650,5 +675,7 @@
         private System.Windows.Forms.Button btnEvidentiraj;
         private System.Windows.Forms.TextBox txtUputna;
         private System.Windows.Forms.TextBox txtOtpravna;
+        private System.Windows.Forms.NumericUpDown numericUpDown2;
+        private System.Windows.Forms.Label label7;
     }
 }
