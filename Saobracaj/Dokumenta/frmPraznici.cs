@@ -13,12 +13,13 @@ using System.Configuration;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPraznici : Form
+    public partial class frmPraznici : Saobracaj.Tema.BaseForm
     {
         Boolean status = false;
         public frmPraznici()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
 

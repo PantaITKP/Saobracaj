@@ -17,11 +17,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Testiranje
 {
-    public partial class TestiranjeStampa : Form
+    public partial class TestiranjeStampa : Saobracaj.Tema.BaseForm
     {
         public TestiranjeStampa()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

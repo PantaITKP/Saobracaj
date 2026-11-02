@@ -14,11 +14,12 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Mobile
 {
-    public partial class frmPrijavaSmene : MetroForm
+    public partial class frmPrijavaSmene : Saobracaj.Tema.BaseForm
     {
         public frmPrijavaSmene()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

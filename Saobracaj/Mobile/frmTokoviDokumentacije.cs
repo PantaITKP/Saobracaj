@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace Saobracaj.Mobile
 {
-    public partial class frmTokoviDokumentacije : Form
+    public partial class frmTokoviDokumentacije : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
 
@@ -28,6 +28,7 @@ namespace Saobracaj.Mobile
         public frmTokoviDokumentacije()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void metroButton1_Click(object sender, EventArgs e)

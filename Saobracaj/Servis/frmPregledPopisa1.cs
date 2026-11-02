@@ -16,12 +16,13 @@ using Syncfusion.Windows.Forms;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmPregledPopisa1 : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmPregledPopisa1 : Saobracaj.Tema.BaseForm
     {
         public frmPregledPopisa1()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

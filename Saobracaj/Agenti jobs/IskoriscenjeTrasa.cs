@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Agenti_jobs
 {
-    public partial class IskoriscenjeTrasa : Form
+    public partial class IskoriscenjeTrasa : Saobracaj.Tema.BaseForm
     {
         private readonly Timer periodTimer = new Timer { Interval = 350 };
         private GridColumnFilters filterDetalji;
@@ -18,6 +18,7 @@ namespace Saobracaj.Agenti_jobs
         public IskoriscenjeTrasa()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
 
             dateTimePicker1.Format = DateTimePickerFormat.Custom;
             dateTimePicker1.CustomFormat = "dd.MM.yyyy";

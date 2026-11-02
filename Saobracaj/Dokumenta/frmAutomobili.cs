@@ -6,13 +6,14 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmAutomobili : Form
+    public partial class frmAutomobili : Saobracaj.Tema.BaseForm
     {
         string Poruka = "";
         bool status = false;
         public frmAutomobili()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

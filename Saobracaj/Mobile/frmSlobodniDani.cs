@@ -16,13 +16,14 @@ using Syncfusion.Windows.Forms.Grid.Grouping;
 namespace Saobracaj.Mobile
 {
     
-    public partial class frmSlobodniDani :  Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmSlobodniDani :  Saobracaj.Tema.BaseForm
     {
        
         public frmSlobodniDani()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -123,6 +124,7 @@ namespace Saobracaj.Mobile
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             string KorisnikL = Korisnik;
             IdGrupe();
             IdForme();

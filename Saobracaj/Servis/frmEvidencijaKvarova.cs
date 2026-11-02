@@ -19,7 +19,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmEvidencijaKvarova : MetroForm
+    public partial class frmEvidencijaKvarova : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
 
@@ -30,6 +30,7 @@ namespace Saobracaj.Servis
         public frmEvidencijaKvarova()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

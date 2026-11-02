@@ -35,7 +35,7 @@
             this.button1 = new Syncfusion.WinForms.Controls.SfButton();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
-            this.cboKorisnik = new MetroFramework.Controls.MetroComboBox();
+            this.cboKorisnik = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.txtPassword)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -105,12 +105,10 @@
             // cboKorisnik
             // 
             this.cboKorisnik.FormattingEnabled = true;
-            this.cboKorisnik.ItemHeight = 23;
             this.cboKorisnik.Location = new System.Drawing.Point(98, 23);
             this.cboKorisnik.Name = "cboKorisnik";
             this.cboKorisnik.Size = new System.Drawing.Size(282, 29);
             this.cboKorisnik.TabIndex = 53;
-            this.cboKorisnik.UseSelectable = true;
             // 
             // frmLogovanje
             // 
@@ -143,6 +141,6 @@
         private Syncfusion.WinForms.Controls.SfButton button1;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.PictureBox pictureBox2;
-        public MetroFramework.Controls.MetroComboBox cboKorisnik;
+        public System.Windows.Forms.ComboBox cboKorisnik;
     }
 }

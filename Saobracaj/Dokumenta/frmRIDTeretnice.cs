@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmRIDTeretnice : Form
+    public partial class frmRIDTeretnice : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmRIDTeretnice";
         public bool Pravo;
@@ -29,6 +29,7 @@ namespace Saobracaj.Dokumenta
         public frmRIDTeretnice()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

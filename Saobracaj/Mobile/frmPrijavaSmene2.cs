@@ -14,11 +14,12 @@ using System.Configuration;
 using Microsoft.Reporting.WinForms;
 namespace Saobracaj.Mobile
 {
-    public partial class frmPrijavaSmene2 : Form
+    public partial class frmPrijavaSmene2 : Saobracaj.Tema.BaseForm
     {
         public frmPrijavaSmene2()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void button1_Click(object sender, EventArgs e)

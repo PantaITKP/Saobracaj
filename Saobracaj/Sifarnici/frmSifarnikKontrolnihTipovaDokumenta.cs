@@ -18,7 +18,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmSifarnikKontrolnihTipovaDokumenta : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmSifarnikKontrolnihTipovaDokumenta : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public static string code = "frmSifarnikKontrolnihTipovaDokumenta";
@@ -33,6 +33,7 @@ namespace Saobracaj.Sifarnici
         public frmSifarnikKontrolnihTipovaDokumenta()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

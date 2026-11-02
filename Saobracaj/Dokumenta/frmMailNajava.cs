@@ -14,7 +14,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmMailNajava : Form
+    public partial class frmMailNajava : Saobracaj.Tema.BaseForm
     {
         string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         int PaSifra;
@@ -22,6 +22,7 @@ namespace Saobracaj.Dokumenta
         public frmMailNajava()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             FillGV();
             FillCheck();
             FillCombo();

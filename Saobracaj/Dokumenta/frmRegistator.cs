@@ -17,7 +17,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmRegistator : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmRegistator : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmRegistator()
@@ -27,6 +27,7 @@ namespace Saobracaj.Dokumenta
             IdForme();
             PravoPristupa();
             InitializeComponent();
+            PrimeniNoviIzgled();
             VratiPodatke();
         }
         public static string code = "frmRegistator";
@@ -126,6 +127,7 @@ namespace Saobracaj.Dokumenta
         public frmRegistator(int Zapis)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             VratiPodatke(Zapis);
         }
         private void VratiPodatke()

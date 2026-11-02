@@ -15,11 +15,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmAutomobiliKvarovi : Form
+    public partial class frmAutomobiliKvarovi : Saobracaj.Tema.BaseForm
     {
         public frmAutomobiliKvarovi()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

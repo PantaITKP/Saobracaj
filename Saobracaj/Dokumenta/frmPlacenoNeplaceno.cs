@@ -15,11 +15,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPlacenoNeplaceno : Form
+    public partial class frmPlacenoNeplaceno : Saobracaj.Tema.BaseForm
     {
         public frmPlacenoNeplaceno()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

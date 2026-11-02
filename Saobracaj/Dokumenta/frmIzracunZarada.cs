@@ -17,11 +17,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmIzracunZarada : Form
+    public partial class frmIzracunZarada : Saobracaj.Tema.BaseForm
     {
         public frmIzracunZarada()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

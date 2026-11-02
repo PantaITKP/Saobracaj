@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmVagoniSerije : Form
+    public partial class frmVagoniSerije : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmLokomotiveSerije";
         public bool Pravo;
@@ -28,6 +28,7 @@ namespace Saobracaj.Sifarnici
         public frmVagoniSerije()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txt_ID.Enabled = false;
             IdGrupe();
             IdForme();

@@ -13,12 +13,13 @@ using System.Configuration;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmSistematizacija : Form
+    public partial class frmSistematizacija : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmSistematizacija()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

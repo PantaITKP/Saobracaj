@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Agenti_jobs
 {
-    public partial class DispMain : Form
+    public partial class DispMain : Saobracaj.Tema.BaseForm
     {
         private readonly Dictionary<long, bool> lastStarted = new Dictionary<long, bool>();
         private bool changingTrainStatus, committingCheck, statusSaveQueued;
@@ -43,6 +43,7 @@ namespace Saobracaj.Agenti_jobs
         public DispMain(string user)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txtOtpravna.TextChanged -= txtOtpravna_TextChanged;
             txtOtpravna.TextChanged += txtOtpravna_TextChanged;
             txtUputna.TextChanged -= txtUputna_TextChanged;

@@ -21,13 +21,14 @@ using Saobracaj.Servis;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmLogovanje : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmLogovanje : Saobracaj.Tema.BaseForm
     {
         public static string user = "";
         public frmLogovanje()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void frmLogovanje_Load(object sender, EventArgs e)

@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmCentralnaTablaRN : Form
+    public partial class frmCentralnaTablaRN : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmCentralnaTablaRN";
         public bool Pravo;
@@ -26,6 +26,7 @@ namespace Saobracaj.Dokumenta
         public frmCentralnaTablaRN()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

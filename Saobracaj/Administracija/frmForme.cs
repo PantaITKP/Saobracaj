@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmForme : Form
+    public partial class frmForme : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmForme";
         public bool Pravo;
@@ -28,6 +28,7 @@ namespace Saobracaj.Administracija
         public frmForme()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txt_Sifra.Enabled = false;
             IdGrupe();
             IdForme();

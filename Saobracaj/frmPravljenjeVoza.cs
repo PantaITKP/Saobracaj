@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj
 {
-    public partial class frmPravljenjeVoza : Form
+    public partial class frmPravljenjeVoza : Saobracaj.Tema.BaseForm
     {
         int tmpStanicaPopisa = 0;
         int IzRN = 0;
@@ -23,6 +23,7 @@ namespace Saobracaj
         public frmPravljenjeVoza()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
            // int RadniNalog = 0;
 
             var select8 = " Select ID, RTrim(Opis) as Stanica From Stanice order by opis";
@@ -58,6 +59,7 @@ namespace Saobracaj
         public frmPravljenjeVoza(int RN)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IzRN = 1;
             tmpRN = RN;
            // cboRadniNalog.SelectedValue = RN;
@@ -95,6 +97,7 @@ namespace Saobracaj
         public frmPravljenjeVoza(int RN, int StanicaPopisa, int StanicaOd, int StanicaDo, DateTime vreme)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             cboRadniNalog.SelectedValue = RN;
             
 

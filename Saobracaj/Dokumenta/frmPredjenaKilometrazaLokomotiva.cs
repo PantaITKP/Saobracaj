@@ -17,11 +17,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPredjenaKilometrazaLokomotiva : Form
+    public partial class frmPredjenaKilometrazaLokomotiva : Saobracaj.Tema.BaseForm
     {
         public frmPredjenaKilometrazaLokomotiva()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

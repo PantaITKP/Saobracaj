@@ -17,7 +17,7 @@ using DataSet = System.Data.DataSet;
 
 namespace Saobracaj.MLProd
 {
-    public partial class PonudaML : Form
+    public partial class PonudaML : Saobracaj.Tema.BaseForm
     {
         private readonly string connection = ConfigurationManager
             .ConnectionStrings["WindowsFormsApplication1.Properties.Settings.TestiranjeConnectionString"]
@@ -36,6 +36,7 @@ namespace Saobracaj.MLProd
         public PonudaML()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             FillCombo();
             FillChkList();
             TryInitEtaService();

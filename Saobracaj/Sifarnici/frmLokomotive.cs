@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmLokomotive : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmLokomotive : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmLokomotive";
         public bool Pravo;
@@ -32,6 +32,7 @@ namespace Saobracaj.Sifarnici
         public frmLokomotive()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

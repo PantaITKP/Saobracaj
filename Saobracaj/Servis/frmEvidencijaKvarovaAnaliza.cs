@@ -12,12 +12,13 @@ using Syncfusion.Windows.Forms.Grid.Grouping;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmEvidencijaKvarovaAnaliza : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmEvidencijaKvarovaAnaliza : Saobracaj.Tema.BaseForm
     {
         public frmEvidencijaKvarovaAnaliza()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

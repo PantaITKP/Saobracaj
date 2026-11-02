@@ -19,7 +19,7 @@ using Microsoft.Ajax.Utilities;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmNajava : Form
+    public partial class frmNajava : Saobracaj.Tema.BaseForm
     {
         public int mailPom;
         string niz = "";
@@ -46,6 +46,7 @@ namespace Saobracaj.Dokumenta
         public frmNajava()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -138,6 +139,7 @@ namespace Saobracaj.Dokumenta
         public frmNajava(string Korisnik, int ArhivskiPodaci)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
            
             KorisnikNajava = Korisnik;
             Arhiv = ArhivskiPodaci;
@@ -150,6 +152,7 @@ namespace Saobracaj.Dokumenta
         public frmNajava(string Sifra)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txtSifra.Text = Sifra;
             VratiPodatke(txtSifra.Text);
             RefreshDataGrid();

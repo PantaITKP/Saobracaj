@@ -18,7 +18,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Tehnologija
 {
-    public partial class frmTehnologijaPregled : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmTehnologijaPregled : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTehnologijaPregled";
         public bool Pravo;
@@ -35,6 +35,7 @@ namespace Saobracaj.Tehnologija
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

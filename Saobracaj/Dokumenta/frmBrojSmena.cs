@@ -17,12 +17,13 @@ using System.Diagnostics;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmBrojSmena : Form
+    public partial class frmBrojSmena : Saobracaj.Tema.BaseForm
     {
         DataTable dt = new DataTable();
         public frmBrojSmena()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

@@ -18,7 +18,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    class frmSerijeLokomotiva: Syncfusion.Windows.Forms.Office2010Form
+    partial class frmSerijeLokomotiva : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmSerijaLokomotiva";
         public bool Pravo;
@@ -56,6 +56,7 @@ namespace Saobracaj.Sifarnici
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

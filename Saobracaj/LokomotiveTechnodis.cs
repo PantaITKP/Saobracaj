@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Servis
 {
-    public partial class LokomotiveTechnodis : Form
+    public partial class LokomotiveTechnodis : Saobracaj.Tema.BaseForm
     {
         private readonly string connection =
             ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -28,6 +28,7 @@ namespace Saobracaj.Servis
         public LokomotiveTechnodis()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
         private async void LokomotiveTechnodis_Load(object sender, EventArgs e)
         {

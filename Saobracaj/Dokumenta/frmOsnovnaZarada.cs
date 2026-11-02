@@ -14,13 +14,14 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmOsnovnaZarada : MetroForm
+    public partial class frmOsnovnaZarada : Saobracaj.Tema.BaseForm
     {
         bool status = false;
 
         public frmOsnovnaZarada()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

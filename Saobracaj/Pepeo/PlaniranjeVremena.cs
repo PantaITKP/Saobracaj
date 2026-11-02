@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Pepeo
 {
-    public partial class PlaniranjeVremena : Form
+    public partial class PlaniranjeVremena : Saobracaj.Tema.BaseForm
     {
         private readonly InsertPepeo insert = new InsertPepeo();
         private bool prikaziZavrsene = false;
@@ -19,6 +19,7 @@ namespace Saobracaj.Pepeo
         public PlaniranjeVremena()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void PlaniranjeVremena_Load(object sender, EventArgs e)

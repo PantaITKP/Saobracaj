@@ -18,12 +18,13 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmSifarnikKontrolnihGresaka : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmSifarnikKontrolnihGresaka : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmSifarnikKontrolnihGresaka()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

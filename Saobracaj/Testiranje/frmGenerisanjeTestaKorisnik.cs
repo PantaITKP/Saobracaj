@@ -19,12 +19,13 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Testiranje
 {
-    public partial class frmGenerisanjeTestaKorisnik : Form
+    public partial class frmGenerisanjeTestaKorisnik : Saobracaj.Tema.BaseForm
     {
         int usao = 0;
         public frmGenerisanjeTestaKorisnik()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

@@ -19,11 +19,12 @@ using Microsoft.Office.Interop.Excel;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmRAdniNalogPregledServisneUluge : Form
+    public partial class frmRAdniNalogPregledServisneUluge : Saobracaj.Tema.BaseForm
     {
         public frmRAdniNalogPregledServisneUluge()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void button3_Click(object sender, EventArgs e)

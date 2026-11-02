@@ -15,7 +15,7 @@ using System.IO;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmTelegrami : Form
+    public partial class frmTelegrami : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTelegrami";
         public bool Pravo;
@@ -36,6 +36,7 @@ namespace Saobracaj.Sifarnici
         public frmTelegrami()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

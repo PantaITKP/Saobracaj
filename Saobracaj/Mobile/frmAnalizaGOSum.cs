@@ -16,12 +16,13 @@ using Syncfusion.Grouping;
 
 namespace Saobracaj.Mobile
 {
-    public partial class frmAnalizaGOSum : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmAnalizaGOSum : Saobracaj.Tema.BaseForm
     {
         public frmAnalizaGOSum()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

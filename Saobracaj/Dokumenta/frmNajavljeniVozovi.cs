@@ -12,11 +12,12 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmNajavljeniVozovi : Form
+    public partial class frmNajavljeniVozovi : Saobracaj.Tema.BaseForm
     {
         public frmNajavljeniVozovi()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void button1_Click(object sender, EventArgs e)

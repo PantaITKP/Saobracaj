@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmNajaveBezTeretnice : Form
+    public partial class frmNajaveBezTeretnice : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmNajaveBezTeretnice";
         public bool Pravo;
@@ -29,6 +29,7 @@ namespace Saobracaj.Dokumenta
         public frmNajaveBezTeretnice()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

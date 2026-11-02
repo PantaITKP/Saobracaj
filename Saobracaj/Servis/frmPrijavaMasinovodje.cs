@@ -8,11 +8,12 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmPrijavaMasinovodje : MetroForm
+    public partial class frmPrijavaMasinovodje : Saobracaj.Tema.BaseForm
     {
         public frmPrijavaMasinovodje()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

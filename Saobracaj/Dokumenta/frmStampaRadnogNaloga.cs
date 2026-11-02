@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmStampaRadnogNaloga : Form
+    public partial class frmStampaRadnogNaloga : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmStampaRadnogNaloga";
         public bool Pravo;
@@ -35,6 +35,7 @@ namespace Saobracaj.Dokumenta
         public frmStampaRadnogNaloga()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

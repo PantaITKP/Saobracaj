@@ -19,7 +19,7 @@ using MetroFramework.Forms;
 namespace Saobracaj.Tehnologija
 {
     
-    public partial class frmTehnologija : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmTehnologija : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTehnologija";
         public bool Pravo;
@@ -37,6 +37,7 @@ namespace Saobracaj.Tehnologija
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -184,6 +185,7 @@ namespace Saobracaj.Tehnologija
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             KorisnikP = Korisnik;
             TehnologijaPrenesena = SifraTehnologije;
             txtSifra.Text = TehnologijaPrenesena.ToString();

@@ -12,13 +12,14 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmPolozeneLokomotive : Form
+    public partial class frmPolozeneLokomotive : Saobracaj.Tema.BaseForm
     {
         string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = false;
         public frmPolozeneLokomotive()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

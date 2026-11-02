@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmTeretnicePregled : Form
+    public partial class frmTeretnicePregled : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTeretnicePregled";
         public bool Pravo;
@@ -32,6 +32,7 @@ namespace Saobracaj.Dokumenta
         public frmTeretnicePregled()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -122,6 +123,7 @@ namespace Saobracaj.Dokumenta
         public frmTeretnicePregled(string KorisnikPregled)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             Korisnik = KorisnikPregled;
             IdGrupe();
             IdForme();

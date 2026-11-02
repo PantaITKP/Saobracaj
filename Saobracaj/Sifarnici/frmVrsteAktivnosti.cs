@@ -13,12 +13,13 @@ using System.Configuration;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmVrsteAktivnosti : Form
+    public partial class frmVrsteAktivnosti : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmVrsteAktivnosti()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
        

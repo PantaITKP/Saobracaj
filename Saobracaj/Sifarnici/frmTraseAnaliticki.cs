@@ -12,7 +12,7 @@ using Syncfusion.Windows.Forms.Grid.Grouping;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmTraseAnaliticki :  Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmTraseAnaliticki :  Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTraseAnaliticki";
         public bool Pravo;
@@ -27,6 +27,7 @@ namespace Saobracaj.Sifarnici
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

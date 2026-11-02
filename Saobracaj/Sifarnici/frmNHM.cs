@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmNHM : Form
+    public partial class frmNHM : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmNHM";
         public bool Pravo;
@@ -30,6 +30,7 @@ namespace Saobracaj.Sifarnici
         public frmNHM()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

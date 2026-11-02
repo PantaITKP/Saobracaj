@@ -15,11 +15,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPutniList : Form
+    public partial class frmPutniList : Saobracaj.Tema.BaseForm
     {
         public frmPutniList()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void frmPutniList_Load(object sender, EventArgs e)

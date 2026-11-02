@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmKreirajGrupu : Form
+    public partial class frmKreirajGrupu : Saobracaj.Tema.BaseForm
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = false;
@@ -20,6 +20,7 @@ namespace Saobracaj.Administracija
         public frmKreirajGrupu()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txt_IdGrupe.Enabled = false;
             txt_Sifra.Enabled = false;
             IdGrupe();

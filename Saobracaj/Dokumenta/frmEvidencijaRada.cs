@@ -16,7 +16,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmEvidencijaRada : Form
+    public partial class frmEvidencijaRada : Saobracaj.Tema.BaseForm
     {
         string Korisnik = "";
         MailMessage mailMessage;
@@ -32,6 +32,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaRada(string TekuciKorisnik)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             VratiDatumZakljucavanja();
             Korisnik = TekuciKorisnik;
             IdGrupe();
@@ -136,6 +137,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaRada(int Sifra, string TekuciKorisnik)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             txtSifra.Text = Sifra.ToString();
             prvinovi = false;
             VratiDatumZakljucavanja();

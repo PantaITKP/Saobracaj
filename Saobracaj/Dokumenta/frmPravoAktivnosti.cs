@@ -18,11 +18,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPravoAktivnosti : Form
+    public partial class frmPravoAktivnosti : Saobracaj.Tema.BaseForm
     {
         public frmPravoAktivnosti()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

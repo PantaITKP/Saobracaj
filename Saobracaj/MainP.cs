@@ -17,7 +17,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj
 {
-    public partial class MainP : Syncfusion.Windows.Forms.Tools.RibbonForm
+    public partial class MainP : Saobracaj.Tema.BaseForm
     {
         string Korisnik = "";
         public bool PravoP;
@@ -25,6 +25,7 @@ namespace Saobracaj
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         public MainP(string Logovan, int Lozinka)
@@ -32,6 +33,7 @@ namespace Saobracaj
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
             Korisnik = Logovan;
+            PrimeniNoviIzgled();
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)

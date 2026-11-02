@@ -14,7 +14,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmStanice : MetroForm
+    public partial class frmStanice : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmStanice";
         public bool Pravo;
@@ -30,6 +30,7 @@ namespace Saobracaj.Sifarnici
         public frmStanice()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

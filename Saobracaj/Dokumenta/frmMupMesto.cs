@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmMupMesto : Form
+    public partial class frmMupMesto : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public static string code = "frmMupMesto";
@@ -31,6 +31,7 @@ namespace Saobracaj.Dokumenta
         public frmMupMesto()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

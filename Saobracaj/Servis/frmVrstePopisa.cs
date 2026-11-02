@@ -14,12 +14,13 @@ using System.Configuration;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmVrstePopisa : Form
+    public partial class frmVrstePopisa : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmVrstePopisa()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

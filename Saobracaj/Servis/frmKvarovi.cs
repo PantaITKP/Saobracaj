@@ -13,12 +13,13 @@ using System.Configuration;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmKvarovi : Form
+    public partial class frmKvarovi : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmKvarovi()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

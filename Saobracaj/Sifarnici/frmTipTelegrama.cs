@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmTipTelegrama : Form
+    public partial class frmTipTelegrama : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTipTelegrama";
         public bool Pravo;
@@ -30,6 +30,7 @@ namespace Saobracaj.Sifarnici
         public frmTipTelegrama()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

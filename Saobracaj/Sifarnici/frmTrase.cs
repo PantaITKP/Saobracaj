@@ -30,7 +30,7 @@ using System.Drawing.Imaging;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmTrase : Form
+    public partial class frmTrase : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmTrase";
         public bool Pravo;
@@ -46,6 +46,7 @@ namespace Saobracaj.Sifarnici
         public frmTrase()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -54,6 +55,7 @@ namespace Saobracaj.Sifarnici
         public frmTrase(int Trasa)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             pomTrasa = Trasa;
         }
         public string IdGrupe()

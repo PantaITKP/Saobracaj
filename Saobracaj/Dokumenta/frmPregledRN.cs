@@ -14,7 +14,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPregledRN : MetroForm
+    public partial class frmPregledRN : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmPregledRN";
         public bool Pravo;
@@ -28,6 +28,7 @@ namespace Saobracaj.Dokumenta
         public frmPregledRN()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

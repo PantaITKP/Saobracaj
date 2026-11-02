@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Agenti_jobs
 {
-    public partial class Planer : Form
+    public partial class Planer : Saobracaj.Tema.BaseForm
     {
         private DatabaseGrid gridMreza;
         private DatabaseGrid gridNajave;
@@ -30,6 +30,7 @@ namespace Saobracaj.Agenti_jobs
         public Planer(int planId, string user = null)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             if (!string.IsNullOrWhiteSpace(Saobracaj.Sifarnici.frmLogovanje.user))
                 OperationalSession.UserName = Saobracaj.Sifarnici.frmLogovanje.user.Trim();
             filterMreza = new GridColumnFilters(dgvMreza);

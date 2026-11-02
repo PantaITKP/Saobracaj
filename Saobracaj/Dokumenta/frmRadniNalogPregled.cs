@@ -21,7 +21,7 @@ using System.Windows.Controls.Primitives;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmRadniNalogPregled : Form
+    public partial class frmRadniNalogPregled : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmRadniNalogPregled";
         public bool Pravo;
@@ -36,6 +36,7 @@ namespace Saobracaj.Dokumenta
         public frmRadniNalogPregled()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

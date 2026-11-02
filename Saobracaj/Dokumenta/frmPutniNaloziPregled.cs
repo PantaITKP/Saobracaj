@@ -15,11 +15,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPutniNaloziPregled : Form
+    public partial class frmPutniNaloziPregled : Saobracaj.Tema.BaseForm
     {
         public frmPutniNaloziPregled()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

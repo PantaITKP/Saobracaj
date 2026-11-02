@@ -16,7 +16,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmMapa : Form
+    public partial class frmMapa : Saobracaj.Tema.BaseForm
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         GMapControl map = new GMapControl();
@@ -45,6 +45,7 @@ namespace Saobracaj.Dokumenta
         public frmMapa()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             /*IdGrupe();
             IdForme();
             PravoPristupa();*/

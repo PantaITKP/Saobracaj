@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmFormePrava : Form
+    public partial class frmFormePrava : Saobracaj.Tema.BaseForm
     {
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         string niz = "";
@@ -29,6 +29,7 @@ namespace Saobracaj.Administracija
         public frmFormePrava()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

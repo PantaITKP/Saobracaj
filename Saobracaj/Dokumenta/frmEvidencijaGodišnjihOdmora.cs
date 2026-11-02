@@ -16,7 +16,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmEvidencijaGodišnjihOdmora : Form
+    public partial class frmEvidencijaGodišnjihOdmora : Saobracaj.Tema.BaseForm
     {
         
         bool status = false;
@@ -40,6 +40,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaGodišnjihOdmora()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -142,6 +143,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaGodišnjihOdmora(int Zaposleni, DateTime VremeOd, DateTime VremeDo, int Odobrio, string Napomena, int SlobodanDan, DateTime DatumZahteva)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             status = true;
             IzMobilneObrade = 1;
            

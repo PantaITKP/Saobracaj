@@ -14,12 +14,13 @@ using Syncfusion.Windows.Forms.Grid;
 using Syncfusion.Grouping;
 namespace Saobracaj.Servis
 {
-    public partial class frmNamirenjaSumarno : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmNamirenjaSumarno : Saobracaj.Tema.BaseForm
     {
         public frmNamirenjaSumarno()
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

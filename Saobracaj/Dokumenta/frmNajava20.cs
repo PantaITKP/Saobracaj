@@ -12,7 +12,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmNajava20 : Form
+    public partial class frmNajava20 : Saobracaj.Tema.BaseForm
     {
         bool go = false;
         int count = 1;
@@ -32,6 +32,7 @@ namespace Saobracaj.Dokumenta
         public frmNajava20()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

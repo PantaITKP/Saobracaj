@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmPrijavaKvaraAuto : Form
+    public partial class frmPrijavaKvaraAuto : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
         List<string> filenames = new List<string>();
@@ -28,6 +28,7 @@ namespace Saobracaj.Servis
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

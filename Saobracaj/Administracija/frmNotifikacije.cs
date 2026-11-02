@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmNotifikacije : Form
+    public partial class frmNotifikacije : Saobracaj.Tema.BaseForm
     {
         string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         string Kor = Sifarnici.frmLogovanje.user.ToString();
@@ -29,6 +29,7 @@ namespace Saobracaj.Administracija
         public frmNotifikacije()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             FillGV();
             FillCheck();
             IdGrupe();

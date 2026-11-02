@@ -17,11 +17,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Testiranje
 {
-    public partial class Obrasci : Form
+    public partial class Obrasci : Saobracaj.Tema.BaseForm
     {
         public Obrasci()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

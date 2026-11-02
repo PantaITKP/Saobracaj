@@ -16,7 +16,7 @@ using System.IO;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmAutomobiliPregledPrijava : Form
+    public partial class frmAutomobiliPregledPrijava : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
         List<string> filenames = new List<string>();
@@ -30,6 +30,7 @@ namespace Saobracaj.Dokumenta
         public frmAutomobiliPregledPrijava()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

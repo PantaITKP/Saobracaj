@@ -18,7 +18,7 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmKontrola : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmKontrola : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         string niz = "";
@@ -37,6 +37,7 @@ namespace Saobracaj.Dokumenta
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzcwMDg5QDMxMzgyZTM0MmUzMFhQSmlDM0M2bGpxcXVtT1VScTg1a0dtVTFLcUZiK0tLRnpvRTYyRFpMc3M9");
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

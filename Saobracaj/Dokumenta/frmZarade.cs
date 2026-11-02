@@ -17,12 +17,13 @@ using Syncfusion.XlsIO.Interfaces;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmZarade : Form
+    public partial class frmZarade : Saobracaj.Tema.BaseForm
     {
         System.Data.DataTable ndt;
         public frmZarade()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void btnStampa_Click(object sender, EventArgs e)

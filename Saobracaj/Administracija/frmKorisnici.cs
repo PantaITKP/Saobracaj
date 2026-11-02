@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmKorisnici : Form
+    public partial class frmKorisnici : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmKorisnici";
         public bool Pravo;
@@ -28,6 +28,7 @@ namespace Saobracaj.Administracija
         public frmKorisnici()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

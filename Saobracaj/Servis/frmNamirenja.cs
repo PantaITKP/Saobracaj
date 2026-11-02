@@ -19,7 +19,7 @@ namespace Saobracaj.Servis
 {
 
     
-    public partial class frmNamirenja : MetroForm
+    public partial class frmNamirenja : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
 
@@ -30,6 +30,7 @@ namespace Saobracaj.Servis
         public frmNamirenja()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

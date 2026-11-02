@@ -18,11 +18,12 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmRegistratorPregled : MetroForm
+    public partial class frmRegistratorPregled : Saobracaj.Tema.BaseForm
     {
         public frmRegistratorPregled()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

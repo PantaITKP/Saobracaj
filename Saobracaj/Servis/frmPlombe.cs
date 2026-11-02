@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmPlombe : Form
+    public partial class frmPlombe : Saobracaj.Tema.BaseForm
     {
         string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         public static string code = "frmPlombe";
@@ -113,6 +113,7 @@ namespace Saobracaj.Servis
         public frmPlombe()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

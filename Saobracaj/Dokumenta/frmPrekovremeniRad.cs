@@ -18,12 +18,13 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPrekovremeniRad : Form
+    public partial class frmPrekovremeniRad : Saobracaj.Tema.BaseForm
     {
         Boolean status = false;
         public frmPrekovremeniRad()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

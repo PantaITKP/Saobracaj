@@ -16,7 +16,7 @@ using Syncfusion.Windows.Forms.Grid.Grouping;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmCentralnaTablaCpajal : Syncfusion.Windows.Forms.Office2010Form
+    public partial class frmCentralnaTablaCpajal : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmCentralnaTablaCpajal";
         public bool Pravo;
@@ -30,6 +30,7 @@ namespace Saobracaj.Dokumenta
         public frmCentralnaTablaCpajal()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

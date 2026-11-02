@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Administracija
 {
-    public partial class frmDodeliGrupu : Form
+    public partial class frmDodeliGrupu : Saobracaj.Tema.BaseForm
     {
         string Kor = Sifarnici.frmLogovanje.user.ToString();
         public string connect = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
@@ -24,6 +24,7 @@ namespace Saobracaj.Administracija
         public frmDodeliGrupu()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             RefreshGV();
             FillCombo();
             IdGrupe();

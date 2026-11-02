@@ -14,12 +14,13 @@ using System.Configuration;
 
 namespace Saobracaj.Servis
 {
-    public partial class frmAVVNeispravnosti : Form
+    public partial class frmAVVNeispravnosti : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmAVVNeispravnosti()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
         private void RefreshDataGrid()
         {

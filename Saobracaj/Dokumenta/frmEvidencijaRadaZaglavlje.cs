@@ -15,12 +15,13 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmEvidencijaRadaZaglavlje : Form
+    public partial class frmEvidencijaRadaZaglavlje : Saobracaj.Tema.BaseForm
     {
         string TekuciKorisnik = "";
         public frmEvidencijaRadaZaglavlje(string Korisnik)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             TekuciKorisnik = Korisnik;
             IdGrupe();
             IdForme();
@@ -121,6 +122,7 @@ namespace Saobracaj.Dokumenta
         public frmEvidencijaRadaZaglavlje()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

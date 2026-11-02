@@ -1783,6 +1783,414 @@
     <Compile Include="Sifarnici\frmKopiranjeTeretnice.Designer.cs">
       <DependentUpon>frmKopiranjeTeretnice.cs</DependentUpon>
     </Compile>
+    <Compile Include="Tema\Theme.cs" />
+    <Compile Include="Tema\Animator.cs" />
+    <Compile Include="Tema\Ikone.cs" />
+    <Compile Include="Tema\ThemeApplier.cs" />
+    <Compile Include="Tema\Controls\NativneKuke.cs" />
+    <Compile Include="Tema\BaseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tema\Controls\OkvirPolja.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Tema\Controls\KarticaPolja.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Tema\Controls\GlavaForme.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Tema\Controls\GlassPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Tema\IzgledForme.cs" />
+    <Compile Include="Tema\Controls\GlavniMeni.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="MainP.NoviIzgled.cs">
+      <DependentUpon>MainP.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmStanice.NoviIzgled.cs">
+      <DependentUpon>frmStanice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmTrase.NoviIzgled.cs">
+      <DependentUpon>frmTrase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmPruge.NoviIzgled.cs">
+      <DependentUpon>frmPruge.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmLokomotive.NoviIzgled.cs">
+      <DependentUpon>frmLokomotive.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmSerijeLokomotiva.NoviIzgled.cs">
+      <DependentUpon>frmSerijeLokomotiva.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmStatusVoza.NoviIzgled.cs">
+      <DependentUpon>frmStatusVoza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmRazlozi.NoviIzgled.cs">
+      <DependentUpon>frmRazlozi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmTipPrevoza.NoviIzgled.cs">
+      <DependentUpon>frmTipPrevoza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmNHM.NoviIzgled.cs">
+      <DependentUpon>frmNHM.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmOsoblje.NoviIzgled.cs">
+      <DependentUpon>frmOsoblje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmPartnerji.NoviIzgled.cs">
+      <DependentUpon>frmPartnerji.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmTipTelegrama.NoviIzgled.cs">
+      <DependentUpon>frmTipTelegrama.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmTelegrami.NoviIzgled.cs">
+      <DependentUpon>frmTelegrami.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmNajava20.NoviIzgled.cs">
+      <DependentUpon>frmNajava20.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmNajavaArhivaAnaliza.NoviIzgled.cs">
+      <DependentUpon>frmNajavaArhivaAnaliza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmAnalizaPorudzbina.NoviIzgled.cs">
+      <DependentUpon>frmAnalizaPorudzbina.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmTeretnicePregled.NoviIzgled.cs">
+      <DependentUpon>frmTeretnicePregled.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmIskljuceniVagoni.NoviIzgled.cs">
+      <DependentUpon>frmIskljuceniVagoni.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmNajaveBezTeretnice.NoviIzgled.cs">
+      <DependentUpon>frmNajaveBezTeretnice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPregledRID.NoviIzgled.cs">
+      <DependentUpon>frmPregledRID.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRIDPoNajavama.NoviIzgled.cs">
+      <DependentUpon>frmRIDPoNajavama.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRIDTeretnice.NoviIzgled.cs">
+      <DependentUpon>frmRIDTeretnice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmZavrsnaDokumentacija.NoviIzgled.cs">
+      <DependentUpon>frmZavrsnaDokumentacija.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmMapa.NoviIzgled.cs">
+      <DependentUpon>frmMapa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPregledRN.NoviIzgled.cs">
+      <DependentUpon>frmPregledRN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRadniNalogPregled.NoviIzgled.cs">
+      <DependentUpon>frmRadniNalogPregled.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRAdniNalogPregledPoLokomotivama.NoviIzgled.cs">
+      <DependentUpon>frmRAdniNalogPregledPoLokomotivama.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmStampaRadnogNaloga.NoviIzgled.cs">
+      <DependentUpon>frmStampaRadnogNaloga.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRaspustiVagone.NoviIzgled.cs">
+      <DependentUpon>frmRaspustiVagone.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPronadjiVagon.NoviIzgled.cs">
+      <DependentUpon>frmPronadjiVagon.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmMUPDozvola.NoviIzgled.cs">
+      <DependentUpon>frmMUPDozvola.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmMupMesto.NoviIzgled.cs">
+      <DependentUpon>frmMupMesto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmKorisnici.NoviIzgled.cs">
+      <DependentUpon>frmKorisnici.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmAutomobili.NoviIzgled.cs">
+      <DependentUpon>frmAutomobili.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRegistator.NoviIzgled.cs">
+      <DependentUpon>frmRegistator.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRegistratorPregled.NoviIzgled.cs">
+      <DependentUpon>frmRegistratorPregled.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmVrstePopisa.NoviIzgled.cs">
+      <DependentUpon>frmVrstePopisa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmLokomotivaVrstaPopisa.NoviIzgled.cs">
+      <DependentUpon>frmLokomotivaVrstaPopisa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmGrupaKvarova.NoviIzgled.cs">
+      <DependentUpon>frmGrupaKvarova.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmKvarovi.NoviIzgled.cs">
+      <DependentUpon>frmKvarovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmEvidencijaKvarova.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaKvarova.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmEvidencijaKvarovaAnaliza.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaKvarovaAnaliza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmSistematizacija.NoviIzgled.cs">
+      <DependentUpon>frmSistematizacija.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmSistematizacijaPovezivanje.NoviIzgled.cs">
+      <DependentUpon>frmSistematizacijaPovezivanje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmVrsteAktivnosti.NoviIzgled.cs">
+      <DependentUpon>frmVrsteAktivnosti.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmCenaPoRadniku.NoviIzgled.cs">
+      <DependentUpon>frmCenaPoRadniku.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPravoAktivnosti.NoviIzgled.cs">
+      <DependentUpon>frmPravoAktivnosti.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPravoAktivnostiViseRadnika.NoviIzgled.cs">
+      <DependentUpon>frmPravoAktivnostiViseRadnika.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmIzracunZarada.NoviIzgled.cs">
+      <DependentUpon>frmIzracunZarada.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPlacenoNeplaceno.NoviIzgled.cs">
+      <DependentUpon>frmPlacenoNeplaceno.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmOsnovnaZarada.NoviIzgled.cs">
+      <DependentUpon>frmOsnovnaZarada.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmBrojSmena.NoviIzgled.cs">
+      <DependentUpon>frmBrojSmena.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaGodišnjihOdmora.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaGodišnjihOdmora.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmPrijavaSmene.NoviIzgled.cs">
+      <DependentUpon>frmPrijavaSmene.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmPregledMobilni.NoviIzgled.cs">
+      <DependentUpon>frmPregledMobilni.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmPrijavaMasinovodje.NoviIzgled.cs">
+      <DependentUpon>frmPrijavaMasinovodje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmPregledMasinovodje.NoviIzgled.cs">
+      <DependentUpon>frmPregledMasinovodje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmNamirenja.NoviIzgled.cs">
+      <DependentUpon>frmNamirenja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmNamirenjaSumarno.NoviIzgled.cs">
+      <DependentUpon>frmNamirenjaSumarno.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmAnalizaGO.NoviIzgled.cs">
+      <DependentUpon>frmAnalizaGO.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmAnalizaGOSum.NoviIzgled.cs">
+      <DependentUpon>frmAnalizaGOSum.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmSlobodniDani.NoviIzgled.cs">
+      <DependentUpon>frmSlobodniDani.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPutniNaloziPregled.NoviIzgled.cs">
+      <DependentUpon>frmPutniNaloziPregled.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRAdaNeplaceno.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaRAdaNeplaceno.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmFinansije.NoviIzgled.cs">
+      <DependentUpon>frmFinansije.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmPlanRada.NoviIzgled.cs">
+      <DependentUpon>frmPlanRada.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRada.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaRada.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmZarade.NoviIzgled.cs">
+      <DependentUpon>frmZarade.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRadaZaglavlje.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaRadaZaglavlje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmAnalizaAktivnosti.NoviIzgled.cs">
+      <DependentUpon>frmAnalizaAktivnosti.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmParametriObracuna.NoviIzgled.cs">
+      <DependentUpon>frmParametriObracuna.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Tehnologija\frmTehnologija.NoviIzgled.cs">
+      <DependentUpon>frmTehnologija.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmTraseAnaliticki.NoviIzgled.cs">
+      <DependentUpon>frmTraseAnaliticki.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Tehnologija\frmTehnologijaPregled.NoviIzgled.cs">
+      <DependentUpon>frmTehnologijaPregled.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmPrijavaKvara.NoviIzgled.cs">
+      <DependentUpon>frmPrijavaKvara.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmSifarnikKontrolnihGresaka.NoviIzgled.cs">
+      <DependentUpon>frmSifarnikKontrolnihGresaka.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmKontrola.NoviIzgled.cs">
+      <DependentUpon>frmKontrola.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmSifarnikKontrolnihTipovaDokumenta.NoviIzgled.cs">
+      <DependentUpon>frmSifarnikKontrolnihTipovaDokumenta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmCentralnaTablaRN.NoviIzgled.cs">
+      <DependentUpon>frmCentralnaTablaRN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmPregledPopisa1.NoviIzgled.cs">
+      <DependentUpon>frmPregledPopisa1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SyncForm\frmPregledPopisa2.NoviIzgled.cs">
+      <DependentUpon>frmPregledPopisa2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPredjenaKilometrazaLokomotiva.NoviIzgled.cs">
+      <DependentUpon>frmPredjenaKilometrazaLokomotiva.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmCentralnaTablaCpajal.NoviIzgled.cs">
+      <DependentUpon>frmCentralnaTablaCpajal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmGrupaKvarovaAuto.NoviIzgled.cs">
+      <DependentUpon>frmGrupaKvarovaAuto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmKvaroviAuto.NoviIzgled.cs">
+      <DependentUpon>frmKvaroviAuto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmEvidencijaRadaPromene.NoviIzgled.cs">
+      <DependentUpon>frmEvidencijaRadaPromene.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmBolovanja.NoviIzgled.cs">
+      <DependentUpon>frmBolovanja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPrekovremeniRad.NoviIzgled.cs">
+      <DependentUpon>frmPrekovremeniRad.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmObracunFiksni.NoviIzgled.cs">
+      <DependentUpon>frmObracunFiksni.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Testiranje\Pitanja.NoviIzgled.cs">
+      <DependentUpon>Pitanja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Testiranje\frmGenerisanjeTestaKorisnik.NoviIzgled.cs">
+      <DependentUpon>frmGenerisanjeTestaKorisnik.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Testiranje\TestiranjeStampa.NoviIzgled.cs">
+      <DependentUpon>TestiranjeStampa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Testiranje\Obrasci.NoviIzgled.cs">
+      <DependentUpon>Obrasci.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmAutomobiliPregledPrijava.NoviIzgled.cs">
+      <DependentUpon>frmAutomobiliPregledPrijava.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmAutomobiliKvarovi.NoviIzgled.cs">
+      <DependentUpon>frmAutomobiliKvarovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmPrijavaKvaraAuto.NoviIzgled.cs">
+      <DependentUpon>frmPrijavaKvaraAuto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmKreirajGrupu.NoviIzgled.cs">
+      <DependentUpon>frmKreirajGrupu.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmDodeliGrupu.NoviIzgled.cs">
+      <DependentUpon>frmDodeliGrupu.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmForme.NoviIzgled.cs">
+      <DependentUpon>frmForme.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmFormePrava.NoviIzgled.cs">
+      <DependentUpon>frmFormePrava.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmPravljenjeVoza.NoviIzgled.cs">
+      <DependentUpon>frmPravljenjeVoza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmTokoviDokumentacije.NoviIzgled.cs">
+      <DependentUpon>frmTokoviDokumentacije.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPropratnice.NoviIzgled.cs">
+      <DependentUpon>frmPropratnice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmPolozenePruge.NoviIzgled.cs">
+      <DependentUpon>frmPolozenePruge.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmPolozeneLokomotive.NoviIzgled.cs">
+      <DependentUpon>frmPolozeneLokomotive.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmMailNajava.NoviIzgled.cs">
+      <DependentUpon>frmMailNajava.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Administracija\frmNotifikacije.NoviIzgled.cs">
+      <DependentUpon>frmNotifikacije.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmPlombe.NoviIzgled.cs">
+      <DependentUpon>frmPlombe.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmVagoniSerije.NoviIzgled.cs">
+      <DependentUpon>frmVagoniSerije.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPraznici.NoviIzgled.cs">
+      <DependentUpon>frmPraznici.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPrimljeniVozovi.NoviIzgled.cs">
+      <DependentUpon>frmPrimljeniVozovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPredatiVozovi.NoviIzgled.cs">
+      <DependentUpon>frmPredatiVozovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmRAdniNalogPregledServisneUluge.NoviIzgled.cs">
+      <DependentUpon>frmRAdniNalogPregledServisneUluge.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmTipDokumentaRadnika.NoviIzgled.cs">
+      <DependentUpon>frmTipDokumentaRadnika.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmNajavljeniVozovi.NoviIzgled.cs">
+      <DependentUpon>frmNajavljeniVozovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mobile\frmPrijavaSmene2.NoviIzgled.cs">
+      <DependentUpon>frmPrijavaSmene2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Servis\frmAVVNeispravnosti.NoviIzgled.cs">
+      <DependentUpon>frmAVVNeispravnosti.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmPutniList.NoviIzgled.cs">
+      <DependentUpon>frmPutniList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\LocoTrack.NoviIzgled.cs">
+      <DependentUpon>LocoTrack.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MLProd\PonudaML.NoviIzgled.cs">
+      <DependentUpon>PonudaML.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LokomotiveTechnodis.NoviIzgled.cs">
+      <DependentUpon>LokomotiveTechnodis.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pepeo\PlaniranjeVremena.NoviIzgled.cs">
+      <DependentUpon>PlaniranjeVremena.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\Planer.NoviIzgled.cs">
+      <DependentUpon>Planer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\DispMain.NoviIzgled.cs">
+      <DependentUpon>DispMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Agenti jobs\IskoriscenjeTrasa.NoviIzgled.cs">
+      <DependentUpon>IskoriscenjeTrasa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sifarnici\frmLogovanje.NoviIzgled.cs">
+      <DependentUpon>frmLogovanje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dokumenta\frmNajava.NoviIzgled.cs">
+      <DependentUpon>frmNajava.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sifarnici\frmLogovanje.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -2652,6 +3060,17 @@
     <EmbeddedResource Include="Sifarnici\frmKopiranjeTeretnice.resx">
       <DependentUpon>frmKopiranjeTeretnice.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Fontovi\DMSans-Regular.ttf">
+      <LogicalName>Saobracaj.Tema.Fontovi.DMSans-Regular.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Fontovi\DMSans-Bold.ttf">
+      <LogicalName>Saobracaj.Tema.Fontovi.DMSans-Bold.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Fontovi\Manrope-ExtraBold.ttf">
+      <LogicalName>Saobracaj.Tema.Fontovi.Manrope-ExtraBold.ttf</LogicalName>
+    </EmbeddedResource>
+    <None Include="Tema\Fontovi\OFL-DMSans.txt" />
+    <None Include="Tema\Fontovi\OFL-Manrope.txt" />
     <EmbeddedResource Include="Sifarnici\frmLogovanje.resx">
       <DependentUpon>frmLogovanje.cs</DependentUpon>
     </EmbeddedResource>

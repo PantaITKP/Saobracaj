@@ -17,7 +17,7 @@ using System.Diagnostics;
 
 namespace Saobracaj.Mobile
 {
-    public partial class frmZavrsnaDokumentacija : Form
+    public partial class frmZavrsnaDokumentacija : Saobracaj.Tema.BaseForm
     {
         private List<PictureBox> PictureBoxes = new List<PictureBox>();
         private const int ThumbWidth = 500;
@@ -36,6 +36,7 @@ namespace Saobracaj.Mobile
         public frmZavrsnaDokumentacija()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

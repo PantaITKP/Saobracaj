@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmIskljuceniVagoni : Form
+    public partial class frmIskljuceniVagoni : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmIskljuceniVagoni";
         public bool Pravo;
@@ -29,6 +29,7 @@ namespace Saobracaj.Dokumenta
         public frmIskljuceniVagoni()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

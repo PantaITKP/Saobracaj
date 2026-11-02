@@ -17,7 +17,7 @@ using System.Windows.Forms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPropratnice : Form
+    public partial class frmPropratnice : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmPropratnice";
         public bool Pravo;
@@ -116,6 +116,7 @@ namespace Saobracaj.Dokumenta
         public frmPropratnice()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

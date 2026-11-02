@@ -16,11 +16,12 @@ using Syncfusion.XlsIO;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmEvidencijaRAdaNeplaceno : Form
+    public partial class frmEvidencijaRAdaNeplaceno : Saobracaj.Tema.BaseForm
     {
         public frmEvidencijaRAdaNeplaceno()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

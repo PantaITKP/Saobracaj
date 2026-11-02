@@ -18,12 +18,13 @@ using MetroFramework.Forms;
 
 namespace Saobracaj.Testiranje
 {
-    public partial class Pitanja : Form
+    public partial class Pitanja : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public Pitanja()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

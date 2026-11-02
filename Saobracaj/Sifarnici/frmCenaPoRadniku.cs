@@ -15,12 +15,13 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmCenaPoRadniku : Form
+    public partial class frmCenaPoRadniku : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmCenaPoRadniku()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
 
         private void frmCenaPoRadniku_Load(object sender, EventArgs e)

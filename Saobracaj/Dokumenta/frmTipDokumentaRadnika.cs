@@ -14,12 +14,13 @@ using System.Configuration;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmTipDokumentaRadnika : Form
+    public partial class frmTipDokumentaRadnika : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmTipDokumentaRadnika()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
         }
         private void RefreshDataGrid()
         {

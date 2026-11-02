@@ -14,7 +14,7 @@ using Syncfusion.Windows.Forms.Diagram;
 
 namespace Saobracaj.Sifarnici
 {
-    public partial class frmPruge : Form
+    public partial class frmPruge : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmPruge";
         public bool Pravo;
@@ -30,6 +30,7 @@ namespace Saobracaj.Sifarnici
         public frmPruge()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();
@@ -39,6 +40,7 @@ namespace Saobracaj.Sifarnici
         public frmPruge(int id,string oznaka,string naziv,int elekt)
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             ID = id;
             Elekt = elekt;
             Oznaka = oznaka;

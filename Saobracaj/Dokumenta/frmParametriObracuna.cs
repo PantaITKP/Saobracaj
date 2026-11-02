@@ -13,12 +13,13 @@ using System.Configuration;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmParametriObracuna : Form
+    public partial class frmParametriObracuna : Saobracaj.Tema.BaseForm
     {
         bool status = false;
         public frmParametriObracuna()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdForme();
             IdGrupe();
             PravoPristupa();

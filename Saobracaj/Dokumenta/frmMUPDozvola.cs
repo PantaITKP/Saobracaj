@@ -18,7 +18,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmMUPDozvola : Form
+    public partial class frmMUPDozvola : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmMUPDozvola";
         public bool Pravo;
@@ -35,6 +35,7 @@ namespace Saobracaj.Dokumenta
         public frmMUPDozvola()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

@@ -15,7 +15,7 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmPregledRID : Form
+    public partial class frmPregledRID : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmPregledRID";
         public bool Pravo;
@@ -29,6 +29,7 @@ namespace Saobracaj.Dokumenta
         public frmPregledRID()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

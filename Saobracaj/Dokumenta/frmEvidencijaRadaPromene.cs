@@ -15,11 +15,12 @@ using Microsoft.Reporting.WinForms;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class frmEvidencijaRadaPromene : Form
+    public partial class frmEvidencijaRadaPromene : Saobracaj.Tema.BaseForm
     {
         public frmEvidencijaRadaPromene()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             IdGrupe();
             IdForme();
             PravoPristupa();

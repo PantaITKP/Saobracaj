@@ -22,13 +22,14 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace Saobracaj.Dokumenta
 {
-    public partial class LocoTrack : Form
+    public partial class LocoTrack : Saobracaj.Tema.BaseForm
     {
         string connection = ConfigurationManager.ConnectionStrings["WindowsFormsApplication1.Properties.Settings.NedraConnectionString"].ConnectionString;
         bool status = true;
         public LocoTrack()
         {
             InitializeComponent();
+            PrimeniNoviIzgled();
             SetWebBrowserVersion(11001); // 11001 = IE11
             webBrowser1.ScriptErrorsSuppressed = true;
             webBrowser1.ObjectForScripting = true;

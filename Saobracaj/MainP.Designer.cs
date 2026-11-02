@@ -2653,7 +2653,6 @@ namespace Saobracaj
             this.Controls.Add(this.ribbonControlAdv1);
             this.Name = "MainP";
             this.Padding = new System.Windows.Forms.Padding(1, 0, 1, 1);
-            this.ShowApplicationIcon = false;
             this.Text = "Glavni meni";
             ((System.ComponentModel.ISupportInitialize)(this.ribbonControlAdv1)).EndInit();
             this.ribbonControlAdv1.ResumeLayout(false);
