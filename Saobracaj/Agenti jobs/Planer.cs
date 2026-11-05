@@ -19,6 +19,7 @@ namespace Saobracaj.Agenti_jobs
         {
             Interval = 5000
         };
+        private readonly Saobracaj.Telegrami.TelegramiTab telegramiTab;
         private PlanSnapshot editorPlan = new PlanSnapshot();
         private bool ready, dirty, busy, painting;
         private readonly int requestedPlan;
@@ -47,6 +48,7 @@ namespace Saobracaj.Agenti_jobs
             gridLokomotive = new DatabaseGrid(dgvLokomotive, "OperativniPlanLokomotive");
             sacuvajPlanToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
             refreshTimer.Tick += refreshTimer_Tick;
+            telegramiTab = new Saobracaj.Telegrami.TelegramiTab(tabTelegrami, dataGridView1);
         }
 
         private async Task Start()
@@ -383,7 +385,11 @@ namespace Saobracaj.Agenti_jobs
 
         private async void Planer_Shown(object sender, EventArgs e)
         {
+            // Obaveštenja o novim telegramima dok je Planer otvoren
+            Saobracaj.Telegrami.TelegramNotifier.Instance.Register(this, telegramiTab);
+            var telegrami = telegramiTab.Ucitaj();
             await Start();
+            await telegrami;
         }
 
         private async void refreshTimer_Tick(object sender, EventArgs e)
@@ -420,6 +426,8 @@ namespace Saobracaj.Agenti_jobs
         {
             refreshTimer.Stop();
             refreshTimer.Dispose();
+            Saobracaj.Telegrami.TelegramNotifier.Instance.Unregister(this);
+            telegramiTab.Dispose();
             DisposeGrids();
         }
     }
