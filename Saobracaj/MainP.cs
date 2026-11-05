@@ -999,5 +999,96 @@ namespace Saobracaj
            IskoriscenjeTrasa drn = new IskoriscenjeTrasa();  
             drn.Show();
         }
+
+        // Planiranje
+        private void tsbOPNedeljniPlan_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPNedeljniPlan(Saobracaj.Planiranje.Forme.VrstaPlana.Nedeljni);
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPOperativniPlan_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPNedeljniPlan(Saobracaj.Planiranje.Forme.VrstaPlana.Operativni);
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPNajaveBezPlana_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPNedeljniPlan(Saobracaj.Planiranje.Forme.VrstaPlana.Nedeljni, samoBezLokomotive: true);
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPDostupnost_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPDostupnost();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPPonudaOsoblja_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPPonudaOsoblja();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPTokPosla_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPTokPosla();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPAdHoc_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPTrase(Saobracaj.Planiranje.Forme.TabTrase.AdHoc);
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPTrase_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPTrase();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPRegistar_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPRegistar();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPStanice_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPStanice();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPLokomotive_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPLokomotive();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPOsoblje_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPOsoblje();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPTurnusi_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPTurnusi();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPTablicaMasa_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPTablicaMasa();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbOPParametri_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmOPParametri();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
     }
 }

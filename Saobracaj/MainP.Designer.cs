@@ -91,6 +91,23 @@ namespace Saobracaj
             this.toolStripButton126 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton131 = new System.Windows.Forms.ToolStripButton();
             this.toolStripEx26 = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
+            this.toolStripExOPPlaniranje = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
+            this.toolStripExOPSifarnici = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
+            this.tsbOPNedeljniPlan = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPOperativniPlan = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPNajaveBezPlana = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPDostupnost = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPPonudaOsoblja = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPTokPosla = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPAdHoc = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPTrase = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPRegistar = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPStanice = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPLokomotive = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPOsoblje = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPTurnusi = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPTablicaMasa = new System.Windows.Forms.ToolStripButton();
+            this.tsbOPParametri = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton85 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton86 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton87 = new System.Windows.Forms.ToolStripButton();
@@ -231,6 +248,8 @@ namespace Saobracaj
             this.toolStripEx10.SuspendLayout();
             this.toolStripEx11.SuspendLayout();
             this.toolStripEx26.SuspendLayout();
+            this.toolStripExOPPlaniranje.SuspendLayout();
+            this.toolStripExOPSifarnici.SuspendLayout();
             this.toolStripTabItem4.Panel.SuspendLayout();
             this.toolStripEx18.SuspendLayout();
             this.toolStripEx19.SuspendLayout();
@@ -868,6 +887,8 @@ namespace Saobracaj
             this.toolStripTabItem3.Panel.Controls.Add(this.toolStripEx10);
             this.toolStripTabItem3.Panel.Controls.Add(this.toolStripEx11);
             this.toolStripTabItem3.Panel.Controls.Add(this.toolStripEx26);
+            this.toolStripTabItem3.Panel.Controls.Add(this.toolStripExOPPlaniranje);
+            this.toolStripTabItem3.Panel.Controls.Add(this.toolStripExOPSifarnici);
             this.toolStripTabItem3.Panel.Name = "ribbonPanel3";
             this.toolStripTabItem3.Panel.ScrollPosition = 0;
             this.toolStripTabItem3.Panel.TabIndex = 4;
@@ -1062,6 +1083,181 @@ namespace Saobracaj
             this.toolStripButton131.Size = new System.Drawing.Size(173, 17);
             this.toolStripButton131.Text = "Putni list";
             this.toolStripButton131.Click += new System.EventHandler(this.toolStripButton131_Click);
+            // 
+            // toolStripExOPPlaniranje
+            // 
+            this.toolStripExOPPlaniranje.AutoSize = false;
+            this.toolStripExOPPlaniranje.Dock = System.Windows.Forms.DockStyle.None;
+            this.toolStripExOPPlaniranje.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+            this.toolStripExOPPlaniranje.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.toolStripExOPPlaniranje.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.toolStripExOPPlaniranje.Image = null;
+            this.toolStripExOPPlaniranje.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.toolStripExOPPlaniranje.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsbOPNedeljniPlan,
+            this.tsbOPOperativniPlan,
+            this.tsbOPNajaveBezPlana,
+            this.tsbOPDostupnost,
+            this.tsbOPPonudaOsoblja,
+            this.tsbOPTokPosla,
+            this.tsbOPAdHoc});
+            this.toolStripExOPPlaniranje.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
+            this.toolStripExOPPlaniranje.Location = new System.Drawing.Point(502, 1);
+            this.toolStripExOPPlaniranje.Name = "toolStripExOPPlaniranje";
+            this.toolStripExOPPlaniranje.Office12Mode = false;
+            this.toolStripExOPPlaniranje.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
+            this.toolStripExOPPlaniranje.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.toolStripExOPPlaniranje.Size = new System.Drawing.Size(170, 262);
+            this.toolStripExOPPlaniranje.TabIndex = 3;
+            this.toolStripExOPPlaniranje.Text = "Planiranje";
+            // 
+            // toolStripExOPSifarnici
+            // 
+            this.toolStripExOPSifarnici.AutoSize = false;
+            this.toolStripExOPSifarnici.Dock = System.Windows.Forms.DockStyle.None;
+            this.toolStripExOPSifarnici.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+            this.toolStripExOPSifarnici.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.toolStripExOPSifarnici.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.toolStripExOPSifarnici.Image = null;
+            this.toolStripExOPSifarnici.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.toolStripExOPSifarnici.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsbOPTrase,
+            this.tsbOPRegistar,
+            this.tsbOPStanice,
+            this.tsbOPLokomotive,
+            this.tsbOPOsoblje,
+            this.tsbOPTurnusi,
+            this.tsbOPTablicaMasa,
+            this.tsbOPParametri});
+            this.toolStripExOPSifarnici.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
+            this.toolStripExOPSifarnici.Location = new System.Drawing.Point(675, 1);
+            this.toolStripExOPSifarnici.Name = "toolStripExOPSifarnici";
+            this.toolStripExOPSifarnici.Office12Mode = false;
+            this.toolStripExOPSifarnici.Padding = new System.Windows.Forms.Padding(3, 0, 0, 0);
+            this.toolStripExOPSifarnici.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.toolStripExOPSifarnici.Size = new System.Drawing.Size(170, 262);
+            this.toolStripExOPSifarnici.TabIndex = 4;
+            this.toolStripExOPSifarnici.Text = "Šifarnici planiranja";
+            // 
+            // tsbOPNedeljniPlan
+            // 
+            this.tsbOPNedeljniPlan.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPNedeljniPlan.Name = "tsbOPNedeljniPlan";
+            this.tsbOPNedeljniPlan.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPNedeljniPlan.Text = "Nedeljni plan";
+            this.tsbOPNedeljniPlan.Click += new System.EventHandler(this.tsbOPNedeljniPlan_Click);
+            // 
+            // tsbOPOperativniPlan
+            // 
+            this.tsbOPOperativniPlan.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPOperativniPlan.Name = "tsbOPOperativniPlan";
+            this.tsbOPOperativniPlan.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPOperativniPlan.Text = "Operativni plan";
+            this.tsbOPOperativniPlan.Click += new System.EventHandler(this.tsbOPOperativniPlan_Click);
+            // 
+            // tsbOPNajaveBezPlana
+            // 
+            this.tsbOPNajaveBezPlana.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPNajaveBezPlana.Name = "tsbOPNajaveBezPlana";
+            this.tsbOPNajaveBezPlana.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPNajaveBezPlana.Text = "Najave bez plana";
+            this.tsbOPNajaveBezPlana.Click += new System.EventHandler(this.tsbOPNajaveBezPlana_Click);
+            // 
+            // tsbOPDostupnost
+            // 
+            this.tsbOPDostupnost.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPDostupnost.Name = "tsbOPDostupnost";
+            this.tsbOPDostupnost.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPDostupnost.Text = "Dostupnost osoblja";
+            this.tsbOPDostupnost.Click += new System.EventHandler(this.tsbOPDostupnost_Click);
+            // 
+            // tsbOPPonudaOsoblja
+            // 
+            this.tsbOPPonudaOsoblja.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPPonudaOsoblja.Name = "tsbOPPonudaOsoblja";
+            this.tsbOPPonudaOsoblja.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPPonudaOsoblja.Text = "Ponuda osoblja";
+            this.tsbOPPonudaOsoblja.Click += new System.EventHandler(this.tsbOPPonudaOsoblja_Click);
+            // 
+            // tsbOPTokPosla
+            // 
+            this.tsbOPTokPosla.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPTokPosla.Name = "tsbOPTokPosla";
+            this.tsbOPTokPosla.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPTokPosla.Text = "Tok posla";
+            this.tsbOPTokPosla.Click += new System.EventHandler(this.tsbOPTokPosla_Click);
+            // 
+            // tsbOPAdHoc
+            // 
+            this.tsbOPAdHoc.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPAdHoc.Name = "tsbOPAdHoc";
+            this.tsbOPAdHoc.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPAdHoc.Text = "Zahtevi za ad hoc trasu";
+            this.tsbOPAdHoc.Click += new System.EventHandler(this.tsbOPAdHoc_Click);
+            // 
+            // tsbOPTrase
+            // 
+            this.tsbOPTrase.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPTrase.Name = "tsbOPTrase";
+            this.tsbOPTrase.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPTrase.Text = "Trase: uvoz i pregled";
+            this.tsbOPTrase.Click += new System.EventHandler(this.tsbOPTrase_Click);
+            // 
+            // tsbOPRegistar
+            // 
+            this.tsbOPRegistar.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPRegistar.Name = "tsbOPRegistar";
+            this.tsbOPRegistar.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPRegistar.Text = "Registar pruga";
+            this.tsbOPRegistar.Click += new System.EventHandler(this.tsbOPRegistar_Click);
+            // 
+            // tsbOPStanice
+            // 
+            this.tsbOPStanice.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPStanice.Name = "tsbOPStanice";
+            this.tsbOPStanice.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPStanice.Text = "Mreža i stanice";
+            this.tsbOPStanice.Click += new System.EventHandler(this.tsbOPStanice_Click);
+            // 
+            // tsbOPLokomotive
+            // 
+            this.tsbOPLokomotive.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPLokomotive.Name = "tsbOPLokomotive";
+            this.tsbOPLokomotive.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPLokomotive.Text = "Lokomotive i serije";
+            this.tsbOPLokomotive.Click += new System.EventHandler(this.tsbOPLokomotive_Click);
+            // 
+            // tsbOPOsoblje
+            // 
+            this.tsbOPOsoblje.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPOsoblje.Name = "tsbOPOsoblje";
+            this.tsbOPOsoblje.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPOsoblje.Text = "Osoblje i kvalifikacije";
+            this.tsbOPOsoblje.Click += new System.EventHandler(this.tsbOPOsoblje_Click);
+            // 
+            // tsbOPTurnusi
+            // 
+            this.tsbOPTurnusi.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPTurnusi.Name = "tsbOPTurnusi";
+            this.tsbOPTurnusi.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPTurnusi.Text = "Turnusi";
+            this.tsbOPTurnusi.Click += new System.EventHandler(this.tsbOPTurnusi_Click);
+            // 
+            // tsbOPTablicaMasa
+            // 
+            this.tsbOPTablicaMasa.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPTablicaMasa.Name = "tsbOPTablicaMasa";
+            this.tsbOPTablicaMasa.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPTablicaMasa.Text = "Tablica masa";
+            this.tsbOPTablicaMasa.Click += new System.EventHandler(this.tsbOPTablicaMasa_Click);
+            // 
+            // tsbOPParametri
+            // 
+            this.tsbOPParametri.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbOPParametri.Name = "tsbOPParametri";
+            this.tsbOPParametri.Size = new System.Drawing.Size(163, 17);
+            this.tsbOPParametri.Text = "Parametri";
+            this.tsbOPParametri.Click += new System.EventHandler(this.tsbOPParametri_Click);
             // 
             // toolStripEx26
             // 
@@ -2684,6 +2880,10 @@ namespace Saobracaj
             this.toolStripEx11.PerformLayout();
             this.toolStripEx26.ResumeLayout(false);
             this.toolStripEx26.PerformLayout();
+            this.toolStripExOPPlaniranje.ResumeLayout(false);
+            this.toolStripExOPPlaniranje.PerformLayout();
+            this.toolStripExOPSifarnici.ResumeLayout(false);
+            this.toolStripExOPSifarnici.PerformLayout();
             this.toolStripTabItem4.Panel.ResumeLayout(false);
             this.toolStripEx18.ResumeLayout(false);
             this.toolStripEx18.PerformLayout();
@@ -2862,6 +3062,23 @@ namespace Saobracaj
         private System.Windows.Forms.ToolStripButton toolStripButton83;
         private System.Windows.Forms.ToolStripButton toolStripButton84;
         private Syncfusion.Windows.Forms.Tools.ToolStripEx toolStripEx26;
+        private Syncfusion.Windows.Forms.Tools.ToolStripEx toolStripExOPPlaniranje;
+        private Syncfusion.Windows.Forms.Tools.ToolStripEx toolStripExOPSifarnici;
+        private System.Windows.Forms.ToolStripButton tsbOPNedeljniPlan;
+        private System.Windows.Forms.ToolStripButton tsbOPOperativniPlan;
+        private System.Windows.Forms.ToolStripButton tsbOPNajaveBezPlana;
+        private System.Windows.Forms.ToolStripButton tsbOPDostupnost;
+        private System.Windows.Forms.ToolStripButton tsbOPPonudaOsoblja;
+        private System.Windows.Forms.ToolStripButton tsbOPTokPosla;
+        private System.Windows.Forms.ToolStripButton tsbOPAdHoc;
+        private System.Windows.Forms.ToolStripButton tsbOPTrase;
+        private System.Windows.Forms.ToolStripButton tsbOPRegistar;
+        private System.Windows.Forms.ToolStripButton tsbOPStanice;
+        private System.Windows.Forms.ToolStripButton tsbOPLokomotive;
+        private System.Windows.Forms.ToolStripButton tsbOPOsoblje;
+        private System.Windows.Forms.ToolStripButton tsbOPTurnusi;
+        private System.Windows.Forms.ToolStripButton tsbOPTablicaMasa;
+        private System.Windows.Forms.ToolStripButton tsbOPParametri;
         private System.Windows.Forms.ToolStripButton toolStripButton85;
         private System.Windows.Forms.ToolStripButton toolStripButton86;
         private System.Windows.Forms.ToolStripButton toolStripButton87;

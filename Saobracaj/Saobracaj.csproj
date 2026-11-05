@@ -494,6 +494,7 @@
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xaml" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -2184,6 +2185,172 @@
     </Compile>
     <Compile Include="Agenti jobs\IskoriscenjeTrasa.NoviIzgled.cs">
       <DependentUpon>IskoriscenjeTrasa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Podaci\DogadjajRepo.cs" />
+    <Compile Include="Planiranje\Podaci\LokomotiveRepo.cs" />
+    <Compile Include="Planiranje\Podaci\NajaveRepo.cs" />
+    <Compile Include="Planiranje\Podaci\OdsustvaRepo.cs" />
+    <Compile Include="Planiranje\Podaci\OsobljeRepo.cs" />
+    <Compile Include="Planiranje\Podaci\ParametriRepo.cs" />
+    <Compile Include="Planiranje\Podaci\PlaniranjeDb.cs" />
+    <Compile Include="Planiranje\Podaci\PosaoRepo.cs" />
+    <Compile Include="Planiranje\Podaci\PravaRepo.cs" />
+    <Compile Include="Planiranje\Podaci\RegistarRepo.cs" />
+    <Compile Include="Planiranje\Podaci\StaniceRepo.cs" />
+    <Compile Include="Planiranje\Podaci\TelegramiRepo.cs" />
+    <Compile Include="Planiranje\Podaci\TraseRepo.cs" />
+    <Compile Include="Planiranje\Pravila\Latinica.cs" />
+    <Compile Include="Planiranje\Pravila\NaziviStanica.cs" />
+    <Compile Include="Planiranje\Pravila\ParametriPravila.cs" />
+    <Compile Include="Planiranje\Forme\EkranOP.cs" />
+    <Compile Include="Planiranje\Podaci\TurnusiRepo.cs" />
+    <Compile Include="Planiranje\Podaci\TablicaMasaRepo.cs" />
+    <Compile Include="Planiranje\Pravila\Turnusi.cs" />
+    <Compile Include="Planiranje\Pravila\XlsxCitac.cs" />
+    <Compile Include="Planiranje\Pravila\RazlikeTrasa.cs" />
+    <Compile Include="Planiranje\Pravila\RegistarSifre.cs" />
+    <Compile Include="Planiranje\Pravila\RegistarCitac.cs" />
+    <Compile Include="Planiranje\Modeli\PlanModeli.cs" />
+    <Compile Include="Planiranje\Pravila\Ruta.cs" />
+    <Compile Include="Planiranje\Pravila\Rutiranje.cs" />
+    <Compile Include="Planiranje\Pravila\KombinacijeTrasa.cs" />
+    <Compile Include="Planiranje\Pravila\PregledPruga.cs" />
+    <Compile Include="Planiranje\Pravila\NaziviRegistra.cs" />
+    <Compile Include="Planiranje\Pravila\BrojLokomotiva.cs" />
+    <Compile Include="Planiranje\Pravila\ProverePosla.cs" />
+    <Compile Include="Planiranje\Pravila\PredlogLokomotiva.cs" />
+    <Compile Include="Planiranje\Podaci\PlanRepo.cs" />
+    <Compile Include="Planiranje\Kontrole\GanttPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Pravila\PonudaOsoblja.cs" />
+    <Compile Include="Planiranje\Podaci\ZadatakRepo.cs" />
+    <Compile Include="Planiranje\Podaci\TokPoslaRepo.cs" />
+    <Compile Include="Planiranje\Forme\MaliDijalog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Podaci\OptimizatorKlijent.cs" />
+    <Compile Include="Planiranje\Podaci\KvalifikacijeRepo.cs" />
+    <Compile Include="Planiranje\Kontrole\MatricaPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\Zajednicko.cs" />
+    <Compile Include="Planiranje\Forme\frmOPNedeljniPlan.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPNedeljniPlan.Designer.cs">
+      <DependentUpon>frmOPNedeljniPlan.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPNedeljniPlan.NoviIzgled.cs">
+      <DependentUpon>frmOPNedeljniPlan.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPosao.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPosao.Designer.cs">
+      <DependentUpon>frmOPPosao.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPosao.NoviIzgled.cs">
+      <DependentUpon>frmOPPosao.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPonudaOsoblja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPonudaOsoblja.Designer.cs">
+      <DependentUpon>frmOPPonudaOsoblja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPPonudaOsoblja.NoviIzgled.cs">
+      <DependentUpon>frmOPPonudaOsoblja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPDostupnost.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPDostupnost.Designer.cs">
+      <DependentUpon>frmOPDostupnost.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPDostupnost.NoviIzgled.cs">
+      <DependentUpon>frmOPDostupnost.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTokPosla.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTokPosla.Designer.cs">
+      <DependentUpon>frmOPTokPosla.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTokPosla.NoviIzgled.cs">
+      <DependentUpon>frmOPTokPosla.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTrase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTrase.Designer.cs">
+      <DependentUpon>frmOPTrase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTrase.NoviIzgled.cs">
+      <DependentUpon>frmOPTrase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPRegistar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPRegistar.Designer.cs">
+      <DependentUpon>frmOPRegistar.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPRegistar.NoviIzgled.cs">
+      <DependentUpon>frmOPRegistar.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPStanice.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPStanice.Designer.cs">
+      <DependentUpon>frmOPStanice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPStanice.NoviIzgled.cs">
+      <DependentUpon>frmOPStanice.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPLokomotive.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPLokomotive.Designer.cs">
+      <DependentUpon>frmOPLokomotive.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPLokomotive.NoviIzgled.cs">
+      <DependentUpon>frmOPLokomotive.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPOsoblje.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPOsoblje.Designer.cs">
+      <DependentUpon>frmOPOsoblje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPOsoblje.NoviIzgled.cs">
+      <DependentUpon>frmOPOsoblje.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTurnusi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTurnusi.Designer.cs">
+      <DependentUpon>frmOPTurnusi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTurnusi.NoviIzgled.cs">
+      <DependentUpon>frmOPTurnusi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTablicaMasa.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTablicaMasa.Designer.cs">
+      <DependentUpon>frmOPTablicaMasa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTablicaMasa.NoviIzgled.cs">
+      <DependentUpon>frmOPTablicaMasa.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPParametri.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPParametri.Designer.cs">
+      <DependentUpon>frmOPParametri.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPParametri.NoviIzgled.cs">
+      <DependentUpon>frmOPParametri.cs</DependentUpon>
     </Compile>
     <Compile Include="Sifarnici\frmLogovanje.NoviIzgled.cs">
       <DependentUpon>frmLogovanje.cs</DependentUpon>

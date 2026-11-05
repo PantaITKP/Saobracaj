@@ -1,0 +1,183 @@
+/* ---------- Rezervne kopije ---------- */
+IF OBJECT_ID(N'planiranje.OP_Stanice_bak_20261103', N'U') IS NULL
+    SELECT * INTO planiranje.OP_Stanice_bak_20261103 FROM planiranje.OP_Stanice;
+IF OBJECT_ID(N'planiranje.OP_MrezaVeza_bak_20261103', N'U') IS NULL
+    SELECT * INTO planiranje.OP_MrezaVeza_bak_20261103 FROM planiranje.OP_MrezaVeza;
+GO
+
+BEGIN TRAN;
+
+/* ---------- 1. Uparivanje: postojeći SRB red -> mesto iz Registra ---------- */
+IF OBJECT_ID('tempdb..#T') IS NOT NULL DROP TABLE #T;
+SELECT s.ID AS PK, s.RegKljuc, REPLACE(REPLACE(s.Kod, N' ', N''), N'-', N'') AS K, REPLACE(s.UIC, N' ', N'') AS U,
+       LTRIM(RTRIM(s.Naziv)) AS N, LTRIM(RTRIM(s.NazivCir)) AS NC,
+       -- Stari podaci imaju zamenjene koordinate; nula znači da ih nema.
+       CASE WHEN s.Latitude BETWEEN 18 AND 23.5 AND s.Longitude BETWEEN 41 AND 46.5 THEN s.Longitude WHEN s.Latitude = 0 THEN NULL ELSE s.Latitude END AS Lat,
+       CASE WHEN s.Latitude BETWEEN 18 AND 23.5 AND s.Longitude BETWEEN 41 AND 46.5 THEN s.Latitude WHEN s.Latitude = 0 THEN NULL ELSE s.Longitude END AS Lon
+INTO   #T
+FROM   planiranje.OP_Stanice s
+WHERE  ISNULL(s.Drzava, N'') IN (N'', N'SRB', N'RS', N'SRBIJA') AND s.DuplikatOd IS NULL;
+
+IF OBJECT_ID('tempdb..#Kand') IS NOT NULL DROP TABLE #Kand;
+CREATE TABLE #Kand (PK int NOT NULL, RegId int NOT NULL, Metod tinyint NOT NULL);
+-- 0 ključ, 1 kod, 2 šifra i naziv, 3 šifra, 4 latinični naziv, 5 ćirilični naziv, 6 alternativni naziv
+INSERT #Kand SELECT t.PK, r.RegId, 0 FROM #T t JOIN #Reg r ON r.Kljuc = t.RegKljuc;
+INSERT #Kand SELECT t.PK, r.RegId, 1 FROM #T t JOIN #Reg r ON r.Kod = t.K WHERE t.RegKljuc IS NULL
+    AND r.SifraIZS NOT IN (SELECT SifraIZS FROM #Reg WHERE SifraIZS IS NOT NULL GROUP BY SifraIZS HAVING COUNT(*) > 1);
+INSERT #Kand SELECT t.PK, r.RegId, 2 FROM #T t JOIN #Reg r ON (t.U = r.UIC OR t.U = CAST(r.SifraIZS AS nvarchar(10))) AND t.N COLLATE Latin1_General_CI_AI = r.Naziv COLLATE Latin1_General_CI_AI WHERE t.RegKljuc IS NULL;
+-- Šifra koju dele dva mesta (Beograd ranžirna A i B) ne određuje mesto bez naziva.
+INSERT #Kand SELECT t.PK, r.RegId, 3 FROM #T t JOIN #Reg r ON (t.U = r.UIC OR t.U = CAST(r.SifraIZS AS nvarchar(10))) WHERE t.RegKljuc IS NULL
+    AND r.SifraIZS NOT IN (SELECT SifraIZS FROM #Reg WHERE SifraIZS IS NOT NULL GROUP BY SifraIZS HAVING COUNT(*) > 1);
+-- Isti naziv sa drugom šifrom ili dalje od 30 km je drugo mesto (npr. Vitkovac).
+INSERT #Kand SELECT t.PK, r.RegId, 4 FROM #T t JOIN #Reg r ON t.N COLLATE Latin1_General_CI_AI = r.Naziv COLLATE Latin1_General_CI_AI
+    WHERE t.RegKljuc IS NULL AND (t.U IS NULL OR r.UIC IS NULL OR t.U = r.UIC OR t.U = CAST(r.SifraIZS AS nvarchar(10)))
+      AND (t.Lat IS NULL OR r.Lat IS NULL OR 111.0 * SQRT(POWER(t.Lat - r.Lat, 2) + POWER((t.Lon - r.Lon) * 0.72, 2)) <= 30);
+INSERT #Kand SELECT t.PK, r.RegId, 5 FROM #T t JOIN #Reg r ON UPPER(t.NC) COLLATE Cyrillic_General_CI_AI IN (UPPER(r.NazivCir) COLLATE Cyrillic_General_CI_AI, r.NazivRegistar COLLATE Cyrillic_General_CI_AI)
+    WHERE t.RegKljuc IS NULL AND t.NC IS NOT NULL AND (t.U IS NULL OR r.UIC IS NULL OR t.U = r.UIC OR t.U = CAST(r.SifraIZS AS nvarchar(10)))
+      AND (t.Lat IS NULL OR r.Lat IS NULL OR 111.0 * SQRT(POWER(t.Lat - r.Lat, 2) + POWER((t.Lon - r.Lon) * 0.72, 2)) <= 30);
+INSERT #Kand SELECT t.PK, r.RegId, 6 FROM #T t JOIN #Reg r ON r.AltNazivi IS NOT NULL AND N';' + REPLACE(r.AltNazivi, N'; ', N';') + N';' LIKE N'%;' + UPPER(t.NC) + N';%' WHERE t.RegKljuc IS NULL AND t.NC IS NOT NULL;
+
+IF OBJECT_ID('tempdb..#Map') IS NOT NULL DROP TABLE #Map;
+SELECT PK, RegId, Metod INTO #Map FROM (SELECT PK, RegId, Metod, ROW_NUMBER() OVER (PARTITION BY PK ORDER BY Metod, RegId) AS rn FROM #Kand) x WHERE rn = 1;
+-- Glavni je red najjačeg uparivanja, a od njih najstariji.
+IF OBJECT_ID('tempdb..#Glavni') IS NOT NULL DROP TABLE #Glavni;
+SELECT RegId, PK INTO #Glavni FROM (SELECT RegId, PK, ROW_NUMBER() OVER (PARTITION BY RegId ORDER BY Metod, PK) AS rn FROM #Map) x WHERE rn = 1;
+
+/* ---------- 2. Ažuriranje upisanih mesta ---------- */
+UPDATE s SET
+    NazivStari = CASE WHEN s.NazivStari IS NULL AND s.Naziv <> r.Naziv THEN s.Naziv ELSE s.NazivStari END,
+    Naziv = r.Naziv, NazivCir = r.NazivCir, NazivRegistar = r.NazivRegistar, AltNazivi = r.AltNazivi, Kod = r.Kod, UIC = r.UIC, SifraIZS = r.SifraIZS, Drzava = N'SRB',
+    VrstaMesta = r.VrstaMesta, VrstaKod = r.VrstaKod, Granicna = r.Granicna, GranicniPrelaz = r.GranicniPrelaz, AdministrativnaLinija = r.AdministrativnaLinija, KiM = r.KiM,
+    Latitude   = CASE WHEN s.KoordIzvor = 'RUCNO' THEN s.Latitude  ELSE COALESCE(r.Lat, t.Lat) END,
+    Longitude  = CASE WHEN s.KoordIzvor = 'RUCNO' THEN s.Longitude ELSE COALESCE(r.Lon, t.Lon) END,
+    KoordIzvor = CASE WHEN s.KoordIzvor = 'RUCNO' THEN s.KoordIzvor ELSE COALESCE(r.KoordIzvor, s.KoordIzvor) END,
+    OsmId = r.OsmId, Pruge = r.Pruge, Cvor = r.Cvor, Posednutost = r.Posednutost, OtvorenaZa = r.OtvorenaZa, Vaga = r.Vaga, Rampa = r.Rampa,
+    MaxDuzinaVozaAB = r.MaxDvAB, KolosekAB = r.KolAB, MaxDuzinaVozaBA = r.MaxDvBA, KolosekBA = r.KolBA, Regulisanje = r.Regulisanje, Osiguranje = r.Osiguranje,
+    NagibStanice = r.NagibSt, MinRadijus = r.MinR, NadmorskaVisina = r.NV, RegKljuc = r.Kljuc, Aktivna = r.Aktivna, DuplikatOd = NULL, Izvor = N'REGISTAR', DatumAzuriranja = SYSDATETIME()
+FROM planiranje.OP_Stanice s JOIN #Glavni g ON g.PK = s.ID JOIN #Reg r ON r.RegId = g.RegId JOIN #T t ON t.PK = s.ID;
+DECLARE @azurirano int; SET @azurirano = @@ROWCOUNT;
+
+/* ---------- 3. Duplikati se gase ---------- */
+UPDATE s SET Aktivna = 0, DuplikatOd = g.PK, DatumAzuriranja = SYSDATETIME()
+FROM planiranje.OP_Stanice s JOIN #Map m ON m.PK = s.ID JOIN #Glavni g ON g.RegId = m.RegId AND g.PK <> m.PK;
+DECLARE @duplikati int; SET @duplikati = @@ROWCOUNT;
+
+/* ---------- 4. Nova mesta ---------- */
+INSERT planiranje.OP_Stanice (Naziv, NazivCir, NazivRegistar, AltNazivi, Kod, UIC, SifraIZS, Drzava, VrstaMesta, VrstaKod, Granicna, GranicniPrelaz, AdministrativnaLinija, KiM, Latitude, Longitude, KoordIzvor, OsmId,
+    Pruge, Cvor, Posednutost, OtvorenaZa, Vaga, Rampa, MaxDuzinaVozaAB, KolosekAB, MaxDuzinaVozaBA, KolosekBA, Regulisanje, Osiguranje, NagibStanice, MinRadijus, NadmorskaVisina, RegKljuc, Aktivna, Izvor, DatumAzuriranja)
+SELECT r.Naziv, r.NazivCir, r.NazivRegistar, r.AltNazivi, r.Kod, r.UIC, r.SifraIZS, N'SRB', r.VrstaMesta, r.VrstaKod, r.Granicna, r.GranicniPrelaz, r.AdministrativnaLinija, r.KiM, r.Lat, r.Lon, r.KoordIzvor, r.OsmId,
+    r.Pruge, r.Cvor, r.Posednutost, r.OtvorenaZa, r.Vaga, r.Rampa, r.MaxDvAB, r.KolAB, r.MaxDvBA, r.KolBA, r.Regulisanje, r.Osiguranje, r.NagibSt, r.MinR, r.NV, r.Kljuc, r.Aktivna, N'REGISTAR', SYSDATETIME()
+FROM #Reg r WHERE NOT EXISTS (SELECT 1 FROM #Glavni g WHERE g.RegId = r.RegId);
+DECLARE @novo int; SET @novo = @@ROWCOUNT;
+
+/* ---------- 5. Ispravka ranijih spajanja ---------- */
+-- Red čiji naziv tačno odgovara drugom mestu iz Registra pripada tom mestu (npr. Rasputnica B sa šifrom Beograd ranžirne).
+UPDATE d SET DuplikatOd = z.ID, DatumAzuriranja = SYSDATETIME()
+FROM planiranje.OP_Stanice d
+JOIN planiranje.OP_Stanice g ON g.ID = d.DuplikatOd
+JOIN planiranje.OP_Stanice z ON z.RegKljuc IS NOT NULL AND z.ID <> g.ID AND z.Naziv COLLATE Latin1_General_CI_AI = LTRIM(RTRIM(d.Naziv)) COLLATE Latin1_General_CI_AI
+WHERE d.Naziv COLLATE Latin1_General_CI_AI <> g.Naziv COLLATE Latin1_General_CI_AI
+  AND (SELECT COUNT(*) FROM planiranje.OP_Stanice x WHERE x.RegKljuc IS NOT NULL AND x.Naziv COLLATE Latin1_General_CI_AI = LTRIM(RTRIM(d.Naziv)) COLLATE Latin1_General_CI_AI) = 1;
+DECLARE @ispravljeno int; SET @ispravljeno = @@ROWCOUNT;
+
+/* ---------- 6. Reference prelaze na glavnu stanicu ---------- */
+-- Isti spisak kao StaniceRepo.Spoji. Bez ovoga trase i poslovi ostaju na ugašenom redu van grafa.
+UPDATE x SET MaticnaStanicaID = d.DuplikatOd FROM planiranje.OP_Lokomotive x JOIN planiranje.OP_Stanice d ON d.ID = x.MaticnaStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET MaticnaStanicaID = d.DuplikatOd FROM planiranje.OP_OsobljePlan x JOIN planiranje.OP_Stanice d ON d.ID = x.MaticnaStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaID = d.DuplikatOd FROM planiranje.OP_PrugaMesto x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET PocetnaStanicaID = d.DuplikatOd FROM planiranje.OP_Trase x JOIN planiranje.OP_Stanice d ON d.ID = x.PocetnaStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET KrajnjaStanicaID = d.DuplikatOd FROM planiranje.OP_Trase x JOIN planiranje.OP_Stanice d ON d.ID = x.KrajnjaStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaID = d.DuplikatOd FROM planiranje.OP_TrasaStanice x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaOdID = d.DuplikatOd FROM planiranje.OP_TablicaMasa x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaOdID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaDoID = d.DuplikatOd FROM planiranje.OP_TablicaMasa x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaDoID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET PrijemStanicaID = d.DuplikatOd FROM planiranje.OP_Posao x JOIN planiranje.OP_Stanice d ON d.ID = x.PrijemStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET PredajaStanicaID = d.DuplikatOd FROM planiranje.OP_Posao x JOIN planiranje.OP_Stanice d ON d.ID = x.PredajaStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaOdID = d.DuplikatOd FROM planiranje.OP_PosaoRuta x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaOdID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaDoID = d.DuplikatOd FROM planiranje.OP_PosaoRuta x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaDoID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET LokacijaPosleStanicaID = d.DuplikatOd FROM planiranje.OP_Smena x JOIN planiranje.OP_Stanice d ON d.ID = x.LokacijaPosleStanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaID = d.DuplikatOd FROM planiranje.OP_Zadatak x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaID WHERE d.DuplikatOd IS NOT NULL;
+-- Parametar glavne stanice ima prednost nad istim parametrom duplikata.
+DELETE x FROM planiranje.OP_Parametri x
+JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaID AND d.DuplikatOd IS NOT NULL
+JOIN planiranje.OP_Parametri p ON p.Kljuc = x.Kljuc AND p.VaziOd = x.VaziOd AND p.StanicaID = d.DuplikatOd AND ISNULL(p.StanicaDoID, 0) = ISNULL(x.StanicaDoID, 0) AND ISNULL(p.SerijaID, 0) = ISNULL(x.SerijaID, 0);
+UPDATE x SET StanicaID = d.DuplikatOd FROM planiranje.OP_Parametri x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaID WHERE d.DuplikatOd IS NOT NULL;
+UPDATE x SET StanicaDoID = d.DuplikatOd FROM planiranje.OP_Parametri x JOIN planiranje.OP_Stanice d ON d.ID = x.StanicaDoID WHERE d.DuplikatOd IS NOT NULL;
+
+/* ---------- 7. Ostali SRB redovi: zamenjene koordinate ---------- */
+UPDATE s SET Latitude = s.Longitude, Longitude = s.Latitude, KoordIzvor = 'ZAMENJENO_LAT_LON', DatumAzuriranja = SYSDATETIME()
+FROM planiranje.OP_Stanice s
+WHERE ISNULL(s.Drzava, N'') IN (N'', N'SRB', N'RS', N'SRBIJA') AND s.RegKljuc IS NULL AND s.Latitude BETWEEN 18 AND 23.5 AND s.Longitude BETWEEN 41 AND 46.5;
+DECLARE @zamenjeno int; SET @zamenjeno = @@ROWCOUNT;
+
+/* ---------- 8. Pruge i mesta važeće verzije ---------- */
+UPDATE p SET Sifra = CASE p.Kategorija WHEN N'MAGISTRALNA' THEN N'M' WHEN N'REGIONALNA' THEN N'R' WHEN N'LOKALNA' THEN N'L' WHEN N'MANIPULATIVNA' THEN N'MP' END + CAST(p.RedniBroj AS nvarchar(4))
+FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID
+WHERE v.Status = N'VAZECA' AND p.RedniBroj IS NOT NULL;
+UPDATE p SET KiM = CASE WHEN p.NazivCir LIKE N'%*)' THEN 1 ELSE 0 END
+FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID
+WHERE v.Status = N'VAZECA';
+
+-- Mesto se nalazi po šifri na toj pruzi, a mesto bez šifre po nazivu iz Registra.
+-- Pre OP_010 uvoz nije ujednačavao ćirilicu, pa su K i B u nekoliko naziva latinični.
+UPDATE m SET RegKljuc = x.Kljuc, VrstaKod = x.VrstaKod, StanicaID = s.ID, PovezanoPo = N'REGISTAR'
+FROM planiranje.OP_PrugaMesto m
+JOIN planiranje.OP_Pruga p ON p.ID = m.PrugaID
+JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID AND v.Status = N'VAZECA'
+JOIN #Stavka x ON x.Pruga = p.Sifra AND (x.NazivRegistar COLLATE Latin1_General_BIN = REPLACE(REPLACE(m.NazivOriginal COLLATE Latin1_General_BIN, N'K', N'К'), N'B', N'В') OR (x.SifraIZS IS NOT NULL AND CAST(x.SifraIZS AS nvarchar(10)) = m.UIC
+        AND x.SifraIZS NOT IN (SELECT SifraIZS FROM #Reg WHERE SifraIZS IS NOT NULL GROUP BY SifraIZS HAVING COUNT(*) > 1)))
+JOIN planiranje.OP_Stanice s ON s.RegKljuc = x.Kljuc;
+DECLARE @mestaVezana int; SET @mestaVezana = @@ROWCOUNT;
+
+/* ---------- 9. Graf ---------- */
+-- Ručne veze ostaju; ona koja bi postala petlja ili duplikat se briše.
+DELETE v FROM planiranje.OP_MrezaVeza v WHERE v.Izvor IN (N'MREZA', N'REGISTAR');
+DELETE v FROM planiranje.OP_MrezaVeza v
+JOIN planiranje.OP_Stanice a ON a.ID = v.StanicaAID JOIN planiranje.OP_Stanice b ON b.ID = v.StanicaBID
+WHERE COALESCE(a.DuplikatOd, a.ID) = COALESCE(b.DuplikatOd, b.ID);
+UPDATE v SET StanicaAID = a.DuplikatOd FROM planiranje.OP_MrezaVeza v JOIN planiranje.OP_Stanice a ON a.ID = v.StanicaAID WHERE a.DuplikatOd IS NOT NULL;
+UPDATE v SET StanicaBID = b.DuplikatOd FROM planiranje.OP_MrezaVeza v JOIN planiranje.OP_Stanice b ON b.ID = v.StanicaBID WHERE b.DuplikatOd IS NOT NULL;
+
+INSERT planiranje.OP_MrezaVeza (StanicaAID, StanicaBID, DuzinaKm, PrugaID, Elektrificirana, Izvor, KmIzvor, Klasa, OsovinskoT, Vmax, Dvokolosecna, MerodavniUspon, MerodavniPad, KiM, GeomIzvor, GeomWKT)
+SELECT a.ID, b.ID, g.Km, p.ID, g.Elektro, N'REGISTAR', g.KmIzvor, g.Klasa, g.OsovinskoT, g.Vmax, g.Dvokolosecna, g.MerU, g.MerP, g.KiM, g.GeomIzvor, g.Geom
+FROM #Grana g
+JOIN planiranje.OP_Stanice a ON a.RegKljuc = g.OdKljuc
+JOIN planiranje.OP_Stanice b ON b.RegKljuc = g.DoKljuc
+LEFT JOIN (SELECT p.ID, p.Sifra FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID WHERE v.Status = N'VAZECA') p ON p.Sifra = g.Pruga
+WHERE NOT EXISTS (SELECT 1 FROM planiranje.OP_MrezaVeza x WHERE (x.StanicaAID = a.ID AND x.StanicaBID = b.ID) OR (x.StanicaAID = b.ID AND x.StanicaBID = a.ID));
+DECLARE @grana int; SET @grana = @@ROWCOUNT;
+
+/* ---------- 10. Tabele bez prefiksa OP_ ---------- */
+IF OBJECT_ID(N'planiranje.MrezaGrana', N'U') IS NOT NULL DROP TABLE planiranje.MrezaGrana;
+IF OBJECT_ID(N'planiranje.RegPrugaStavka', N'U') IS NOT NULL DROP TABLE planiranje.RegPrugaStavka;
+IF OBJECT_ID(N'planiranje.RegPruga', N'U') IS NOT NULL DROP TABLE planiranje.RegPruga;
+
+/* ---------- 11. Izveštaj ---------- */
+SELECT @azurirano AS Azurirano, @duplikati AS NoviDuplikati, @ispravljeno AS IspravljenaSpajanja, @novo AS NovoUneto, @zamenjeno AS ZamenjeneKoordinate, @mestaVezana AS MestaVezana, @grana AS Grana;
+SELECT m.Metod, COUNT(*) AS Broj FROM #Map m GROUP BY m.Metod ORDER BY m.Metod;
+SELECT d.ID, d.Naziv, d.IzvorniID, g.ID AS GlavnaID, g.Naziv AS Glavna FROM planiranje.OP_Stanice d JOIN planiranje.OP_Stanice g ON g.ID = d.DuplikatOd ORDER BY g.Naziv;
+-- Provera: svaka linija mora biti 0.
+SELECT N'Grana iz podataka koja nije upisana' AS Provera, (SELECT COUNT(*) FROM #Grana g WHERE NOT EXISTS (SELECT 1 FROM planiranje.OP_Stanice a JOIN planiranje.OP_Stanice b ON b.RegKljuc = g.DoKljuc WHERE a.RegKljuc = g.OdKljuc AND EXISTS (SELECT 1 FROM planiranje.OP_MrezaVeza v WHERE (v.StanicaAID = a.ID AND v.StanicaBID = b.ID) OR (v.StanicaAID = b.ID AND v.StanicaBID = a.ID)))) AS Broj
+UNION ALL SELECT N'Veza bez pruge', COUNT(*) FROM planiranje.OP_MrezaVeza WHERE PrugaID IS NULL AND Izvor = N'REGISTAR'
+UNION ALL SELECT N'Veza na ugašenoj stanici', COUNT(*) FROM planiranje.OP_MrezaVeza v JOIN planiranje.OP_Stanice a ON a.ID = v.StanicaAID JOIN planiranje.OP_Stanice b ON b.ID = v.StanicaBID WHERE a.DuplikatOd IS NOT NULL OR b.DuplikatOd IS NOT NULL
+UNION ALL SELECT N'Trasa na duplikatu', COUNT(*) FROM planiranje.OP_Trase t JOIN planiranje.OP_Stanice a ON a.ID = t.PocetnaStanicaID OR a.ID = t.KrajnjaStanicaID WHERE a.DuplikatOd IS NOT NULL
+UNION ALL SELECT N'Mesto iz Registra bez stanice', COUNT(*) FROM #Reg r WHERE NOT EXISTS (SELECT 1 FROM planiranje.OP_Stanice s WHERE s.RegKljuc = r.Kljuc);
+-- Za ručnu proveru.
+SELECT N'Mesta važeće verzije bez ključa (oznake, inostranstvo, naziv se razlikuje)' AS Stavka, m.Naziv, m.NazivOriginal, p.Sifra
+FROM planiranje.OP_PrugaMesto m JOIN planiranje.OP_Pruga p ON p.ID = m.PrugaID JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID
+WHERE v.Status = N'VAZECA' AND m.RegKljuc IS NULL AND ISNULL(m.VrstaMesta, N'') <> N'oznaka' ORDER BY p.Sifra, m.RB;
+SELECT s.ID, s.Naziv, s.Drzava, s.Izvor, s.Latitude, s.Longitude, s.IzvorniID AS SRB_red_kojeg_nema_u_Registru
+FROM planiranje.OP_Stanice s WHERE ISNULL(s.Drzava, N'') IN (N'', N'SRB', N'RS', N'SRBIJA') AND s.RegKljuc IS NULL AND s.DuplikatOd IS NULL AND s.Aktivna = 1 ORDER BY s.Naziv;
+
+IF (SELECT Potvrdi FROM #Cfg) = 1
+BEGIN
+    COMMIT;
+    PRINT N'POTVRĐENO (COMMIT).';
+END
+ELSE
+BEGIN
+    ROLLBACK;
+    PRINT N'PROBA: sve je vraćeno (ROLLBACK). Za upis staviti Potvrdi = 1 u #Cfg na vrhu skripte.';
+END
+GO
+SET NOEXEC OFF;
+GO

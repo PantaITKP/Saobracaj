@@ -1,0 +1,65 @@
+/* =====================================================================
+   OP_010_MrezaPodaci.sql  (generiše gen_OP_010.py, ne menjati ručno)
+   Dorada KP-26-11-03-Mreza i stanice: šifarnik stanica SRB iz Registra pruga
+   IŽS i mreža pruga za rutiranje. Izvor: Registar.xlsx i OpenStreetMap (ODbL).
+
+   Šta radi:
+   - usklađuje SRB redove u OP_Stanice sa Registrom i dodaje mesta koja fale;
+   - duplikate gasi (Aktivna = 0, DuplikatOd), a sve reference prevezuje na
+     glavnu stanicu; redovi se ne brišu zbog veze sa dbo.stanice;
+   - vezuje OP_PrugaMesto važeće verzije za stanice i puni OP_Pruga.Sifra;
+   - zamenjuje graf u OP_MrezaVeza (Izvor MREZA i REGISTAR), a RUCNO ostaje;
+   - briše RegPruga, RegPrugaStavka i MrezaGrana, ako ih je napravila
+     stanice_mreza_SRB.sql, jer su ti podaci sada u OP_ tabelama.
+
+   Strane stanice se ne menjaju. U dbo se ništa ne upisuje.
+   Rezervne kopije: OP_Stanice_bak_20261103 i OP_MrezaVeza_bak_20261103.
+
+   Pokretanje: posle OP_009, a Registar mora biti uvezen (važeća verzija).
+   U #Cfg je Potvrdi = 0: sve se izvrši pa vrati, a ostaje izveštaj.
+   Kad je izveštaj u redu, staviti Potvrdi = 1 i pokrenuti ponovo.
+   Može da se ponovi: stanica sa RegKljuc se nalazi po njemu.
+   ===================================================================== */
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ARITHABORT ON;
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+SET NOEXEC OFF;
+GO
+IF OBJECT_ID('tempdb..#Cfg') IS NOT NULL DROP TABLE #Cfg;
+CREATE TABLE #Cfg (Potvrdi bit NOT NULL);
+INSERT #Cfg VALUES (0);   -- 0 = proba (ROLLBACK), 1 = upis (COMMIT)
+GO
+IF COL_LENGTH('planiranje.OP_Stanice', 'AltNazivi') IS NULL OR COL_LENGTH('planiranje.OP_MrezaVeza', 'GeomWKT') IS NULL OR COL_LENGTH('planiranje.OP_Pruga', 'Sifra') IS NULL
+BEGIN
+    RAISERROR(N'Prvo pokrenuti OP_009_MrezaSema.sql.', 16, 1) WITH NOWAIT;
+    SET NOEXEC ON;
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID WHERE v.Status = N'VAZECA' AND p.RedniBroj IS NOT NULL)
+BEGIN
+    RAISERROR(N'Nema važeće verzije Registra. Prvo uvesti Registar.xlsx kroz Planiranje / Registar pruga.', 16, 1) WITH NOWAIT;
+    SET NOEXEC ON;
+END
+GO
+IF OBJECT_ID('tempdb..#Reg') IS NOT NULL DROP TABLE #Reg;
+CREATE TABLE #Reg
+(
+    RegId int PRIMARY KEY, Kljuc nvarchar(80) COLLATE DATABASE_DEFAULT NOT NULL, Naziv nvarchar(100) COLLATE DATABASE_DEFAULT NOT NULL, NazivCir nvarchar(100) COLLATE DATABASE_DEFAULT NULL,
+    NazivRegistar nvarchar(120) COLLATE DATABASE_DEFAULT NULL, AltNazivi nvarchar(300) COLLATE DATABASE_DEFAULT NULL, SifraIZS int NULL, Kod nvarchar(20) COLLATE DATABASE_DEFAULT NULL, UIC nvarchar(10) COLLATE DATABASE_DEFAULT NULL,
+    VrstaKod int NULL, VrstaMesta nvarchar(40) COLLATE DATABASE_DEFAULT NULL, Granicna bit NOT NULL, GranicniPrelaz bit NOT NULL, AdministrativnaLinija bit NOT NULL, KiM bit NOT NULL,
+    Lat float NULL, Lon float NULL, KoordIzvor varchar(20) COLLATE DATABASE_DEFAULT NULL, OsmId bigint NULL, Pruge nvarchar(200) COLLATE DATABASE_DEFAULT NULL, Cvor bit NOT NULL,
+    Posednutost nvarchar(10) COLLATE DATABASE_DEFAULT NULL, OtvorenaZa nvarchar(10) COLLATE DATABASE_DEFAULT NULL, Vaga nvarchar(10) COLLATE DATABASE_DEFAULT NULL, Rampa nvarchar(10) COLLATE DATABASE_DEFAULT NULL,
+    MaxDvAB int NULL, KolAB nvarchar(30) COLLATE DATABASE_DEFAULT NULL, MaxDvBA int NULL, KolBA nvarchar(30) COLLATE DATABASE_DEFAULT NULL, Regulisanje nvarchar(40) COLLATE DATABASE_DEFAULT NULL, Osiguranje nvarchar(10) COLLATE DATABASE_DEFAULT NULL,
+    NagibSt decimal(6,2) NULL, MinR int NULL, NV decimal(7,2) NULL, Aktivna bit NOT NULL
+);
+IF OBJECT_ID('tempdb..#Stavka') IS NOT NULL DROP TABLE #Stavka;
+CREATE TABLE #Stavka (Pruga nvarchar(6) COLLATE DATABASE_DEFAULT NOT NULL, Kljuc nvarchar(80) COLLATE DATABASE_DEFAULT NOT NULL, SifraIZS int NULL, VrstaKod int NULL, NazivRegistar nvarchar(150) COLLATE DATABASE_DEFAULT NOT NULL);
+IF OBJECT_ID('tempdb..#Grana') IS NOT NULL DROP TABLE #Grana;
+CREATE TABLE #Grana
+(
+    Pruga nvarchar(6) COLLATE DATABASE_DEFAULT NOT NULL, OdKljuc nvarchar(80) COLLATE DATABASE_DEFAULT NOT NULL, DoKljuc nvarchar(80) COLLATE DATABASE_DEFAULT NOT NULL, Km decimal(9,3) NOT NULL, KmIzvor nvarchar(20) COLLATE DATABASE_DEFAULT NOT NULL,
+    Klasa nvarchar(10) COLLATE DATABASE_DEFAULT NULL, OsovinskoT decimal(4,1) NULL, Vmax int NULL, Dvokolosecna bit NULL, Elektro bit NULL, MerU decimal(6,2) NULL, MerP decimal(6,2) NULL, KiM bit NOT NULL,
+    GeomIzvor nvarchar(20) COLLATE DATABASE_DEFAULT NULL, Geom nvarchar(max) COLLATE DATABASE_DEFAULT NULL
+);
