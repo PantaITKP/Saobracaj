@@ -39,7 +39,80 @@ namespace Saobracaj.Sifarnici
             IdGrupe();
             IdForme();
             PravoPristupa();
+            UgradiPregled();
+        }
 
+        // ------------------------------------------------------------------ tab "Na pregled" (NeedsReview agenta)
+
+        private TabControl tabovi;
+        private TabPage tabUnos, tabPregled;
+        private Saobracaj.Telegrami.TelegramiPregledTab pregled;
+
+        /// <summary>
+        /// Postojeće kontrole forme idu u tab "Telegrami" (isti raspored), a novi tab "Na pregled" prikazuje poruke koje
+        /// agent nije mogao sam da upiše. Radi se u kodu, bez izmene frmTelegrami.Designer.cs.
+        /// </summary>
+        private void UgradiPregled()
+        {
+            var traka = toolStrip1.Height;
+            var sirina = ClientSize.Width;
+            var visina = ClientSize.Height;
+            var postojece = Controls.Cast<Control>().Where(c => c != toolStrip1).ToList();
+            var margine = postojece.ToDictionary(c => c, c => new { c.Anchor, Desno = sirina - c.Right, Dole = visina - c.Bottom });
+
+            SuspendLayout();
+            tabovi = new TabControl { Dock = DockStyle.Fill };
+            tabUnos = new TabPage("Telegrami") { UseVisualStyleBackColor = true };
+            tabPregled = new TabPage("Na pregled") { UseVisualStyleBackColor = true };
+            tabovi.TabPages.Add(tabUnos);
+            tabovi.TabPages.Add(tabPregled);
+            Controls.Add(tabovi);
+            tabovi.BringToFront(); // toolStrip (Dock=Top) se raspoređuje prvi, tab popunjava ostatak
+            foreach (var c in postojece)
+            {
+                var loc = c.Location;
+                c.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                tabUnos.Controls.Add(c);
+                c.Location = new Point(loc.X, loc.Y - traka);
+            }
+            ClientSize = new Size(sirina, visina + 24); // visina zaglavlja tabova
+            ResumeLayout(true);
+
+            // Veličina kontrola koje se šire sa formom (grid) kada tab dobije stvarnu veličinu
+            Load += (s, e) =>
+            {
+                foreach (var c in postojece)
+                {
+                    var m = margine[c];
+                    if ((m.Anchor & AnchorStyles.Right) != 0 && (m.Anchor & AnchorStyles.Left) != 0)
+                        c.Width = Math.Max(50, tabUnos.ClientSize.Width - c.Left - m.Desno);
+                    if ((m.Anchor & AnchorStyles.Bottom) != 0 && (m.Anchor & AnchorStyles.Top) != 0)
+                        c.Height = Math.Max(50, tabUnos.ClientSize.Height - c.Top - m.Dole);
+                    c.Anchor = m.Anchor;
+                }
+            };
+
+            pregled = new Saobracaj.Telegrami.TelegramiPregledTab(tabPregled, Pravo && insert, Kor.Trim());
+            pregled.BrojPromenjen += async (s, e) => await OsveziBrojNaPregledu();
+            tabovi.SelectedIndexChanged += async (s, e) => { if (tabovi.SelectedTab == tabPregled) await pregled.Ucitaj(); };
+            FormClosed += (s, e) => pregled.Dispose();
+            Shown += async (s, e) => await OsveziBrojNaPregledu();
+        }
+
+        private async Task OsveziBrojNaPregledu()
+        {
+            try
+            {
+                var n = await Task.Run(() => Saobracaj.Telegrami.TelegramiPregledRepository.BrojNaPregledu());
+                if (!tabPregled.IsDisposed) tabPregled.Text = n > 0 ? "Na pregled (" + n + ")" : "Na pregled";
+            }
+            catch { /* broj na tabu nije bitan za rad forme */ }
+        }
+
+        /// <summary>Otvara tab "Na pregled" (npr. iz Planera, dugme "Na pregled").</summary>
+        public void PrikaziPregled()
+        {
+            if (tabovi != null) tabovi.SelectedTab = tabPregled;
         }
         public string IdGrupe()
         {

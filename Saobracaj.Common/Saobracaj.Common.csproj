@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- net461: isti framework kao aplikacija Saobracaj, da bi i ona mogla da referencira ovu biblioteku. -->
+    <TargetFramework>net461</TargetFramework>
+    <RootNamespace>Saobracaj.Common</RootNamespace>
+    <AssemblyName>Saobracaj.Common</AssemblyName>
+    <LangVersion>7.3</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

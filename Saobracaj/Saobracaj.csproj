@@ -647,6 +647,19 @@
     <Compile Include="Agenti jobs\StaniceCenovnika.cs" />
     <Compile Include="Agenti jobs\StationGeography.cs" />
     <Compile Include="Agenti jobs\TextRangeMapper.cs" />
+    <Compile Include="MailNalog.cs" />
+    <None Include="Lozinke.config.example" />
+    <None Include="Lozinke.config" Condition="Exists('Lozinke.config')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="Telegrami\TelegramiRepository.cs" />
+    <Compile Include="Telegrami\TelegramiTab.cs" />
+    <Compile Include="Telegrami\TelegramiLegenda.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Telegrami\TelegramNotifier.cs" />
+    <Compile Include="Telegrami\TelegramiPregledRepository.cs" />
+    <Compile Include="Telegrami\TelegramiPregledTab.cs" />
     <Compile Include="Dokumenta\frmBonusi.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -3030,6 +3043,13 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Zajednički kod sa agentom Saobracaj.Agent.TelegramiImport (ključ naziva za TelegramiAlias) -->
+    <ProjectReference Include="..\Saobracaj.Common\Saobracaj.Common.csproj">
+      <Project>{651B3EE2-4D9A-4FD4-AD0B-2DB30868BF69}</Project>
+      <Name>Saobracaj.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net462, NE 4.7+: SQL Server 2008 R2 SP2 (10.50.4000) podržava samo TLS 1.0; aplikacije koje ciljaju .NET 4.7+
+         koriste sistemske TLS verzije i konekcija puca u "pre-login handshake". Isto važi za Saobracaj (net461). -->
+    <TargetFramework>net462</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <RootNamespace>Saobracaj.Agent.TelegramiImport</RootNamespace>
+    <AssemblyName>Saobracaj.Agent.TelegramiImport</AssemblyName>
+    <LangVersion>7.3</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Sql\**" />
+    <None Include="Sql\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Security" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="MailKit" Version="4.15.1" />
+    <PackageReference Include="PdfPig" Version="0.1.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Saobracaj.Common\Saobracaj.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Saobracaj.Agent.TelegramiImport.Tests" />
+  </ItemGroup>
+
+</Project>

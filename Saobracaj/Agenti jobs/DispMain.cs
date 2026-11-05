@@ -985,6 +985,8 @@ namespace Saobracaj.Agenti_jobs
 
         private async void DispMain_Shown(object sender, EventArgs e)
         {
+            // Obaveštenja o novim telegramima dok je dispMain otvoren (posle poruke se ništa drugo ne radi)
+            Saobracaj.Telegrami.TelegramNotifier.Instance.Register(this);
             await Start();
         }
 
@@ -1025,6 +1027,7 @@ namespace Saobracaj.Agenti_jobs
             refreshTimer.Dispose();
             noteTimer.Stop();
             noteTimer.Dispose();
+            Saobracaj.Telegrami.TelegramNotifier.Instance.Unregister(this);
             DisposeGrids();
         }
 
