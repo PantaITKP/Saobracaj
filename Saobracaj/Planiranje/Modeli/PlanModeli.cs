@@ -182,12 +182,26 @@ namespace Saobracaj.Planiranje.Modeli
         internal string Tekst;
     }
 
+    // GPS tačka lokomotive vezana za najbližu stanicu mreže.
+    internal sealed class GpsLokacija
+    {
+        internal string Oznaka;
+        internal int LokomotivaID;
+        internal double Lat;
+        internal double Lon;
+        internal DateTime? Vreme;
+        internal double? Brzina;
+        internal int? StanicaID;
+        internal double? KmDoStanice;
+    }
+
     internal sealed class KandidatLokomotiva
     {
         internal List<LokomotivaOP> Lokomotive = new List<LokomotivaOP>();
         internal string Lokacija;
         internal int? LokacijaID;
         internal string IzvorLokacije;
+        internal decimal? KmDoPrijema;
         internal int PraznaVoznjaMin;
         internal bool LokacijaNepoznata;
         internal decimal Ocena;

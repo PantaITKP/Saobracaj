@@ -2218,6 +2218,7 @@
     <Compile Include="Planiranje\Pravila\NaziviRegistra.cs" />
     <Compile Include="Planiranje\Pravila\BrojLokomotiva.cs" />
     <Compile Include="Planiranje\Pravila\ProverePosla.cs" />
+    <Compile Include="Planiranje\Pravila\GpsLokacije.cs" />
     <Compile Include="Planiranje\Pravila\PredlogLokomotiva.cs" />
     <Compile Include="Planiranje\Podaci\PlanRepo.cs" />
     <Compile Include="Planiranje\Kontrole\GanttPanel.cs">

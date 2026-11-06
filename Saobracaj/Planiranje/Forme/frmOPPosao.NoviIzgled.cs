@@ -60,7 +60,7 @@ namespace Saobracaj.Planiranje.Forme
             tabPonuda.CellContentClick += (s, e) =>
             {
                 if (e.RowIndex < 0 || tabPonuda.Columns[e.ColumnIndex].Name != "Izaberi") return;
-                Izaberi(ponuda[Convert.ToInt32(tabPonuda.Rows[e.RowIndex].Cells["Indeks"].Value)]);
+                Izaberi(prikazane[Convert.ToInt32(tabPonuda.Rows[e.RowIndex].Cells["Indeks"].Value)]);
             };
 
             var levo = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 3 };
@@ -75,7 +75,7 @@ namespace Saobracaj.Planiranje.Forme
             sredina.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.Dp(124)));
             sredina.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             sredina.Controls.Add(Odeljak("Potreban broj lokomotiva", Natpis(lblMasa, 54), trakaMase), 0, 0);
-            sredina.Controls.Add(Odeljak("Ponuda lokomotiva", tabPonuda), 0, 1);
+            sredina.Controls.Add(Odeljak("Predlog lokomotiva – dve najbliže po GPS-u", Natpis(lblPonuda, 40), tabPonuda), 0, 1);
 
             var kolone = new TableLayoutPanel { ColumnCount = 3, RowCount = 3 };
             kolone.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.Dp(32)));

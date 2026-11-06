@@ -9,6 +9,16 @@ namespace Saobracaj.Planiranje.Podaci
 {
     internal static class StaniceRepo
     {
+        // ID → [lat, lon] aktivnih stanica sa koordinatama, za vezivanje GPS tačke za stanicu.
+        internal static Dictionary<int, double[]> Koordinate()
+        {
+            var d = new Dictionary<int, double[]>();
+            using (var c = Db.Open())
+                foreach (DataRow r in Db.Table(c, null, "SELECT ID, Latitude, Longitude FROM planiranje.OP_Stanice WHERE Aktivna = 1 AND Latitude IS NOT NULL AND Longitude IS NOT NULL").Rows)
+                    d[Convert.ToInt32(r["ID"])] = new[] { Convert.ToDouble(r["Latitude"]), Convert.ToDouble(r["Longitude"]) };
+            return d;
+        }
+
         internal static DataTable Sve(bool samoAktivne)
         {
             using (var c = Db.Open())
