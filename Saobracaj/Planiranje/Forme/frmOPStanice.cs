@@ -40,6 +40,12 @@ namespace Saobracaj.Planiranje.Forme
         private bool prugeUcitane;
         private DataTable stanice;
         private bool mapaUcitana;
+        private readonly CheckBox chkLokomotive = new CheckBox { Text = "Lokomotive na mapi (GPS)", AutoSize = true, Checked = true };
+        private readonly Label lblGps = new Label { AutoSize = true, MaximumSize = new System.Drawing.Size(SirinaPoljaRute - 30, 0) };
+        private readonly Timer tajmerGps = new Timer { Interval = 60000 };
+        private List<PozicijaLokomotive> pozicije;
+        private bool gpsUToku;
+        private bool gpsPrviPut = true;
 
         public frmOPStanice()
         {
@@ -294,6 +300,93 @@ namespace Saobracaj.Planiranje.Forme
             lblRuta.Text = "Ručno zatvorenih deonica: " + rucnoZatvorene.Count + ". Zatvor važi dok je ekran otvoren.";
         }
 
+        // ---------- Lokomotive (GPS) ----------
+
+        private void PrebaciLokomotive()
+        {
+            if (chkLokomotive.Checked)
+            {
+                gpsPrviPut = true;
+                tajmerGps.Start();
+                var _ = OsveziLokomotive();
+                return;
+            }
+            tajmerGps.Stop();
+            pozicije = null;
+            lblGps.Text = "";
+            PozoviMapu("crtajLokomotive", "[]", false);
+        }
+
+        // Greška GPS servisa ide u natpis, a ne u poruku, jer se osvežava svakog minuta.
+        private async Task OsveziLokomotive()
+        {
+            if (gpsUToku || !chkLokomotive.Checked) return;
+            gpsUToku = true;
+            if (pozicije == null) lblGps.Text = "Učitavam pozicije lokomotiva...";
+            try
+            {
+                List<PozicijaLokomotive> lista = await Task.Run(() => GpsLokomotive.Ucitaj());
+                if (IsDisposed || !chkLokomotive.Checked) return;
+                pozicije = lista;
+                CrtajLokomotive();
+                var bez = lista.Where(p => !p.ImaPoziciju).Select(p => p.Oznaka).ToList();
+                lblGps.Text = "Na mapi: " + lista.Count(p => p.ImaPoziciju) + " od " + lista.Count + " lokomotiva."
+                    + (bez.Count > 0 ? " Bez pozicije u poslednja 24 h: " + string.Join(", ", bez) + "." : "")
+                    + " Osveženo u " + DateTime.Now.ToString("HH:mm") + ", ponovo za minut.";
+            }
+            catch (Exception ex)
+            {
+                if (!IsDisposed) lblGps.Text = "GPS servis nije dostupan: " + (ex is TaskCanceledException ? "isteklo je vreme čekanja." : ex.Message);
+            }
+            finally
+            {
+                gpsUToku = false;
+            }
+        }
+
+        private void CrtajLokomotive()
+        {
+            if (pozicije == null || !mapaUcitana) return;
+            DateTime granica = DateTime.Now - GpsLokomotive.Svez;
+            var n = CultureInfo.InvariantCulture;
+            var tacke = pozicije.Where(p => p.ImaPoziciju).Select(p => new
+            {
+                n = p.Oznaka,
+                a = p.Lat.Value,
+                o = p.Lon.Value,
+                s = p.Vreme.HasValue && p.Vreme.Value >= granica ? 1 : 0,
+                b = BojaBrzine(p.Brzina),
+                d = "<b>" + System.Net.WebUtility.HtmlEncode(p.Oznaka) + "</b>"
+                    + (p.Model != null ? "<br>" + System.Net.WebUtility.HtmlEncode(p.Model) : "")
+                    + (p.Vreme.HasValue ? "<br>Signal: " + p.Vreme.Value.ToString("dd.MM.yyyy HH:mm:ss") : "")
+                    + (p.Brzina.HasValue ? "<br>Brzina: " + p.Brzina.Value.ToString("0", n) + " km/h" : "")
+            });
+            if (PozoviMapu("crtajLokomotive", Newtonsoft.Json.JsonConvert.SerializeObject(tacke), gpsPrviPut)) gpsPrviPut = false;
+        }
+
+        // Preko 5 km/h vozi (zelena), 0 stoji (crvena), između manevriše (plava). Brzina ispod 1 km/h računa se kao 0.
+        private static string BojaBrzine(double? brzina)
+        {
+            if (!brzina.HasValue) return "#8A7C7F";
+            if (brzina.Value > 5) return "#2E8B3A";
+            if (brzina.Value < 1) return "#D7261E";
+            return "#0B6E99";
+        }
+
+        private bool PozoviMapu(string funkcija, params object[] argumenti)
+        {
+            if (mapa.Document == null) return false;
+            try
+            {
+                // Funkcija vraća 1; null znači da se stranica još učitava, pa DocumentCompleted crta ponovo.
+                return mapa.Document.InvokeScript(funkcija, argumenti) != null;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         private async Task IzracunajRutu()
         {
             int? od = poljaRuta.IzabranID("OdID"), doStanice = poljaRuta.IzabranID("DoID");
@@ -398,7 +491,7 @@ namespace Saobracaj.Planiranje.Forme
             // WebBrowser radi kao IE11, zato je ovde ES5, bez strelica i const.
             return "<!doctype html><html><head><meta charset='utf-8'><meta http-equiv='X-UA-Compatible' content='IE=edge'>" +
                 "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.7.1/dist/leaflet.css'><script src='https://unpkg.com/leaflet@1.7.1/dist/leaflet.js'></script>" +
-                "<style>html,body,#m{height:100%;margin:0}.leg{background:#F8F6F3;padding:6px 8px;font:12px sans-serif;border:1px solid #D2C9C6}.leg i{display:inline-block;width:20px;border-top:3px solid;vertical-align:middle;margin-right:6px}</style></head><body><div id='m'></div><script>" +
+                "<style>html,body,#m{height:100%;margin:0}.lokt{font:bold 11px sans-serif;padding:1px 4px}.leg{background:#F8F6F3;padding:6px 8px;font:12px sans-serif;border:1px solid #D2C9C6}.leg i{display:inline-block;width:20px;border-top:3px solid;vertical-align:middle;margin-right:6px}</style></head><body><div id='m'></div><script>" +
                 "var m=L.map('m',{preferCanvas:true}).setView([44.2,20.9],7);" +
                 "L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(m);" +
                 "var boje=['#8A7C7F','#51111C','#C9BFBC'],v=[" + linije + "],l={};" +
@@ -413,8 +506,12 @@ namespace Saobracaj.Planiranje.Forme
                 "function oznaciZatvor(id,z){l[id].zatvor=z;stil(l[id]);}" +
                 "function crtajRutu(ids){for(var i=0;i<ruta.length;i++){l[ruta[i]].uRuti=false;stil(l[ruta[i]]);}ruta=ids?ids.split(','):[];var g=null;" +
                 "for(var k=0;k<ruta.length;k++){var a=l[ruta[k]];if(!a)continue;a.uRuti=true;stil(a);g=g?g.extend(a.getBounds()):L.latLngBounds(a.getBounds().getSouthWest(),a.getBounds().getNorthEast());}if(g)m.fitBounds(g);}" +
+                "var lok=L.layerGroup().addTo(m);" +
+                "function crtajLokomotive(js,fit){lok.clearLayers();var a=JSON.parse(js),g=[];for(var i=0;i<a.length;i++){var t=a[i];" +
+                "L.circleMarker([t.a,t.o],{radius:7,weight:2,color:'#FFFFFF',fillColor:t.b,fillOpacity:t.s?1:0.45}).bindTooltip(t.n,{permanent:true,direction:'right',offset:[8,0],className:'lokt'}).bindPopup(t.d).addTo(lok);g.push([t.a,t.o]);}" +
+                "if(fit&&g.length)m.fitBounds(L.latLngBounds(g).pad(0.2),{maxZoom:10});return 1;}" +
                 "var leg=L.control({position:'bottomleft'});leg.onAdd=function(){var d=L.DomUtil.create('div','leg');" +
-                "d.innerHTML='<i style=\"border-color:#51111C\"></i>Elektrificirana<br><i style=\"border-color:#8A7C7F\"></i>Bez kontaktne mreže ili nepoznato<br><i style=\"border-color:#C9BFBC\"></i>KiM<br><i style=\"border-color:#0B6E99\"></i>Ruta<br>Žuta tačka: koordinata za proveru. Klik na prugu: zatvor. Klik na tačku pa prevlačenje: nove koordinate.';return d;};leg.addTo(m);" +
+                "d.innerHTML='<i style=\"border-color:#51111C\"></i>Elektrificirana<br><i style=\"border-color:#8A7C7F\"></i>Bez kontaktne mreže ili nepoznato<br><i style=\"border-color:#C9BFBC\"></i>KiM<br><i style=\"border-color:#0B6E99\"></i>Ruta<br>Žuta tačka: koordinata za proveru. Klik na prugu: zatvor. Klik na tačku pa prevlačenje: nove koordinate.<br>Lokomotive (GPS): <span style=\"color:#2E8B3A\">&#9679;</span> preko 5 km/h <span style=\"color:#0B6E99\">&#9679;</span> 1-5 km/h <span style=\"color:#D7261E\">&#9679;</span> stoji. Bled krug: signal stariji od 15 min.';return d;};leg.addTo(m);" +
                 "</script></body></html>";
         }
     }
