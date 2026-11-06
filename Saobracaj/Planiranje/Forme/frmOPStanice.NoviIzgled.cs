@@ -100,6 +100,16 @@ namespace Saobracaj.Planiranje.Forme
             poljaRuta.Kartica.Dock = DockStyle.Top;
             levo.Controls.Add(poljaRuta.Kartica);
             poljaRuta.Kartica.Height = poljaRuta.Kartica.Rasporedi(SirinaPoljaRute - SystemInformation.VerticalScrollBarWidth);
+            // Lokomotive su na vrhu kolone; dodaju se posle kartice da bi bile iznad nje.
+            var gps = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(8, 6, 8, 6) };
+            gps.Controls.Add(chkLokomotive);
+            gps.Controls.Add(lblGps);
+            levo.Controls.Add(gps);
+            chkLokomotive.CheckedChanged += (s, e) => PrebaciLokomotive();
+            // Osvežava se samo dok je mapa na ekranu.
+            tajmerGps.Tick += (s, e) => { if (mapa.Visible) { var _ = OsveziLokomotive(); } };
+            mapa.DocumentCompleted += (s, e) => CrtajLokomotive();
+            FormClosed += (s, e) => { tajmerGps.Stop(); tajmerGps.Dispose(); };
             // Kombinacije trasa su ispod mape, jer tekst trasa traži širinu.
             tabKombinacije.Dock = DockStyle.Bottom;
             tabKombinacije.Height = VisinaKombinacija;
@@ -138,7 +148,12 @@ namespace Saobracaj.Planiranje.Forme
                 okvir.Dock = naMapi ? DockStyle.Fill : DockStyle.Bottom;
                 if (!naMapi && visinaDonjeg > 0) okvir.Height = visinaDonjeg;
                 foreach (Splitter podela in Controls.OfType<Splitter>()) podela.Visible = !naMapi;
-                if (tabovi.SelectedTab == strMapa) { var _ = PrikaziMapu(); }
+                // Lokomotive su uključene od početka, a učitavaju se tek kad se mapa prvi put otvori.
+                if (tabovi.SelectedTab == strMapa)
+                {
+                    var _ = PrikaziMapu();
+                    if (chkLokomotive.Checked) { tajmerGps.Start(); var __ = OsveziLokomotive(); }
+                }
                 if (tabovi.SelectedTab == strPruge) { var _ = PrikaziPruge(); }
             };
 
