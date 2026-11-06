@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Kopirati u Lozinke.config (isti folder kao Saobracaj.exe) i upisati lozinku.
+  Lozinke.config se NE commit-uje (.gitignore).
+-->
+<appSettings>
+  <add key="DispMailKorisnik" value="disp@kprevoz.co.rs" />
+  <add key="DispMailLozinka" value="" />
+</appSettings>

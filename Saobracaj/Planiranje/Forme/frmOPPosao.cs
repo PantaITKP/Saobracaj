@@ -14,7 +14,7 @@ namespace Saobracaj.Planiranje.Forme
     public partial class frmOPPosao : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmOPPosao";
-        private const int BrojPonuda = 3;
+        private const int BrojPonuda = 2;
 
         public bool Pravo { get; }
         public int PosaoId { get; }
@@ -37,7 +37,14 @@ namespace Saobracaj.Planiranje.Forme
         private RezultatPosla rezultat;
         private MasaZaSeriju masa;
         private List<KandidatLokomotiva> ponuda = new List<KandidatLokomotiva>();
+        private List<KandidatLokomotiva> prikazane = new List<KandidatLokomotiva>();
         private KandidatLokomotiva izabran;
+        private readonly Label lblPonuda = new Label();
+        // null dok se GPS učitava ili kad nije dostupan.
+        private Dictionary<int, GpsLokacija> gps;
+        private int gpsUkupno;
+        private bool gpsUcitava;
+        private string gpsGreska;
 
         public frmOPPosao(int posaoId, int? lokomotiva = null)
         {
@@ -85,10 +92,117 @@ namespace Saobracaj.Planiranje.Forme
                 kontekst = d.Kontekst;
                 rezultat = d.Rezultat;
                 ponuda = d.Ponuda;
+                gps = null;
+                gpsGreska = null;
+                gpsUcitava = true;
                 Prikazi();
                 PrikaziTrase(d.Kombinacije);
                 if (lokomotiva.HasValue) IzaberiLokomotivu(lokomotiva.Value, d.Iskljuceni);
+                var _ = UcitajGps();
             });
+        }
+
+        // GPS (prvi put ~30 s) stiže posle ostatka ekrana; ponuda se zatim računa iznova sa GPS lokacijama.
+        private async Task UcitajGps()
+        {
+            PlanKontekst k = kontekst;
+            RezultatPosla r = rezultat;
+            try
+            {
+                var d = await Task.Run(() =>
+                {
+                    List<PozicijaLokomotive> pozicije = GpsLokomotive.Ucitaj();
+                    Dictionary<int, double[]> koordinate = StaniceRepo.Koordinate();
+                    ICollection<int> dostupne = r.Posao.PrijemID.HasValue ? (ICollection<int>)k.Graf.Rastojanja(r.Posao.PrijemID.Value).Keys : koordinate.Keys;
+                    List<GpsLokacija> tacke = pozicije.Where(x => x.ImaPoziciju).Select(x => new GpsLokacija
+                    {
+                        Oznaka = x.Oznaka, Lat = x.Lat.Value, Lon = x.Lon.Value, Vreme = x.Vreme, Brzina = x.Brzina
+                    }).ToList();
+                    Dictionary<int, GpsLokacija> g = GpsLokacije.Povezi(k.Lokomotive, tacke, koordinate, dostupne);
+                    List<string> isk;
+                    List<KandidatLokomotiva> p = PredlogLokomotiva.Kandidati(k, r, k.Kalendar, out isk, g);
+                    return new { Gps = g, Ponuda = p, Ukupno = pozicije.Count };
+                });
+                if (IsDisposed || r != rezultat) return;
+                gps = d.Gps;
+                gpsUkupno = d.Ukupno;
+                ponuda = d.Ponuda;
+            }
+            catch (Exception ex)
+            {
+                if (IsDisposed || r != rezultat) return;
+                gpsGreska = ex is TaskCanceledException ? "isteklo je vreme čekanja" : ex.Message;
+            }
+            gpsUcitava = false;
+            // Izbor ostaje, a vezuje se za novi kandidat sa istim lokomotivama.
+            if (izabran != null)
+            {
+                var ids = izabran.Lokomotive.Select(l => l.ID).ToList();
+                izabran = ponuda.FirstOrDefault(c => c.Lokomotive.Select(l => l.ID).SequenceEqual(ids)) ?? izabran;
+            }
+            PrikaziPonudu();
+        }
+
+        // Dve najbliže početnoj stanici po GPS-u (prugom, pa vazdušno); bez GPS-a ostaje redosled po oceni.
+        private List<KandidatLokomotiva> NajblizePoGps()
+        {
+            if (gps == null) return gpsUcitava ? new List<KandidatLokomotiva>() : ponuda.Take(BrojPonuda).ToList();
+            List<KandidatLokomotiva> saGps = ponuda
+                .Where(c => c.IzvorLokacije == "GPS" && !c.LokacijaNepoznata)
+                .OrderBy(c => c.KmDoPrijema ?? decimal.MaxValue)
+                .ThenBy(c => c.Lokomotive.Max(l => gps[l.ID].KmDoStanice ?? double.MaxValue))
+                .Take(BrojPonuda).ToList();
+            return saGps.Concat(ponuda.Where(c => !saGps.Contains(c))).Take(BrojPonuda).ToList();
+        }
+
+        private string GpsPozicija(KandidatLokomotiva c)
+        {
+            var n = CultureInfo.GetCultureInfo("sr-Latn-RS");
+            var delovi = new List<string>();
+            foreach (LokomotivaOP l in c.Lokomotive)
+            {
+                GpsLokacija g;
+                if (gps == null || !gps.TryGetValue(l.ID, out g)) { delovi.Add("nema GPS"); continue; }
+                bool staro = !g.Vreme.HasValue || g.Vreme.Value < DateTime.Now.AddMinutes(-15);
+                delovi.Add((g.StanicaID.HasValue ? "kod " + kontekst.Naziv(g.StanicaID) + " (" + g.KmDoStanice.Value.ToString("0.0", n) + " km)" : "van mreže")
+                    + ", " + (g.Brzina.HasValue ? g.Brzina.Value.ToString("0", n) + " km/h" : "brzina ?")
+                    + (g.Vreme.HasValue ? ", " + g.Vreme.Value.ToString("dd.MM. HH:mm") : "") + (staro ? " (staro)" : ""));
+            }
+            return string.Join(" / ", delovi);
+        }
+
+        private void PrikaziPonudu()
+        {
+            PosaoPlan p = rezultat.Posao;
+            prikazane = NajblizePoGps();
+            var t = new DataTable();
+            t.Columns.Add("Indeks", typeof(int));
+            foreach (string k in new[] { "#", "Lokomotive", "GPS pozicija", "Lokacija za račun", "Do prijema", "Prazna vožnja", "Provere" }) t.Columns.Add(k);
+            for (int i = 0; i < prikazane.Count; i++)
+            {
+                KandidatLokomotiva c = prikazane[i];
+                List<ProveraStavka> pr = ProverePosla.Proveri(kontekst, rezultat, c.Lokomotive);
+                t.Rows.Add(i, i + 1, c.Oznaka, GpsPozicija(c), c.Lokacija + " (" + c.IzvorLokacije + ")",
+                    c.KmDoPrijema.HasValue ? Bro(Math.Round(c.KmDoPrijema.Value, 1), " km") : "nepoznato",
+                    c.LokacijaNepoznata ? "nepoznato" : c.PraznaVoznjaMin + " min", pr.Count(x => x.Ok) + " od " + pr.Count + " · " + c.Razlog);
+            }
+            tabPonuda.DataSource = t;
+            if (tabPonuda.Columns.Contains("#")) tabPonuda.Columns["#"].FillWeight = 25;
+            if (!tabPonuda.Columns.Contains("Izaberi"))
+                tabPonuda.Columns.Add(new DataGridViewButtonColumn { Name = "Izaberi", HeaderText = "", Text = "Izaberi", UseColumnTextForButtonValue = true, MinimumWidth = Saobracaj.Tema.Theme.Dp(70) });
+
+            string stanica = p.PrijemID.HasValue ? kontekst.Naziv(p.PrijemID) : p.Otpravna;
+            if (gpsUcitava)
+                lblPonuda.Text = "Učitavam GPS pozicije lokomotiva...";
+            else if (gps == null)
+                lblPonuda.Text = "GPS nije dostupan (" + gpsGreska + "). Prikazana je ponuda po poslednjem poslu i matičnoj stanici.";
+            else
+            {
+                int saGps = prikazane.Count(c => c.IzvorLokacije == "GPS");
+                lblPonuda.Text = "Najbliže stanici prijema " + stanica + " po GPS poziciji, rastojanje prugom. GPS pozicija za " + gps.Count + " od " + gpsUkupno + " lokomotiva u GPS sistemu."
+                    + (saGps < prikazane.Count ? " Za ostale u ponudi lokacija je iz plana." : "")
+                    + (prikazane.Count == 0 ? " Nijedna slobodna lokomotiva ne odgovara poslu." : "");
+            }
         }
 
         // Prevlačenje trake u planu vodi ovde: isti izbor, iste provere i ista potvrda.
@@ -136,26 +250,13 @@ namespace Saobracaj.Planiranje.Forme
             if (!tabRuta.Columns.Contains("AdHoc"))
                 tabRuta.Columns.Add(new DataGridViewButtonColumn { Name = "AdHoc", HeaderText = "", Text = "Zatraži ad hoc", UseColumnTextForButtonValue = true, MinimumWidth = Saobracaj.Tema.Theme.Dp(110) });
 
-            List<KandidatLokomotiva> prikazane = ponuda.Take(BrojPonuda).ToList();
-            KandidatLokomotiva vodeci = prikazane.FirstOrDefault();
+            KandidatLokomotiva vodeci = ponuda.FirstOrDefault();
             LokomotivaOP uzorak = vodeci?.Lokomotive[0] ?? kontekst.Lokomotive.FirstOrDefault(l => l.SerijaID.HasValue);
             masa = uzorak == null ? null : BrojLokomotiva.Odredi(kontekst, rezultat.Bruto, uzorak, rezultat.Ruta, p.Prijem);
             lblMasa.Text = masa?.Tekst ?? "Nema lokomotive sa serijom.";
             trakaMase.Invalidate();
 
-            var t = new DataTable();
-            t.Columns.Add("Indeks", typeof(int));
-            foreach (string k in new[] { "#", "Lokomotive", "Lokacija", "Prazna vožnja", "Zauzetost", "Provere" }) t.Columns.Add(k);
-            for (int i = 0; i < prikazane.Count; i++)
-            {
-                KandidatLokomotiva c = prikazane[i];
-                List<ProveraStavka> pr = ProverePosla.Proveri(kontekst, rezultat, c.Lokomotive);
-                t.Rows.Add(i, i + 1, c.Oznaka, c.Lokacija + " (" + c.IzvorLokacije + ")", c.LokacijaNepoznata ? "nepoznato" : c.PraznaVoznjaMin + " min", "Slobodna", pr.Count(x => x.Ok) + " od " + pr.Count + " · " + c.Razlog);
-            }
-            tabPonuda.DataSource = t;
-            if (tabPonuda.Columns.Contains("#")) tabPonuda.Columns["#"].FillWeight = 25;
-            if (!tabPonuda.Columns.Contains("Izaberi"))
-                tabPonuda.Columns.Add(new DataGridViewButtonColumn { Name = "Izaberi", HeaderText = "", Text = "Izaberi", UseColumnTextForButtonValue = true, MinimumWidth = Saobracaj.Tema.Theme.Dp(70) });
+            PrikaziPonudu();
 
             izabran = null;
             lblIzabrano.Text = "Izabrano: ništa";

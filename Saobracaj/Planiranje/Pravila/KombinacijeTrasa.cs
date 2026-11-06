@@ -41,6 +41,8 @@ namespace Saobracaj.Planiranje.Pravila
     internal sealed class KombinacijaTrasa
     {
         internal RezultatRute Ruta;
+        // Redni broj alternativne rute (1 = najkraća dozvoljena); null za lanac trasa preko mreže.
+        internal int? RutaRB;
         internal List<DeoKombinacije> Delovi = new List<DeoKombinacije>();
         internal decimal KmBezTrase { get { return Delovi.Where(d => d.Trasa == null).Sum(d => d.Km); } }
         internal int BrojTrasa { get { return Delovi.Count(d => d.Trasa != null); } }
@@ -132,7 +134,7 @@ namespace Saobracaj.Planiranje.Pravila
         internal static List<KombinacijaTrasa> SaZastojima(PlanKontekst k, RuteSaZastojima rute, ZahtevRute z, IList<TrasaZaRutu> trase, decimal? brutoT)
         {
             if (rute.Rute.Count == 0) return new List<KombinacijaTrasa>();
-            return Izracunaj(rute.Rute, trase, brutoT, z.DuzinaM, 5, rute.Graf, deonice =>
+            return Izracunaj(rute.Rute, trase, brutoT, z.DuzinaM, 5, rute.Graf, k.Graf, deonice =>
             {
                 RezultatRute r = Rutiranje.IzDeonica(k, deonice, z);
                 r.Upozorenja.Clear();
@@ -141,24 +143,48 @@ namespace Saobracaj.Planiranje.Pravila
             });
         }
 
-        internal static List<KombinacijaTrasa> Izracunaj(IEnumerable<RezultatRute> rute, IList<TrasaZaRutu> trase, decimal? brutoT, decimal? duzinaM, int koliko = 5, Graf graf = null, Func<List<DeonicaRute>, RezultatRute> saberi = null)
+        // mreza: cela mreža bez telegrama. Trasa ide svojim (najkraćim) putem, pa ne važi na delu rute koji je mnogo duži,
+        // na primer na obilasku zatvora, jer bi stvarno prošla kroz zatvorenu deonicu.
+        internal static List<KombinacijaTrasa> Izracunaj(IEnumerable<RezultatRute> rute, IList<TrasaZaRutu> trase, decimal? brutoT, decimal? duzinaM, int koliko = 5, Graf graf = null, Graf mreza = null, Func<List<DeonicaRute>, RezultatRute> saberi = null)
         {
             List<TrasaZaRutu> dozvoljene = trase.Where(t => t.OdID.HasValue && t.DoID.HasValue
                 && (!brutoT.HasValue || !t.MaxMasaT.HasValue || t.MaxMasaT.Value >= brutoT.Value)
                 && (!duzinaM.HasValue || !t.MaxDuzinaM.HasValue || t.MaxDuzinaM.Value >= duzinaM.Value)).ToList();
+            var prirodno = new Dictionary<int, Dictionary<int, decimal>>();
+            Func<int, int, decimal?> duzinaTrase = (od, doS) =>
+            {
+                if (mreza == null) return null;
+                Dictionary<int, decimal> d;
+                if (!prirodno.TryGetValue(od, out d)) prirodno[od] = d = mreza.Rastojanja(od);
+                decimal km;
+                return d.TryGetValue(doS, out km) ? km : (decimal?)null;
+            };
+            Func<int, int, decimal, bool> svojimPutem = (od, doS, km) =>
+            {
+                decimal? p = duzinaTrase(od, doS);
+                return !p.HasValue || km <= p.Value * NajvecaDuzinaLanca + 1;
+            };
             var sve = new List<KombinacijaTrasa>();
             List<RezultatRute> sveRute = rute.ToList();
-            foreach (RezultatRute r in sveRute) sve.AddRange(ZaRutu(r, dozvoljene));
+            for (int i = 0; i < sveRute.Count; i++)
+                foreach (KombinacijaTrasa k in ZaRutu(sveRute[i], dozvoljene, svojimPutem)) { k.RutaRB = i + 1; sve.Add(k); }
             if (graf != null && saberi != null && sveRute.Count > 0)
-                sve.AddRange(LanciPrekoMreze(sveRute[0], dozvoljene, graf, saberi));
-            return sve
+                sve.AddRange(LanciPrekoMreze(sveRute[0], dozvoljene, graf, saberi, svojimPutem));
+            List<KombinacijaTrasa> redom = sve
                 .OrderBy(k => k.KmBezTrase).ThenBy(k => k.BrojTrasa).ThenByDescending(k => k.NajmanjaMasa ?? 0).ThenBy(k => k.Ruta.Km)
-                .GroupBy(Kljuc).Select(g => g.First()).Take(koliko).ToList();
+                .GroupBy(Kljuc).Select(g => g.OrderBy(k => k.RutaRB ?? int.MaxValue).First()).ToList();
+            // Svaka alternativna ruta ima bar jedan predlog, pa tek onda ostale kombinacije po redu.
+            var izbor = sveRute.Select((r, i) => redom.FirstOrDefault(k => k.RutaRB == i + 1)).Where(k => k != null).ToList();
+            izbor.AddRange(redom.Where(k => !izbor.Contains(k)).Take(Math.Max(0, koliko - izbor.Count)));
+            return izbor
+                .OrderBy(k => k.KmBezTrase).ThenBy(k => k.BrojTrasa).ThenByDescending(k => k.NajmanjaMasa ?? 0).ThenBy(k => k.Ruta.Km)
+                .ToList();
         }
 
+        // Ista kombinacija po istom putu; dve rute bez trase između istih stanica nisu isto.
         private static string Kljuc(KombinacijaTrasa k)
         {
-            return string.Join("|", k.Delovi.Select(d => d.Trasa != null ? "T" + d.Trasa.ID : d.OdID + "-" + d.DoID));
+            return string.Join(",", k.Ruta.Deonice.Select(d => d.VezaID)) + "#" + string.Join("|", k.Delovi.Select(d => d.Trasa != null ? "T" + d.Trasa.ID : d.OdID + "-" + d.DoID));
         }
 
         // Dozvoljeno produženje u odnosu na najkraću rutu: lanac preko Beograd ranžirne je duži, ali je stvarni put voza.
@@ -177,7 +203,7 @@ namespace Saobracaj.Planiranje.Pravila
         }
 
         // Lanac trasa preko cele mreže, jer trase često idu preko čvorova koje najkraća ruta zaobilazi.
-        private static List<KombinacijaTrasa> LanciPrekoMreze(RezultatRute najkraca, List<TrasaZaRutu> trase, Graf graf, Func<List<DeonicaRute>, RezultatRute> saberi)
+        private static List<KombinacijaTrasa> LanciPrekoMreze(RezultatRute najkraca, List<TrasaZaRutu> trase, Graf graf, Func<List<DeonicaRute>, RezultatRute> saberi, Func<int, int, decimal, bool> svojimPutem)
         {
             int od = najkraca.Mesta[0], cilj = najkraca.Mesta[najkraca.Mesta.Count - 1];
             var rastojanja = new Dictionary<int, Dictionary<int, decimal>>();
@@ -191,7 +217,7 @@ namespace Saobracaj.Planiranje.Pravila
             foreach (var g in trase.Where(t => t.OdID != t.DoID).GroupBy(t => Tuple.Create(t.OdID.Value, t.DoID.Value)))
             {
                 decimal km;
-                if (!iz(g.Key.Item1).TryGetValue(g.Key.Item2, out km)) continue;
+                if (!iz(g.Key.Item1).TryGetValue(g.Key.Item2, out km) || !svojimPutem(g.Key.Item1, g.Key.Item2, km)) continue;
                 TrasaZaRutu najbolja = g.OrderByDescending(t => t.MaxMasaT ?? 0).ThenByDescending(t => t.MaxDuzinaM ?? 0).ThenBy(t => t.Broj).First();
                 koraci.Add(new Korak { Od = g.Key.Item1, Do = g.Key.Item2, Trasa = najbolja, Km = km, Drugih = g.Count() - 1 });
             }
@@ -269,7 +295,7 @@ namespace Saobracaj.Planiranje.Pravila
             internal int Drugih;
         }
 
-        private static List<KombinacijaTrasa> ZaRutu(RezultatRute r, List<TrasaZaRutu> trase)
+        private static List<KombinacijaTrasa> ZaRutu(RezultatRute r, List<TrasaZaRutu> trase, Func<int, int, decimal, bool> svojimPutem)
         {
             int n = r.Mesta.Count;
             var mesto = new Dictionary<int, int>();
@@ -280,7 +306,8 @@ namespace Saobracaj.Planiranje.Pravila
             // Za isti deo rute ostaje trasa sa najvećom masom, a ostale se samo broje.
             var pocetak = new Dictionary<int, List<Segment>>();
             foreach (var g in trase
-                .Where(t => mesto.ContainsKey(t.OdID.Value) && mesto.ContainsKey(t.DoID.Value) && mesto[t.OdID.Value] < mesto[t.DoID.Value])
+                .Where(t => mesto.ContainsKey(t.OdID.Value) && mesto.ContainsKey(t.DoID.Value) && mesto[t.OdID.Value] < mesto[t.DoID.Value]
+                    && svojimPutem(t.OdID.Value, t.DoID.Value, km[mesto[t.DoID.Value]] - km[mesto[t.OdID.Value]]))
                 .GroupBy(t => Tuple.Create(mesto[t.OdID.Value], mesto[t.DoID.Value])))
             {
                 TrasaZaRutu najbolja = g.OrderByDescending(t => t.MaxMasaT ?? 0).ThenByDescending(t => t.MaxDuzinaM ?? 0).ThenBy(t => t.Broj).First();

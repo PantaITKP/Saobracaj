@@ -109,24 +109,32 @@ namespace Saobracaj.Planiranje.Forme
             return red?.Row;
         }
 
-        private static string TekstDela(DeoKombinacije d, IDictionary<int, string> nazivi)
+        private const int NajviseCvorova = 4;
+
+        // Deo bez trase je predlog „od stanice do stanice“: kroz čvorove u kojima ruta prelazi na drugu prugu.
+        private static string TekstDela(DeoKombinacije d, RezultatRute ruta, IDictionary<int, string> nazivi)
         {
-            string od, doS;
-            nazivi.TryGetValue(d.OdID, out od);
-            nazivi.TryGetValue(d.DoID, out doS);
-            if (d.Trasa == null) return "BEZ TRASE " + od + " – " + doS + " (" + d.Km.ToString("N1") + " km)";
-            return d.Trasa.Broj + " " + od + " – " + doS + (d.Trasa.MaxMasaT.HasValue ? " (" + d.Trasa.MaxMasaT.Value.ToString("0.#") + " t)" : "") + (d.DrugihTrasa > 0 ? " +" + d.DrugihTrasa : "");
+            Func<int, string> naziv = id => { string n; return nazivi.TryGetValue(id, out n) ? n : "?"; };
+            string od = naziv(d.OdID), doS = naziv(d.DoID);
+            if (d.Trasa != null)
+                return d.Trasa.Broj + " " + od + " – " + doS + (d.Trasa.MaxMasaT.HasValue ? " (" + d.Trasa.MaxMasaT.Value.ToString("0.#") + " t)" : "") + (d.DrugihTrasa > 0 ? " +" + d.DrugihTrasa : "");
+            var cvorovi = new List<string>();
+            int pocetak = ruta.Deonice.FindIndex(x => x.OdID == d.OdID), kraj = ruta.Deonice.FindIndex(x => x.DoID == d.DoID);
+            for (int i = pocetak; pocetak >= 0 && i < kraj; i++)
+                if (ruta.Deonice[i].PrugaID != ruta.Deonice[i + 1].PrugaID) cvorovi.Add(naziv(ruta.Deonice[i].DoID));
+            string preko = cvorovi.Count == 0 ? "" : " preko " + string.Join(", ", cvorovi.Take(NajviseCvorova)) + (cvorovi.Count > NajviseCvorova ? " i još " + (cvorovi.Count - NajviseCvorova) : "");
+            return "BEZ TRASE " + od + " – " + doS + preko + " (" + d.Km.ToString("N1") + " km)";
         }
 
         internal static DataTable TabelaKombinacija(IList<KombinacijaTrasa> lista, IDictionary<int, string> nazivi)
         {
             var t = new DataTable();
             t.Columns.Add("RB", typeof(int));
-            foreach (string k in new[] { "Kombinacija trasa", "Trasa", "Ruta km", "Bez trase km", "Zastoji", "Max masa t", "Max dužina m" }) t.Columns.Add(k);
+            foreach (string k in new[] { "Ruta", "Kombinacija trasa", "Trasa", "Ruta km", "Bez trase km", "Zastoji", "Max masa t", "Max dužina m" }) t.Columns.Add(k);
             for (int i = 0; i < lista.Count; i++)
             {
                 KombinacijaTrasa k = lista[i];
-                t.Rows.Add(i, string.Join("  →  ", k.Delovi.Select(d => TekstDela(d, nazivi))), k.BrojTrasa, k.Ruta.Km.ToString("N1"), k.KmBezTrase.ToString("N1"), k.Ruta.Zastoji.Count == 0 ? "nema" : string.Join("; ", k.Ruta.Zastoji.Select(z => z.Tekst)),
+                t.Rows.Add(i, k.RutaRB.HasValue ? "Ruta " + k.RutaRB.Value : "Lanac trasa", string.Join("  →  ", k.Delovi.Select(d => TekstDela(d, k.Ruta, nazivi))), k.BrojTrasa, k.Ruta.Km.ToString("N1"), k.KmBezTrase.ToString("N1"), k.Ruta.Zastoji.Count == 0 ? "nema" : string.Join("; ", k.Ruta.Zastoji.Select(z => z.Tekst)),
                     k.NajmanjaMasa.HasValue ? k.NajmanjaMasa.Value.ToString("0.#") : "–", k.NajmanjaDuzina.HasValue ? k.NajmanjaDuzina.Value.ToString("0.#") : "–");
             }
             return t;
@@ -397,6 +405,17 @@ namespace Saobracaj.Planiranje.Forme
         {
             decimal? v = DecimalIliNull(kolona, natpis);
             return v.HasValue ? (double?)v.Value : null;
+        }
+
+        // Kontrola polja, kad forma treba sama da reaguje na izbor.
+        internal Control Polje(string kolona)
+        {
+            return polja[kolona];
+        }
+
+        internal void IzaberiID(string kolona, int? id)
+        {
+            ((ComboBox)polja[kolona]).SelectedValue = id.HasValue ? (object)id.Value : DBNull.Value;
         }
 
         internal int? IzabranID(string kolona)

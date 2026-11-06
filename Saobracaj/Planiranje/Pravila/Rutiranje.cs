@@ -18,6 +18,16 @@ namespace Saobracaj.Planiranje.Pravila
         internal int BrojAlternativa = 1;
         // Zatvor iz telegrama ne isključuje deonicu, nego se samo prijavljuje.
         internal bool BezTelegrama;
+        // Polazak na dan Datum: zatvori se gledaju od polaska narednih SatiVoznje sati (koliko otprilike traje vožnja).
+        // Bez polaska ili za drugi dan važi ceo dan Datum.
+        internal DateTime? Polazak;
+        internal const int SatiVoznje = 6;
+        // Električna lokomotiva: neelektrificirana deonica se preskače kao zatvor, a ne samo prijavljuje.
+        internal bool ObaveznaElektro;
+
+        private bool PolazakDanas { get { return Polazak.HasValue && Polazak.Value.Date == Datum.Date; } }
+        internal DateTime ProzorOd { get { return PolazakDanas ? Polazak.Value : Datum.Date; } }
+        internal DateTime ProzorDo { get { return PolazakDanas ? Polazak.Value.AddHours(SatiVoznje) : Datum.Date.AddDays(1); } }
     }
 
     // Deo rute koji voz po izabranim uslovima ne bi smeo da prođe.
@@ -31,6 +41,10 @@ namespace Saobracaj.Planiranje.Pravila
     {
         internal List<RezultatRute> Rute = new List<RezultatRute>();
         internal RezultatRute BezZastoja;
+        // Najkraća ruta da nema telegrama, kad je ponuđena ruta obilazak zatvora.
+        internal RezultatRute KrozZatvor;
+        // Tražen je elektrificiran put, a postoji samo put sa deonicama bez kontaktne mreže.
+        internal bool BezElektro;
         internal Graf Graf;
     }
 
@@ -58,7 +72,15 @@ namespace Saobracaj.Planiranje.Pravila
         {
             RezultatRute prva = rez.Rute[0];
             string s = Opis(prva);
+            if (rez.BezElektro)
+                s += Environment.NewLine + Environment.NewLine + "NEMA ELEKTRIFICIRANOG PUTA: električna lokomotiva ne može da prođe ceo put; deonice bez kontaktne mreže su među zastojima.";
+            if (rez.KrozZatvor != null)
+                s += Environment.NewLine + Environment.NewLine + "OBILAZAK ZATVORA: najkraća ruta (" + rez.KrozZatvor.Km.ToString("N1") + " km) prolazi kroz zatvor, pa je ponuđen obilazak duži za "
+                    + (prva.Km - rez.KrozZatvor.Km).ToString("N1") + " km." + Environment.NewLine
+                    + string.Join(Environment.NewLine, rez.KrozZatvor.Zastoji.Where(z => z.Tekst.StartsWith("Zatvor")).Select(z => "• " + z.Tekst));
             if (prva.Zastoji.Count == 0) return s;
+            if (prva.Zastoji.Any(z => z.Tekst.StartsWith("Zatvor")))
+                s += Environment.NewLine + Environment.NewLine + "NEMA OBILASKA ZATVORA: svi putevi do odredišta prolaze kroz zatvor iz telegrama, pa je prikazana najkraća ruta kroz zatvor.";
             s += Environment.NewLine + Environment.NewLine + "ZASTOJI (samo obaveštenje):" + Environment.NewLine + string.Join(Environment.NewLine, prva.Zastoji.Select(z => "• " + z.Tekst));
             s += Environment.NewLine + Environment.NewLine + (rez.BezZastoja != null ? "Ruta bez zastoja: " + rez.BezZastoja.Km.ToString("N1") + " km." : "Ruta bez zastoja ne postoji.");
             return s;
@@ -106,32 +128,58 @@ namespace Saobracaj.Planiranje.Pravila
         private static bool Zatvorena(PlanKontekst k, VezaMreze v, DateTime od, DateTime doVreme)
         {
             var d = new DeonicaRute { VezaID = v.ID, OdID = v.A, DoID = v.B, PrugaID = v.PrugaID };
-            return k.Telegrami.Any(t => t.Vrsta == "ZATVOR" && Ruta.JeAktivan(t, od, doVreme) && Ruta.Pokriva(k, t, d));
+            return k.Telegrami.Any(t => Ruta.JeZatvor(t) && Ruta.JeAktivan(t, od, doVreme) && Ruta.Pokriva(k, t, d));
         }
 
         // Mreža uz uslove voza; po njoj se računaju i rute i lanci trasa.
         internal static Graf GrafZa(PlanKontekst k, ZahtevRute z)
         {
-            DateTime od = z.Datum.Date, doVreme = z.Datum.Date.AddDays(1);
+            DateTime od = z.ProzorOd, doVreme = z.ProzorDo;
             return new Graf(k.Veze.Where(v => Dozvoljena(v, z) && (z.BezTelegrama || !Zatvorena(k, v, od, doVreme))).ToList());
         }
 
-        // Ekran Mreža i stanice: ruta se računa i kad voz po uslovima ne može da prođe, a zastoji su samo obaveštenje.
-        // Ručni zatvor sa mape važi, jer ga je korisnik sam postavio da vidi obilazak.
+        // Ekran Mreža i stanice i ponuda trasa na poslu: deonica zatvorena telegramom se preskače i traži se obilazak.
+        // Vuča i osovinsko ne blokiraju, nego su zastoji (obaveštenje). Ručni zatvor sa mape važi.
+        // Tek kad obilaska nema, ruta ide kroz zatvor, a zatvor je među zastojima.
         internal static RuteSaZastojima IzracunajSaZastojima(PlanKontekst k, ZahtevRute z)
         {
-            var slobodan = new ZahtevRute { OdID = z.OdID, DoID = z.DoID, DuzinaM = z.DuzinaM, Datum = z.Datum, SaKiM = z.SaKiM, RucnoZatvorene = z.RucnoZatvorene, BrojAlternativa = z.BrojAlternativa, BezTelegrama = true };
-            List<RezultatRute> rute = Izracunaj(k, slobodan);
-            if (rute.Count == 0 && !z.SaKiM)
+            Func<bool, bool, bool, ZahtevRute> slobodan = (kim, bezTelegrama, elektro) => new ZahtevRute
             {
-                slobodan.SaKiM = true;
-                rute = Izracunaj(k, slobodan);
+                OdID = z.OdID, DoID = z.DoID, DuzinaM = z.DuzinaM, Datum = z.Datum, Polazak = z.Polazak, SaKiM = kim,
+                RucnoZatvorene = z.RucnoZatvorene, BrojAlternativa = z.BrojAlternativa, BezTelegrama = bezTelegrama, Elektricna = elektro
+            };
+            // Redom: uz zatvore, pa uz zatvore i preko KiM, pa kroz zatvore, pa kroz zatvore i preko KiM.
+            // Za obaveznu elektro vuču isti redosled prvo samo po elektrificiranoj mreži, pa tek onda bez tog uslova.
+            var pokusaji = new List<ZahtevRute>();
+            foreach (bool elektro in z.ObaveznaElektro && z.Elektricna ? new[] { true, false } : new[] { false })
+            {
+                pokusaji.Add(slobodan(z.SaKiM, false, elektro));
+                if (!z.SaKiM) pokusaji.Add(slobodan(true, false, elektro));
+                pokusaji.Add(slobodan(z.SaKiM, true, elektro));
+                if (!z.SaKiM) pokusaji.Add(slobodan(true, true, elektro));
             }
-            var rezultat = new RuteSaZastojima { Rute = rute, Graf = GrafZa(k, slobodan) };
+            ZahtevRute izabran = pokusaji[pokusaji.Count - 1];
+            List<RezultatRute> rute = new List<RezultatRute>();
+            foreach (ZahtevRute pokusaj in pokusaji)
+            {
+                rute = Izracunaj(k, pokusaj);
+                if (rute.Count > 0) { izabran = pokusaj; break; }
+            }
+            var rezultat = new RuteSaZastojima { Rute = rute, Graf = GrafZa(k, izabran), BezElektro = rute.Count > 0 && z.ObaveznaElektro && z.Elektricna && !izabran.Elektricna };
+            if (rute.Count > 0 && !izabran.BezTelegrama)
+            {
+                // Najkraća ruta bez obzira na telegrame (uz istu vuču), da se vidi šta je zaobiđeno.
+                RezultatRute najkraca = Izracunaj(k, new ZahtevRute { OdID = z.OdID, DoID = z.DoID, DuzinaM = z.DuzinaM, Datum = z.Datum, Polazak = z.Polazak, SaKiM = izabran.SaKiM, RucnoZatvorene = z.RucnoZatvorene, BezTelegrama = true, Elektricna = izabran.Elektricna }).FirstOrDefault();
+                if (najkraca != null && !najkraca.Deonice.Select(d => d.VezaID).SequenceEqual(rute[0].Deonice.Select(d => d.VezaID)))
+                {
+                    DodajZastoje(k, najkraca, z);
+                    if (najkraca.Zastoji.Any(x => x.Tekst.StartsWith("Zatvor"))) rezultat.KrozZatvor = najkraca;
+                }
+            }
             foreach (RezultatRute r in rute) DodajZastoje(k, r, z);
             if (rute.Count == 0 || rute[0].Zastoji.Count == 0) return rezultat;
             // Ako postoji i put bez zastoja, nudi se kao poslednji.
-            var strog = new ZahtevRute { OdID = z.OdID, DoID = z.DoID, Elektricna = z.Elektricna, OsovinskoT = z.OsovinskoT, DuzinaM = z.DuzinaM, Datum = z.Datum, SaKiM = z.SaKiM, RucnoZatvorene = z.RucnoZatvorene };
+            var strog = new ZahtevRute { OdID = z.OdID, DoID = z.DoID, Elektricna = z.Elektricna, OsovinskoT = z.OsovinskoT, DuzinaM = z.DuzinaM, Datum = z.Datum, Polazak = z.Polazak, SaKiM = z.SaKiM, RucnoZatvorene = z.RucnoZatvorene };
             rezultat.BezZastoja = Izracunaj(k, strog).FirstOrDefault();
             if (rezultat.BezZastoja != null && !rute.Any(r => r.Deonice.Select(d => d.VezaID).SequenceEqual(rezultat.BezZastoja.Deonice.Select(d => d.VezaID))))
                 rute.Add(rezultat.BezZastoja);
@@ -141,7 +189,7 @@ namespace Saobracaj.Planiranje.Pravila
         // Zastoji na ruti, spojeni u uzastopne deonice istog razloga.
         internal static void DodajZastoje(PlanKontekst k, RezultatRute r, ZahtevRute z)
         {
-            DateTime od = z.Datum.Date, doVreme = z.Datum.Date.AddDays(1);
+            DateTime od = z.ProzorOd, doVreme = z.ProzorDo;
             var poId = k.Veze.ToDictionary(v => v.ID);
             var otvoreni = new Dictionary<string, Tuple<int, int, decimal>>();
             var gotovi = new List<Tuple<int, string, int, decimal>>();
@@ -187,7 +235,7 @@ namespace Saobracaj.Planiranje.Pravila
             if (z.Elektricna && v.Elektrificirana == false) razlozi.Add("Bez kontaktne mreže");
             if (z.OsovinskoT.HasValue && v.OsovinskoT.HasValue && v.OsovinskoT.Value < z.OsovinskoT.Value)
                 razlozi.Add("Osovinsko " + v.OsovinskoT.Value.ToString("0.#") + " t, a voz traži " + z.OsovinskoT.Value.ToString("0.#") + " t");
-            foreach (TelegramOP t in k.Telegrami.Where(x => x.Vrsta == "ZATVOR" && Ruta.JeAktivan(x, od, doVreme) && Ruta.Pokriva(k, x, d)))
+            foreach (TelegramOP t in k.Telegrami.Where(x => Ruta.JeZatvor(x) && Ruta.JeAktivan(x, od, doVreme) && Ruta.Pokriva(k, x, d)))
                 razlozi.Add("Zatvor, telegram " + t.Broj);
             return razlozi;
         }
@@ -196,13 +244,13 @@ namespace Saobracaj.Planiranje.Pravila
         internal static RezultatRute IzDeonica(PlanKontekst k, List<DeonicaRute> deonice, ZahtevRute z)
         {
             for (int i = 0; i < deonice.Count; i++) deonice[i].RB = i + 1;
-            return Sazmi(k, deonice, k.Veze.ToDictionary(v => v.ID), z, z.Datum.Date, z.Datum.Date.AddDays(1));
+            return Sazmi(k, deonice, k.Veze.ToDictionary(v => v.ID), z, z.ProzorOd, z.ProzorDo);
         }
 
         // Prazna lista znači da uz izabrane uslove puta nema.
         internal static List<RezultatRute> Izracunaj(PlanKontekst k, ZahtevRute z)
         {
-            DateTime od = z.Datum.Date, doVreme = z.Datum.Date.AddDays(1);
+            DateTime od = z.ProzorOd, doVreme = z.ProzorDo;
             Graf graf = GrafZa(k, z);
             var poId = k.Veze.ToDictionary(v => v.ID);
             return graf.Alternative(z.OdID, z.DoID, Math.Max(1, z.BrojAlternativa))
@@ -266,7 +314,7 @@ namespace Saobracaj.Planiranje.Pravila
                     if (granica.HasValue && granica.Value > 0 && z.DuzinaM.Value > granica.Value)
                         r.Upozorenja.Add("Dužina voza " + z.DuzinaM.Value + " m je veća od dozvoljenih " + granica.Value + " m u stanici " + k.Naziv(d.DoID) + ".");
                 }
-            foreach (TelegramOP t in k.Telegrami.Where(x => x.Vrsta != "ZATVOR" && Ruta.JeAktivan(x, od, doVreme)))
+            foreach (TelegramOP t in k.Telegrami.Where(x => !Ruta.JeZatvor(x) && Ruta.JeAktivan(x, od, doVreme)))
             {
                 DeonicaRute pogodjena = r.Deonice.FirstOrDefault(d => Ruta.Pokriva(k, t, d));
                 if (pogodjena == null) continue;

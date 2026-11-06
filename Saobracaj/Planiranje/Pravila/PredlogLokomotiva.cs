@@ -53,18 +53,22 @@ namespace Saobracaj.Planiranje.Pravila
             internal string Izvor;
         }
 
-        // Stanica predaje poslednjeg posla pre prijema, zatim matična stanica. GPS još nije povezan sa planiranjem.
-        private static Lokacija NadjiLokaciju(PlanKontekst k, LokomotivaOP l, IEnumerable<ZauzetostLok> kalendar, PosaoPlan posao)
+        // Posao koji se tek završava pre prijema određuje lokaciju (stanica predaje), jer GPS pokazuje gde je lokomotiva sada.
+        // Inače važi GPS pozicija, pa stanica predaje poslednjeg posla, pa matična stanica.
+        private static Lokacija NadjiLokaciju(PlanKontekst k, LokomotivaOP l, IEnumerable<ZauzetostLok> kalendar, PosaoPlan posao, IDictionary<int, GpsLokacija> gps)
         {
             ZauzetostLok poslednji = kalendar
                 .Where(z => z.LokomotivaID == l.ID && z.Vrsta == "POSAO" && z.PosaoID != posao.ID && z.Do <= posao.Prijem)
                 .OrderByDescending(z => z.Do).FirstOrDefault();
+            GpsLokacija g;
+            if (gps != null && gps.TryGetValue(l.ID, out g) && g.StanicaID.HasValue && (poslednji == null || poslednji.Do <= DateTime.Now))
+                return new Lokacija { StanicaID = g.StanicaID, Izvor = "GPS" };
             if (poslednji != null)
                 return new Lokacija { StanicaID = poslednji.PredajaStanicaID, SlobodnaOd = poslednji.Do, Izvor = "Poslednji posao" };
             return new Lokacija { StanicaID = l.MaticnaStanicaID, Izvor = l.MaticnaStanicaID.HasValue ? "Matična stanica" : "Nepoznato" };
         }
 
-        internal static List<KandidatLokomotiva> Kandidati(PlanKontekst k, RezultatPosla r, IList<ZauzetostLok> kalendar, out List<string> iskljuceni)
+        internal static List<KandidatLokomotiva> Kandidati(PlanKontekst k, RezultatPosla r, IList<ZauzetostLok> kalendar, out List<string> iskljuceni, IDictionary<int, GpsLokacija> gps = null)
         {
             iskljuceni = new List<string>();
             PosaoPlan p = r.Posao;
@@ -87,7 +91,7 @@ namespace Saobracaj.Planiranje.Pravila
                 ZauzetostLok prepreka = Prepreka(kalendar, l.ID, p, p.Prijem, r.Predaja);
                 if (prepreka != null) { iskljuceni.Add(l.Broj + ": " + OpisPrepreke(prepreka)); continue; }
 
-                Lokacija lok = NadjiLokaciju(k, l, kalendar, p);
+                Lokacija lok = NadjiLokaciju(k, l, kalendar, p, gps);
                 decimal km;
                 bool poznato = lok.StanicaID.HasValue && dist.TryGetValue(lok.StanicaID.Value, out km);
                 km = poznato ? dist[lok.StanicaID.Value] : 0;
@@ -103,6 +107,7 @@ namespace Saobracaj.Planiranje.Pravila
                     Lokacija = lok.StanicaID.HasValue ? k.Naziv(lok.StanicaID) : "Nepoznata",
                     LokacijaID = lok.StanicaID,
                     IzvorLokacije = lok.Izvor,
+                    KmDoPrijema = poznato ? km : (decimal?)null,
                     PraznaVoznjaMin = prazna,
                     LokacijaNepoznata = !poznato,
                     Ocena = ocena,
@@ -132,7 +137,8 @@ namespace Saobracaj.Planiranje.Pravila
                         Lokomotive = new List<LokomotivaOP> { lista[i].Lokomotive[0], lista[j].Lokomotive[0] },
                         Lokacija = lista[i].Lokacija + " / " + lista[j].Lokacija,
                         LokacijaID = lista[i].LokacijaID,
-                        IzvorLokacije = lista[i].IzvorLokacije,
+                        IzvorLokacije = lista[i].IzvorLokacije == lista[j].IzvorLokacije ? lista[i].IzvorLokacije : lista[i].IzvorLokacije + " / " + lista[j].IzvorLokacije,
+                        KmDoPrijema = lista[i].KmDoPrijema.HasValue && lista[j].KmDoPrijema.HasValue ? Math.Max(lista[i].KmDoPrijema.Value, lista[j].KmDoPrijema.Value) : (decimal?)null,
                         PraznaVoznjaMin = Math.Max(lista[i].PraznaVoznjaMin, lista[j].PraznaVoznjaMin),
                         LokacijaNepoznata = lista[i].LokacijaNepoznata || lista[j].LokacijaNepoznata,
                         Ocena = lista[i].Ocena + lista[j].Ocena,

@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Lozinke aplikacije (Saobracaj/Lozinke.config) i test podaci telegrama sa ličnim podacima
+Lozinke.config
+**/TestData/
