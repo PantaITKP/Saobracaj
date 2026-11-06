@@ -36,6 +36,7 @@ namespace Saobracaj
         private void PrimeniNoviIzgled()
         {
             SuspendLayout();
+            DodajMapuLokomotiva();
             UcitajStavkeIzRibona();
             // Ribbon se ne prikazuje, ali njegova dugmad i dalje nose događaje.
             Controls.Remove(ribbonControlAdv1);
@@ -71,6 +72,18 @@ namespace Saobracaj
 
             PrikaziModul(PocetniModul);
             ResumeLayout(true);
+        }
+
+        // Transport / Tabla, odmah posle Planera i DispMain-a; meni stavke čita iz ribbon-a.
+        private void DodajMapuLokomotiva()
+        {
+            var dugme = new ToolStripButton("Mapa lokomotiva") { DisplayStyle = ToolStripItemDisplayStyle.Text, Name = "tsbOPMapa" };
+            dugme.Click += (s, e) =>
+            {
+                var forma = new Saobracaj.Planiranje.Forme.frmOPMapa();
+                if (forma.Pravo) forma.Show(); else forma.Dispose();
+            };
+            toolStripEx10.Items.Insert(toolStripEx10.Items.IndexOf(toolStripButton139) + 1, dugme);
         }
 
         private void UcitajStavkeIzRibona()

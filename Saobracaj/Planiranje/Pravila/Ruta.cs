@@ -170,7 +170,7 @@ namespace Saobracaj.Planiranje.Pravila
             var zatvorene = new List<DeonicaRute>();
             foreach (DeonicaRute d in ruta)
             {
-                List<TelegramOP> svi = k.Telegrami.Where(x => x.Vrsta == "ZATVOR" && JeAktivan(x, od, doVreme) && Pokriva(k, x, d)).ToList();
+                List<TelegramOP> svi = k.Telegrami.Where(x => JeZatvor(x) && JeAktivan(x, od, doVreme) && Pokriva(k, x, d)).ToList();
                 TelegramOP t = svi.FirstOrDefault();
                 if (t == null) continue;
                 foreach (TelegramOP x in svi) if (!uticu.Contains(x)) uticu.Add(x);
@@ -183,7 +183,7 @@ namespace Saobracaj.Planiranje.Pravila
 
         private static void DodajUpozorenjaTelegrama(PlanKontekst k, List<DeonicaRute> ruta, PosaoPlan posao, DateTime od, DateTime doVreme, List<Nalaz> nalazi, List<TelegramOP> uticu)
         {
-            foreach (TelegramOP t in k.Telegrami.Where(x => x.Vrsta != "ZATVOR" && JeAktivan(x, od, doVreme)))
+            foreach (TelegramOP t in k.Telegrami.Where(x => !JeZatvor(x) && JeAktivan(x, od, doVreme)))
                 if (ruta.Any(d => Pokriva(k, t, d)))
                 {
                     if (!uticu.Contains(t)) uticu.Add(t);
@@ -192,10 +192,52 @@ namespace Saobracaj.Planiranje.Pravila
         }
 
         // Važi u periodu posla, a dnevni interval mora da se preklopi sa vremenom posla.
+        private static readonly TimeSpan KrajDana = new TimeSpan(23, 59, 0);
+
+        // Zatvor pruge, ili zatvor svih koloseka (između stanica to je isto što i zatvor pruge).
+        internal static bool JeZatvor(TelegramOP t)
+        {
+            if (t.Vrsta == "ZATVOR") return true;
+            string k = (t.Kolosek ?? "").Trim().TrimEnd('.').ToLowerInvariant();
+            return k == "svi" || k.StartsWith("svi kolos");
+        }
+
+        private static TimeSpan BezSekundi(TimeSpan v)
+        {
+            return TimeSpan.FromMinutes(Math.Floor(v.TotalMinutes));
+        }
+
+        private static bool CeoDan(TimeSpan a, TimeSpan b)
+        {
+            return a == TimeSpan.Zero && (b == TimeSpan.Zero || b >= KrajDana);
+        }
+
+        // Dnevni interval telegrama; null znači da važi neprekidno od VaziOd do VaziDo.
+        // Agent i ručni unos upisuju TrajeOd/TrajeDo = 00:00–23:59, a interval je u vremenu VaziOd/VaziDo
+        // (prvi dan + početak, poslednji dan + kraj), kao TelegramRed.VaziU na tabu Telegrami. Ručni unos ima i sekunde (07:00:53).
+        // Telegram sa „neprekidan“ u napomeni važi bez prekida i kad traje više dana.
+        internal static bool DnevniProzor(TelegramOP t, out TimeSpan od, out TimeSpan doVreme)
+        {
+            od = doVreme = TimeSpan.Zero;
+            if (t.TrajeOd.HasValue && t.TrajeDo.HasValue && !CeoDan(BezSekundi(t.TrajeOd.Value), BezSekundi(t.TrajeDo.Value)))
+            {
+                od = t.TrajeOd.Value;
+                doVreme = t.TrajeDo.Value;
+                return true;
+            }
+            if (!t.VaziDo.HasValue || (t.Napomena ?? "").IndexOf("neprekid", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+            TimeSpan a = BezSekundi(t.VaziOd.TimeOfDay), b = BezSekundi(t.VaziDo.Value.TimeOfDay);
+            if (CeoDan(a, b) || a == b) return false;
+            od = a;
+            doVreme = b;
+            return true;
+        }
+
         internal static bool JeAktivan(TelegramOP t, DateTime od, DateTime doVreme)
         {
             if (t.VaziOd > doVreme || (t.VaziDo.HasValue && t.VaziDo.Value < od)) return false;
-            if (!t.TrajeOd.HasValue || !t.TrajeDo.HasValue || (doVreme - od).TotalHours >= 24) return true;
+            TimeSpan x, y;
+            if (!DnevniProzor(t, out x, out y) || (doVreme - od).TotalHours >= 24) return true;
             TimeSpan a = od.TimeOfDay, b = doVreme.TimeOfDay;
             var delovi = new List<Tuple<TimeSpan, TimeSpan>>();
             if (b >= a) delovi.Add(Tuple.Create(a, b));
@@ -204,7 +246,6 @@ namespace Saobracaj.Planiranje.Pravila
                 delovi.Add(Tuple.Create(a, TimeSpan.FromHours(24)));
                 delovi.Add(Tuple.Create(TimeSpan.Zero, b));
             }
-            TimeSpan x = t.TrajeOd.Value, y = t.TrajeDo.Value;
             if (y >= x) return delovi.Any(p => p.Item1 < y && p.Item2 > x);
             return delovi.Any(p => p.Item2 > x || p.Item1 < y);
         }
