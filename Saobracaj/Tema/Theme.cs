@@ -52,7 +52,7 @@ namespace Saobracaj.Tema
         private static void UcitajFontove()
         {
             var asm = Assembly.GetExecutingAssembly();
-            foreach (var ime in new[] { "DMSans-Regular.ttf", "DMSans-Bold.ttf", "Manrope-ExtraBold.ttf" })
+            foreach (var ime in new[] { "DMSans-Regular.ttf", "DMSans-Bold.ttf", "DMSans-Italic.ttf", "Manrope-ExtraBold.ttf", "Manrope-Medium.ttf" })
             {
                 using (Stream s = asm.GetManifestResourceStream("Saobracaj.Tema.Fontovi." + ime))
                 {
@@ -69,7 +69,14 @@ namespace Saobracaj.Tema
                 }
             }
             dmSans = kolekcija.Families.FirstOrDefault(f => f.Name == "DM Sans");
-            manrope = kolekcija.Families.FirstOrDefault(f => f.Name.StartsWith("Manrope"));
+            // Manrope Medium je zasebna porodica, pa se naslovni font bira po imenu.
+            manrope = Porodica("Manrope ExtraBold") ?? kolekcija.Families.FirstOrDefault(f => f.Name.StartsWith("Manrope"));
+        }
+
+        // Ugrađena porodica po imenu ("Manrope Medium", "DM Sans 14pt" za italik...); null ako nije učitana.
+        public static FontFamily Porodica(string ime)
+        {
+            return kolekcija.Families.FirstOrDefault(f => f.Name == ime);
         }
 
         private static Font Uzmi(FontFamily porodica, float velicina, FontStyle stil)

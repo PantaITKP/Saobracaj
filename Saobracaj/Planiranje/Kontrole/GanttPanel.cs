@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -8,7 +8,7 @@ using Saobracaj.Tema;
 
 namespace Saobracaj.Planiranje.Kontrole
 {
-    internal enum VrstaTrake { Posao, DvostrukaVuca, Zauzetost, BezLokomotive, Nacrt }
+    internal enum VrstaTrake { Posao, DvostrukaVuca, Zauzetost, BezLokomotive, Nacrt, Dostupnost }
 
     internal sealed class GanttRed
     {
@@ -27,6 +27,10 @@ namespace Saobracaj.Planiranje.Kontrole
         internal VrstaTrake Vrsta;
         internal bool Konflikt;
         internal int? PosaoID;
+        // Dvoklik bez prevlačenja (npr. task na gantogramu Taskova); PosaoID uključuje i prevlačenje.
+        internal int? ZapisID;
+        // Opis na prelazu mišem.
+        internal string Opis;
         internal int Traka;
         internal Rectangle Okvir;
     }
@@ -36,6 +40,7 @@ namespace Saobracaj.Planiranje.Kontrole
     {
         private static readonly Color Zuta = ColorTranslator.FromHtml("#E0A800");
         private static readonly Color Servis = ColorTranslator.FromHtml("#8A8078");
+        private static readonly Color Dostupna = ColorTranslator.FromHtml("#DCEFE2");
 
         private readonly List<GanttRed> redovi = new List<GanttRed>();
         private readonly List<GanttTraka> trake = new List<GanttTraka>();
@@ -45,6 +50,8 @@ namespace Saobracaj.Planiranje.Kontrole
         private Point pritisak;
         private Point poslednja;
         private bool prevlacenje;
+        private readonly ToolTip opis = new ToolTip { InitialDelay = 300, AutoPopDelay = 15000 };
+        private GanttTraka podMisem;
 
         internal event Action<GanttTraka> DvoklikTraka;
         internal event Action<GanttTraka, int> PrevucenaTraka;
@@ -65,6 +72,12 @@ namespace Saobracaj.Planiranje.Kontrole
             // Zaglavlje je zakucano na vrhu, pa pomeranje mora da precrta sve; inače se kopija zaglavlja pomeri sa slikom.
             Scroll += (s, e) => Invalidate();
             MouseWheel += (s, e) => Invalidate();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) opis.Dispose();
+            base.Dispose(disposing);
         }
 
         internal void Prikazi(DateTime pocetak, DateTime kraj, bool satno, IEnumerable<GanttRed> noviRedovi, IEnumerable<GanttTraka> noveTrake)
@@ -99,7 +112,9 @@ namespace Saobracaj.Planiranje.Kontrole
 
         private int VisinaReda(GanttRed r)
         {
-            return r.Traka * (VisinaTrake + RazmakTrake) + Theme.Dp(6);
+            int h = r.Traka * (VisinaTrake + RazmakTrake) + Theme.Dp(6);
+            // Podnaslov je ispod naslova, pa red mora biti dovoljno visok za oba.
+            return string.IsNullOrEmpty(r.Podnaslov) ? h : Math.Max(h, Theme.Dp(40));
         }
 
         private void PodesiVisinu()
@@ -189,6 +204,10 @@ namespace Saobracaj.Planiranje.Kontrole
                     using (var okvir = new Pen(Theme.Akcent, 1.5f) { DashStyle = DashStyle.Dash }) g.DrawRectangle(okvir, r);
                     tekst = Theme.Primarna;
                     break;
+                case VrstaTrake.Dostupnost:
+                    using (var b = new SolidBrush(Dostupna)) g.FillRectangle(b, r);
+                    tekst = Theme.Tekst;
+                    break;
                 case VrstaTrake.DvostrukaVuca:
                     using (var b = new SolidBrush(Theme.Tamna)) g.FillRectangle(b, r);
                     break;
@@ -235,6 +254,11 @@ namespace Saobracaj.Planiranje.Kontrole
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
+            if (e.Button == MouseButtons.None)
+            {
+                GanttTraka t = TrakaNa(e.Location);
+                if (t != podMisem) { podMisem = t; opis.SetToolTip(this, t == null ? null : t.Opis ?? t.Tekst); }
+            }
             if (vucena == null || e.Button != MouseButtons.Left) return;
             if (!prevlacenje && Math.Abs(e.X - pritisak.X) + Math.Abs(e.Y - pritisak.Y) < Theme.Dp(6)) return;
             prevlacenje = true;
@@ -266,7 +290,7 @@ namespace Saobracaj.Planiranje.Kontrole
         {
             base.OnMouseDoubleClick(e);
             GanttTraka t = TrakaNa(e.Location);
-            if (t != null && t.PosaoID.HasValue) DvoklikTraka?.Invoke(t);
+            if (t != null && (t.PosaoID.HasValue || t.ZapisID.HasValue)) DvoklikTraka?.Invoke(t);
         }
     }
 }

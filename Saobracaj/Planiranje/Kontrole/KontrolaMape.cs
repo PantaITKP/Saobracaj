@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -54,6 +54,11 @@ namespace Saobracaj.Planiranje.Kontrole
         private readonly Label lblGps = new Label { AutoSize = true, MaximumSize = new System.Drawing.Size(SirinaKolone - 30, 0) };
         private readonly CheckBox chkZatvori = new CheckBox { Text = "Zatvori iz telegrama", AutoSize = true, Checked = true, Margin = new Padding(3, 8, 3, 3) };
         private readonly Label lblZatvori = new Label { AutoSize = true, MaximumSize = new System.Drawing.Size(SirinaKolone - 30, 0) };
+        private readonly CheckBox chkVagoni = new CheckBox { Text = "Prikaži vagone na stanicama", AutoSize = true, Margin = new Padding(3, 8, 3, 3) };
+        private readonly Label lblVagoni = new Label { AutoSize = true, MaximumSize = new System.Drawing.Size(SirinaKolone - 30, 0) };
+        private readonly FlowLayoutPanel panelVagona = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Visible = false, Margin = new Padding(0) };
+        private readonly TextBox txtFilterVagona = new TextBox { Width = SirinaKolone - 40 };
+        private readonly CheckedListBox listaVagona = new CheckedListBox { Width = SirinaKolone - 40, Height = 220, CheckOnClick = true, IntegralHeight = false, HorizontalScrollbar = true };
         private readonly Timer tajmerGps = new Timer { Interval = 60000 };
         // Agent upisuje telegrame na 2 minuta, pa je osvežavanje na 5 minuta dovoljno.
         private readonly Timer tajmerZatvora = new Timer { Interval = 5 * 60000 };
@@ -62,6 +67,10 @@ namespace Saobracaj.Planiranje.Kontrole
         private List<ZatvorNaMapi> zatvori;
         private bool gpsUToku, zatvoriUToku, gpsPrviPut = true;
         private string prilaz = "", put = "", tacke = "[]";
+        // Vagoni iz „Stanje na mreži“ (Planer): izvor je tabela iz Planera, a bez nje dbo.OperativniPlanMreza (samo čitanje).
+        private DataTable izvorVagona;
+        private List<VagonNaMapi> vagoni;
+        private bool vagoniUToku, popunjavamListu;
 
         // Slojevi (GPS i zatvori) sa natpisima; forma ih stavlja u svoju kolonu.
         internal FlowLayoutPanel PanelSlojeva { get; } = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(8, 6, 8, 6) };
@@ -84,8 +93,30 @@ namespace Saobracaj.Planiranje.Kontrole
             PanelSlojeva.Controls.Add(lblGps);
             PanelSlojeva.Controls.Add(chkZatvori);
             PanelSlojeva.Controls.Add(lblZatvori);
+            PanelSlojeva.Controls.Add(chkVagoni);
+            PanelSlojeva.Controls.Add(lblVagoni);
+            PanelSlojeva.Controls.Add(panelVagona);
+            var dugmad = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0) };
+            var sve = new Button { Text = "Uključi sve", AutoSize = true };
+            var nijedan = new Button { Text = "Isključi sve", AutoSize = true };
+            sve.Click += (s, e) => UkljuciVagone(true);
+            nijedan.Click += (s, e) => UkljuciVagone(false);
+            dugmad.Controls.Add(sve);
+            dugmad.Controls.Add(nijedan);
+            panelVagona.Controls.Add(new Label { Text = "Filter (klijent ili stanica):", AutoSize = true, Margin = new Padding(3, 4, 3, 0) });
+            panelVagona.Controls.Add(txtFilterVagona);
+            panelVagona.Controls.Add(dugmad);
+            panelVagona.Controls.Add(listaVagona);
             chkLokomotive.CheckedChanged += (s, e) => PrebaciLokomotive();
             chkZatvori.CheckedChanged += (s, e) => PrebaciZatvore();
+            chkVagoni.CheckedChanged += (s, e) => PrebaciVagone();
+            txtFilterVagona.TextChanged += (s, e) => PopuniListuVagona();
+            listaVagona.ItemCheck += (s, e) =>
+            {
+                if (popunjavamListu) return;
+                ((VagonNaMapi)listaVagona.Items[e.Index]).Ukljucen = e.NewValue == CheckState.Checked;
+                BeginInvoke((Action)CrtajVagone);
+            };
             tajmerGps.Tick += (s, e) => { if (Visible) { var _ = OsveziLokomotive(); } };
             tajmerZatvora.Tick += (s, e) => { if (Visible) { var _ = OsveziZatvore(); } };
             web.DocumentCompleted += (s, e) => PonoviCrtanje();
@@ -117,6 +148,7 @@ namespace Saobracaj.Planiranje.Kontrole
             if (!Ucitana) return;
             if (chkLokomotive.Checked) { tajmerGps.Start(); var _ = OsveziLokomotive(); }
             if (chkZatvori.Checked) { tajmerZatvora.Start(); var __ = OsveziZatvore(); }
+            if (chkVagoni.Checked && vagoni == null) { var ___ = OsveziVagone(); }
         }
 
         // Prilaz lokomotive (ljubičasto, isprekidano) i predlog puta (zeleno); prazno briše.
@@ -154,6 +186,7 @@ namespace Saobracaj.Planiranje.Kontrole
         {
             CrtajZatvore();
             CrtajLokomotive();
+            CrtajVagone();
             Pozovi("oznaciTacke", tacke);
             if (prilaz.Length > 0 || put.Length > 0) Pozovi("crtajRute", prilaz, put);
         }
@@ -235,6 +268,163 @@ namespace Saobracaj.Planiranje.Kontrole
             if (brzina.Value > 5) return "#2E8B3A";
             if (brzina.Value < 1) return "#D7261E";
             return "#0B6E99";
+        }
+
+        // ---------- Vagoni na stanicama ----------
+
+        // Planer (dugme GRAF) predaje kopiju tabele „Stanje na mreži“; opcija ostaje isključena dok je korisnik ne uključi.
+        internal void PostaviVagone(DataTable stanjeNaMrezi)
+        {
+            izvorVagona = stanjeNaMrezi;
+            vagoni = null;
+            if (chkVagoni.Checked) { var _ = OsveziVagone(); }
+        }
+
+        private void PrebaciVagone()
+        {
+            panelVagona.Visible = chkVagoni.Checked;
+            if (chkVagoni.Checked) { var _ = OsveziVagone(); return; }
+            // Izbor se ne pamti: posle isključenja sve se ponovo učitava i sve je uključeno.
+            vagoni = null;
+            lblVagoni.Text = "";
+            listaVagona.Items.Clear();
+            txtFilterVagona.Text = "";
+            Pozovi("crtajVagone", "[]");
+        }
+
+        private async Task OsveziVagone()
+        {
+            // Pre prve mape stanice nisu poznate; Aktiviraj ponovo poziva učitavanje.
+            if (vagoniUToku || !chkVagoni.Checked || !Ucitana) return;
+            vagoniUToku = true;
+            lblVagoni.Text = "Učitavam stanje na mreži...";
+            try
+            {
+                DataTable izvor = izvorVagona;
+                DataTable st = stanice;
+                List<VagonNaMapi> lista = await Task.Run(() => Rasporedi(izvor ?? StaniceRepo.StanjeNaMrezi(), st));
+                if (IsDisposed || !chkVagoni.Checked) return;
+                vagoni = lista;
+                PopuniListuVagona();
+                CrtajVagone();
+                var bez = lista.Where(x => x.Lat == null).Select(x => x.Stanica).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToList();
+                int naMapi = lista.Count(x => x.Lat != null);
+                lblVagoni.Text = (izvor != null ? "Iz Planera (stanje u trenutku otvaranja). " : "Iz tabele Stanje na mreži. ")
+                    + "Na mapi: " + naMapi + " od " + lista.Count + " stavki, na " + lista.Where(x => x.Lat != null).Select(x => x.StanicaID).Distinct().Count() + " stanica."
+                    + (bez.Count > 0 ? " Bez pozicije: " + string.Join(", ", bez) + "." : "");
+            }
+            catch (Exception ex)
+            {
+                if (!IsDisposed) lblVagoni.Text = "Stanje na mreži nije učitano: " + ex.Message;
+            }
+            finally
+            {
+                vagoniUToku = false;
+            }
+        }
+
+        // Lista prikazuje samo stavke sa pozicijom; filter je po klijentu ili stanici, a čekiranje se čuva na stavci.
+        private void PopuniListuVagona()
+        {
+            if (vagoni == null) return;
+            string f = txtFilterVagona.Text.Trim();
+            popunjavamListu = true;
+            listaVagona.BeginUpdate();
+            listaVagona.Items.Clear();
+            foreach (VagonNaMapi v in vagoni.Where(x => x.Lat != null && x.Odgovara(f)))
+                listaVagona.Items.Add(v, v.Ukljucen);
+            listaVagona.EndUpdate();
+            popunjavamListu = false;
+        }
+
+        // Uključi sve / Isključi sve važi za stavke koje filter prikazuje.
+        private void UkljuciVagone(bool ukljuci)
+        {
+            if (vagoni == null) return;
+            popunjavamListu = true;
+            for (int i = 0; i < listaVagona.Items.Count; i++)
+            {
+                ((VagonNaMapi)listaVagona.Items[i]).Ukljucen = ukljuci;
+                listaVagona.SetItemChecked(i, ukljuci);
+            }
+            popunjavamListu = false;
+            CrtajVagone();
+        }
+
+        private void CrtajVagone()
+        {
+            if (vagoni == null || !Ucitana) return;
+            var lista = vagoni.Where(x => x.Lat != null && x.Ukljucen).GroupBy(x => x.StanicaID).Select(g => new
+            {
+                a = g.First().Lat.Value,
+                o = g.First().Lon.Value,
+                n = g.Count(),
+                t = "<b>" + System.Net.WebUtility.HtmlEncode(g.First().NazivNaMapi) + "</b> (" + g.Count() + ")<br>"
+                    + string.Join("<br>", g.Select(x => System.Net.WebUtility.HtmlEncode(x.Opis)))
+            });
+            Pozovi("crtajVagone", Newtonsoft.Json.JsonConvert.SerializeObject(lista));
+        }
+
+        // „NAZIV:“ i „Naziv“ su ista stanica: dvotačka i razmaci se uklanjaju, pa se naziv normalizuje kao u ostatku Planiranja.
+        internal static string KljucStanice(string naziv)
+        {
+            return NaziviStanica.Normalizuj((naziv ?? "").Replace(":", " ").Trim());
+        }
+
+        // Stavka bez trenutne stanice se preskače. Stanica koja nije u mreži, ili ima koordinate 0,0, ostaje bez pozicije.
+        internal static List<VagonNaMapi> Rasporedi(DataTable stanje, DataTable sveStanice)
+        {
+            var rezultat = new List<VagonNaMapi>();
+            if (stanje == null || !stanje.Columns.Contains("Stanica")) return rezultat;
+            var poId = new Dictionary<int, DataRow>();
+            if (sveStanice != null)
+                foreach (DataRow r in sveStanice.Rows) poId[Convert.ToInt32(r["ID"])] = r;
+            Func<DataRow, DataRow> glavna = r =>
+            {
+                for (int i = 0; i < 5 && r != null && r.Table.Columns.Contains("DuplikatOd") && !r.IsNull("DuplikatOd"); i++)
+                {
+                    DataRow d;
+                    if (!poId.TryGetValue(Convert.ToInt32(r["DuplikatOd"]), out d)) break;
+                    r = d;
+                }
+                return r;
+            };
+            Func<DataRow, bool> imaPoziciju = r => r != null && !r.IsNull("Latitude") && !r.IsNull("Longitude")
+                && !(Convert.ToDouble(r["Latitude"]) == 0 && Convert.ToDouble(r["Longitude"]) == 0)
+                && (!r.Table.Columns.Contains("Aktivna") || r.IsNull("Aktivna") || Convert.ToBoolean(r["Aktivna"]));
+            // Ključ naziva → stanica; prednost ima stanica sa pozicijom, pa tekući naziv pre starog.
+            var poNazivu = new Dictionary<string, DataRow>();
+            if (sveStanice != null)
+                foreach (string kolona in new[] { "Naziv", "NazivStari" })
+                {
+                    if (!sveStanice.Columns.Contains(kolona)) continue;
+                    foreach (DataRow r in sveStanice.Rows)
+                    {
+                        string k = KljucStanice(Convert.ToString(r[kolona]));
+                        if (k.Length == 0) continue;
+                        DataRow g = glavna(r);
+                        DataRow postojeca;
+                        if (!poNazivu.TryGetValue(k, out postojeca) || (!imaPoziciju(postojeca) && imaPoziciju(g))) poNazivu[k] = g;
+                    }
+                }
+            Func<DataRow, string, string> polje = (r, k) => r.Table.Columns.Contains(k) && !r.IsNull(k) ? Convert.ToString(r[k]).Trim() : "";
+            foreach (DataRow r in stanje.Rows)
+            {
+                if (r.RowState == DataRowState.Deleted) continue;
+                string naziv = polje(r, "Stanica").Replace(":", " ").Trim();
+                if (naziv.Length == 0) continue;
+                var v = new VagonNaMapi { Stanica = naziv, IDVoza = polje(r, "IDVoza"), Vagoni = polje(r, "Vagoni"), Klijent = polje(r, "Klijent") };
+                DataRow s;
+                if (poNazivu.TryGetValue(KljucStanice(naziv), out s) && imaPoziciju(s))
+                {
+                    v.StanicaID = Convert.ToInt32(s["ID"]);
+                    v.NazivNaMapi = Convert.ToString(s["Naziv"]).Trim();
+                    v.Lat = Convert.ToDouble(s["Latitude"]);
+                    v.Lon = Convert.ToDouble(s["Longitude"]);
+                }
+                rezultat.Add(v);
+            }
+            return rezultat.OrderBy(x => x.NazivNaMapi ?? x.Stanica).ThenBy(x => x.IDVoza).ToList();
         }
 
         // ---------- Zatvori iz telegrama ----------
@@ -358,11 +548,13 @@ namespace Saobracaj.Planiranje.Kontrole
                 (DozvoliPomeranje ? "Žuta tačka: koordinata za proveru. Klik na tačku pa prevlačenje: nove koordinate.<br>" : "") +
                 "Klik na prugu: ručni zatvor za račun rute.<br>Lokomotive (GPS): <span style=\"color:#2E8B3A\">&#9679;</span> preko 5 km/h <span style=\"color:#0B6E99\">&#9679;</span> 1-5 km/h <span style=\"color:#D7261E\">&#9679;</span> stoji. Bled krug: signal stariji od 15 min.<br>" +
                 "Zatvori iz telegrama: <i style=\"border-color:#D7261E\"></i>u toku <i style=\"border-color:#F08C00\"></i>danas <i style=\"border-color:#2F80ED\"></i>naredna 3 dana. Puna linija: zatvor pruge, isprekidana: kolosek ili skretnica; krug: zatvor u stanici." +
+                "<br>Vagoni na stanicama: <span style=\"background:#F2C94C;border:1px solid #7A5B00;padding:0 3px\">3</span> broj stavki; mišem preko ili klik: ID voza, vagoni, klijent." +
                 (DodatakLegende.Length > 0 ? "<br>" + DodatakLegende : "");
             // WebBrowser radi kao IE11, zato je ovde ES5, bez strelica i const.
             return "<!doctype html><html><head><meta charset='utf-8'><meta http-equiv='X-UA-Compatible' content='IE=edge'>" +
                 "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.7.1/dist/leaflet.css'><script src='https://unpkg.com/leaflet@1.7.1/dist/leaflet.js'></script>" +
                 "<style>html,body,#m{height:100%;margin:0}.lokt{font:bold 11px sans-serif;padding:1px 4px}.tackat{font:bold 12px sans-serif;padding:2px 6px}.zt{white-space:normal;width:380px}" +
+                ".vagt{background:#F2C94C;border:1px solid #7A5B00;border-radius:3px;font:bold 11px sans-serif;padding:1px 4px;color:#3A2A00;white-space:nowrap}" +
                 ".leg{background:#F8F6F3;padding:6px 8px;font:12px sans-serif;border:1px solid #D2C9C6;max-width:420px}.leg i{display:inline-block;width:20px;border-top:3px solid;vertical-align:middle;margin-right:6px}</style></head><body><div id='m'></div><script>" +
                 "var m=L.map('m',{preferCanvas:true}).setView([44.2,20.9],7);" +
                 "L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(m);" +
@@ -389,12 +581,42 @@ namespace Saobracaj.Planiranje.Kontrole
                 "function crtajLokomotive(js,fit){lok.clearLayers();var a=JSON.parse(js),g=[];for(var i=0;i<a.length;i++){var t=a[i];" +
                 "L.circleMarker([t.a,t.o],{radius:7,weight:2,color:'#FFFFFF',fillColor:t.b,fillOpacity:t.s?1:0.45}).bindTooltip(t.n,{permanent:true,direction:'right',offset:[8,0],className:'lokt'}).bindPopup(t.d).addTo(lok);g.push([t.a,t.o]);}" +
                 "if(fit&&g.length)m.fitBounds(L.latLngBounds(g).pad(0.2),{maxZoom:10});return 1;}" +
+                // Vagoni su u svom sloju: oznaka sa brojem stavki je gore-levo od stanice, da ne pokriva stanicu, lokomotive i zatvore.
+                "m.createPane('vagoni');m.getPane('vagoni').style.zIndex=450;var vag=L.layerGroup().addTo(m);" +
+                "function crtajVagone(js){vag.clearLayers();var a=JSON.parse(js);for(var i=0;i<a.length;i++){var t=a[i];" +
+                "L.marker([t.a,t.o],{pane:'vagoni',icon:L.divIcon({className:'',html:'<div class=\"vagt\">'+t.n+'</div>',iconSize:null,iconAnchor:[22,22]})})" +
+                ".bindTooltip(t.t,{direction:'top',className:'zt'}).bindPopup(t.t,{maxWidth:420}).addTo(vag);}return 1;}" +
                 "var tac=L.layerGroup().addTo(m);" +
                 "function oznaciTacke(js){tac.clearLayers();var a=JSON.parse(js);for(var i=0;i<a.length;i++){var t=a[i];" +
                 "L.circleMarker([t.a,t.o],{radius:9,weight:3,color:t.b,fillColor:'#FFFFFF',fillOpacity:1}).bindTooltip(t.n,{permanent:true,direction:'top',offset:[0,-8],className:'tackat'}).addTo(tac);}return 1;}" +
                 "var leg=L.control({position:'bottomleft'});leg.onAdd=function(){var d=L.DomUtil.create('div','leg');" +
                 "d.innerHTML='" + legenda + "';return d;};leg.addTo(m);" +
                 "</script></body></html>";
+        }
+    }
+
+    // Stavka „Stanje na mreži“ na mapi; Lat je null kad stanica nije u mreži ili ima koordinate 0,0.
+    internal sealed class VagonNaMapi
+    {
+        internal string Stanica, IDVoza, Vagoni, Klijent, NazivNaMapi;
+        internal int StanicaID;
+        internal double? Lat, Lon;
+        internal bool Ukljucen = true;
+
+        internal string Opis
+        {
+            get { return string.Join(" · ", new[] { IDVoza, Vagoni, Klijent }.Select(x => string.IsNullOrEmpty(x) ? "-" : x)); }
+        }
+
+        internal bool Odgovara(string filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return true;
+            return new[] { Klijent, Stanica, NazivNaMapi }.Any(x => x != null && x.IndexOf(filter, StringComparison.CurrentCultureIgnoreCase) >= 0);
+        }
+
+        public override string ToString()
+        {
+            return Opis + " — " + (NazivNaMapi ?? Stanica);
         }
     }
 }

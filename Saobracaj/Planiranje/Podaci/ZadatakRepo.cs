@@ -24,7 +24,7 @@ namespace Saobracaj.Planiranje.Podaci
             using (var c = Db.Open())
             {
                 foreach (DataRow r in Db.Table(c, null,
-                    "SELECT o.DeSifra, o.Naziv, o.Telefon, o.Email, o.Masinovodja, o.PregledacKola, o.Manevrista, o.Vozovodja, o.Aktivan, o.UPlaniranju, o.MaticnaStanicaID, " +
+                    "SELECT o.DeSifra, o.Naziv, o.Telefon, o.Email, o.Masinovodja, o.PregledacKola, o.Manevrista, o.Vozovodja, o.MasinovodjaManevra, o.Aktivan, o.UPlaniranju, o.MaticnaStanicaID, " +
                     "(SELECT p.Auto FROM planiranje.OP_OsobljePlan p WHERE p.DeSifra = o.DeSifra) AS Auto, (SELECT p.SamoDomicilna FROM planiranje.OP_OsobljePlan p WHERE p.DeSifra = o.DeSifra) AS SamoDomicilna, " +
                     "(SELECT TOP 1 t.Naziv FROM planiranje.OP_OsobljeTurnus d JOIN planiranje.OP_Turnus t ON t.ID = d.TurnusID WHERE d.DeSifra = o.DeSifra ORDER BY d.Od DESC) AS Turnus " +
                     "FROM planiranje.OP_vOsoblje o WHERE o.UPlaniranju = 1 ORDER BY o.Naziv").Rows)
@@ -38,6 +38,7 @@ namespace Saobracaj.Planiranje.Podaci
                         Pregledac = Convert.ToBoolean(r["PregledacKola"]),
                         Manevrista = Convert.ToBoolean(r["Manevrista"]),
                         Vozovodja = Convert.ToBoolean(r["Vozovodja"]),
+                        MasinovodjaManevra = Convert.ToBoolean(r["MasinovodjaManevra"]),
                         Aktivan = Convert.ToBoolean(r["Aktivan"]),
                         UPlaniranju = Convert.ToBoolean(r["UPlaniranju"]),
                         MaticnaID = PlanRepo.Ceo(r, "MaticnaStanicaID"),
@@ -47,8 +48,9 @@ namespace Saobracaj.Planiranje.Podaci
                     });
                 foreach (DataRow r in Db.Table(c, null, "SELECT DeSifra, PrugaID, VaziDo FROM planiranje.OP_OsobljePruga").Rows)
                     k.Kvalifikacije.Add(new KvalifikacijaOsobe { DeSifra = Convert.ToInt32(r["DeSifra"]), Vrsta = "PRUGA", PrugaID = PlanRepo.Ceo(r, "PrugaID"), VaziDo = PlanRepo.Dat(r, "VaziDo") });
-                foreach (DataRow r in Db.Table(c, null, "SELECT DeSifra, LokomotivaID, VaziDo FROM planiranje.OP_OsobljeLokomotiva").Rows)
-                    k.Kvalifikacije.Add(new KvalifikacijaOsobe { DeSifra = Convert.ToInt32(r["DeSifra"]), Vrsta = "LOKOMOTIVA", LokomotivaID = PlanRepo.Ceo(r, "LokomotivaID"), VaziDo = PlanRepo.Dat(r, "VaziDo") });
+                // Poznavanje serija (OP_029); poznavanje pojedinačnih lokomotiva se više ne koristi.
+                foreach (DataRow r in Db.Table(c, null, "SELECT DeSifra, SerijaID, VaziDo FROM planiranje.OP_OsobljeSerija").Rows)
+                    k.Kvalifikacije.Add(new KvalifikacijaOsobe { DeSifra = Convert.ToInt32(r["DeSifra"]), Vrsta = "SERIJA", SerijaID = PlanRepo.Ceo(r, "SerijaID"), VaziDo = PlanRepo.Dat(r, "VaziDo") });
                 foreach (DataRow r in Db.Table(c, null, "SELECT DeSifra, Datum, Vrsta, Od, Do, LokacijaPosleStanicaID FROM planiranje.OP_Smena WHERE Datum >= @od AND Datum < @do", "@od", sireOd, "@do", sireDo).Rows)
                     k.Smene.Add(new SmenaOsobe { DeSifra = Convert.ToInt32(r["DeSifra"]), Datum = Convert.ToDateTime(r["Datum"]), Vrsta = Txt(r, "Vrsta"), Od = PlanRepo.Dat(r, "Od"), Do = PlanRepo.Dat(r, "Do"), LokacijaPosleID = PlanRepo.Ceo(r, "LokacijaPosleStanicaID") });
                 foreach (DataRow r in Db.Table(c, null, "SELECT DeSifra, Vrsta, [Od], [Do] FROM planiranje.OP_vOdsustvo WHERE [Od] < @do AND [Do] >= @od AND [Od] IS NOT NULL AND [Do] IS NOT NULL", "@od", sireOd, "@do", sireDo).Rows)
@@ -61,13 +63,15 @@ namespace Saobracaj.Planiranje.Podaci
         private static List<ZadatakOsobe> Zadaci(SqlConnection c, SqlTransaction tx, string uslov, params object[] args)
         {
             return Db.Table(c, tx,
-                "SELECT z.ID, z.PosaoID, z.DeSifra, z.Uloga, z.Status, z.StanicaID, z.Od, z.Do, z.RowVer, p.PredajaStanicaID, n.BrojNajave, o.Naziv, o.Telefon, o.Email " +
-                "FROM planiranje.OP_Zadatak z JOIN planiranje.OP_Posao p ON p.ID = z.PosaoID LEFT JOIN planiranje.OP_vNajava n ON n.NajavaID = p.NajavaID " +
+                "SELECT z.ID, z.PosaoID, z.TaskID, z.TaskOsobljeID, z.DeSifra, z.Uloga, z.Status, z.StanicaID, z.Od, z.Do, z.RowVer, COALESCE(tk.StanicaDoID, p.PredajaStanicaID) AS PredajaStanicaID, n.BrojNajave, o.Naziv, o.Telefon, o.Email " +
+                "FROM planiranje.OP_Zadatak z JOIN planiranje.OP_Posao p ON p.ID = z.PosaoID LEFT JOIN planiranje.OP_Task tk ON tk.ID = z.TaskID LEFT JOIN planiranje.OP_vNajava n ON n.NajavaID = p.NajavaID " +
                 "LEFT JOIN planiranje.OP_vOsoblje o ON o.DeSifra = z.DeSifra WHERE " + uslov + " ORDER BY z.Od", args)
                 .Rows.Cast<DataRow>().Select(r => new ZadatakOsobe
                 {
                     ID = Convert.ToInt32(r["ID"]),
                     PosaoID = Convert.ToInt32(r["PosaoID"]),
+                    TaskID = PlanRepo.Ceo(r, "TaskID"),
+                    TaskOsobljeID = PlanRepo.Ceo(r, "TaskOsobljeID"),
                     DeSifra = Convert.ToInt32(r["DeSifra"]),
                     Uloga = Txt(r, "Uloga"),
                     Status = Txt(r, "Status"),
@@ -89,8 +93,15 @@ namespace Saobracaj.Planiranje.Podaci
                 return Zadaci(c, null, "z.PosaoID = @p", "@p", posaoId);
         }
 
+        internal static List<ZadatakOsobe> ZaTask(int taskId)
+        {
+            using (var c = Db.Open())
+                return Zadaci(c, null, "z.TaskID = @t", "@t", taskId);
+        }
+
         internal sealed class NoviZadatak
         {
+            internal int? TaskOsobljeID;
             internal int DeSifra;
             internal string Naziv;
             internal string Uloga;
@@ -101,8 +112,13 @@ namespace Saobracaj.Planiranje.Podaci
         }
 
         // Svi zadaci jednog slanja idu u istoj transakciji, sa ponovnom proverom preklapanja.
-        internal static void Posalji(int posaoId, IList<NoviZadatak> novi, string napomena)
+        // Zadaci za task (taskId) vezuju se za task i radno mesto; isti „posao“ je tada task, a ne najava.
+        internal static void Posalji(int posaoId, IList<NoviZadatak> novi, string napomena, int? taskId = null)
         {
+            // Uslovi nad aliasom z: zadaci istog posla (task ili najava bez taska) i zadaci drugih poslova.
+            string isti = taskId.HasValue ? "z.TaskID = @p" : "z.PosaoID = @p AND z.TaskID IS NULL";
+            string drugiPosao = taskId.HasValue ? "ISNULL(z.TaskID, 0) <> @p" : "(z.PosaoID <> @p OR z.TaskID IS NOT NULL)";
+            object kljuc = taskId.HasValue ? taskId.Value : posaoId;
             using (var c = Db.Open())
             using (var tx = c.BeginTransaction())
             {
@@ -112,19 +128,24 @@ namespace Saobracaj.Planiranje.Podaci
                         Db.Lock(c, tx, "OP_Osoba_" + z.DeSifra);
                     foreach (NoviZadatak z in novi)
                     {
-                        using (var cmd = Db.Command(c, tx, "DELETE planiranje.OP_Zadatak WHERE PosaoID=@p AND Uloga=@u AND Status=N'PREDLOZEN'", "@p", posaoId, "@u", z.Uloga))
+                        // Radno mesto taska ima svoj zadatak (može biti više manevrista); inače jedan zadatak po ulozi.
+                        string mesto = taskId.HasValue && z.TaskOsobljeID.HasValue ? " AND z.TaskOsobljeID = @to" : " AND z.Uloga = @u";
+                        using (var cmd = Db.Command(c, tx, "DELETE z FROM planiranje.OP_Zadatak z WHERE " + isti + mesto + " AND z.Status=N'PREDLOZEN'", "@p", kljuc, "@u", z.Uloga, "@to", (object)z.TaskOsobljeID))
                             cmd.ExecuteNonQuery();
-                        if (Zadaci(c, tx, "z.PosaoID = @p AND z.Uloga = @u AND z.Status IN (N'POSLAT', N'PRIHVACEN')", "@p", posaoId, "@u", z.Uloga).Count > 0)
-                            throw new InvalidOperationException(z.Naziv + ": za ovu ulogu zadatak je već poslat.");
-                        ZadatakOsobe drugi = Zadaci(c, tx, "z.DeSifra = @d AND z.PosaoID <> @p AND z.Status IN (N'POSLAT', N'PRIHVACEN') AND z.Od < @do AND z.Do > @od", "@d", z.DeSifra, "@p", posaoId, "@od", z.Od, "@do", z.Do).FirstOrDefault();
+                        if (Zadaci(c, tx, isti + mesto + " AND z.Status IN (N'POSLAT', N'PRIHVACEN')", "@p", kljuc, "@u", z.Uloga, "@to", (object)z.TaskOsobljeID).Count > 0)
+                            throw new InvalidOperationException(z.Naziv + ": za ovo radno mesto zadatak je već poslat.");
+                        // Druga zauzetost: zadatak drugog posla, a kod taska i drugo radno mesto istog taska.
+                        string drugoMesto = taskId.HasValue && z.TaskOsobljeID.HasValue ? " OR (" + isti + " AND z.TaskOsobljeID IS NOT NULL AND z.TaskOsobljeID <> @to)" : "";
+                        ZadatakOsobe drugi = Zadaci(c, tx, "z.DeSifra = @d AND (" + drugiPosao + drugoMesto + ") AND z.Status IN (N'POSLAT', N'PRIHVACEN') AND z.Od < @do AND z.Do > @od",
+                            "@d", z.DeSifra, "@p", kljuc, "@to", (object)z.TaskOsobljeID, "@od", z.Od, "@do", z.Do).FirstOrDefault();
                         if (drugi != null)
-                            throw new InvalidOperationException(z.Naziv + " već ima zadatak za najavu " + drugi.BrojNajave + ". Osvežite prikaz.");
+                            throw new InvalidOperationException(z.Naziv + " već ima zadatak " + (drugi.TaskID.HasValue ? "za task " + drugi.TaskID : "za najavu " + drugi.BrojNajave) + ". Osvežite prikaz.");
                         using (var cmd = Db.Command(c, tx,
-                            "INSERT planiranje.OP_Zadatak (PosaoID, DeSifra, Uloga, StanicaID, Od, Do, Status, NapomenaZaOsobu, Poslao, Poslato) VALUES (@p, @d, @u, @s, @od, @do, N'POSLAT', @n, @k, SYSDATETIME())",
-                            "@p", posaoId, "@d", z.DeSifra, "@u", z.Uloga, "@s", (object)z.StanicaID, "@od", z.Od, "@do", z.Do, "@n", (object)(z.Napomena ?? (z.Uloga == PonudaOsoblja.UlogaMasinovodja ? napomena : null)), "@k", PlaniranjeDb.Korisnik))
+                            "INSERT planiranje.OP_Zadatak (PosaoID, TaskID, TaskOsobljeID, DeSifra, Uloga, StanicaID, Od, Do, Status, NapomenaZaOsobu, Poslao, Poslato) VALUES (@p, @t, @to, @d, @u, @s, @od, @do, N'POSLAT', @n, @k, SYSDATETIME())",
+                            "@p", posaoId, "@t", (object)taskId, "@to", (object)z.TaskOsobljeID, "@d", z.DeSifra, "@u", z.Uloga, "@s", (object)z.StanicaID, "@od", z.Od, "@do", z.Do, "@n", (object)(z.Napomena ?? (z.Uloga == PonudaOsoblja.UlogaMasinovodja ? napomena : null)), "@k", PlaniranjeDb.Korisnik))
                             cmd.ExecuteNonQuery();
                     }
-                    DogadjajRepo.Upisi(c, tx, posaoId, "ZADATAK_POSLAT", "Zadatak poslat: " + string.Join(", ", novi.Select(z => z.Naziv)) + ".");
+                    DogadjajRepo.Upisi(c, tx, posaoId, "ZADATAK_POSLAT", (taskId.HasValue ? "Task " + taskId + ": z" : "Z") + "adatak poslat: " + string.Join(", ", novi.Select(z => z.Naziv)) + ".");
                     tx.Commit();
                 }
                 catch { tx.Rollback(); throw; }
@@ -164,14 +185,18 @@ namespace Saobracaj.Planiranje.Podaci
                         "@s", prihvatio ? "PRIHVACEN" : "ODBIJEN", "@r", (object)razlog, "@k", PlaniranjeDb.Korisnik, "@id", z.ID, "@rv", z.RowVer);
                     DogadjajRepo.Upisi(c, tx, z.PosaoID, prihvatio ? "ZADATAK_PRIHVACEN" : "ZADATAK_ODBIJEN", z.Osoba + (prihvatio ? " je prihvatio zadatak." : " je odbio zadatak: " + razlog));
                     // Ko je odbio ne ide nigde, pa vozaču prevoz više ne važi.
-                    if (!prihvatio && !PonudaOsoblja.JePrevoz(z.Uloga))
+                    // Zadatak taska se odnosi samo na taj task; zadatak bez taska na posao najave.
+                    string isti = z.TaskID.HasValue ? "TaskID = @p" : "PosaoID = @p AND TaskID IS NULL";
+                    object kljuc = z.TaskID.HasValue ? z.TaskID.Value : z.PosaoID;
+                    if (!prihvatio && PonudaOsoblja.ImaPrevoz(z.Uloga))
                         using (var cmd = Db.Command(c, tx,
-                            "UPDATE planiranje.OP_Zadatak SET Status=N'OTKAZAN', Odgovoreno=SYSDATETIME(), UneoOdgovor=@k WHERE PosaoID=@p AND Uloga=@u AND Status IN (N'PREDLOZEN', N'POSLAT', N'PRIHVACEN')",
-                            "@k", PlaniranjeDb.Korisnik, "@p", z.PosaoID, "@u", PonudaOsoblja.UlogaPrevoza(z.Uloga)))
+                            "UPDATE planiranje.OP_Zadatak SET Status=N'OTKAZAN', Odgovoreno=SYSDATETIME(), UneoOdgovor=@k WHERE " + isti + " AND Uloga=@u AND Status IN (N'PREDLOZEN', N'POSLAT', N'PRIHVACEN')",
+                            "@k", PlaniranjeDb.Korisnik, "@p", kljuc, "@u", PonudaOsoblja.UlogaPrevoza(z.Uloga)))
                             if (cmd.ExecuteNonQuery() > 0)
                                 DogadjajRepo.Upisi(c, tx, z.PosaoID, "ZADATAK_OTKAZAN", "Prevoz je otkazan jer je " + z.Osoba + " odbio zadatak.");
-                    List<ZadatakOsobe> svi = Zadaci(c, tx, "z.PosaoID = @p AND z.Status IN (N'POSLAT', N'PRIHVACEN')", "@p", z.PosaoID);
-                    if (prihvatio && svi.All(x => x.Status == "PRIHVACEN") && svi.Any(x => x.Uloga == PonudaOsoblja.UlogaMasinovodja))
+                    List<ZadatakOsobe> svi = Zadaci(c, tx, "z." + isti.Replace(" AND TaskID", " AND z.TaskID") + " AND z.Status IN (N'POSLAT', N'PRIHVACEN')", "@p", kljuc);
+                    // Faza posla se menja samo za zadatke najave; posao sa taskovima ima više taskova i ostaje kako jeste.
+                    if (!z.TaskID.HasValue && prihvatio && svi.All(x => x.Status == "PRIHVACEN") && svi.Any(x => x.Uloga == PonudaOsoblja.UlogaMasinovodja))
                     {
                         int promena;
                         using (var cmd = Db.Command(c, tx, "UPDATE planiranje.OP_Posao SET Faza=4, Izmenio=@k, Izmenjeno=SYSDATETIME() WHERE ID=@id AND Faza=3", "@k", PlaniranjeDb.Korisnik, "@id", z.PosaoID))

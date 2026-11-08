@@ -10,8 +10,8 @@ namespace Saobracaj.Planiranje.Podaci
     {
         internal int DeSifra;
         internal string Naziv;
-        internal bool Masinovodja, PregledacKola, Vozovodja, Manevrista;
-        internal bool StaroMasinovodja, StaroPregledacKola, StaroVozovodja, StaroManevrista;
+        internal bool Masinovodja, PregledacKola, Vozovodja, Manevrista, MasinovodjaManevra;
+        internal bool StaroMasinovodja, StaroPregledacKola, StaroVozovodja, StaroManevrista, StaroMasinovodjaManevra;
     }
 
     // Ime i aktivnost dolaze iz dbo.Delavci kroz pogled. Uloge se jedine upisuju u Delavci (izuzetak od pravila 3.4).
@@ -21,7 +21,9 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT o.*, s.Naziv AS MaticnaStanica, CAST(ISNULL(p.Auto, 0) AS bit) AS Auto, CAST(ISNULL(p.SamoDomicilna, 0) AS bit) AS SamoDomicilna FROM planiranje.OP_vOsoblje o " +
+                    "SELECT o.*, s.Naziv AS MaticnaStanica, CAST(ISNULL(p.Auto, 0) AS bit) AS Auto, CAST(ISNULL(p.SamoDomicilna, 0) AS bit) AS SamoDomicilna, " +
+                    "CAST(ISNULL(p.LekarskiPregled, 0) AS bit) AS LekarskiPregled, CAST(ISNULL(p.PeriodicniIspit, 0) AS bit) AS PeriodicniIspit, CAST(ISNULL(p.Skolovanje, 0) AS bit) AS Skolovanje " +
+                    "FROM planiranje.OP_vOsoblje o " +
                     "LEFT JOIN planiranje.OP_Stanice s ON s.ID = o.MaticnaStanicaID " +
                     "LEFT JOIN planiranje.OP_OsobljePlan p ON p.DeSifra = o.DeSifra " +
                     "WHERE (@sve = 1 OR o.UPlaniranju = 1) ORDER BY o.Naziv",
@@ -38,30 +40,30 @@ namespace Saobracaj.Planiranje.Podaci
             }
         }
 
-        internal static void SacuvajPlan(int deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, string napomena)
+        internal static void SacuvajPlan(int deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, bool lekarski, bool ispit, bool skolovanje, string napomena)
         {
             using (var c = Db.Open())
-                UpisiPlan(c, null, deSifra, rowVer, maticnaStanicaId, uPlaniranju, auto, samoDomicilna, napomena);
+                UpisiPlan(c, null, deSifra, rowVer, maticnaStanicaId, uPlaniranju, auto, samoDomicilna, lekarski, ispit, skolovanje, napomena);
         }
 
-        private static void UpisiPlan(SqlConnection c, SqlTransaction tx, int deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, string napomena)
+        private static void UpisiPlan(SqlConnection c, SqlTransaction tx, int deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, bool lekarski, bool ispit, bool skolovanje, string napomena)
         {
             if (rowVer != null)
             {
                 PlaniranjeDb.IzvrsiSaRowVer(c, tx,
-                    "UPDATE planiranje.OP_OsobljePlan SET MaticnaStanicaID=@m, UPlaniranju=@u, Auto=@a, SamoDomicilna=@sd, Napomena=@n, Izmenio=@k " +
+                    "UPDATE planiranje.OP_OsobljePlan SET MaticnaStanicaID=@m, UPlaniranju=@u, Auto=@a, SamoDomicilna=@sd, LekarskiPregled=@lp, PeriodicniIspit=@pi, Skolovanje=@sk, Napomena=@n, Izmenio=@k " +
                     "WHERE DeSifra=@d AND RowVer=@rv",
-                    "@m", (object)maticnaStanicaId, "@u", uPlaniranju, "@a", auto, "@sd", samoDomicilna, "@n", (object)napomena, "@k", PlaniranjeDb.Korisnik, "@d", deSifra, "@rv", rowVer);
+                    "@m", (object)maticnaStanicaId, "@u", uPlaniranju, "@a", auto, "@sd", samoDomicilna, "@lp", lekarski, "@pi", ispit, "@sk", skolovanje, "@n", (object)napomena, "@k", PlaniranjeDb.Korisnik, "@d", deSifra, "@rv", rowVer);
                 return;
             }
             using (var cmd = Db.Command(c, tx,
-                "INSERT planiranje.OP_OsobljePlan (DeSifra, MaticnaStanicaID, UPlaniranju, Auto, SamoDomicilna, Napomena, Izmenio) VALUES (@d, @m, @u, @a, @sd, @n, @k)",
-                "@d", deSifra, "@m", (object)maticnaStanicaId, "@u", uPlaniranju, "@a", auto, "@sd", samoDomicilna, "@n", (object)napomena, "@k", PlaniranjeDb.Korisnik))
+                "INSERT planiranje.OP_OsobljePlan (DeSifra, MaticnaStanicaID, UPlaniranju, Auto, SamoDomicilna, LekarskiPregled, PeriodicniIspit, Skolovanje, Napomena, Izmenio) VALUES (@d, @m, @u, @a, @sd, @lp, @pi, @sk, @n, @k)",
+                "@d", deSifra, "@m", (object)maticnaStanicaId, "@u", uPlaniranju, "@a", auto, "@sd", samoDomicilna, "@lp", lekarski, "@pi", ispit, "@sk", skolovanje, "@n", (object)napomena, "@k", PlaniranjeDb.Korisnik))
                 cmd.ExecuteNonQuery();
         }
 
         // Dugme Sačuvaj: izmenjene uloge i dopuna izabrane osobe u istoj transakciji.
-        internal static void SacuvajOsobe(IList<IzmenaUloga> uloge, int? deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, string napomena)
+        internal static void SacuvajOsobe(IList<IzmenaUloga> uloge, int? deSifra, byte[] rowVer, int? maticnaStanicaId, bool uPlaniranju, bool auto, bool samoDomicilna, bool lekarski, bool ispit, bool skolovanje, string napomena)
         {
             using (var c = Db.Open())
             using (var tx = c.BeginTransaction())
@@ -69,7 +71,7 @@ namespace Saobracaj.Planiranje.Podaci
                 try
                 {
                     foreach (IzmenaUloga u in uloge) UpisiUloge(c, tx, u);
-                    if (deSifra.HasValue) UpisiPlan(c, tx, deSifra.Value, rowVer, maticnaStanicaId, uPlaniranju, auto, samoDomicilna, napomena);
+                    if (deSifra.HasValue) UpisiPlan(c, tx, deSifra.Value, rowVer, maticnaStanicaId, uPlaniranju, auto, samoDomicilna, lekarski, ispit, skolovanje, napomena);
                     tx.Commit();
                 }
                 catch { tx.Rollback(); throw; }
@@ -77,16 +79,35 @@ namespace Saobracaj.Planiranje.Podaci
         }
 
         // Delavci nema RowVer, pa stare vrednosti u uslovu otkrivaju izmenu drugog korisnika.
+        // Pregledač je u pogledu PregledacKola ili stari Pregledac (OP_026 upisuje oba), pa skidanje uloge nuluje i Pregledac.
         private static void UpisiUloge(SqlConnection c, SqlTransaction tx, IzmenaUloga u)
         {
+            // Mašinovođa manevre postoji u Delavci tek posle OP_026.
+            bool mm = ImaMasinovodjuManevra;
             PlaniranjeDb.IzvrsiSaRowVer(c, tx,
-                "UPDATE dbo.Delavci SET Masinovodja=@m, PregledacKola=@p, Vozovodja=@v, Manevrista=@a WHERE DeSifra=@d " +
+                "UPDATE dbo.Delavci SET Masinovodja=@m, PregledacKola=@p, Pregledac=CASE WHEN @p = 0 AND ISNULL(Pregledac,0) > 0 THEN 0 ELSE Pregledac END, Vozovodja=@v, Manevrista=@a" +
+                (mm ? ", MasinovodjaManevra=@mm" : "") + " WHERE DeSifra=@d " +
                 "AND CASE WHEN ISNULL(Masinovodja,0) > 0 THEN 1 ELSE 0 END = @sm " +
                 "AND CASE WHEN ISNULL(PregledacKola,0) > 0 OR ISNULL(Pregledac,0) > 0 THEN 1 ELSE 0 END = @sp " +
                 "AND CASE WHEN ISNULL(Vozovodja,0) > 0 THEN 1 ELSE 0 END = @sv " +
-                "AND CASE WHEN ISNULL(Manevrista,0) > 0 THEN 1 ELSE 0 END = @sa",
+                "AND CASE WHEN ISNULL(Manevrista,0) > 0 THEN 1 ELSE 0 END = @sa" +
+                (mm ? " AND CASE WHEN ISNULL(MasinovodjaManevra,0) > 0 THEN 1 ELSE 0 END = @smm" : ""),
                 "@m", u.Masinovodja ? 1 : 0, "@p", u.PregledacKola ? 1 : 0, "@v", u.Vozovodja ? 1 : 0, "@a", u.Manevrista ? 1 : 0, "@d", u.DeSifra,
-                "@sm", u.StaroMasinovodja ? 1 : 0, "@sp", u.StaroPregledacKola ? 1 : 0, "@sv", u.StaroVozovodja ? 1 : 0, "@sa", u.StaroManevrista ? 1 : 0);
+                "@sm", u.StaroMasinovodja ? 1 : 0, "@sp", u.StaroPregledacKola ? 1 : 0, "@sv", u.StaroVozovodja ? 1 : 0, "@sa", u.StaroManevrista ? 1 : 0,
+                "@mm", u.MasinovodjaManevra ? 1 : 0, "@smm", u.StaroMasinovodjaManevra ? 1 : 0);
+        }
+
+        private static bool? imaMasinovodjuManevra;
+
+        internal static bool ImaMasinovodjuManevra
+        {
+            get
+            {
+                if (!imaMasinovodjuManevra.HasValue)
+                    using (var c = Db.Open())
+                        imaMasinovodjuManevra = !Db.Table(c, null, "SELECT COL_LENGTH('dbo.Delavci', 'MasinovodjaManevra') AS d").Rows[0].IsNull("d");
+                return imaMasinovodjuManevra.Value;
+            }
         }
 
         // Odsustva i smene imaju strani ključ na OP_OsobljePlan, a većina radnika tu još nema red.
@@ -105,7 +126,7 @@ namespace Saobracaj.Planiranje.Podaci
             using (var c = Db.Open())
                 return Db.Table(c, null,
                     "SELECT N'Pruga' AS Vrsta, p.Naziv, k.VaziDo FROM planiranje.OP_OsobljePruga k JOIN planiranje.OP_Pruga p ON p.ID = k.PrugaID WHERE k.DeSifra = @d " +
-                    "UNION ALL SELECT N'Lokomotiva', l.Broj, k.VaziDo FROM planiranje.OP_OsobljeLokomotiva k JOIN planiranje.OP_Lokomotive l ON l.ID = k.LokomotivaID WHERE k.DeSifra = @d " +
+                    "UNION ALL SELECT N'Serija', s.Oznaka, k.VaziDo FROM planiranje.OP_OsobljeSerija k JOIN planiranje.OP_SerijeLokomotiva s ON s.ID = k.SerijaID WHERE k.DeSifra = @d " +
                     "ORDER BY 1, 2",
                     "@d", deSifra);
         }

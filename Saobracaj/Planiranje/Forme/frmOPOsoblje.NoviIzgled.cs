@@ -16,6 +16,7 @@ namespace Saobracaj.Planiranje.Forme
             poljaOsoba.Izbor("MaticnaStanicaID", "Matična stanica")
                 .Tekst("Napomena", "Napomena")
                 .Cekiranja("UPlaniranju", "Uključi u plan", "Auto", "AUTO", "SamoDomicilna", "Samo domicilna")
+                .Cekiranja("LekarskiPregled", "Lekarski pregled", "PeriodicniIspit", "Položio periodični ispit", "Skolovanje", "Prošao školovanje")
                 .Dugmad(
                     EkranOP.Dugme("Sačuvaj", (s, e) => SacuvajOsobe()),
                     EkranOP.Dugme("Osveži", (s, e) => { var _ = Osvezi(); }));
@@ -25,7 +26,10 @@ namespace Saobracaj.Planiranje.Forme
                 tabOsoblje.ReadOnly = false;
                 foreach (DataGridViewColumn c in tabOsoblje.Columns)
                     c.ReadOnly = !Uloge.Contains(c.Name);
-                if (tabOsoblje.Columns.Contains("UPlaniranju")) tabOsoblje.Columns["UPlaniranju"].HeaderText = "Uključi u plan";
+                foreach (var n in new[] { new[] { "UPlaniranju", "Uključi u plan" }, new[] { "Masinovodja", "Mašinovođa" }, new[] { "PregledacKola", "Pregledač kola" },
+                    new[] { "Vozovodja", "Vozovođa" }, new[] { "MasinovodjaManevra", "Mašinovođa manevre" }, new[] { "MaticnaStanica", "Matična stanica" }, new[] { "Auto", "AUTO" },
+                    new[] { "SamoDomicilna", "Samo domicilna" }, new[] { "LekarskiPregled", "Lekarski pregled" }, new[] { "PeriodicniIspit", "Periodični ispit" }, new[] { "Skolovanje", "Školovanje" } })
+                    if (tabOsoblje.Columns.Contains(n[0])) tabOsoblje.Columns[n[0]].HeaderText = n[1];
             };
             // Čekiranje mora odmah da uđe u izvor podataka, da bi Sačuvaj video izmenu.
             tabOsoblje.CurrentCellDirtyStateChanged += (s, e) =>
@@ -56,7 +60,7 @@ namespace Saobracaj.Planiranje.Forme
             dtPregledDo.ValueChanged += filter;
 
             // Kvalifikacije: dve matrice i zajedničko čuvanje.
-            var kartKval = new KarticaPolja("Poznavanje pruga i lokomotiva");
+            var kartKval = new KarticaPolja("Poznavanje pruga i serija lokomotiva");
             kartKval.Tekst(new Label { Text = "Prikazani su aktivni radnici. Kvalifikacija bez roka je trajna, a istekla se ne računa pri planiranju." });
             kartKval.Dugmad(
                 EkranOP.Dugme("Sačuvaj", (s, e) => { var _ = SacuvajMatrice(); }),
@@ -64,11 +68,11 @@ namespace Saobracaj.Planiranje.Forme
             kartKval.Dock = DockStyle.Top;
             var unutra = new TabControl { Dock = DockStyle.Fill };
             var sPruge = new TabPage("Poznavanje pruga");
-            var sLok = new TabPage("Poznavanje lokomotiva");
+            var sLok = new TabPage("Poznavanje serija");
             matricaPruga.Dock = DockStyle.Fill;
-            matricaLokomotiva.Dock = DockStyle.Fill;
+            matricaSerija.Dock = DockStyle.Fill;
             sPruge.Controls.Add(matricaPruga);
-            sLok.Controls.Add(matricaLokomotiva);
+            sLok.Controls.Add(matricaSerija);
             unutra.TabPages.AddRange(new[] { sPruge, sLok });
             ThemeApplier.TabeviNovogIzgleda(unutra);
 

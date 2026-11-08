@@ -19,12 +19,18 @@ namespace Saobracaj.Planiranje.Podaci
                     "FROM planiranje.OP_RegistarVerzija ORDER BY ID DESC");
         }
 
+        // Broj pruge za prikaz (alias p nad OP_Pruga): stotina po vrsti + broj iz Registra (101, 205, 318, 413),
+        // isto pre i posle OP_028 (u bazi može biti 13 ili 413).
+        internal const string BrojPruge =
+            "CASE p.Kategorija WHEN N'MAGISTRALNA' THEN 100 + p.RedniBroj % 100 WHEN N'REGIONALNA' THEN 200 + p.RedniBroj % 100 " +
+            "WHEN N'LOKALNA' THEN 300 + p.RedniBroj % 100 WHEN N'MANIPULATIVNA' THEN 400 + p.RedniBroj % 100 ELSE p.RedniBroj END";
+
         internal static DataTable Pruge(int verzijaId)
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT ID, RedniBroj, IdentBroj, Naziv, NazivCir, Kategorija, Elektrificirana, Aktivna, IzvorniID " +
-                    "FROM planiranje.OP_Pruga WHERE RegistarVerzijaID = @v ORDER BY RedniBroj, Naziv",
+                    "SELECT p.ID, " + BrojPruge + " AS RedniBroj, p.IdentBroj, p.Naziv, p.NazivCir, p.Kategorija, p.Elektrificirana, p.Aktivna, p.IzvorniID " +
+                    "FROM planiranje.OP_Pruga p WHERE p.RegistarVerzijaID = @v ORDER BY 2, p.Naziv",
                     "@v", verzijaId);
         }
 
@@ -32,9 +38,9 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT p.ID, p.RedniBroj, p.IdentBroj, p.Naziv, p.Kategorija, p.Elektrificirana, p.IzvorniID " +
+                    "SELECT p.ID, " + BrojPruge + " AS RedniBroj, p.IdentBroj, p.Naziv, p.Kategorija, p.Elektrificirana, p.IzvorniID " +
                     "FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID " +
-                    "WHERE v.Status = N'VAZECA' ORDER BY p.RedniBroj, p.Naziv");
+                    "WHERE v.Status = N'VAZECA' ORDER BY 2, p.Naziv");
         }
 
         internal static DataTable PrugeZaIzbor()
@@ -107,7 +113,8 @@ namespace Saobracaj.Planiranje.Podaci
                     "WHERE v.Status = N'VAZECA' AND p.RedniBroj IS NOT NULL ORDER BY p.ID, m.RB").Rows)
                     lista.Add(new MestoZaPoredjenje
                     {
-                        Pruga = Db.Text(r, "Kategorija") + " " + r["RedniBroj"],
+                        // Isti ključ kao PrugaRegistra.Kljuc: broj iz Registra, i kad je u bazi broj u stotinama (OP_028).
+                        Pruga = Db.Text(r, "Kategorija") + " " + (Convert.ToInt32(r["RedniBroj"]) >= 100 ? Convert.ToInt32(r["RedniBroj"]) % 100 : Convert.ToInt32(r["RedniBroj"])),
                         Naziv = Db.Text(r, "Naziv"),
                         Aktivno = Convert.ToBoolean(r["Aktivno"]),
                         Klasa = r.IsNull("Klasa") ? null : Db.Text(r, "Klasa"),

@@ -53,11 +53,24 @@ namespace Saobracaj.Planiranje.Forme
         }
 
         // Čitanje ide van UI niti, a forma ostaje živa dok traje (pravilo 10).
+        // Broj učitavanja u toku po formi: prikaz često pokreće novo učitavanje (osvežavanje posle upisa),
+        // pa kursor „čekam“ ostaje dok se ne završi poslednje.
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Form, StrongBox<int>> uToku = new System.Runtime.CompilerServices.ConditionalWeakTable<Form, StrongBox<int>>();
+
+        private sealed class StrongBox<TV> { internal TV Value; }
+
+        internal static bool UcitavaSe(Form forma)
+        {
+            StrongBox<int> b;
+            return uToku.TryGetValue(forma, out b) && b.Value > 0;
+        }
+
         internal static async Task Ucitaj<T>(Form forma, Func<T> citaj, Action<T> prikazi)
         {
-            Cursor kursor = forma.Cursor;
+            StrongBox<int> broj = uToku.GetValue(forma, f => new StrongBox<int>());
             try
             {
+                broj.Value++;
                 forma.UseWaitCursor = true;
                 T rezultat = await Task.Run(citaj);
                 if (!forma.IsDisposed) prikazi(rezultat);
@@ -68,7 +81,8 @@ namespace Saobracaj.Planiranje.Forme
             }
             finally
             {
-                if (!forma.IsDisposed) forma.UseWaitCursor = false;
+                broj.Value--;
+                if (!forma.IsDisposed && broj.Value <= 0) forma.UseWaitCursor = false;
             }
         }
 
@@ -112,12 +126,14 @@ namespace Saobracaj.Planiranje.Forme
         private const int NajviseCvorova = 4;
 
         // Deo bez trase je predlog „od stanice do stanice“: kroz čvorove u kojima ruta prelazi na drugu prugu.
-        private static string TekstDela(DeoKombinacije d, RezultatRute ruta, IDictionary<int, string> nazivi)
+        // Kratko: samo prva i poslednja stanica dela, bez čvorova.
+        private static string TekstDela(DeoKombinacije d, RezultatRute ruta, IDictionary<int, string> nazivi, bool kratko)
         {
             Func<int, string> naziv = id => { string n; return nazivi.TryGetValue(id, out n) ? n : "?"; };
             string od = naziv(d.OdID), doS = naziv(d.DoID);
             if (d.Trasa != null)
                 return d.Trasa.Broj + " " + od + " – " + doS + (d.Trasa.MaxMasaT.HasValue ? " (" + d.Trasa.MaxMasaT.Value.ToString("0.#") + " t)" : "") + (d.DrugihTrasa > 0 ? " +" + d.DrugihTrasa : "");
+            if (kratko) return "BEZ TRASE " + od + " – " + doS + " (" + d.Km.ToString("N1") + " km)";
             var cvorovi = new List<string>();
             int pocetak = ruta.Deonice.FindIndex(x => x.OdID == d.OdID), kraj = ruta.Deonice.FindIndex(x => x.DoID == d.DoID);
             for (int i = pocetak; pocetak >= 0 && i < kraj; i++)
@@ -126,18 +142,29 @@ namespace Saobracaj.Planiranje.Forme
             return "BEZ TRASE " + od + " – " + doS + preko + " (" + d.Km.ToString("N1") + " km)";
         }
 
-        internal static DataTable TabelaKombinacija(IList<KombinacijaTrasa> lista, IDictionary<int, string> nazivi)
+        internal static DataTable TabelaKombinacija(IList<KombinacijaTrasa> lista, IDictionary<int, string> nazivi, bool kratko = false)
         {
             var t = new DataTable();
             t.Columns.Add("RB", typeof(int));
-            foreach (string k in new[] { "Ruta", "Kombinacija trasa", "Trasa", "Ruta km", "Bez trase km", "Zastoji", "Max masa t", "Max dužina m" }) t.Columns.Add(k);
+            foreach (string k in new[] { "Ruta", "Kombinacija trasa", "Trasa", "Ruta km", "Elektrifikacija", "Bez trase km", "Zastoji", "Max masa t", "Max dužina m" }) t.Columns.Add(k);
             for (int i = 0; i < lista.Count; i++)
             {
                 KombinacijaTrasa k = lista[i];
-                t.Rows.Add(i, k.RutaRB.HasValue ? "Ruta " + k.RutaRB.Value : "Lanac trasa", string.Join("  →  ", k.Delovi.Select(d => TekstDela(d, k.Ruta, nazivi))), k.BrojTrasa, k.Ruta.Km.ToString("N1"), k.KmBezTrase.ToString("N1"), k.Ruta.Zastoji.Count == 0 ? "nema" : string.Join("; ", k.Ruta.Zastoji.Select(z => z.Tekst)),
+                t.Rows.Add(i, k.RutaRB.HasValue ? "Ruta " + k.RutaRB.Value : "Lanac trasa", string.Join("  →  ", k.Delovi.Select(d => TekstDela(d, k.Ruta, nazivi, kratko))), k.BrojTrasa, k.Ruta.Km.ToString("N1"),
+                    Elektrifikacija(k.Ruta), k.KmBezTrase.ToString("N1"), k.Ruta.Zastoji.Count == 0 ? "nema" : string.Join("; ", k.Ruta.Zastoji.Select(z => z.Tekst)),
                     k.NajmanjaMasa.HasValue ? k.NajmanjaMasa.Value.ToString("0.#") : "–", k.NajmanjaDuzina.HasValue ? k.NajmanjaDuzina.Value.ToString("0.#") : "–");
             }
             return t;
+        }
+
+        // Elektrifikacija rute po deonicama mreže: Da, Ne ili Delimično, uz km bez kontaktne mreže i nepoznate km.
+        internal static string Elektrifikacija(RezultatRute r)
+        {
+            string tekst = PregledPruga.Elektrifikacija(r.KmElektro, r.KmDizel, r.KmNepoznato);
+            var dodaci = new List<string>();
+            if (r.KmElektro > 0 && r.KmDizel > 0) dodaci.Add("bez mreže " + r.KmDizel.ToString("N1") + " km");
+            if (r.KmNepoznato > 0 && (r.KmElektro > 0 || r.KmDizel > 0)) dodaci.Add("nepoznato " + r.KmNepoznato.ToString("N1") + " km");
+            return dodaci.Count == 0 ? tekst : tekst.Split(',')[0] + " (" + string.Join(", ", dodaci) + ")";
         }
 
         // Tekst trasa traži širinu i prelazi u novi red.
@@ -226,6 +253,8 @@ namespace Saobracaj.Planiranje.Forme
                 CustomFormat = saVremenom ? "dd.MM.yyyy HH:mm" : "dd.MM.yyyy",
                 ShowCheckBox = moguPrazno
             };
+            // DateTimePicker sa kvadratićem je podrazumevano čekiran (danas); polje koje može biti prazno počinje prazno.
+            if (moguPrazno) d.Checked = false;
             polja[kolona] = d;
             Kartica.Polje(Oznaka(natpis), d);
             return this;

@@ -12,13 +12,17 @@ namespace Saobracaj.Planiranje.Forme
     public partial class frmOPOsoblje : Saobracaj.Tema.BaseForm
     {
         public static string code = "frmOPOsoblje";
-        private static readonly string[] Uloge = { "Masinovodja", "PregledacKola", "Vozovodja", "Manevrista" };
+        // Mašinovođa manevre se menja tek kad Delavci ima kolonu (OP_026); do tada pogled daje 0 i kolona je samo za čitanje.
+        private static string[] uloge;
+        private static string[] Uloge => uloge ?? (uloge = OsobljeRepo.ImaMasinovodjuManevra
+            ? new[] { "Masinovodja", "PregledacKola", "Vozovodja", "Manevrista", "MasinovodjaManevra" }
+            : new[] { "Masinovodja", "PregledacKola", "Vozovodja", "Manevrista" });
 
         public bool Pravo { get; }
 
         private readonly DataGridView tabOsoblje = EkranOP.NovaTabela("MaticnaStanicaID", "Ime", "Prezime");
         private readonly MatricaPanel matricaPruga = new MatricaPanel("Pruga", false);
-        private readonly MatricaPanel matricaLokomotiva = new MatricaPanel("Lokomotiva", true);
+        private readonly MatricaPanel matricaSerija = new MatricaPanel("Serija", true);
         private readonly DataGridView tabTurnusi = EkranOP.NovaTabela("ID", "DeSifra", "TurnusID");
         private readonly DataGridView tabOdsustva = EkranOP.NovaTabela();
         private readonly UredjivacReda poljaOsoba = new UredjivacReda("Dopuna za planiranje");
@@ -59,7 +63,7 @@ namespace Saobracaj.Planiranje.Forme
                 Razlozi = OdsustvaRepo.Razlozi(),
                 Zaposleni = OdsustvaRepo.Zaposleni(),
                 Pruge = KvalifikacijeRepo.Pruge(),
-                Lokomotive = KvalifikacijeRepo.Lokomotive()
+                Serije = KvalifikacijeRepo.Serije()
             }, p =>
             {
                 poljaOsoba.IzvorIzbora("MaticnaStanicaID", p.Stanice, "Naziv", "ID", true);
@@ -71,7 +75,7 @@ namespace Saobracaj.Planiranje.Forme
                 IzaberiOsobu(izabrana);
                 // Neupisane izmene u matrici se ne gaze osvežavanjem drugog taba.
                 if (!matricaPruga.ImaIzmena) matricaPruga.Postavi(p.Pruge.Radnici, p.Pruge.Redovi, p.Pruge.Stavke);
-                if (!matricaLokomotiva.ImaIzmena) matricaLokomotiva.Postavi(p.Lokomotive.Radnici, p.Lokomotive.Redovi, p.Lokomotive.Stavke);
+                if (!matricaSerija.ImaIzmena) matricaSerija.Postavi(p.Serije.Radnici, p.Serije.Redovi, p.Serije.Stavke);
             });
             await OsveziOdsustva();
         }
@@ -116,6 +120,9 @@ namespace Saobracaj.Planiranje.Forme
             tabOsoblje.EndEdit();
             var t = tabOsoblje.DataSource as DataTable;
             if (t == null) return new List<IzmenaUloga>();
+            // EndEdit zatvara samo ćeliju; red ostaje u izmeni (RowState Unchanged) dok se ne pređe na drugi red, pa se izmena ne bi videla.
+            foreach (DataRow r in t.Rows)
+                if (r.HasVersion(DataRowVersion.Proposed)) r.EndEdit();
             return t.Rows.Cast<DataRow>()
                 .Where(r => r.RowState == DataRowState.Modified && Uloge.Any(u => Bit(r, u) != Bit(r, u, DataRowVersion.Original)))
                 .Select(r => new IzmenaUloga
@@ -126,10 +133,12 @@ namespace Saobracaj.Planiranje.Forme
                     PregledacKola = Bit(r, "PregledacKola"),
                     Vozovodja = Bit(r, "Vozovodja"),
                     Manevrista = Bit(r, "Manevrista"),
+                    MasinovodjaManevra = Bit(r, "MasinovodjaManevra"),
                     StaroMasinovodja = Bit(r, "Masinovodja", DataRowVersion.Original),
                     StaroPregledacKola = Bit(r, "PregledacKola", DataRowVersion.Original),
                     StaroVozovodja = Bit(r, "Vozovodja", DataRowVersion.Original),
-                    StaroManevrista = Bit(r, "Manevrista", DataRowVersion.Original)
+                    StaroManevrista = Bit(r, "Manevrista", DataRowVersion.Original),
+                    StaroMasinovodjaManevra = Bit(r, "MasinovodjaManevra", DataRowVersion.Original)
                 }).ToList();
         }
 
@@ -158,7 +167,8 @@ namespace Saobracaj.Planiranje.Forme
                 EkranOP.Poruka(this, "Za „Samo domicilna“ izaberite matičnu stanicu.");
                 return;
             }
-            if (EkranOP.Izvrsi(this, () => OsobljeRepo.SacuvajOsobe(uloge, d, planRowVer, matica, poljaOsoba.Cek("UPlaniranju"), poljaOsoba.Cek("Auto"), poljaOsoba.Cek("SamoDomicilna"), poljaOsoba.TekstIliNull("Napomena"))))
+            if (EkranOP.Izvrsi(this, () => OsobljeRepo.SacuvajOsobe(uloge, d, planRowVer, matica, poljaOsoba.Cek("UPlaniranju"), poljaOsoba.Cek("Auto"), poljaOsoba.Cek("SamoDomicilna"),
+                poljaOsoba.Cek("LekarskiPregled"), poljaOsoba.Cek("PeriodicniIspit"), poljaOsoba.Cek("Skolovanje"), poljaOsoba.TekstIliNull("Napomena"))))
             {
                 var _ = Osvezi();
             }
@@ -166,18 +176,18 @@ namespace Saobracaj.Planiranje.Forme
 
         private async Task SacuvajMatrice()
         {
-            IzmeneMatrice pruge = matricaPruga.Izmene(), lokomotive = matricaLokomotiva.Izmene();
-            if (!pruge.Ima && !lokomotive.Ima) { EkranOP.Poruka(this, "Nema izmena."); return; }
+            IzmeneMatrice pruge = matricaPruga.Izmene(), serije = matricaSerija.Izmene();
+            if (!pruge.Ima && !serije.Ima) { EkranOP.Poruka(this, "Nema izmena."); return; }
             bool upisano = false;
             await EkranOP.Ucitaj(this, () =>
             {
                 KvalifikacijeRepo.SacuvajPruge(pruge);
-                KvalifikacijeRepo.SacuvajLokomotive(lokomotive);
-                return new { Pruge = KvalifikacijeRepo.Pruge(), Lokomotive = KvalifikacijeRepo.Lokomotive() };
+                KvalifikacijeRepo.SacuvajSerije(serije);
+                return new { Pruge = KvalifikacijeRepo.Pruge(), Serije = KvalifikacijeRepo.Serije() };
             }, p =>
             {
                 matricaPruga.Postavi(p.Pruge.Radnici, p.Pruge.Redovi, p.Pruge.Stavke);
-                matricaLokomotiva.Postavi(p.Lokomotive.Radnici, p.Lokomotive.Redovi, p.Lokomotive.Stavke);
+                matricaSerija.Postavi(p.Serije.Radnici, p.Serije.Redovi, p.Serije.Stavke);
                 upisano = true;
             });
             if (upisano) EkranOP.Poruka(this, "Kvalifikacije su sačuvane.");
@@ -185,24 +195,27 @@ namespace Saobracaj.Planiranje.Forme
 
         private async Task OsveziMatrice()
         {
-            if ((matricaPruga.ImaIzmena || matricaLokomotiva.ImaIzmena) && !EkranOP.Potvrdi(this, "Odbaciti nesačuvane izmene u matrici?")) return;
-            await EkranOP.Ucitaj(this, () => new { Pruge = KvalifikacijeRepo.Pruge(), Lokomotive = KvalifikacijeRepo.Lokomotive() }, p =>
+            if ((matricaPruga.ImaIzmena || matricaSerija.ImaIzmena) && !EkranOP.Potvrdi(this, "Odbaciti nesačuvane izmene u matrici?")) return;
+            await EkranOP.Ucitaj(this, () => new { Pruge = KvalifikacijeRepo.Pruge(), Serije = KvalifikacijeRepo.Serije() }, p =>
             {
                 matricaPruga.Postavi(p.Pruge.Radnici, p.Pruge.Redovi, p.Pruge.Stavke);
-                matricaLokomotiva.Postavi(p.Lokomotive.Radnici, p.Lokomotive.Redovi, p.Lokomotive.Stavke);
+                matricaSerija.Postavi(p.Serije.Radnici, p.Serije.Redovi, p.Serije.Stavke);
             });
         }
 
         private bool ImaNesacuvano()
         {
-            return IzmeneUloga().Count > 0 || matricaPruga.ImaIzmena || matricaLokomotiva.ImaIzmena;
+            return IzmeneUloga().Count > 0 || matricaPruga.ImaIzmena || matricaSerija.ImaIzmena;
         }
 
         private void DodeliTurnus()
         {
             int? d = IzabranaOsoba, t = poljaTurnus.IzabranID("TurnusID");
             if (!d.HasValue || !t.HasValue) { EkranOP.Poruka(this, "Izaberite osobu i turnus."); return; }
-            if (EkranOP.Izvrsi(this, () => TurnusiRepo.Dodeli(d.Value, t.Value, poljaTurnus.DatumVreme("Od").Date, poljaTurnus.DatumIliNull("Do"))))
+            DateTime od = poljaTurnus.DatumVreme("Od").Date;
+            DateTime? doDatuma = poljaTurnus.DatumIliNull("Do")?.Date;
+            if (doDatuma < od) { EkranOP.Poruka(this, "„Važi do“ ne može biti pre prvog radnog dana. Za turnus bez kraja ostavite „Važi do“ prazno."); return; }
+            if (EkranOP.Izvrsi(this, () => TurnusiRepo.Dodeli(d.Value, t.Value, od, doDatuma)))
             {
                 var _ = PrikaziOsobu();
             }

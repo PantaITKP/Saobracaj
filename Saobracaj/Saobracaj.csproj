@@ -2370,6 +2370,41 @@
     <Compile Include="Planiranje\Forme\MaliDijalog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Planiranje\Modeli\TaskModeli.cs" />
+    <Compile Include="Planiranje\Modeli\JobsModeli.cs" />
+    <Compile Include="Planiranje\Podaci\JobsRepo.cs" />
+    <Compile Include="Planiranje\Forme\frmOPJobs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPJobs.Designer.cs">
+      <DependentUpon>frmOPJobs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPJobs.NoviIzgled.cs">
+      <DependentUpon>frmOPJobs.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Pravila\TaskPravila.cs" />
+    <Compile Include="Planiranje\Pravila\PonudaLokomotivaTaska.cs" />
+    <Compile Include="Planiranje\Forme\DijalogLokomotiveTaska.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPGanttTaskova.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Podaci\TaskRepo.cs" />
+    <Compile Include="Planiranje\Forme\DijalogSplitRute.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTaskovi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTaskovi.Designer.cs">
+      <DependentUpon>frmOPTaskovi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmOPTaskovi.NoviIzgled.cs">
+      <DependentUpon>frmOPTaskovi.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Planiranje\Podaci\GpsLokomotive.cs" />
     <Compile Include="Planiranje\Podaci\OptimizatorKlijent.cs" />
     <Compile Include="Planiranje\Podaci\KvalifikacijeRepo.cs" />
@@ -3401,6 +3436,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Tema\Fontovi\Manrope-ExtraBold.ttf">
       <LogicalName>Saobracaj.Tema.Fontovi.Manrope-ExtraBold.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Fontovi\Manrope-Medium.ttf">
+      <LogicalName>Saobracaj.Tema.Fontovi.Manrope-Medium.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Fontovi\DMSans-Italic.ttf">
+      <LogicalName>Saobracaj.Tema.Fontovi.DMSans-Italic.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Slike\lokomotiva-480.png">
+      <LogicalName>Saobracaj.Tema.Slike.lokomotiva-480.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tema\Slike\freightmind.ico">
+      <LogicalName>Saobracaj.Tema.Slike.freightmind.ico</LogicalName>
     </EmbeddedResource>
     <None Include="Tema\Fontovi\OFL-DMSans.txt" />
     <None Include="Tema\Fontovi\OFL-Manrope.txt" />

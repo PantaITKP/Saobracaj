@@ -64,8 +64,8 @@ namespace Saobracaj.Planiranje.Forme
             internal List<KombinacijaTrasa> Kombinacije;
         }
 
-        // Kombinacije trasa za najavu: isti račun kao na mapi, a bruto i dužina su iz najave.
-        private static List<KombinacijaTrasa> KombinacijeZa(PlanKontekst k, RezultatPosla r)
+        // Kombinacije trasa za najavu: isti račun kao na mapi, a bruto i dužina su iz najave. Koristi ga i ekran Taskovi.
+        internal static List<KombinacijaTrasa> KombinacijeZa(PlanKontekst k, RezultatPosla r)
         {
             PosaoPlan p = r.Posao;
             if (!p.PrijemID.HasValue || !p.PredajaID.HasValue || p.PrijemID == p.PredajaID) return new List<KombinacijaTrasa>();

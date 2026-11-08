@@ -108,6 +108,14 @@ namespace Saobracaj.Planiranje.Pravila
             }
             string[] mesta = Regex.Split(Regex.Replace(tekst, @"\([^()]*\)", " "), @"\s*-\s*").Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
             if (mesta.Length == 0) return null;
+            // „(Vinkovci) - Šid“: voz dolazi iz inostranstva, pa trasa kod nas kreće sa granice „Šid gr.“, a ne iz stanice Šid.
+            // Isto važi za kraj „Šid - (Vinkovci)“. Sused iz zagrade nije uvek granično mesto iz Registra (tamo je Tovarnik).
+            string t = tekst.Trim();
+            if (pocetak ? t.StartsWith("(") : t.EndsWith(")"))
+            {
+                int? naGranici = GranicnoMesto(pocetak ? mesta[0] : mesta[mesta.Length - 1], poId, poNazivu);
+                if (naGranici.HasValue) return naGranici;
+            }
             int? izbor = PoNazivu(pocetak ? mesta[0] : mesta[mesta.Length - 1], poId, poNazivu, granica);
             if (izbor.HasValue) return izbor;
             foreach (string mesto in mesta)
@@ -128,6 +136,16 @@ namespace Saobracaj.Planiranje.Pravila
             List<int> bezGranice = kandidati.Where(x => poId.TryGetValue(x, out s) && !s.GranicniPrelaz).ToList();
             if (bezGranice.Count == 1) return bezGranice[0];
             return kandidati.Count == 1 ? kandidati[0] : (int?)null;
+        }
+
+        // Jedino granično mesto sa istim normalizovanim nazivom („Šid“ → „Šid gr.“).
+        private static int? GranicnoMesto(string naziv, Dictionary<int, StanicaZaTrasu> poId, Dictionary<string, List<int>> poNazivu)
+        {
+            List<int> kandidati;
+            if (!poNazivu.TryGetValue(NaziviStanica.Normalizuj(naziv), out kandidati)) return null;
+            StanicaZaTrasu s;
+            List<int> granicne = kandidati.Where(x => poId.TryGetValue(x, out s) && s.GranicniPrelaz).ToList();
+            return granicne.Count == 1 ? granicne[0] : (int?)null;
         }
 
         // Isti račun za mapu i za ponudu na poslu: trase uz rutu, sa zastojima kao obaveštenjem.

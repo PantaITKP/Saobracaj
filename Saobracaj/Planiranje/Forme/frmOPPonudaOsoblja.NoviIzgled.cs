@@ -29,11 +29,10 @@ namespace Saobracaj.Planiranje.Forme
             cboPosao.SelectedIndexChanged += (s, e) =>
             {
                 if (punjenje || !(cboPosao.SelectedValue is int)) return;
-                PosaoId = (int)cboPosao.SelectedValue;
-                var _ = Osvezi();
+                IzabranoUListi((int)cboPosao.SelectedValue);
             };
-            var glava = new KarticaPolja("Posao");
-            glava.Polje(new Label { Text = "Najava" }, cboPosao, siroko: true);
+            var glava = new KarticaPolja(zaTask ? "Task" : "Posao");
+            glava.Polje(new Label { Text = zaTask ? "Task" : "Najava" }, cboPosao, siroko: true);
             glava.Tekst(lblZaglavlje);
             izgled.Mreza.Dodaj(glava);
 
@@ -47,19 +46,28 @@ namespace Saobracaj.Planiranje.Forme
                 if (kolona != "Prihvatio" && kolona != "Odbio") return;
                 var _ = Odgovori(Convert.ToInt32(tabOdgovori.Rows[e.RowIndex].Cells["ID"].Value), kolona == "Prihvatio");
             };
-            foreach (DataGridView g in new[] { tabMasinovodje, tabPrijem, tabPredaja, tabOdgovori })
+            tabOstali.CellClick += (s, e) => IzaberiOstalog(e.RowIndex);
+            cboOstalo.SelectedIndexChanged += (s, e) => { if (!punjenje) PrikaziOstale(); };
+            foreach (DataGridView g in new[] { tabMasinovodje, tabPrijem, tabPredaja, tabOstali, tabOdgovori })
             {
                 DataGridView tabela = g;
                 tabela.DataBindingComplete += (s, e) => tabela.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             }
 
-            var levo = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 3 };
-            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
-            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
-            levo.Controls.Add(Odeljak(new Label { Text = "Mašinovođa" }, tabMasinovodje), 0, 0);
+            var levo = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4 };
+            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
+            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 22));
+            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 22));
+            levo.Controls.Add(Odeljak(lblNaslovMasinovodja, tabMasinovodje), 0, 0);
             levo.Controls.Add(Odeljak(lblNaslovPrijem, tabPrijem), 0, 1);
             levo.Controls.Add(Odeljak(lblNaslovPredaja, tabPredaja), 0, 2);
+            levo.RowStyles.Add(new RowStyle(SizeType.Percent, 22));
+            var ostalo = new Panel();
+            tabOstali.Dock = DockStyle.Fill;
+            cboOstalo.Dock = DockStyle.Top;
+            ostalo.Controls.Add(tabOstali);
+            ostalo.Controls.Add(cboOstalo);
+            levo.Controls.Add(Odeljak(lblNaslovOstalo, ostalo), 0, 3);
 
             var slanje = new KarticaPolja("Zadatak za slanje");
             slanje.Tekst(lblIzabrani);

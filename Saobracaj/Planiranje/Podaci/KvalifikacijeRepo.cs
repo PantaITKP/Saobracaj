@@ -53,26 +53,25 @@ namespace Saobracaj.Planiranje.Podaci
                 {
                     Radnici = Radnici(c, "Masinovodja = 1"),
                     Redovi = Redovi(c,
-                        "SELECT p.ID, LEFT(p.Kategorija, 3) + N' ' + CAST(p.RedniBroj AS nvarchar(10)) + N'. ' + p.Naziv AS Naziv FROM planiranje.OP_Pruga p " +
+                        "SELECT p.ID, ISNULL(CAST(" + RegistarRepo.BrojPruge + " AS nvarchar(10)) + N'. ', N'') + p.Naziv + ISNULL(N' (' + p.Sifra + N')', N'') AS Naziv FROM planiranje.OP_Pruga p " +
                         "JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID " +
-                        "WHERE v.Status = N'VAZECA' AND p.Aktivna = 1 ORDER BY CASE p.Kategorija WHEN N'MAGISTRALNA' THEN 1 WHEN N'REGIONALNA' THEN 2 WHEN N'LOKALNA' THEN 3 ELSE 4 END, p.RedniBroj, p.Naziv"),
+                        "WHERE v.Status = N'VAZECA' AND p.Aktivna = 1 ORDER BY CASE WHEN p.RedniBroj IS NULL THEN 1 ELSE 0 END, " + RegistarRepo.BrojPruge + ", p.Naziv"),
                     Stavke = Stavke(c, "SELECT DeSifra, PrugaID AS RedID, VaziDo, Napomena FROM planiranje.OP_OsobljePruga")
                 };
         }
 
-        // Aktivne lokomotive su one iz dbo.Mesta sa Lokomotiva = 1, kroz njihov par u OP_Lokomotive.
-        internal static PodaciMatrice Lokomotive()
+        // Poznavanje serija (OP_029) umesto pojedinačnih lokomotiva: aktivne serije, sa vrstom vuče i brojem aktivnih lokomotiva.
+        internal static PodaciMatrice Serije()
         {
             using (var c = Db.Open())
                 return new PodaciMatrice
                 {
-                    Radnici = Radnici(c, "Masinovodja = 1 OR Manevrista = 1"),
+                    Radnici = Radnici(c, "Masinovodja = 1 OR Manevrista = 1 OR MasinovodjaManevra = 1"),
                     Redovi = Redovi(c,
-                        "SELECT l.ID, l.Broj + ISNULL(N' · ' + s.Oznaka, N'') AS Naziv FROM planiranje.OP_Lokomotive l " +
-                        "LEFT JOIN planiranje.OP_SerijeLokomotiva s ON s.ID = l.SerijaID " +
-                        "WHERE l.Aktivna = 1 AND EXISTS (SELECT 1 FROM dbo.Mesta m WHERE m.Lokomotiva = 1 AND RTRIM(m.SmSifra) = RTRIM(l.IzvorniSmSifra) COLLATE DATABASE_DEFAULT) " +
-                        "ORDER BY l.Broj"),
-                    Stavke = Stavke(c, "SELECT DeSifra, LokomotivaID AS RedID, VaziDo, Napomena FROM planiranje.OP_OsobljeLokomotiva")
+                        "SELECT s.ID, s.Oznaka + CASE s.VrstaVuce WHEN N'E' THEN N' · EL' WHEN N'D' THEN N' · DZ' ELSE N'' END " +
+                        "+ N' (' + CAST((SELECT COUNT(*) FROM planiranje.OP_Lokomotive l WHERE l.SerijaID = s.ID AND l.Aktivna = 1) AS nvarchar(10)) + N' lok.)' AS Naziv " +
+                        "FROM planiranje.OP_SerijeLokomotiva s WHERE s.Aktivna = 1 ORDER BY s.Oznaka"),
+                    Stavke = Stavke(c, "SELECT DeSifra, SerijaID AS RedID, VaziDo, Napomena FROM planiranje.OP_OsobljeSerija")
                 };
         }
 
@@ -81,9 +80,9 @@ namespace Saobracaj.Planiranje.Podaci
             Sacuvaj(iz, "planiranje.OP_OsobljePruga", "PrugaID");
         }
 
-        internal static void SacuvajLokomotive(IzmeneMatrice iz)
+        internal static void SacuvajSerije(IzmeneMatrice iz)
         {
-            Sacuvaj(iz, "planiranje.OP_OsobljeLokomotiva", "LokomotivaID");
+            Sacuvaj(iz, "planiranje.OP_OsobljeSerija", "SerijaID");
         }
 
         // Tabela i kolona su fiksne vrednosti iz dve metode iznad, a podaci idu kao parametri.

@@ -37,6 +37,8 @@ namespace Saobracaj
         {
             SuspendLayout();
             DodajMapuLokomotiva();
+            DodajTaskove();
+            DodajJobs();
             UcitajStavkeIzRibona();
             // Ribbon se ne prikazuje, ali njegova dugmad i dalje nose događaje.
             Controls.Remove(ribbonControlAdv1);
@@ -84,6 +86,30 @@ namespace Saobracaj
                 if (forma.Pravo) forma.Show(); else forma.Dispose();
             };
             toolStripEx10.Items.Insert(toolStripEx10.Items.IndexOf(toolStripButton139) + 1, dugme);
+        }
+
+        // Transport / Planiranje, prvo dugme: JOBS (posao koji zamenjuje najavu u planiranju).
+        private void DodajJobs()
+        {
+            var dugme = new ToolStripButton("JOBS") { DisplayStyle = ToolStripItemDisplayStyle.Text, Name = "tsbOPJobs" };
+            dugme.Click += (s, e) =>
+            {
+                var forma = new Saobracaj.Planiranje.Forme.frmOPJobs();
+                if (forma.Pravo) forma.Show(); else forma.Dispose();
+            };
+            toolStripExOPPlaniranje.Items.Insert(0, dugme);
+        }
+
+        // Transport / Planiranje, posle „Najave bez plana“: najave (jobs), rute i taskovi.
+        private void DodajTaskove()
+        {
+            var dugme = new ToolStripButton("Taskovi") { DisplayStyle = ToolStripItemDisplayStyle.Text, Name = "tsbOPTaskovi" };
+            dugme.Click += (s, e) =>
+            {
+                var forma = new Saobracaj.Planiranje.Forme.frmOPTaskovi();
+                if (forma.Pravo) forma.Show(); else forma.Dispose();
+            };
+            toolStripExOPPlaniranje.Items.Insert(toolStripExOPPlaniranje.Items.IndexOf(tsbOPNajaveBezPlana) + 1, dugme);
         }
 
         private void UcitajStavkeIzRibona()

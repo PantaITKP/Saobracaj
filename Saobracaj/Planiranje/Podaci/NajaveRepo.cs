@@ -10,12 +10,21 @@ namespace Saobracaj.Planiranje.Podaci
     // Najave se samo čitaju, kroz pogled nad dbo.Najava.
     internal static class NajaveRepo
     {
+        // Status 4 (Nije pokrenuto - U Srbiji): voz čeka u Srbiji, pa ulazi u plan dok ne krene, i kad je primljen pre perioda.
+        internal const int NijePokrenuto = 4;
+
+        // Najava perioda, uz @od i @do, sa aliasom n nad OP_vNajava.
+        internal static readonly string UslovPerioda =
+            "ISNULL(n.StatusNajave, 0) <> 7 AND n.StvarnaPredaja IS NULL " +
+            "AND ((n.PredvidjenoPrimanje >= @od AND n.PredvidjenoPrimanje < @do) " +
+            "OR (n.StatusNajave = " + NijePokrenuto + " AND COALESCE(n.PredvidjenoPrimanje, n.StvarnoPrimanje) < @do)) ";
+
         // Otkud-kuda su išle najave od datuma, po merodavnim stanicama.
         internal static List<ParUpotrebe> ParoviOd(DateTime od)
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT n.PlanOtpravnaID, n.PlanUputnaID, COUNT(*) AS Broj FROM planiranje.OP_vNajava n " +
+                    "SELECT n.PlanOtpravnaID, n.PlanUputnaID, COUNT(*) AS Broj FROM planiranje.OP_vJobPravac n " +
                     "WHERE n.PredvidjenoPrimanje >= @od GROUP BY n.PlanOtpravnaID, n.PlanUputnaID", "@od", od)
                     .Rows.Cast<DataRow>().Select(r => new ParUpotrebe
                     {
@@ -29,9 +38,10 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT n.* FROM planiranje.OP_vNajava n " +
-                    "WHERE n.PredvidjenoPrimanje >= @od AND n.PredvidjenoPrimanje < @do AND ISNULL(n.StatusNajave, 0) <> 7 AND n.StvarnaPredaja IS NULL " +
-                    "AND NOT EXISTS (SELECT 1 FROM planiranje.OP_Posao p WHERE p.NajavaID = n.NajavaID AND p.Status <> N'OTKAZAN') " +
+                    // Od OP_030 izvor su pravci JOBS-a: svaki pravac je jedan posao (RBDeonice).
+                    "SELECT n.* FROM planiranje.OP_vJobPravac n " +
+                    "WHERE " + UslovPerioda +
+                    "AND NOT EXISTS (SELECT 1 FROM planiranje.OP_Posao p WHERE p.NajavaID = n.NajavaID AND p.RBDeonice = n.Pravac AND p.Status <> N'OTKAZAN') " +
                     "ORDER BY n.PredvidjenoPrimanje",
                     "@od", od, "@do", doDatuma);
         }

@@ -1,4 +1,4 @@
-# Specifikacija: Planiranje (meni Transport)
+﻿# Specifikacija: Planiranje (meni Transport)
 
 **Za:** Claude Code · **Projekat:** `Saobracaj` (WinForms) · **Verzija:** 3, 3.11.2026
 
@@ -540,6 +540,8 @@ Ovo menja pravilo 8.1 i opis `PlanOtpravnaID` / `PlanUputnaID`. Skripta je `OP_0
 
 Državne granice iz Registra nose nazive koje planeri koriste (`Bogojevo gr.`, `Šid gr.`), a naziv iz Registra je u `NazivStari`. Skripta je `OP_015_GranicneStanice.sql`; pokreće se ponovo posle svakog `OP_010`, jer `OP_010` vraća nazive iz Registra. Ona spaja i stanice koje su isto mesto kao stavka Registra, a stanicu „Nema“ gasi. Polja Od i Do na mapi nude samo aktivne stanice sa `Drzava = SRB` koje su u mreži. Kad ruta ne postoji zbog osovinskog, mapa to kaže i navodi dužinu rute bez te provere. Planer proverava osovinsko samo na ekranu rute na mapi, a ne pri računu posla.
 
+Trasa čiji naziv počinje stranim delom u zagradi, npr. „(Vinkovci) - Šid“ ili „(Dobova) - Šid“, kreće sa graničnog mesta istog naziva (Šid gr.), a ne iz stanice Šid. Isto važi za kraj „Šid - (Vinkovci)“. Ovo važi i kad sused iz zagrade nije granično mesto iz Registra (za Šid gr. je to Tovarnik). Trasa bez zagrade („Šid - Ruma“) ostaje u stanici. Dorada je od 7.11.2026.
+
 **Spajanje van mreže.** `OP_016_SpajanjeStanica.sql` spaja stanice van mreže sa mestom iz Registra istog ili sličnog naziva, po proverenom spisku. Spaja se kad se naziv poklapa i stanica je blizu, ili kad nema koordinate, a naziv je jasno isti. Stanice na KiM i u inostranstvu bez takvog para se ne spajaju, jer bi dale pogrešnu rutu.
 
 ## 16. Dorada: kombinacije trasa na mapi (4.11.2026)
@@ -563,6 +565,7 @@ Skripta je `OP_017_PosaoStanice.sql`, a program ne radi bez nje. Ona ispravlja p
 
 Skripta je `OP_018_NajavaDatumi.sql`.
 - **Ne ulazi:** najava u statusu 7 (Predato) i najava sa stvarnom predajom. Ne pravi se posao pri „Uzmi najave“ i ne prikazuje se u planu. Posao koji već ima lokomotivu ostaje u kalendaru.
+- **Ulazi i status 4** (Nije pokrenuto – U Srbiji, dorada 6.11.2026): najava u statusu 4 ulazi u plan i kad joj je predviđeno primanje pre perioda ili prazno; tada se gleda stvarno primanje. Posao se planira od početka perioda, a aktivan posao takve najave ostaje u svakom planu dok voz ne bude predat. Uslovi su `NajaveRepo.UslovPerioda` i `PlanRepo.UPeriodu`. Skripta nije potrebna.
 - **Prazan datum** u `dbo.Najava` je `1900-01-01`. `OP_vNajava` umesto datuma pre 1950. daje NULL. To ispravlja pogrešno zatvaranje poslova i poruku „Predaja posle predviđene“.
 
 ## 19. Dorada: tab Pruge na ekranu Mreža i stanice (4.11.2026)
@@ -584,6 +587,216 @@ Skripta je `OP_019_Elektrifikacija.sql`, a izvor Prilog 3.4 Elektrificirane prug
 
 Skripta je `OP_020_AktivneLokomotive.sql`. Aktivne su 28 lokomotiva sa spiska korisnika i sve lokomotive serija 186 i 193; ostale postaju neaktivne, bez brisanja. Dodate su serije 186 i 383. Lokomotiva serije 186 još nema u bazi.
 
+## 22. Dorada: Taskovi (6.11.2026)
+
+Ekran `frmOPTaskovi` (Transport / Planiranje / Taskovi, posle „Najave bez plana“). Skripta šeme je `OP_022_Taskovi.sql`, a prava `OP_023_FormaTaskovi.sql` (dbo.Forme, iste grupe kao `frmOPPosao`). Program ne radi bez `OP_022`. Obe skripte pokreće korisnik na radnoj bazi, posle `OP_021`, a posle njih `OP_024_TaskTrajanje.sql` (trajanje taska) `OP_025_TaskOsoblje.sql` (osoblje taska) i `OP_027_TaskOsobljeUloge.sql` (ostale uloge; posle `OP_026` se pokreće ponovo). Program ne radi bez njih.
+
+**Tok.**
+1. Lista najava (jobs) su poslovi perioda sa istim računom i kolonama kao „Bez lokomotive“ na nedeljnom planu: Najava (ID / status), telegram (zastavica, opis na prelaz mišem), relacija, prijem, km, bruto, BTTO, broj i tip kola. Kolona Taskovi daje broj aktivnih taskova (i lansiranih i završenih), a „nema“ je crveno. „Uzmi najave“ pravi poslove kao na planu. Ispod najava, preko cele širine, je ponuda trasa, a na dnu su taskovi.
+2. Izbor najave nudi rute kojima se posao može završiti: isti račun kao „Ponuda trasa“ na ekranu Posao (`frmOPPosao.KombinacijeZa`). Deo bez trase se ovde piše samo kao prva – poslednja stanica, bez čvorova „preko …“. Kolona Elektrifikacija (na svim ekranima sa ponudom trasa) daje Da, Ne ili Delimično, uz km bez kontaktne mreže, po deonicama mreže (`OP_MrezaVeza.Elektrificirana`).
+3. „Napravi task“ na izabranoj ruti pravi task. Task prepisuje podatke najave (broj najave, bruto, broj kola, dužina, tip kola) i dobija jedinstven broj (`OP_Task.ID`, identity). Status je Otvoren, a lokomotiva nema.
+4. ETD je planirani polazak iz računa posla, a ETA je ETD plus vreme vožnje iz računa posla, srazmerno km izabrane rute. ATD i ATA se upisuju ručno.
+5. Ako najava već ima otvorene taskove, uz potvrdu se storniraju. Ako ima lansiran ili završen task, nova ruta se ne bira.
+
+**Model.**
+- `OP_Task`: stanice, km, bruto, EA, dužina, tip kola, ETD, ATD, ETA, ATA, `Status` (OTVOREN, LANSIRAN, ZAVRSEN, STORNIRAN), `Nastanak` (RUTA, SPLIT_RUTE, SPLIT_BRUTO, SPAJANJE), `RazlogStorna`, `OpisRute`, `RowVer`.
+- `OP_TaskNajava`: najave taska. Posle spajanja ih može biti više. Za svaku najavu se čuvaju bruto i kola koje task nosi, `KmOd`/`KmDo` (gde je task na ruti najave) i `RBDela`.
+- `OP_TaskStanica`: stanice rute taska, sa km od početka taska, prugom i trasom deonice.
+- `OP_TaskLokomotiva`: tačno jedna `VUCNA`, a ostale su `POTISAK` (filtrirani jedinstveni indeks).
+- `OP_TaskVeza`: iz kog taska je nastao novi.
+
+**Redosled** ne zavisi od broja taska. Po najavi se ređa po `KmOd` (deo rute), pa po `RBDela` (bruto deo na istom delu rute). Pogled `OP_vTaskNajava` daje `DeoRute` i `DelovaBruto`, a ekran prikazuje „2“ ili „2.1“, „2.2“. Posle svake promene `RBDela` se prenumeriše 1..n, a stornirani se ne broje.
+
+**Split rute.** Samo otvoren task. Korisnik bira jednu međustanicu (oznaka „promena trase“ pomaže izboru), a dijalog pre potvrde prikazuje delove. Nastaju tačno dva taska (do te stanice i od nje), sa istim sastavom i istim lokomotivama. Svaki od njih se dalje deli po ruti ili po brutu. Vremena se dele srazmerno km, izvorni task se stornira (`RazlogStorna = SPLIT_RUTE`), a novi su otvoreni.
+
+**Split bruto.** Samo otvoren task jedne najave. Korisnik unosi bruto (t) i broj kola (EA) prvog dela, a drugi deo je ostatak. Bruto je veći od 0 i manji od ukupnog; kola su od 1 do ukupno − 1 (0 ako task nema kola). Dužina se deli po kolima. Prvi deo zadržava vremena i lokomotive izvornog taska. Delovi ne moraju da voze u isto vreme: za drugi deo se unose ETD i ETA, a predlog je da polazi kad prvi stigne i vozi isto toliko. Korisnik bira da li drugi deo zadržava iste lokomotive. Ako se vremena tada preklapaju, upis odbija provera preklapanja lokomotiva. Split se može ponavljati.
+
+**Spajanje** (dva ili više otvorenih taskova):
+- **Ista ruta** (isti niz stanica): jedan sastav. Bruto, kola i dužina se sabiraju, a najave se spajaju. ETD je najraniji, a ETA najkasniji.
+- **Nastavak** (krajnja stanica jednog je početna sledećeg): jedna duža ruta. Važi samo kad taskovi nose iste najave sa istim brutom i kolima.
+- Inače se taskovi ne spajaju. Lokomotive svih taskova ostaju: prva vučna ostaje vučna, a ostale su potisak.
+
+**Trajanje taska** (`OP_024_TaskTrajanje.sql`, program ne radi bez nje): `OP_Task.TrajanjeMin` = `TASK_OBRADA_MIN` (180 min = 3 h) + km rute taska / `BRZINA_VOZA_KMH` (40 km/h). Računa se pri svakom novom tasku (izbor rute, split, spajanje), a tabela taskova ga prikazuje uz „Zauzeta do“. Lokomotiva je na tasku zauzeta od ATD (inače ETD) do ATA, a dok ATA nije upisan do kasnijeg od ETA i polaska + trajanje. Isto važi u proveri preklapanja (`TaskRepo.KrajTaska`). Posledica: posle splita rute drugi deo po ETD obično polazi pre kraja zauzetosti prvog dela, pa ista lokomotiva ne može na oba dela dok se ETD drugog dela ne pomeri.
+
+**Ponuda lokomotiva za task** (`Pravila/PonudaLokomotivaTaska.cs`, dijalog na „+ Vučna“ i „+ Potisak“):
+- Lokacija u vreme polaska je kraj poslednjeg taska ili posla te lokomotive pre polaska. Ako takvog nema ili se završio pre sada, uzima se GPS (učitava se u pozadini, kao na ekranu Posao), a na kraju matična stanica.
+- Km do polazne stanice su po mreži, vreme dolaska je km / `BRZINA_PRAZNE_VOZNJE_KMH`, a „Stiže“ je kasnije od sada i kraja prethodnog posla, plus vreme dolaska. „Na vreme“ poredi „Stiže“ sa polaskom taska.
+- Vuča: ako je cela ruta taska elektrificirana, prednost imaju električne. Ako ruta ima deo bez kontaktne mreže, prednost imaju dizel lokomotive. Druga vuča se nudi, uz napomenu i potvrdu.
+- Zauzetost: drugi task sa tom lokomotivom (ETD/ATD – ETA/ATA i trajanje) i kalendar lokomotive (posao druge najave, servis, namenska) u vremenu taska. Zauzeta lokomotiva je na dnu i ne može da se izabere. Uz svaku piše i sledeći task.
+- Redosled: slobodne, vuča prema ruti, poznata lokacija, stiže na vreme, vreme dolaska, km.
+
+**Lokomotive.** Samo na otvorenom tasku i samo kad task ima ETD i ETA. U istoj transakciji, uz `OP_Lok_{id}`, proverava se:
+- drugi task sa tom lokomotivom (stvarna vremena ATD/ATA kad postoje, inače ETD/ETA);
+- `OP_vLokomotivaKalendar` (servis, namenska, posao druge najave), osim posla iste najave.
+
+Preklapanje se ne može potvrditi. Promena vremena ponavlja proveru.
+
+**Statusi.** Otvoren → Lansiran traži vučnu, ETD i ETA. Lansiran → Završen traži ATA, a ATD se nudi. Lansiran se vraća u Otvoren. Otvoren ili Lansiran se stornira ručno (`RUCNO`). Split, spajanje i lokomotive menjaju se samo na otvorenom tasku.
+
+**Evidencija i konkurentnost.** Svaka promena upisuje događaj `TASK_*` na posao svake najave taska (vidi se u Toku posla), u istoj transakciji. Svaki upis proverava `RowVer`. Kolona Upozorenje na ekranu javlja task koji polazi pre dolaska prethodnog dela iste najave.
+
+**Osoblje taska** (`OP_025_TaskOsoblje.sql`, program ne radi bez nje):
+- Kad su lokomotive određene, uključuje se „Osoblje“ u traci Prikaži. Panel lokomotiva se tada gasi, a na istom mestu se pali panel osoblja (i obrnuto).
+- Radna mesta taska (`OP_TaskOsoblje`) unose se ručno dugmetom „+ Radno mesto“: uloga, stanica sa rute taska, vreme od–do i napomena; mogu da se izmene i uklone. Uloge su Mašinovođa, Pregledač prijem, Pregledač predaja, a od `OP_027_TaskOsobljeUloge.sql` i Manevrista, Vozovođa, Mašinovođa na manevri i Ostali (napomena kaže koji posao). Predlog stanice i vremena menja se sa ulogom:
+  - mašinovođa, vozovođa i ostali: polazna stanica, od ETD do kraja zauzetosti taska;
+  - pregledač na prijemu, manevrista i mašinovođa na manevri: polazna stanica, sat pre ETD;
+  - pregledač na predaji: krajnja stanica, sat posle ETA.
+- **Ostala radna mesta** (manevrista, vozovođa, mašinovođa na manevri, ostali) imaju u Ponudi osoblja svoj odeljak: bira se radno mesto, a nude se osobe sa tom ulogom u `OP_vOsoblje` (za „Ostali“ svi iz planiranja). Proverava se smena od–do (uz vreme puta), odsustvo i drugi zadatak, i drugo radno mesto istog taska u isto vreme. Ko nije u stanici dolazi sam sa AUTO; vozač iz osoblja se za ova mesta ne traži, a ko nema AUTO ne može da se izabere. Svako radno mesto ima svoj zadatak (`TaskOsobljeID`), pa task može imati više manevrista. Odbijanje na ovim mestima ne otkazuje prevoz.
+- Radno mesto kome je zadatak poslat ili prihvaćen ne menja se dok zadatak ne bude odbijen.
+- „Odaberi osoblje“ otvara Ponudu osoblja za taj task. Ponuda nudi osobe za stanicu i vreme svakog radnog mesta, po pravilu 8.9 (lokomotive i pruge su sa taska). Za svaku ulogu nudi se prvo radno mesto taska.
+- Zadatak se vezuje za task i radno mesto (`OP_Zadatak.TaskID`, `TaskOsobljeID`), a `PosaoID` je posao najave.
+- Preklapanje, odbijanje i otkazivanje prevoza gledaju se po tasku: osoba sa zadatkom na jednom tasku je zauzeta za drugi task iste najave. Faza posla se ne menja za zadatke taska.
+- Meni „Ponuda osoblja“ sada nudi taskove. Ponuda po najavi ostaje u kodu (`frmOPPonudaOsoblja(posaoId)`).
+- Split i spajanje ne prenose radna mesta na nove taskove, jer su vezana za stanice i vremena izvornog taska.
+
+**Prikaz delova.** Traka „Prikaži“ ispod perioda sakriva i vraća delove ekrana: Najave, Ponuda trasa, Taskovi i Lokomotive i stanice. Prostor sakrivenog dela preuzimaju ostali, a jedan deo uvek ostaje vidljiv.
+
+**Brisanje za probni rad.** Dugme „Obriši taskove najave (proba)“ fizički briše sve taskove izabrane najave, i stornirane, sa vezama, stanicama i lokomotivama (`TaskRepo.ObrisiZaNajavu`). Spojen task nestaje i iz druge najave. Na posao se upisuje događaj `TASK_BRISANJE`, a najava se vraća na početak. Pre puštanja u rad dugme treba ukloniti ili ograničiti pravom.
+
+**Nije u obimu:** osoblje na tasku, prenos taskova u plan lokomotiva (Gantt) i Dispečer.
+
+## 23. Dorada: uloge zaposlenih prema radnom mestu (7.11.2026)
+
+Skripta je `OP_026_DelavciUloge.sql`, a na radnoj bazi je pokreće korisnik. Po zahtevu korisnika menja `dbo.Delavci`, kao izuzetak od pravila 3.4 (kao kod dorade Osoblje). Program je ne zahteva.
+- Dodaje kolonu `dbo.Delavci.MasinovodjaManevra` (tinyint, podrazumevano 0).
+- Radno mesto je `Delavci.DeSifDelMes` = `DelovnaMesta.DmSifra`; kolona `DmSifra` u `Delavci` ne postoji.
+- Za sve zaposlene, bez obzira na `DeSifStat` (odluka korisnika 7.11.2026):
+  - 7 → `Manevrista`;
+  - 8 → `Vozovodja`;
+  - 9 i 19 → `Masinovodja`;
+  - 10 → `MasinovodjaManevra`;
+  - 22 → `Pregledac` i `PregledacKola` (planiranje čita `PregledacKola`).
+- Podrazumevano (`@Potvrdi = 0`) skripta samo prikazuje promene, a `@Potvrdi = 1` upisuje.
+- `@Prepisi = 0` samo postavlja 1 i ne dira ostale uloge (ni ručno unete na ekranu Osoblje). `@Prepisi = 1` postavlja sve uloge samo prema radnom mestu.
+- `OP_027` dodaje `MasinovodjaManevra` u pogled `OP_vOsoblje` (bez ove kolone u `Delavci` vrednost je 0), a Ponuda osoblja je koristi za radno mesto „Mašinovođa na manevri“. Ekran Osoblje je još ne prikazuje.
+
+## 24. Dorada: brojevi pruga u stotinama (7.11.2026)
+
+Skripta je `OP_028_PrugaBrojevi.sql`, a na radnoj bazi je pokreće korisnik. Drugi prolaz ne menja ništa.
+- `OP_Pruga.RedniBroj` = stotina po vrsti + broj iz Registra: magistralna 1xx (M1 → 101), regionalna 2xx, lokalna 3xx, manipulativna 4xx (MP3 → 403). Važi za sve verzije Registra.
+- `Sifra` (M1, R5, L18, MP3) ostaje zvanična oznaka i ne menja se. Po njoj se vezuju mreža (`OP_010`), elektrifikacija (`OP_019`), deonice pri novoj verziji Registra i granična mesta.
+- Uvoz Registra (`RegistarCitac.BrojPruge`) odmah daje nove brojeve. Ključ poređenja i oznake mesta ostaju po broju iz Registra (`PrugaRegistra.BrojRegistra`), a poređenje sa bazom svodi broj na broj iz Registra (`% 100`). Zato uvoz radi isto i pre i posle `OP_028`.
+- `OP_010` računa `Sifra` iz `RedniBroj % 100`.
+- Novi broj se prikazuje u stablu Registra i povezivanju pruga, u izboru pruge za kvalifikacije („101. Naziv (M1)“), na tabu Pruge ekrana Mreža i stanice (kolona Broj), u spisku pruga na ruti i u opisu deonice na mapi („101 M1“).
+
+## 25. Dorada: provere osoblja i poznavanje serija (7.11.2026)
+
+Skripta je `OP_029_OsobljeSerijeProvere.sql`, a program ne radi bez nje. Pokreće se posle `OP_028`.
+- **Provere osobe.** Na tabu Osobe ekrana Osoblje i kvalifikacije su čekiranja „Lekarski pregled“, „Položio periodični ispit“ i „Prošao školovanje“ (`OP_OsobljePlan.LekarskiPregled`, `PeriodicniIspit`, `Skolovanje`). Čuvaju se dugmetom Sačuvaj, kao AUTO. Ponuda osoblja ih za sada ne proverava.
+- **Poznavanje serija.** Matrica „Poznavanje lokomotiva“ je zamenjena matricom „Poznavanje serija“ (`OP_OsobljeSerija`: osoba, serija, važi do). Redovi su aktivne serije, sa vrstom vuče i brojem aktivnih lokomotiva. Radnici su mašinovođe, manevristi i mašinovođe na manevri.
+- Skripta prenosi postojeća znanja iz `OP_OsobljeLokomotiva` na seriju lokomotive: rok je najkasniji, a bez roka ako je jedna od tih lokomotiva bez roka. `OP_OsobljeLokomotiva` ostaje, ali je program više ne koristi.
+- **Ponuda osoblja** traži da mašinovođa poznaje seriju svake lokomotive posla ili taska (vučne i potiska). Kolona „Serija“ je Da ili Ne, a ocena „Bez serije 185, 193“. Lokomotiva bez serije se ne može proveriti („Lokomotiva bez serije: …“).
+- **Optimizator** (`podaci.py`) dobija iste parove osoba–lokomotiva, izvedene iz serija (aktivne lokomotive serije koju osoba poznaje).
+
+## 26. Dorada: JOBS umesto najave (Zadatak 14, 7.11.2026)
+
+Skripte su `OP_030_Jobs.sql` (šema, program ne radi bez nje) i `OP_031_FormaJobs.sql` (prava, iste grupe kao `frmOPPosao`), posle `OP_029`. Ekran je `frmOPJobs` (Transport / Planiranje, prvo dugme „JOBS“). Forma Najava i `dbo.Najava` ostaju kakve jesu.
+
+**Odluke korisnika od 7.11.2026:**
+- U JOBS ulaze samo polja iz teksta zadatka. Pošiljalac, Primalac, Otpravna gr, Uputna gr i Faktura ne ulaze.
+- Iz trake se sada prave Filtriraj po platiocu, Svi JOBS i LOG. Dokumenta, email, štampa, vagon, Excel i Teretnica dolaze kasnije.
+- Planiranje odmah radi samo sa JOBS-om; najava ulazi u plan samo prenosom u JOBS.
+- „Datum predviđanja“ je ETD.
+
+**Tabela `planiranje.OP_Jobs`:**
+- Šifra je `ID`. Posao prenet iz najave zadržava broj najave, a nov posao počinje od 1.000.000.
+- Opšti podaci: platilac, organizator, tip prevoza (`dbo.TipSaobPrevoza`), otpravna, uputna, status (`dbo.StatusVoza`), napomena.
+- Relacija: preuzima od operatera (partner prevoznik), predaje operateru, stanica preuzimanja (1), stanica istovara (2), stanica predaje (3), ETD.
+- Roba po pravcu: NHM, bruto, broj kola, dužina, neto, RID broj, OM broj (pravac 1 i pravac 2).
+- Stanice su iz `dbo.stanice`, a partneri iz `dbo.Partnerji`, sa istim izvorima kao na formi Najava.
+
+**Serija kola (OP_032, 7.11.2026).** Uz broj kola svakog pravca je i serija kola, kao polje pored broja kola na formi Najava (`dbo.Najava.SerijaVagona`, izbor iz `dbo.VagoniSerije`).
+- Kolone su `OP_Jobs.SerijaKola1` i `SerijaKola2`.
+- Pogledi daju seriju pravca kao `SerijaVagona`, pa je plan, Posao i Taskovi prikazuju kao „Tip kola“.
+- Prenos iz najave upisuje i seriju. `OP_032` je dopisuje i već prenetim poslovima, i pokreće se ponovo posle svakog ponovnog `OP_030`.
+- Serija koje više nema u šifarniku ostaje na poslu i prikazuje se u izboru.
+
+**Pravci.** Bez stanice 2 posao ima jedan pravac (1 → 3). Sa stanicom 2 ima dva (1 → 2 i 2 → 3), a roba drugog pravca se tada unosi.
+- `OP_vJobPravac` daje red po pravcu, a svaki pravac je jedan `OP_Posao` (`RBDeonice` = pravac).
+- `OP_vNajava` sada čita `OP_Jobs` (jedan red po poslu, stanica 1 → 3), pa postojeći upiti po `NajavaID` ostaju ispravni.
+- `OP_vPosao` čita pravac posla. Plan, Taskovi, Ponuda osoblja i Tok posla time rade sa JOBS-om.
+- Taskovi, redosled (`OP_vTaskNajava`), prenumeracija bruto delova i upozorenje o vremenu gledaju se po pravcu.
+
+**Čuvanje.** Jedna transakcija upisuje posao, LOG (`OP_JobsLog`: nov, izmena sa poljima staro → novo, prenos, brisanje) i poslove pravaca.
+- Posao pravca bez taska i lokomotiva dobija nove stanice i ETD. Posao koji je u radu se ne menja, uz napomenu.
+- Uklonjen pravac 2 otkazuje svoj posao, ako on nema taskova.
+- Posle čuvanja se za svaki pravac bez taska pravi task iz najbolje ponuđene rute. Pravac 2 kreće kad se završi zauzetost taska prvog pravca. Bez ETD-a ili rute task se ne pravi, uz poruku. Ruta se menja na ekranu Taskovi.
+
+**Brisanje** je moguće samo dok posao nema taskova ni lokomotiva, a poslovi pravaca se otkazuju.
+
+**Lista:** šifra, platilac, stanice 1–3, ETD, broj otvorenih taskova, status i broj najave iz koje je posao prenet. Podrazumevano su bez predatih (status 7), „Svi JOBS“ prikazuje sve, a filter po platiocu uzima platioca iz opštih podataka. Desno su taskovi izabranog posla po pravcu.
+
+**Privremeno dugme „Prenesi najave u JOBS“.** Najava uneta ili predviđena od izabranog datuma, koja još nije preneta, postaje JOBS sa istim brojem i jednim pravcem: merodavna otpravna → uputna, kao u ranijem pogledu najave. Najava bez dve različite stanice se preskače. Postojeći posao najave ostaje, a nov se pravi samo ako ga nema.
+
+## 27. Dorada: GRAF u Planeru i vagoni na stanicama (Zadatak 15, 7.11.2026)
+
+Bez SQL skripte. Na radnoj bazi se iz `dbo.OperativniPlanMreza` samo čita.
+
+**Dugme GRAF** je u Planeru (Operativni plan), desno od „Sačuvaj plan“ (`Planer.NoviIzgled.cs`). Otvara Mreža i stanice u novom prozoru, odmah na tabu Mapa, uz ista prava kao iz menija (`frmOPStanice`).
+- Forma dobija kopiju tabele „Stanje na mreži“ kakva je u Planeru u tom trenutku, sa nesačuvanim izmenama, a bez obrisanih redova.
+- Kopija se posle ne osvežava; za novo stanje GRAF se pritisne ponovo.
+- Kad se Mreža i stanice otvori iz menija, opcija čita `dbo.OperativniPlanMreza`. Ako tabele nema, lista je prazna.
+
+**Opcija „Prikaži vagone na stanicama“** (`KontrolaMape`) je ispod „Lokomotive na mapi (GPS)“ i „Zatvori iz telegrama“, a podrazumevano je isključena.
+- Prikaz ne zavisi od plana: ulaze sve stavke iz Stanja na mreži.
+- Stavka bez trenutne stanice se preskače.
+- Naziv stanice se poredi bez dvotačke i razmaka („PANČEVO VAROŠ:“ = „Pančevo varoš“), normalizovano kao u ostatku Planiranja (`NaziviStanica.Normalizuj`). Poredi se sa nazivom i starim nazivom stanice, a duplikat vodi na glavnu stanicu.
+- Stanica koja nije u mreži, nije aktivna ili ima koordinate 0,0 navodi se u natpisu kao „Bez pozicije: …“.
+- Na mapi je jedna žuta oznaka po stanici, sa brojem stavki. Oznaka je u svom sloju, gore-levo od tačke stanice, pa ne pokriva stanice, lokomotive ni zatvore. Prelaz mišem ili klik prikazuje stanicu i spisak „ID voza · Vagoni · Klijent“.
+- Ispod opcije su filter (klijent ili stanica), „Uključi sve“, „Isključi sve“ (važe za stavke koje filter prikazuje) i lista stavki sa čekiranjem.
+- Izbor se ne pamti: posle isključenja opcije, ili kad se forma ponovo otvori, sve stavke su uključene.
+
+## 28. Test procesa: Osoblje i kvalifikacije (7.11.2026)
+
+Ekran je proveren kroz formu na `Planiranje_RadnaKopija`, pre i posle `OP_026`/`OP_027`, a baza je posle vraćena. Skripte nisu potrebne.
+
+**Provereno i radi:**
+- uloge, sa upisom u `dbo.Delavci`;
+- matična stanica (domicil) i njena promena;
+- Uključi u plan, AUTO, Samo domicilna, Lekarski pregled, Periodični ispit, Školovanje, napomena i „ko je menjao“;
+- provere bez matične stanice;
+- poznavanje pruga (sa rokom važenja) i serija;
+- turnus i promena turnusa (prethodni se zatvara dan ranije);
+- odsustvo.
+
+**Ispravljeno posle testa:**
+- Promena uloge u tabeli se nije upisivala dok se ne pređe na drugi red. Red je ostajao u izmeni, a Sačuvaj je zatvarao samo ćeliju. Sada Sačuvaj zatvara i izmenu reda.
+- Skidanje uloge pregledača nije uspevalo kad je u `Delavci` i stari `Pregledac` = 1, kako ga upisuje `OP_026` za radno mesto 22. Sada se nuluje i `Pregledac`.
+- „Važi do“ kod dodele turnusa bilo je podrazumevano čekirano na današnji datum. Turnus od budućeg dana je padao na SQL proveri, a turnus od danas dobijao bi kraj danas. Polje sada počinje prazno, i važi za sva datumska polja koja smeju biti prazna. Ako je „Važi do“ pre prvog dana, ekran to javlja porukom.
+- Uloga Mašinovođa manevre se sada menja na ekranu kad `dbo.Delavci` ima tu kolonu (`OP_026`); bez nje je samo za čitanje.
+- Kolone tabele osoba imaju srpske nazive.
+
+**Ne radi se na ovom ekranu:** radno mesto (`Delavci.DeSifDelMes`, naziv u `dbo.DelovnaMesta.DmNaziv`) menja se u kadrovskom delu programa. Uloge iz radnog mesta upisuje samo `OP_026`, jednom.
+
+## 29. Ispravke posle testa JOBS → Taskovi (7.11.2026)
+- **Dijalog lokomotiva (B-01).** Lista se preuređuje kad stigne GPS, pa je izbor zaključan dok traje učitavanje. Izbor napravljen pre toga vraća se po lokomotivi, a ne po mestu u listi.
+- **Taskovi posle akcije (B-03, B-04).** Posle akcije čitaju se samo taskovi; poslovi se tada ne menjaju, a njihov račun je spor.
+  - Dugmad akcija su zaključana dok traju upis i osvežavanje.
+  - Posle splita i spajanja izabran je prvi novi task.
+  - Kursor „čekam“ ostaje dok se ne završi i osvežavanje (`EkranOP.Ucitaj` broji učitavanja u toku).
+- **Izbor posle Osveži (Z-04).** Posle povezivanja tabele ostajao je izabran i prvi red, pa je sledeće osvežavanje skakalo na njega. Sada se izbor briše pre vraćanja.
+- **„Polazi pre dolaska“ (Z-02).** Upozorenje se poredilo sa „Zauzeta do“ prethodnog dela, koje uključuje obradu posle dolaska. Sada se poredi sa ATA, pa ETA.
+- **Stara forma Šifarnici → Osoblje (B-02).** Poruka „Nije uspela selekcija stavki“ dolazila je od `ValueMember` postavljenog posle `DataSource`.
+- **ETD taska je sat posle ETD-a JOBS-a (Z-01).** To je obrada prijema (`OBRADA_PRIJEM_MIN` = 60, pravilo 8.3), nije menjano.
+- **Šifre JOBS od 1.000.000 (Z-03)** su namerne (odeljak 26).
+
+## 30. Gantogrami zauzetosti na ekranu Taskovi (8.11.2026)
+
+Bez SQL skripte. U zaglavlju ekrana Taskovi su dugmad „Gantogram lokomotiva“ i „Gantogram osoblja“ (`frmOPGanttTaskova`, crta `GanttPanel` kao nedeljni plan). Gantogram je samo prikaz; dvoklik na traku taska bira taj task na ekranu Taskovi (po potrebi uključuje „Svi taskovi perioda“).
+
+- **Period** je period ekrana Taskovi i menja se u gantogramu; „Po satima“ je uključeno za period do 3 dana. „Osveži“ čita plan i taskove iznova.
+- **Lokomotive:**
+  - jedan red po lokomotivi koja ima zauzetost u periodu, a uz „Sve aktivne lokomotive“ i sve ostale;
+  - trake taskova traju od ETD/ATD do „Zauzeta do“ (puna traka je vučna, tamna potisak);
+  - poslovi sa nedeljnog plana bez taska te lokomotive su isprekidani, a servis i namenska zauzetost iz kalendara šrafirani.
+- **Osoblje:**
+  - jedan red po osobi u planiranju koja u periodu ima zadatak, smenu ili odsustvo; uz „Sve osobe u planiranju“ prikazuju se sve aktivne;
+  - zadaci su pune trake (poslat ili prihvaćen), a ostali su tamni; odbijeni i otkazani se ne prikazuju;
+  - smene su zelene, a odsustva šrafirana;
+  - radna mesta taskova bez osobe su u redu „Nepopunjena radna mesta“.
+- **Preklapanje** zauzetosti u istom redu ima žut okvir; smena se ne računa jer je dostupnost.
+- **Prelaz mišem** preko trake prikazuje opis: task, ulogu, relaciju, vreme i status.
+- Red sa podnaslovom (serija ili uloge) ima visinu za oba reda teksta, pa je i nedeljni plan za to spreman.
 ## Dodatak A. Kolone tabela (iz `SQL/OP_001_Sema.sql`)
 
 Izvučeno automatski iz skripte. Kad se razlikuje, važi skripta.

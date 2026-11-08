@@ -261,9 +261,10 @@ namespace Saobracaj.Sifarnici
             var commandBuilder = new SqlCommandBuilder(dataAdapter);
             var ds = new DataSet();
             dataAdapter.Fill(ds);
-            cboPartneri.DataSource = ds.Tables[0];
+            // ValueMember pre DataSource: inače SelectedIndexChanged dobija DataRowView umesto šifre i javlja „Nije uspela selekcija stavki“.
             cboPartneri.DisplayMember = "Naziv";
             cboPartneri.ValueMember = "DeSifra";
+            cboPartneri.DataSource = ds.Tables[0];
 
             dataGridView1.ReadOnly = true;
             dataGridView1.DataSource = ds.Tables[0];
@@ -327,6 +328,8 @@ namespace Saobracaj.Sifarnici
 
         private void cboPartneri_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // Dok se lista puni, SelectedValue još nije šifra radnika.
+            if (cboPartneri.SelectedValue == null || cboPartneri.SelectedValue is DataRowView) return;
             try
             {
 

@@ -11,6 +11,8 @@ namespace Saobracaj.Planiranje.Pravila
         internal int A;
         internal int B;
         internal int? PrugaID;
+        // Broj pruge u planiranju (101, 205...); Sifra je zvanična oznaka (M1, R5).
+        internal int? Broj;
         internal string Sifra;
         internal string Naziv;
         internal string Kategorija;
@@ -33,6 +35,8 @@ namespace Saobracaj.Planiranje.Pravila
     internal sealed class RedPruge
     {
         internal int PrugaID;
+        // Broj pruge u planiranju (101, 205...); Sifra je zvanična oznaka (M1, R5).
+        internal int? Broj;
         internal string Sifra;
         internal string Naziv;
         internal string Kategorija;
@@ -76,7 +80,7 @@ namespace Saobracaj.Planiranje.Pravila
                 if (!d.PrugaID.HasValue) continue;
                 RedPruge r;
                 if (!redovi.TryGetValue(d.PrugaID.Value, out r))
-                    redovi[d.PrugaID.Value] = r = new RedPruge { PrugaID = d.PrugaID.Value, Sifra = d.Sifra, Naziv = d.Naziv, Kategorija = d.Kategorija };
+                    redovi[d.PrugaID.Value] = r = new RedPruge { PrugaID = d.PrugaID.Value, Broj = d.Broj, Sifra = d.Sifra, Naziv = d.Naziv, Kategorija = d.Kategorija };
                 r.Km += d.Km;
                 if (d.Elektrificirana == true) r.KmElektro += d.Km;
                 else if (d.Elektrificirana == false) r.KmBezMreze += d.Km;
@@ -110,7 +114,7 @@ namespace Saobracaj.Planiranje.Pravila
                 if (lista == null) { rezultat.NajaveBezRute += p.Broj; continue; }
                 foreach (int id in lista) redovi[id].Najave += p.Broj;
             }
-            rezultat.Redovi = redovi.Values.OrderByDescending(r => r.Najave).ThenByDescending(r => r.Trase).ThenBy(r => r.Sifra).ToList();
+            rezultat.Redovi = redovi.Values.OrderByDescending(r => r.Najave).ThenByDescending(r => r.Trase).ThenBy(r => r.Broj ?? int.MaxValue).ThenBy(r => r.Sifra).ToList();
             return rezultat;
         }
 
@@ -130,14 +134,14 @@ namespace Saobracaj.Planiranje.Pravila
                 if (!poVezi.TryGetValue(d.VezaID, out dp)) continue;
                 RedPruge r = delovi.LastOrDefault();
                 if (r == null || r.PrugaID != (dp.PrugaID ?? 0))
-                    delovi.Add(r = new RedPruge { PrugaID = dp.PrugaID ?? 0, Sifra = dp.Sifra, Naziv = dp.Naziv });
+                    delovi.Add(r = new RedPruge { PrugaID = dp.PrugaID ?? 0, Broj = dp.Broj, Sifra = dp.Sifra, Naziv = dp.Naziv });
                 r.Km += dp.Km;
                 if (dp.Elektrificirana == true) r.KmElektro += dp.Km;
                 else if (dp.Elektrificirana == false) r.KmBezMreze += dp.Km;
                 else r.KmNepoznato += dp.Km;
             }
             return "PRUGE NA RUTI:" + Environment.NewLine + string.Join(Environment.NewLine,
-                delovi.Select(r => "• " + r.Sifra + " " + r.Naziv + ": " + r.Km.ToString("N1") + " km, elektrificirana: " + r.Elektrifikacija));
+                delovi.Select(r => "• " + (r.Broj.HasValue ? r.Broj + " " : "") + r.Sifra + " " + r.Naziv + ": " + r.Km.ToString("N1") + " km, elektrificirana: " + r.Elektrifikacija));
         }
     }
 }

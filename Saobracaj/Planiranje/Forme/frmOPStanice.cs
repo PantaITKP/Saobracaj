@@ -41,11 +41,22 @@ namespace Saobracaj.Planiranje.Forme
         private DataTable stanice;
         private bool mapaZastarela;
 
+        // Otvara se tab Mapa (dugme GRAF u Planeru).
+        private bool otvoriMapu;
+        private TabPage stranaMape;
+
         public frmOPStanice()
         {
             InitializeComponent();
             PrimeniNoviIzgled();
             Pravo = PraviloPristupa.Proveri(code);
+        }
+
+        // Planer (dugme GRAF): tab Mapa, a vagoni na stanicama su iz trenutnog stanja tabele „Stanje na mreži“.
+        public frmOPStanice(DataTable stanjeNaMrezi) : this()
+        {
+            otvoriMapu = true;
+            mapa.PostaviVagone(stanjeNaMrezi);
         }
 
         private async Task Osvezi()
@@ -58,6 +69,11 @@ namespace Saobracaj.Planiranje.Forme
                 poljaRuta.IzvorIzbora("DoID", t.Izbor, "Naziv", "ID", false);
                 mapaZastarela = true;
                 prugeUcitane = false;
+                if (otvoriMapu)
+                {
+                    otvoriMapu = false;
+                    if (stranaMape.Parent is TabControl tabovi) tabovi.SelectedTab = stranaMape;
+                }
             });
         }
 
@@ -192,11 +208,12 @@ namespace Saobracaj.Planiranje.Forme
             if (pregledPruga == null) return;
             var t = new DataTable();
             t.Columns.Add("PrugaID", typeof(int));
+            t.Columns.Add("Broj", typeof(int));
             foreach (string k in new[] { "Pruga", "Naziv pruge", "Kategorija", "Elektrificirana" }) t.Columns.Add(k);
             foreach (string k in new[] { "Km", "Elektro km", "Bez mreže km", "Nepoznato km" }) t.Columns.Add(k, typeof(decimal));
             foreach (string k in new[] { "Trase", "Najave" }) t.Columns.Add(k, typeof(int));
             foreach (RedPruge r in pregledPruga.Redovi.Where(x => x.Koristi || !chkSamoKoriscene.Checked))
-                t.Rows.Add(r.PrugaID, r.Sifra, r.Naziv, r.Kategorija, r.Elektrifikacija, Math.Round(r.Km, 1), Math.Round(r.KmElektro, 1), Math.Round(r.KmBezMreze, 1), Math.Round(r.KmNepoznato, 1), r.Trase, r.Najave);
+                t.Rows.Add(r.PrugaID, (object)r.Broj ?? DBNull.Value, r.Sifra, r.Naziv, r.Kategorija, r.Elektrifikacija, Math.Round(r.Km, 1), Math.Round(r.KmElektro, 1), Math.Round(r.KmBezMreze, 1), Math.Round(r.KmNepoznato, 1), r.Trase, r.Najave);
             tabPruge.DataSource = t;
             int koristi = pregledPruga.Redovi.Count(r => r.Koristi);
             lblPruge.Text = "Koristi se " + koristi + " od " + pregledPruga.Redovi.Count + " pruga: važeće trase i najave iz poslednjih " + DanaNajava + " dana, po najkraćoj ruti. Bez rute: trasa " + pregledPruga.TraseBezRute + ", najava " + pregledPruga.NajaveBezRute + ".";

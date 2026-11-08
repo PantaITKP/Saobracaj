@@ -58,6 +58,8 @@ namespace Saobracaj.Planiranje.Pravila
     internal sealed class PrugaRegistra
     {
         internal int RedniBroj;
+        // Broj pruge u Registru (1, 2, 3... u svakoj kategoriji); RedniBroj je broj u planiranju (101, 205...).
+        internal int BrojRegistra;
         internal string NazivCir;
         internal string Naziv;
         internal string Kategorija;
@@ -69,8 +71,8 @@ namespace Saobracaj.Planiranje.Pravila
         internal bool KiM;
         internal readonly List<MestoRegistra> Mesta = new List<MestoRegistra>();
 
-        // Redni brojevi kreću iznova u svakoj kategoriji.
-        internal string Kljuc { get { return Kategorija + " " + RedniBroj; } }
+        // Ključ je po broju iz Registra, kao i pre brojeva u stotinama (upisuje se i u nazive oznaka).
+        internal string Kljuc { get { return Kategorija + " " + BrojRegistra; } }
     }
 
     internal sealed class SadrzajRegistra
@@ -122,7 +124,8 @@ namespace Saobracaj.Planiranje.Pravila
                     string nazivCir = Regex.Replace(mp.Groups[2].Value, @"\s+", " ").Trim();
                     pruga = new PrugaRegistra
                     {
-                        RedniBroj = int.Parse(mp.Groups[1].Value, CultureInfo.InvariantCulture),
+                        RedniBroj = BrojPruge(kategorija, int.Parse(mp.Groups[1].Value, CultureInfo.InvariantCulture)),
+                        BrojRegistra = int.Parse(mp.Groups[1].Value, CultureInfo.InvariantCulture),
                         NazivCir = nazivCir,
                         Naziv = Latinica.IzCirilice(nazivCir),
                         Kategorija = kategorija,
@@ -156,6 +159,20 @@ namespace Saobracaj.Planiranje.Pravila
             return rezultat;
         }
 
+        // Broj pruge u planiranju: stotina po vrsti (magistralna 1, regionalna 2, lokalna 3, manipulativna 4) + broj iz Registra (OP_028).
+        internal static int BrojPruge(string kategorija, int redniBroj)
+        {
+            switch (kategorija)
+            {
+                case "MAGISTRALNA": return 100 + redniBroj;
+                case "REGIONALNA": return 200 + redniBroj;
+                case "LOKALNA": return 300 + redniBroj;
+                case "MANIPULATIVNA": return 400 + redniBroj;
+                default: return redniBroj;
+            }
+        }
+
+        // Zvanična oznaka (M1, R5, L18, MP3) ostaje po broju iz Registra.
         private static string SifraPruge(string kategorija, int redniBroj)
         {
             switch (kategorija)

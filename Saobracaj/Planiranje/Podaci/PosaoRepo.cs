@@ -48,18 +48,21 @@ namespace Saobracaj.Planiranje.Podaci
                 {
                     Db.Lock(c, tx, "OP_UzmiNajave");
                     DataTable najave = Db.Table(c, tx,
-                        "SELECT n.NajavaID, n.BrojNajave, n.PlanOtpravnaID, n.PlanUputnaID, n.PredvidjenoPrimanje FROM planiranje.OP_vNajava n " +
-                        "WHERE n.PredvidjenoPrimanje >= @od AND n.PredvidjenoPrimanje < @do AND ISNULL(n.StatusNajave, 0) <> 7 AND n.StvarnaPredaja IS NULL " +
-                        "AND NOT EXISTS (SELECT 1 FROM planiranje.OP_Posao p WHERE p.NajavaID = n.NajavaID AND p.Status <> N'OTKAZAN') ORDER BY n.PredvidjenoPrimanje",
+                        // Voz primljen pre perioda (status 4) planira se od početka perioda.
+                        // Od OP_030 izvor su pravci JOBS-a: svaki pravac je jedan posao (RBDeonice = pravac).
+                        "SELECT n.NajavaID, n.Pravac, n.BrojNajave, n.PlanOtpravnaID, n.PlanUputnaID, " +
+                        "CASE WHEN COALESCE(n.PredvidjenoPrimanje, n.StvarnoPrimanje) < @od THEN @od ELSE COALESCE(n.PredvidjenoPrimanje, n.StvarnoPrimanje) END AS PredvidjenoPrimanje " +
+                        "FROM planiranje.OP_vJobPravac n WHERE " + NajaveRepo.UslovPerioda +
+                        "AND NOT EXISTS (SELECT 1 FROM planiranje.OP_Posao p WHERE p.NajavaID = n.NajavaID AND p.RBDeonice = n.Pravac AND p.Status <> N'OTKAZAN') ORDER BY 6, 1, 2",
                         "@od", od, "@do", doDatuma);
                     foreach (DataRow n in najave.Rows)
                     {
                         int posao;
                         using (var cmd = Db.Command(c, tx,
-                            "INSERT planiranje.OP_Posao (NajavaID, PrijemStanicaID, PredajaStanicaID, PlaniraniPrijem, Faza, Kreirao) " +
-                            "SELECT @n, (SELECT TOP 1 COALESCE(DuplikatOd, ID) FROM planiranje.OP_Stanice WHERE IzvorniID = @o ORDER BY ID), (SELECT TOP 1 COALESCE(DuplikatOd, ID) FROM planiranje.OP_Stanice WHERE IzvorniID = @u ORDER BY ID), @d, 1, @k; " +
+                            "INSERT planiranje.OP_Posao (NajavaID, RBDeonice, PrijemStanicaID, PredajaStanicaID, PlaniraniPrijem, Faza, Kreirao) " +
+                            "SELECT @n, @r, (SELECT TOP 1 COALESCE(DuplikatOd, ID) FROM planiranje.OP_Stanice WHERE IzvorniID = @o ORDER BY ID), (SELECT TOP 1 COALESCE(DuplikatOd, ID) FROM planiranje.OP_Stanice WHERE IzvorniID = @u ORDER BY ID), @d, 1, @k; " +
                             "SELECT CAST(SCOPE_IDENTITY() AS int);",
-                            "@n", n["NajavaID"], "@o", n["PlanOtpravnaID"], "@u", n["PlanUputnaID"], "@d", n["PredvidjenoPrimanje"], "@k", PlaniranjeDb.Korisnik))
+                            "@n", n["NajavaID"], "@r", n["Pravac"], "@o", n["PlanOtpravnaID"], "@u", n["PlanUputnaID"], "@d", n["PredvidjenoPrimanje"], "@k", PlaniranjeDb.Korisnik))
                             posao = Convert.ToInt32(cmd.ExecuteScalar());
                         DogadjajRepo.Upisi(c, tx, posao, "NAJAVA", "Najava " + Convert.ToString(n["BrojNajave"]).Trim() + " je ušla u plan.");
                         novih++;
@@ -172,8 +175,8 @@ namespace Saobracaj.Planiranje.Podaci
                     using (var cmd = Db.Command(c, tx,
                         "INSERT planiranje.OP_PlanVerzijaStavka (PlanVerzijaID, PosaoID, LokomotivaID, RB, Od, Do) " +
                         "SELECT @ver, p.ID, l.LokomotivaID, l.RB, ISNULL(l.Od, p.PlaniraniPrijem), ISNULL(l.Do, p.PlaniranaPredaja) " +
-                        "FROM planiranje.OP_Posao p LEFT JOIN planiranje.OP_PosaoLokomotiva l ON l.PosaoID = p.ID " +
-                        "WHERE p.PlaniraniPrijem >= @od AND p.PlaniraniPrijem < @do AND p.Status <> N'OTKAZAN'",
+                        "FROM planiranje.OP_vPosao p LEFT JOIN planiranje.OP_PosaoLokomotiva l ON l.PosaoID = p.ID " +
+                        "WHERE " + PlanRepo.UPeriodu + "AND p.Status <> N'OTKAZAN'",
                         "@ver", verzija, "@od", od, "@do", doDatuma))
                         cmd.ExecuteNonQuery();
                     tx.Commit();

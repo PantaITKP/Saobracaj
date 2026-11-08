@@ -81,6 +81,7 @@ namespace Saobracaj.Planiranje.Forme
             var strRegistar = new TabPage("Registar");
             var strMapa = new TabPage("Mapa");
             var strPruge = new TabPage("Pruge");
+            stranaMape = strMapa;
             tabela.Dock = DockStyle.Fill;
             mapa.Dock = DockStyle.Fill;
             strTabela.Controls.Add(tabela);

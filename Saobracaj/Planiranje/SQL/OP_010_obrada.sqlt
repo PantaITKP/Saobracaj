@@ -110,7 +110,7 @@ WHERE ISNULL(s.Drzava, N'') IN (N'', N'SRB', N'RS', N'SRBIJA') AND s.RegKljuc IS
 DECLARE @zamenjeno int; SET @zamenjeno = @@ROWCOUNT;
 
 /* ---------- 8. Pruge i mesta važeće verzije ---------- */
-UPDATE p SET Sifra = CASE p.Kategorija WHEN N'MAGISTRALNA' THEN N'M' WHEN N'REGIONALNA' THEN N'R' WHEN N'LOKALNA' THEN N'L' WHEN N'MANIPULATIVNA' THEN N'MP' END + CAST(p.RedniBroj AS nvarchar(4))
+UPDATE p SET Sifra = CASE p.Kategorija WHEN N'MAGISTRALNA' THEN N'M' WHEN N'REGIONALNA' THEN N'R' WHEN N'LOKALNA' THEN N'L' WHEN N'MANIPULATIVNA' THEN N'MP' END + CAST(p.RedniBroj % 100 AS nvarchar(4)) -- broj iz Registra (OP_028: RedniBroj je 101, 205...)
 FROM planiranje.OP_Pruga p JOIN planiranje.OP_RegistarVerzija v ON v.ID = p.RegistarVerzijaID
 WHERE v.Status = N'VAZECA' AND p.RedniBroj IS NOT NULL;
 UPDATE p SET KiM = CASE WHEN p.NazivCir LIKE N'%*)' THEN 1 ELSE 0 END

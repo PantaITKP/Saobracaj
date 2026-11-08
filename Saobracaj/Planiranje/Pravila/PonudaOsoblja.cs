@@ -15,6 +15,7 @@ namespace Saobracaj.Planiranje.Pravila
         internal bool Pregledac;
         internal bool Manevrista;
         internal bool Vozovodja;
+        internal bool MasinovodjaManevra;
         internal bool Aktivan;
         internal bool UPlaniranju;
         internal int? MaticnaID;
@@ -28,6 +29,7 @@ namespace Saobracaj.Planiranje.Pravila
         internal int DeSifra;
         internal string Vrsta;
         internal int? LokomotivaID;
+        internal int? SerijaID;
         internal int? PrugaID;
         internal DateTime? VaziDo;
     }
@@ -66,7 +68,11 @@ namespace Saobracaj.Planiranje.Pravila
         internal string Telefon;
         internal string Email;
         internal byte[] RowVer;
+        internal int? TaskID;
+        internal int? TaskOsobljeID;
         internal bool Aktivan { get { return Status == "POSLAT" || Status == "PRIHVACEN"; } }
+        // Isti „posao“ za ponudu: task, a za zadatak bez taska posao najave (task ima negativan ključ).
+        internal int Kljuc { get { return TaskID.HasValue ? -TaskID.Value : PosaoID; } }
     }
 
     internal sealed class OsobljeKontekst
@@ -91,6 +97,9 @@ namespace Saobracaj.Planiranje.Pravila
         internal int? PredajaID;
         internal List<int> Lokomotive = new List<int>();
         internal List<int> Pruge = new List<int>();
+        // Termin taska: zadaci se vezuju za task, pa drugi task iste najave ne smeta.
+        internal int? TaskID;
+        internal int Kljuc { get { return TaskID.HasValue ? -TaskID.Value : PosaoID; } }
     }
 
     internal sealed class KandidatOsoba
@@ -98,7 +107,8 @@ namespace Saobracaj.Planiranje.Pravila
         internal OsobaPlan Osoba;
         internal string Uloga;
         internal string Lokacija;
-        internal bool? ImaLokomotivu;
+        // Poznaje seriju svake lokomotive posla (OP_029).
+        internal bool? ImaSeriju;
         internal bool? ImaPrugu;
         internal string Zauzetost;
         internal string Ocena;
@@ -116,6 +126,8 @@ namespace Saobracaj.Planiranje.Pravila
         internal DateTime? TerminDo;
         internal int? StanicaID;
         internal string Napomena;
+        // Ostalo radno mesto taska za koje je osoba ponuđena (OP_TaskOsoblje.ID).
+        internal int? MestoID;
     }
 
     // Pravilo 8.9.
@@ -127,6 +139,67 @@ namespace Saobracaj.Planiranje.Pravila
         internal const string UlogaPrevozMasinovodje = "PREVOZ_MASINOVODJA";
         internal const string UlogaPrevozPrijem = "PREVOZ_PRIJEM";
         internal const string UlogaPrevozPredaja = "PREVOZ_PREDAJA";
+        // Ostala radna mesta taska (OP_027).
+        internal const string UlogaManevrista = "MANEVRISTA";
+        internal const string UlogaVozovodja = "VOZOVODJA";
+        internal const string UlogaMasinovodjaManevra = "MASINOVODJA_MANEVRA";
+        internal const string UlogaOstalo = "OSTALO";
+
+        // Samo mašinovođa i pregledači imaju par i vozača iz osoblja (dorada 12).
+        internal static bool ImaPrevoz(string uloga)
+        {
+            return uloga == UlogaMasinovodja || uloga == UlogaPrijem || uloga == UlogaPredaja;
+        }
+
+        internal static bool OstaloMesto(string uloga)
+        {
+            return uloga == UlogaManevrista || uloga == UlogaVozovodja || uloga == UlogaMasinovodjaManevra || uloga == UlogaOstalo;
+        }
+
+        private static bool ImaUlogu(OsobaPlan o, string uloga)
+        {
+            switch (uloga)
+            {
+                case UlogaManevrista: return o.Manevrista;
+                case UlogaVozovodja: return o.Vozovodja;
+                case UlogaMasinovodjaManevra: return o.MasinovodjaManevra;
+                default: return true;
+            }
+        }
+
+        // Ostalo radno mesto taska: osoba sa tom ulogom (za „Ostali“ svako iz planiranja), sa smenom od–do,
+        // bez odsustva i drugog zadatka. Ko nije u stanici dolazi sam sa AUTO; vozač iz osoblja se za ova mesta ne traži.
+        internal static List<KandidatOsoba> ZaMesto(OsobljeKontekst k, TerminPosla t, string uloga, int stanica, DateTime od, DateTime doVreme, int? mestoId = null)
+        {
+            decimal brzina = k.Plan.Parametar("BRZINA_PRAZNE_VOZNJE_KMH", od, null, null, null, 50);
+            Dictionary<int, decimal> dist = k.Plan.Graf.Rastojanja(stanica);
+            var lista = new List<KandidatOsoba>();
+            foreach (OsobaPlan o in k.Osobe.Where(x => x.Aktivan && x.UPlaniranju && ImaUlogu(x, uloga)))
+            {
+                string izvor;
+                int? lok = Lokacija(k, o, od, out izvor);
+                var c = new KandidatOsoba { Osoba = o, Uloga = uloga, Lokacija = k.Plan.Naziv(lok) + " (" + izvor + ")", Zauzetost = "Slobodan", LokacijaID = lok };
+                decimal km;
+                int minuta = lok.HasValue && lok != stanica && dist.TryGetValue(lok.Value, out km) ? MinutaZaKm(km, brzina) : 0;
+                DateTime slobodanOd = od.AddMinutes(-minuta);
+                string odsustvo = Odsustvo(k, o.DeSifra, slobodanOd, doVreme);
+                // Drugo radno mesto istog taska u isto vreme je takođe zauzetost.
+                ZadatakOsobe drugi = Preklapanje(k, o.DeSifra, t.Kljuc, slobodanOd, doVreme, 0)
+                    ?? k.Zadaci.FirstOrDefault(z => z.DeSifra == o.DeSifra && z.Kljuc == t.Kljuc && z.Aktivan && z.Od < doVreme && z.Do > slobodanOd && (!mestoId.HasValue || z.TaskOsobljeID != mestoId));
+                bool odbio = k.Zadaci.Any(z => z.DeSifra == o.DeSifra && z.Kljuc == t.Kljuc && z.Uloga == uloga && z.Status == "ODBIJEN");
+                c.MinutaDoLokacije = minuta;
+                if (odbio) c.Ocena = "Odbio zadatak";
+                else if (odsustvo != null) { c.Ocena = "Nedostupan"; c.Zauzetost = odsustvo; }
+                else if (drugi != null) { c.Ocena = "Zauzet"; c.Zauzetost = Termin(drugi); }
+                else if (!k.Smene.Any(s => s.DeSifra == o.DeSifra && Pokriva(s, slobodanOd, doVreme))) { c.Ocena = "Nedostupan"; c.Zauzetost = "Nema smenu u terminu"; }
+                else if (!lok.HasValue) c.Ocena = "Lokacija nije poznata";
+                else if (lok == stanica) { c.Ocena = "Preporučen"; c.Prolazi = true; }
+                else if (o.Auto) { c.Ocena = Dolazi(minuta); c.Prolazi = true; c.TerminOd = slobodanOd; c.NaPutu = true; }
+                else c.Ocena = Dolazi(minuta) + ", nema AUTO";
+                lista.Add(c);
+            }
+            return lista.OrderBy(x => x.Prolazi ? 0 : 1).ThenBy(x => x.MinutaDoLokacije).ThenBy(x => x.Osoba.Naziv).ToList();
+        }
 
         // Svaka uloga ima svoju ulogu prevoza, jer na jednom poslu može da se vozi više osoba.
         internal static string UlogaPrevoza(string uloga)
@@ -172,7 +245,7 @@ namespace Saobracaj.Planiranje.Pravila
                 int minuta = Math.Max(1, MinutaZaKm(km + doCilja, brzina));
                 DateTime od = dolazak.AddMinutes(-minuta);
                 if (najbolji != null && minuta >= najbolji.MinutaDoLokacije) continue;
-                if (k.Zadaci.Any(z => z.DeSifra == v.DeSifra && z.PosaoID == posao && z.Uloga == ulogaPrevoza && z.Status == "ODBIJEN")) continue;
+                if (k.Zadaci.Any(z => z.DeSifra == v.DeSifra && z.Kljuc == posao && z.Uloga == ulogaPrevoza && z.Status == "ODBIJEN")) continue;
                 if (!Slobodan(k, v.DeSifra, posao, od, dolazak)) continue;
                 najbolji = new KandidatOsoba
                 {
@@ -217,7 +290,7 @@ namespace Saobracaj.Planiranje.Pravila
         {
             if (!a.NaPutu || !b.NaPutu || !a.LokacijaID.HasValue || a.LokacijaID != b.LokacijaID || a.Osoba.DeSifra == b.Osoba.DeSifra) return false;
             DateTime od = t.Prijem.AddMinutes(-Math.Max(a.MinutaDoLokacije, b.MinutaDoLokacije));
-            return Slobodan(k, a.Osoba.DeSifra, t.PosaoID, od, t.Prijem) && Slobodan(k, b.Osoba.DeSifra, t.PosaoID, od, t.Prijem);
+            return Slobodan(k, a.Osoba.DeSifra, t.Kljuc, od, t.Prijem) && Slobodan(k, b.Osoba.DeSifra, t.Kljuc, od, t.Prijem);
         }
 
         // Ko nema AUTO prvo traži par sa AUTO; vozač iz osoblja ostaje rezerva. Par ide ispred onih kojima treba vozač.
@@ -262,7 +335,7 @@ namespace Saobracaj.Planiranje.Pravila
                     return vozaci;
                 }
                 decimal brzina = k.Plan.Parametar("BRZINA_PRAZNE_VOZNJE_KMH", t.Prijem, null, null, null, 50);
-                KandidatOsoba zajednicki = NadjiPrevoz(k, m.Osoba, m.LokacijaID.Value, t.PrijemID.Value, t.Prijem, t.PosaoID, UlogaMasinovodja, brzina, p.Osoba);
+                KandidatOsoba zajednicki = NadjiPrevoz(k, m.Osoba, m.LokacijaID.Value, t.PrijemID.Value, t.Prijem, t.Kljuc, UlogaMasinovodja, brzina, p.Osoba);
                 if (zajednicki != null) vozaci.Add(zajednicki);
                 else greske.Add("Niko ne može da preveze: " + m.Osoba.Naziv + " i " + p.Osoba.Naziv + ".");
                 return vozaci;
@@ -299,12 +372,12 @@ namespace Saobracaj.Planiranje.Pravila
 
         private static ZadatakOsobe Preklapanje(OsobljeKontekst k, int osoba, int posao, DateTime od, DateTime doVreme, decimal odmorH)
         {
-            return k.Zadaci.FirstOrDefault(z => z.DeSifra == osoba && z.PosaoID != posao && z.Aktivan && z.Od < doVreme.AddHours((double)odmorH) && z.Do > od.AddHours(-(double)odmorH));
+            return k.Zadaci.FirstOrDefault(z => z.DeSifra == osoba && z.Kljuc != posao && z.Aktivan && z.Od < doVreme.AddHours((double)odmorH) && z.Do > od.AddHours(-(double)odmorH));
         }
 
         private static bool Kvalifikovan(OsobljeKontekst k, int osoba, string vrsta, int vrednost, DateTime datum)
         {
-            return k.Kvalifikacije.Any(q => q.DeSifra == osoba && q.Vrsta == vrsta && (vrsta == "LOKOMOTIVA" ? q.LokomotivaID == vrednost : q.PrugaID == vrednost)
+            return k.Kvalifikacije.Any(q => q.DeSifra == osoba && q.Vrsta == vrsta && (vrsta == "SERIJA" ? q.SerijaID == vrednost : vrsta == "LOKOMOTIVA" ? q.LokomotivaID == vrednost : q.PrugaID == vrednost)
                 && (!q.VaziDo.HasValue || q.VaziDo.Value.Date >= datum.Date));
         }
 
@@ -321,7 +394,7 @@ namespace Saobracaj.Planiranje.Pravila
 
         private static string Termin(ZadatakOsobe z)
         {
-            return "Najava " + z.BrojNajave + " " + z.Od.ToString("dd.MM. HH:mm") + "–" + z.Do.ToString("HH:mm");
+            return (z.TaskID.HasValue ? "Task " + z.TaskID + " (najava " + z.BrojNajave + ")" : "Najava " + z.BrojNajave) + " " + z.Od.ToString("dd.MM. HH:mm") + "–" + z.Do.ToString("HH:mm");
         }
 
         internal static List<KandidatOsoba> Masinovodje(OsobljeKontekst k, TerminPosla t)
@@ -336,14 +409,17 @@ namespace Saobracaj.Planiranje.Pravila
                 string izvor;
                 int? lok = Lokacija(k, o, t.Polazak, out izvor);
                 var c = new KandidatOsoba { Osoba = o, Uloga = UlogaMasinovodja, Lokacija = k.Plan.Naziv(lok) + " (" + izvor + ")", Zauzetost = "Slobodan" };
-                List<int> bezLokomotive = t.Lokomotive.Where(l => !Kvalifikovan(k, o.DeSifra, "LOKOMOTIVA", l, t.Polazak)).ToList();
+                // Mašinovođa poznaje seriju svake lokomotive; lokomotiva bez serije se ne može proveriti.
+                List<int> lokBezSerije = t.Lokomotive.Where(l => !SerijaLokomotive(k, l).HasValue).ToList();
+                List<int> bezSerije = t.Lokomotive.Select(l => SerijaLokomotive(k, l)).Where(s => s.HasValue).Select(s => s.Value).Distinct()
+                    .Where(s => !Kvalifikovan(k, o.DeSifra, "SERIJA", s, t.Polazak)).ToList();
                 List<int> bezPruge = t.Pruge.Where(p => !Kvalifikovan(k, o.DeSifra, "PRUGA", p, t.Polazak)).ToList();
-                c.ImaLokomotivu = bezLokomotive.Count == 0;
+                c.ImaSeriju = bezSerije.Count == 0 && lokBezSerije.Count == 0;
                 c.ImaPrugu = bezPruge.Count == 0;
 
                 string odsustvo = Odsustvo(k, o.DeSifra, t.Polazak, t.Predaja);
-                ZadatakOsobe drugi = Preklapanje(k, o.DeSifra, t.PosaoID, t.Polazak, t.Predaja, odmor);
-                bool odbio = k.Zadaci.Any(z => z.DeSifra == o.DeSifra && z.PosaoID == t.PosaoID && z.Uloga == UlogaMasinovodja && z.Status == "ODBIJEN");
+                ZadatakOsobe drugi = Preklapanje(k, o.DeSifra, t.Kljuc, t.Polazak, t.Predaja, odmor);
+                bool odbio = k.Zadaci.Any(z => z.DeSifra == o.DeSifra && z.Kljuc == t.Kljuc && z.Uloga == UlogaMasinovodja && z.Status == "ODBIJEN");
                 bool smena = k.Smene.Any(s => s.DeSifra == o.DeSifra && Pokriva(s, t.Polazak, t.Predaja));
                 bool predugo = (decimal)(t.Predaja - t.Polazak).TotalHours > maxRad;
 
@@ -352,7 +428,8 @@ namespace Saobracaj.Planiranje.Pravila
                 else if (drugi != null) { c.Ocena = "Zauzet"; c.Zauzetost = Termin(drugi); }
                 else if (!smena) { c.Ocena = "Nedostupan"; c.Zauzetost = "Nema smenu u terminu"; }
                 else if (predugo) { c.Ocena = "Nedostupan"; c.Zauzetost = "Posao je duži od " + maxRad + " h"; }
-                else if (bezLokomotive.Count > 0) c.Ocena = "Bez lokomotive " + string.Join(", ", bezLokomotive.Select(l => BrojLokomotive(k, l)));
+                else if (bezSerije.Count > 0) c.Ocena = "Bez serije " + string.Join(", ", bezSerije.Select(s => OznakaSerije(k, s)));
+                else if (lokBezSerije.Count > 0) c.Ocena = "Lokomotiva bez serije: " + string.Join(", ", lokBezSerije.Select(l => BrojLokomotive(k, l)));
                 else if (bezPruge.Count > 0) c.Ocena = "Bez pruge " + string.Join(", ", bezPruge);
                 else
                 {
@@ -361,7 +438,7 @@ namespace Saobracaj.Planiranje.Pravila
                     {
                         decimal km;
                         int min = lok.HasValue && dist.TryGetValue(lok.Value, out km) ? MinutaZaKm(km, brzina) : 0;
-                        OceniPut(k, c, lok, t.PrijemID, t.Polazak, t.PosaoID, brzina, min);
+                        OceniPut(k, c, lok, t.PrijemID, t.Polazak, t.Kljuc, brzina, min);
                     }
                 }
                 lista.Add(c);
@@ -390,18 +467,28 @@ namespace Saobracaj.Planiranje.Pravila
                 int minuta = lok.HasValue && lok != stanica && dist.TryGetValue(lok.Value, out km) ? MinutaZaKm(km, brzina) : 0;
                 DateTime slobodanOd = vreme.AddMinutes(-minuta);
                 string odsustvo = Odsustvo(k, o.DeSifra, od < slobodanOd ? od : slobodanOd, doVreme);
-                ZadatakOsobe drugi = Preklapanje(k, o.DeSifra, t.PosaoID, slobodanOd, vreme.AddMinutes(obrada), 0);
-                bool odbio = k.Zadaci.Any(z => z.DeSifra == o.DeSifra && z.PosaoID == t.PosaoID && z.Uloga == uloga && z.Status == "ODBIJEN");
+                ZadatakOsobe drugi = Preklapanje(k, o.DeSifra, t.Kljuc, slobodanOd, vreme.AddMinutes(obrada), 0);
+                bool odbio = k.Zadaci.Any(z => z.DeSifra == o.DeSifra && z.Kljuc == t.Kljuc && z.Uloga == uloga && z.Status == "ODBIJEN");
                 if (odbio) c.Ocena = "Odbio zadatak";
                 else if (odsustvo != null) { c.Ocena = "Nedostupan"; c.Zauzetost = odsustvo; }
                 else if (drugi != null) { c.Ocena = "Zauzet"; c.Zauzetost = Termin(drugi); }
                 else if (!k.Smene.Any(s => s.DeSifra == o.DeSifra && Pokriva(s, od < slobodanOd ? od : slobodanOd, doVreme))) { c.Ocena = "Nedostupan"; c.Zauzetost = "Nema smenu u terminu"; }
                 else if (!lok.HasValue) c.Ocena = "Lokacija nije poznata";
                 else if (lok == stanica) { c.Ocena = "Preporučen"; c.Prolazi = true; }
-                else OceniPut(k, c, lok, stanica, vreme, t.PosaoID, brzina, minuta);
+                else OceniPut(k, c, lok, stanica, vreme, t.Kljuc, brzina, minuta);
                 lista.Add(c);
             }
             return lista.OrderBy(x => x.Prolazi ? 0 : 1).ThenBy(x => x.MinutaDoLokacije).ThenBy(x => x.Osoba.Naziv).ToList();
+        }
+
+        private static int? SerijaLokomotive(OsobljeKontekst k, int lokomotiva)
+        {
+            return k.Plan.Lokomotive.Where(l => l.ID == lokomotiva).Select(l => l.SerijaID).FirstOrDefault();
+        }
+
+        private static string OznakaSerije(OsobljeKontekst k, int serija)
+        {
+            return k.Plan.Lokomotive.Where(l => l.SerijaID == serija).Select(l => l.Serija).FirstOrDefault() ?? serija.ToString();
         }
 
         private static string BrojLokomotive(OsobljeKontekst k, int lokomotiva)

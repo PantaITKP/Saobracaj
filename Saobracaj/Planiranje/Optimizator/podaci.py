@@ -175,7 +175,9 @@ def ucitaj(c: pyodbc.Connection, od: datetime, do: datetime, vreme_s: float) -> 
     for r in c.execute("SELECT DeSifra, PrugaID FROM planiranje.OP_OsobljePruga WHERE VaziDo IS NULL OR VaziDo >= ?", od):
         if r.DeSifra in osobe:
             osobe[r.DeSifra].pruge.add(r.PrugaID)
-    for r in c.execute("SELECT DeSifra, LokomotivaID FROM planiranje.OP_OsobljeLokomotiva WHERE VaziDo IS NULL OR VaziDo >= ?", od):
+    # Poznavanje serija (OP_029): mašinovođa zna svaku aktivnu lokomotivu serije koju poznaje.
+    for r in c.execute("SELECT k.DeSifra, l.ID AS LokomotivaID FROM planiranje.OP_OsobljeSerija k JOIN planiranje.OP_Lokomotive l ON l.SerijaID = k.SerijaID "
+                       "WHERE l.Aktivna = 1 AND (k.VaziDo IS NULL OR k.VaziDo >= ?)", od):
         if r.DeSifra in osobe:
             osobe[r.DeSifra].lokomotive.add(r.LokomotivaID)
     for r in c.execute("SELECT DeSifra, Od, Do FROM planiranje.OP_Smena WHERE Vrsta <> N'SLOBODAN' AND Od IS NOT NULL AND Do IS NOT NULL AND Od < ? AND Do > ?", do, od - timedelta(days=1)):

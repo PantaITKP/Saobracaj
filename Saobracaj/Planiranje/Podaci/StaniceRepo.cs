@@ -35,6 +35,13 @@ namespace Saobracaj.Planiranje.Podaci
                 return Db.Table(c, null, "SELECT ID, Naziv FROM planiranje.OP_Stanice WHERE Aktivna = 1 ORDER BY Naziv");
         }
 
+        // Stanje na mreži iz Planera (Operativni plan), samo čitanje; tabela pripada Planeru, pa je prazno kad je nema.
+        internal static DataTable StanjeNaMrezi()
+        {
+            using (var c = Db.Open())
+                return Db.Table(c, null, "IF OBJECT_ID(N'dbo.OperativniPlanMreza', N'U') IS NOT NULL SELECT Stanica, IDVoza, Vagoni, Klijent FROM dbo.OperativniPlanMreza ORDER BY ID ELSE SELECT CAST(NULL AS nvarchar(100)) AS Stanica, CAST(NULL AS nvarchar(100)) AS IDVoza, CAST(NULL AS nvarchar(100)) AS Vagoni, CAST(NULL AS nvarchar(100)) AS Klijent WHERE 1 = 0");
+        }
+
         internal static DataTable ZaIzborSrb()
         {
             using (var c = Db.Open())
@@ -55,7 +62,7 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT v.ID, v.StanicaAID, v.StanicaBID, v.PrugaID, p.Sifra, p.Naziv, p.Kategorija, a.Naziv AS OdNaziv, b.Naziv AS DoNaziv, v.DuzinaKm, v.Elektrificirana, v.Klasa, v.Vmax, v.KiM, " +
+                    "SELECT v.ID, v.StanicaAID, v.StanicaBID, v.PrugaID, " + RegistarRepo.BrojPruge + " AS RedniBroj, p.Sifra, p.Naziv, p.Kategorija, a.Naziv AS OdNaziv, b.Naziv AS DoNaziv, v.DuzinaKm, v.Elektrificirana, v.Klasa, v.Vmax, v.KiM, " +
                     "(SELECT MIN(m.RB) FROM planiranje.OP_PrugaMesto m WHERE m.PrugaID = v.PrugaID AND m.StanicaID IN (v.StanicaAID, v.StanicaBID)) AS RB " +
                     "FROM planiranje.OP_MrezaVeza v " +
                     "JOIN planiranje.OP_Stanice a ON a.ID = v.StanicaAID " +
@@ -68,6 +75,7 @@ namespace Saobracaj.Planiranje.Podaci
                         A = Convert.ToInt32(r["StanicaAID"]),
                         B = Convert.ToInt32(r["StanicaBID"]),
                         PrugaID = r.IsNull("PrugaID") ? (int?)null : Convert.ToInt32(r["PrugaID"]),
+                        Broj = r.IsNull("RedniBroj") ? (int?)null : Convert.ToInt32(r["RedniBroj"]),
                         Sifra = Db.Text(r, "Sifra"),
                         Naziv = Db.Text(r, "Naziv"),
                         Kategorija = Db.Text(r, "Kategorija"),
@@ -85,7 +93,7 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT v.ID, v.DuzinaKm, COALESCE(v.Elektrificirana, p.Elektrificirana) AS Elektrificirana, v.KiM, v.GeomWKT, p.Sifra AS Pruga, " +
+                    "SELECT v.ID, v.DuzinaKm, COALESCE(v.Elektrificirana, p.Elektrificirana) AS Elektrificirana, v.KiM, v.GeomWKT, ISNULL(CAST(" + RegistarRepo.BrojPruge + " AS nvarchar(10)) + N' ', N'') + ISNULL(p.Sifra, N'') AS Pruga, " +
                     "a.Latitude AS LatA, a.Longitude AS LonA, b.Latitude AS LatB, b.Longitude AS LonB, a.Naziv AS NazivA, b.Naziv AS NazivB " +
                     "FROM planiranje.OP_MrezaVeza v " +
                     "JOIN planiranje.OP_Stanice a ON a.ID = v.StanicaAID " +

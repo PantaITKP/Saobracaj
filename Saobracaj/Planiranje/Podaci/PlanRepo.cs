@@ -203,6 +203,11 @@ namespace Saobracaj.Planiranje.Podaci
             "p.PlaniraniPolazak, p.PlaniraniDolazak, p.PlaniranaPredaja, p.NajavaBrutoT, p.NajavaDuzinaM, p.NajavaBrojKola, p.Projekat, p.Faza, p.RowVer, t.BrutoZbir " +
             "FROM planiranje.OP_vPosao p LEFT JOIN planiranje.OP_vTeretnicaNajava t ON t.NajavaID = p.NajavaID ";
 
+        // Posao perioda, uz @od i @do, sa aliasom p nad OP_vPosao; voz u statusu 4 ostaje u svakom planu dok ne krene.
+        internal static readonly string UPeriodu =
+            "((p.PlaniraniPrijem >= @od AND p.PlaniraniPrijem < @do) " +
+            "OR (p.StatusNajave = " + NajaveRepo.NijePokrenuto + " AND p.StvarnaPredaja IS NULL AND p.Status = N'AKTIVAN' AND p.PlaniraniPrijem < @do)) ";
+
         private static PosaoPlan UPosao(DataRow r)
         {
             return new PosaoPlan
@@ -235,7 +240,7 @@ namespace Saobracaj.Planiranje.Podaci
         internal static List<PosaoPlan> Poslovi(DateTime od, DateTime doDatuma)
         {
             using (var c = Db.Open())
-                return Db.Table(c, null, UpitPosla + "WHERE p.PlaniraniPrijem >= @od AND p.PlaniraniPrijem < @do AND p.Status <> N'OTKAZAN' " +
+                return Db.Table(c, null, UpitPosla + "WHERE " + UPeriodu + "AND p.Status <> N'OTKAZAN' " +
                     // Predat voz se više ne planira; ako je imao lokomotivu, ostaje u kalendaru kao istorija.
                     "AND ((ISNULL(p.StatusNajave, 0) <> 7 AND p.StvarnaPredaja IS NULL) OR EXISTS (SELECT 1 FROM planiranje.OP_PosaoLokomotiva l WHERE l.PosaoID = p.ID)) " +
                     "ORDER BY p.PlaniraniPrijem", "@od", od, "@do", doDatuma)
