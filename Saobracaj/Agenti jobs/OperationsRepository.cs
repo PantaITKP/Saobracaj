@@ -92,8 +92,18 @@ namespace Saobracaj.Agenti_jobs
             {
                 if (table == "OperativniPlanVozovi" && synchronizeStarts)
                     SynchronizeStartHistory(c);
-                return Db.Table(c, null, "SELECT * FROM dbo.[" + table + "]" +
+                // Mreža i najave: vreme unosa i poslednje izmene po lokalnom vremenu, samo za čitanje (čuvaju se samo kolone za unos).
+                bool saVremenima = table == "OperativniPlanMreza" || table == "OperativniPlanNajave";
+                var data = Db.Table(c, null, "SELECT *" +
+                    (saVremenima ? ", DATEADD(minute, DATEDIFF(minute, GETUTCDATE(), GETDATE()), CreatedUtc) AS Uneto, DATEADD(minute, DATEDIFF(minute, GETUTCDATE(), GETDATE()), IzmenjenoUtc) AS PoslednjaIzmena" : "") +
+                    " FROM dbo.[" + table + "]" +
                     (table == "OperativniPlanVozovi" ? " WHERE CompletionRecorded=0" : "") + " ORDER BY ID");
+                if (saVremenima)
+                {
+                    data.Columns["Uneto"].ReadOnly = true;
+                    data.Columns["PoslednjaIzmena"].ReadOnly = true;
+                }
+                return data;
             }
         }
 

@@ -2371,6 +2371,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Planiranje\Podaci\GpsLokomotive.cs" />
+    <Compile Include="Planiranje\Podaci\PlanMrezeRepo.cs" />
     <Compile Include="Planiranje\Podaci\OptimizatorKlijent.cs" />
     <Compile Include="Planiranje\Podaci\KvalifikacijeRepo.cs" />
     <Compile Include="Planiranje\Kontrole\MatricaPanel.cs">
@@ -2378,6 +2379,9 @@
     </Compile>
     <Compile Include="Planiranje\Kontrole\KontrolaMape.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Kontrole\ProzorAkcije.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Planiranje\Forme\Zajednicko.cs" />
     <Compile Include="Planiranje\Forme\frmOPNedeljniPlan.cs">

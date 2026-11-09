@@ -344,7 +344,9 @@ namespace Saobracaj.Agenti_jobs
             {
                 "IzmenjenoUtc",
                 "Izmenjeno (UTC)"
-            }
+            },
+            { "Uneto", "Uneto" },
+            { "PoslednjaIzmena", "Poslednja izmena" }
         };
         public static void Configure(DataGridView grid, bool editable)
         {
@@ -475,6 +477,13 @@ namespace Saobracaj.Agenti_jobs
                     (key == "From" || key == "To" || key.Contains("Stanica")) ? 180 :
                     (key == "StartedAtLocal") ? 180 :
                     (key == "CompletedAtLocal") ? 180 : 125;
+                // Mreža i najave: vreme unosa i poslednje izmene se samo prikazuju.
+                if (key == "Uneto" || key == "PoslednjaIzmena")
+                {
+                    c.ReadOnly = true;
+                    c.DefaultCellStyle.Format = "dd.MM.yyyy HH:mm";
+                    c.Width = 130;
+                }
             }
         }
 

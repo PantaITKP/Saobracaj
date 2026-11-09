@@ -100,8 +100,7 @@ namespace Saobracaj.Planiranje.Forme
             poljaRuta.Kartica.Dock = DockStyle.Top;
             levo.Controls.Add(poljaRuta.Kartica);
             poljaRuta.Kartica.Height = poljaRuta.Kartica.Rasporedi(SirinaPoljaRute - SystemInformation.VerticalScrollBarWidth);
-            // Slojevi mape (GPS, zatvori) su na vrhu kolone; dodaju se posle kartice da bi bili iznad nje.
-            levo.Controls.Add(mapa.PanelSlojeva);
+            // Slojevi mape su u traci na vrhu same mape.
             mapa.StanicaPomerena += PomeriStanicu;
             mapa.StanicaIzabrana += IzaberiNaMapi;
             mapa.VezaKliknuta += ZameniZatvor;
