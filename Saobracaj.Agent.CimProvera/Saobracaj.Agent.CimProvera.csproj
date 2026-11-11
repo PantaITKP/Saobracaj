@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net462 kao TelegramiImport (SQL Server 2008 R2 / TLS 1.0 na serveru). -->
+    <TargetFramework>net462</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <RootNamespace>Saobracaj.Agent.CimProvera</RootNamespace>
+    <AssemblyName>Saobracaj.Agent.CimProvera</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Samo JSON: na Windows-u "pravila" i izvorni folder "Pravila" su isti folder. -->
+    <None Include="pravila\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="sablon\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="sablon\obrasci\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Tesseract jezici (tessdata_fast, Apache 2.0). Nisu u git-u: preuzimaju se skriptom tessdata\Preuzmi.ps1. -->
+    <None Include="tessdata\*.traineddata" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="tessdata\Preuzmi.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Instaliraj.ps1" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="MailKit" Version="4.15.1" />
+    <PackageReference Include="PdfiumViewer" Version="2.13.0" />
+    <PackageReference Include="PdfiumViewer.Native.x86.v8-xfa" Version="2018.4.8.256" />
+    <PackageReference Include="PdfPig" Version="0.1.11" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageReference Include="MsgReader" Version="5.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Saobracaj.Common\Saobracaj.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Saobracaj.Agent.CimProvera.Tests" />
+  </ItemGroup>
+
+</Project>

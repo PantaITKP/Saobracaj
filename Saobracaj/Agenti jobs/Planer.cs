@@ -14,7 +14,7 @@ namespace Saobracaj.Agenti_jobs
         private DatabaseGrid gridLokomotive;
         private GridColumnFilters filterMreza;
         private GridColumnFilters filterNajave;
-        private GridColumnFilters filterLokomotive;
+        // Lokomotive nemaju filtere ni dodatne opcije: samo pregled i upis po kolonama.
         private readonly Timer refreshTimer = new Timer
         {
             Interval = 5000
@@ -36,7 +36,6 @@ namespace Saobracaj.Agenti_jobs
                 OperationalSession.UserName = Saobracaj.Sifarnici.frmLogovanje.user.Trim();
             filterMreza = new GridColumnFilters(dgvMreza);
             filterNajave = new GridColumnFilters(dgvNajave);
-            filterLokomotive = new GridColumnFilters(dgvLokomotive);
             requestedPlan = planId;
             if (!string.IsNullOrWhiteSpace(user))
                 OperationalSession.UserName = user;
@@ -49,6 +48,67 @@ namespace Saobracaj.Agenti_jobs
             sacuvajPlanToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
             refreshTimer.Tick += refreshTimer_Tick;
             telegramiTab = new Saobracaj.Telegrami.TelegramiTab(tabTelegrami, dataGridView1);
+            uveziCentralniPregledMenuItem.Click += uveziCentralniPregledMenuItem_Click;
+            menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(ucitajExcelTraseToolStripMenuItem), uveziCentralniPregledMenuItem);
+        }
+
+        private readonly ToolStripMenuItem uveziCentralniPregledMenuItem = new ToolStripMenuItem("Uvezi centralni pregled")
+        {
+            Alignment = ToolStripItemAlignment.Right,
+            BackColor = System.Drawing.Color.SeaGreen,
+            ForeColor = System.Drawing.SystemColors.ButtonHighlight,
+            Font = new System.Drawing.Font("Segoe UI", 11.25F)
+        };
+
+        // Excel „Centralni pregled vozova“ puni tabove Lokomotive / bruto, Stanje na mreži i Najave vozova.
+        private async void uveziCentralniPregledMenuItem_Click(object sender, EventArgs e)
+        {
+            if (busy) return;
+            string fajl;
+            using (var dialog = new OpenFileDialog { Filter = "Centralni pregled vozova (*.xlsx)|*.xlsx", Title = "Izaberite centralni pregled vozova" })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                fajl = dialog.FileName;
+            }
+            busy = true;
+            uveziCentralniPregledMenuItem.Enabled = false;
+            UseWaitCursor = true;
+            try
+            {
+                CentralniPregled pregled = await Task.Run(() => CentralniPregled.Procitaj(fajl));
+                UseWaitCursor = false;
+                int stanica = pregled.Mreza.Select(r => StationNames.Normalize(r[0])).Distinct().Count();
+                int prelaza = pregled.Najave.Select(r => StationNames.Normalize(r[0])).Distinct().Count();
+                string pitanje = "U fajlu „" + System.IO.Path.GetFileName(fajl) + "“:\n\n"
+                    + "• Lokomotive / bruto: " + pregled.Lokomotive.Count + " redova\n"
+                    + "• Stanje na mreži: " + pregled.Mreza.Count + " redova u " + stanica + " stanica\n"
+                    + "• Najave vozova: " + pregled.Najave.Count + " redova na " + prelaza + " graničnih prelaza\n\n"
+                    + "Uvoz zamenjuje sve redove na ova tri taba sadržajem fajla (i za dispMain). Red koji je postojao i pre uvoza "
+                    + "zadržava vreme unosa, pa se i dalje vidi koliko dugo stoji.\n\nNastaviti?";
+                if (MessageBox.Show(this, pitanje, "Uvoz centralnog pregleda", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                // Nesačuvane izmene u tabelama se prvo upišu, da posle uvoza ne bi bile u sukobu sa novim redovima.
+                SaveGrids();
+                UseWaitCursor = true;
+                RezultatUvoza rez = await Task.Run(() => CentralniPregledUvoz.Uvezi(pregled));
+                FillDGV();
+                UseWaitCursor = false;
+                MessageBox.Show(this, "Uvezeno:\n\n"
+                    + "• Lokomotive / bruto: " + rez.Lokomotive + "\n"
+                    + "• Stanje na mreži: " + rez.Mreza + " (od toga " + rez.MrezaZadrzano + " ranije unetih, sa starim vremenom unosa)\n"
+                    + "• Najave vozova: " + rez.Najave + " (od toga " + rez.NajaveZadrzano + " ranije unetih)",
+                    "Uvoz centralnog pregleda", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                UseWaitCursor = false;
+                MessageBox.Show(this, ex.Message, "Uvoz centralnog pregleda", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                busy = false;
+                uveziCentralniPregledMenuItem.Enabled = true;
+            }
         }
 
         private async Task Start()
@@ -118,7 +178,6 @@ namespace Saobracaj.Agenti_jobs
             gridNajave.Dispose();
             filterNajave.Dispose();
             gridLokomotive.Dispose();
-            filterLokomotive.Dispose();
         }
 
         private void FillDGV()
@@ -245,15 +304,16 @@ namespace Saobracaj.Agenti_jobs
                 gridNajave.Schedule();
         }
 
-        private void dgvLokomotive_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
-        {
-            filterLokomotive.Header(sender, e);
-        }
-
+        // Bez filtera i sortiranja: zaglavlje je samo naziv kolone, a klik na ćeliju je običan izbor za upis.
         private void dgvLokomotive_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             GridTitles.Apply(dgvLokomotive);
-            filterLokomotive.Bound(sender, e);
+            foreach (DataGridViewColumn kolona in dgvLokomotive.Columns)
+            {
+                if (kolona.DataPropertyName.StartsWith("__filter_")) kolona.Visible = false;
+                kolona.SortMode = DataGridViewColumnSortMode.NotSortable;
+                kolona.ToolTipText = "";
+            }
         }
 
         private void dgvLokomotive_CellEndEdit(object sender, DataGridViewCellEventArgs e)

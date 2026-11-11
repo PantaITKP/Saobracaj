@@ -599,6 +599,7 @@
       <DependentUpon>DopunaRadnogNaloga.cs</DependentUpon>
     </Compile>
     <Compile Include="Agenti jobs\ExcelRoutes.cs" />
+    <Compile Include="Agenti jobs\CentralniPregled.cs" />
     <Compile Include="Agenti jobs\GridSupport.cs" />
     <Compile Include="Agenti jobs\IskoriscenjeInfrastruktura.cs" />
     <Compile Include="Agenti jobs\IskoriscenjeTrasa.cs">

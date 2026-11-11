@@ -231,7 +231,6 @@
             this.dgvLokomotive.Size = new System.Drawing.Size(1199, 391);
             this.dgvLokomotive.TabIndex = 0;
             this.dgvLokomotive.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvLokomotive_CellEndEdit);
-            this.dgvLokomotive.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvLokomotive_ColumnHeaderMouseClick);
             this.dgvLokomotive.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvLokomotive_CellValueChanged);
             this.dgvLokomotive.CurrentCellDirtyStateChanged += new System.EventHandler(this.dgvLokomotive_CurrentCellDirtyStateChanged);
             this.dgvLokomotive.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvLokomotive_DataBindingComplete);
