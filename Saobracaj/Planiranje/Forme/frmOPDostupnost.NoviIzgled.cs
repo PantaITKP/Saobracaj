@@ -24,11 +24,16 @@ namespace Saobracaj.Planiranje.Forme
             cboFilter.Items.AddRange(new object[] { "Svi", "Mašinovođe", "Pregledači" });
             cboFilter.SelectedIndex = 0;
             cboFilter.SelectedIndexChanged += (s, e) => PrikaziKalendar();
+            // Posle „Svi“ redosled prati StatusOsobe.
+            cboStatus.Items.AddRange(new object[] { "Svi", "Odsutni", "Raspoređeni", "Slobodni" });
+            cboStatus.SelectedIndex = 0;
+            cboStatus.SelectedIndexChanged += (s, e) => PrikaziKalendar();
             dtNedelja.ValueChanged += (s, e) => { var _ = Osvezi(); };
 
             var glava = new KarticaPolja("Nedelja");
             glava.Polje(new Label { Text = "Nedelja" }, dtNedelja);
             glava.Polje(new Label { Text = "Prikaz" }, cboFilter);
+            glava.Polje(new Label { Text = "Status sada" }, cboStatus);
             glava.Tekst(new Label { Text = "Legenda: zeleno dnevna · plavo noćna · sivo slobodan · žuto odsustvo · roze posao. Dvoklik na ćeliju menja smenu ručno." });
             glava.Dugmad(
                 EkranOP.Dugme("Generiši smene iz turnusa", (s, e) => { var _ = Generisi(); }),

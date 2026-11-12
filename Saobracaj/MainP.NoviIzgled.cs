@@ -56,10 +56,8 @@ namespace Saobracaj
             bocniMeni.ModulIzabran += (s, i) => PrikaziModul(i);
 
             hero = new HeroMeni();
-            hero.DodajPrecicu("Novi radni nalog", Ikona.Plus, () => toolStripButton28.PerformClick());
-            hero.DodajPrecicu("Centralna tabla", Ikona.Tabla, () => toolStripButton26.PerformClick());
-            hero.DodajPrecicu("Najavljeni vozovi", Ikona.StrelicaDesno, () => toolStripButton129.PerformClick());
-            hero.DodajPrecicu("Pronađi vagon", Ikona.Pretraga, () => toolStripButton34.PerformClick());
+            // Stare prečice (Novi radni nalog, Centralna tabla, Najavljeni vozovi, Pronađi vagon) ostaju u grupama i pretrazi.
+            DodajKarticeStanja();
             hero.Pretraga.TextChanged += (s, e) => PrikaziSadrzaj();
             hero.Pretraga.KeyDown += PretragaTaster;
 
@@ -144,6 +142,7 @@ namespace Saobracaj
             aktivniModul = indeks;
             bocniMeni.Izaberi(indeks);
             hero.PostaviModul(moduliMenija[indeks].Naziv);
+            PrikaziKarticeZaModul();
             if (hero.Pretraga.TextLength > 0)
                 hero.Pretraga.Clear();
             else

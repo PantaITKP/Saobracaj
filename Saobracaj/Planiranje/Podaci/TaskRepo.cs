@@ -101,8 +101,22 @@ namespace Saobracaj.Planiranje.Podaci
             using (var c = Db.Open())
                 return Ucitaj(c, null,
                     "SELECT tn.TaskID FROM planiranje.OP_TaskNajava tn JOIN planiranje.OP_vPosao p ON p.ID = tn.PosaoID WHERE " + PlanRepo.UPeriodu +
-                    "UNION SELECT t.ID FROM planiranje.OP_Task t WHERE t.ETD >= @od AND t.ETD < @do",
+                    // I task koji je krenuo pre perioda, a još traje u njemu (kraj je ETA, a bez nje ETD).
+                    "UNION SELECT t.ID FROM planiranje.OP_Task t WHERE t.ETD < @do AND COALESCE(t.ETA, t.ETD) >= @od",
                     saStorniranim, "@od", od, "@do", doDatuma);
+        }
+
+        // Od najranijeg polaska do najkasnijeg kraja otvorenih taskova (ili samo onih koji kasne), po datumu.
+        internal static Tuple<DateTime?, DateTime?> PeriodOtvorenih(bool samoKasne)
+        {
+            using (var c = Db.Open())
+            {
+                DataRow r = Db.Table(c, null,
+                    "SELECT MIN(CAST(t.ETD AS date)) AS Od, MAX(CAST(COALESCE(t.ETA, t.ETD) AS date)) AS Do FROM planiranje.OP_Task t " +
+                    "WHERE " + KarticeRepo.OtvorenTask + " AND t.ETD IS NOT NULL" +
+                    (samoKasne ? " AND CAST(COALESCE(t.ETA, t.ETD) AS date) < CAST(SYSDATETIME() AS date)" : "")).Rows[0];
+                return Tuple.Create(PlanRepo.Dat(r, "Od"), PlanRepo.Dat(r, "Do"));
+            }
         }
 
         // idUpit vraća kolonu ID-jeva taskova; isti argumenti važe za sva četiri upita.

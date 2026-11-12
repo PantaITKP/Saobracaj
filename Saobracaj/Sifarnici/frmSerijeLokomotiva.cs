@@ -236,7 +236,7 @@ namespace Saobracaj.Sifarnici
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(28, 13);
             this.label3.TabIndex = 29;
-            this.label3.Text = "Opis";
+            this.label3.Text = "Vlasništvo";
             // 
             // txtTezina
             // 
@@ -434,7 +434,7 @@ namespace Saobracaj.Sifarnici
 
 
             DataGridViewColumn column3 = dataGridView1.Columns[2];
-            dataGridView1.Columns[2].HeaderText = "Opis";
+            dataGridView1.Columns[2].HeaderText = "Vlasništvo";
             dataGridView1.Columns[2].Width = 350;
         }
 

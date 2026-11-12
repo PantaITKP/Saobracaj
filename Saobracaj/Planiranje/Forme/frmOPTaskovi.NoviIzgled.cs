@@ -115,14 +115,19 @@ namespace Saobracaj.Planiranje.Forme
 
             dtOd.Width = Theme.Dp(110);
             dtDo.Width = Theme.Dp(110);
+            // Redosled stavki prati FilterTaskova.
+            cboFilter.Items.AddRange(new object[] { "Svi", "Otvoreni", "Otvoreni danas", "Kasne" });
+            cboFilter.SelectedIndex = 0;
+            cboFilter.Width = Theme.Dp(130);
             FlowLayoutPanel zaglavlje = Traka(Oznaka("Od"), dtOd, Oznaka("Do"), dtDo,
                 EkranOP.Dugme("Osveži", (s, e) => { var _ = Osvezi(); }),
                 EkranOP.Dugme("Uzmi najave", (s, e) => { var _ = UzmiNajave(); }),
-                chkSvi, chkStorno, lblStanje,
+                chkSvi, chkStorno, Oznaka("Prikaz"), cboFilter, lblStanje,
                 EkranOP.Dugme("Gantogram lokomotiva", (s, e) => OtvoriGantogram(frmOPGanttTaskova.Vrsta.Lokomotive)),
                 EkranOP.Dugme("Gantogram osoblja", (s, e) => OtvoriGantogram(frmOPGanttTaskova.Vrsta.Osoblje)));
             zaglavlje.Padding = new Padding(Theme.Dp(8), Theme.Dp(4), Theme.Dp(8), Theme.Dp(4));
             chkSvi.CheckedChanged += (s, e) => PrikaziTaskove();
+            cboFilter.SelectedIndexChanged += (s, e) => { if (taskovi != null) PrikaziTaskove(); };
             chkStorno.CheckedChanged += (s, e) => { var _ = OsveziTaskove(); };
 
             tabNajave.SelectionChanged += (s, e) => IzabranaNajavaPromenjena();
@@ -239,7 +244,7 @@ namespace Saobracaj.Planiranje.Forme
             okvir.Controls.Add(prikaz);
             okvir.Controls.Add(zaglavlje);
 
-            Load += (s, e) => { var _ = Osvezi(); };
+            Load += (s, e) => { var _ = PrvoOsvezavanje(); };
             izgled.Zavrsi(okvir, 1500, 900);
         }
 

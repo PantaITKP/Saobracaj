@@ -178,7 +178,8 @@ namespace Saobracaj.Tema.Controls
     // Bordo gornji deo glavnog menija: traka sa pretragom, naslov modula i brze prečice.
     public class HeroMeni : Panel
     {
-        private readonly List<StakloPrecica> precice = new List<StakloPrecica>();
+        private readonly List<Control> precice = new List<Control>();
+        private readonly OznakaOsvezavanja osvezavanje = new OznakaOsvezavanja { Visible = false };
         private readonly TextBox pretraga;
         private readonly Panel isecakPretrage = new Panel();
         private readonly Label nagovestaj;
@@ -189,6 +190,13 @@ namespace Saobracaj.Tema.Controls
         private static int VisinaTrake => Theme.Dp(52);
 
         public TextBox Pretraga => pretraga;
+
+        // Klik na „Ažurirano …“ sa ikonom osvežavanja ispod kartica stanja.
+        public event EventHandler OsveziKartice
+        {
+            add { osvezavanje.Click += value; }
+            remove { osvezavanje.Click -= value; }
+        }
 
         public HeroMeni()
         {
@@ -202,6 +210,7 @@ namespace Saobracaj.Tema.Controls
             nagovestaj.BringToFront();
             nagovestaj.Click += (s, e) => pretraga.Focus();
             pretraga.TextChanged += (s, e) => nagovestaj.Visible = pretraga.TextLength == 0;
+            osvezavanje.Parent = this;
         }
 
         public void PostaviModul(string tekst)
@@ -217,6 +226,27 @@ namespace Saobracaj.Tema.Controls
             var p = new StakloPrecica(tekst, ikona) { Parent = this };
             p.Click += (s, e) => radnja();
             precice.Add(p);
+            Rasporedi();
+        }
+
+        public void DodajKarticu(KarticaStanja k)
+        {
+            k.Parent = this;
+            precice.Add(k);
+            osvezavanje.Visible = true;
+            Rasporedi();
+        }
+
+        // Red kartica se vidi samo na modulu za koji su napravljene.
+        public void PrikaziPrecice(bool vidljive)
+        {
+            foreach (Control c in precice) c.Visible = vidljive;
+            osvezavanje.Visible = vidljive && precice.Exists(c => c is KarticaStanja);
+        }
+
+        public void PostaviAzurirano(string tekst)
+        {
+            osvezavanje.Text = tekst;
             Rasporedi();
         }
 
@@ -243,7 +273,13 @@ namespace Saobracaj.Tema.Controls
             int sirina = (Width - 2 * LevoDesno - (precice.Count - 1) * razmak) / precice.Count;
             int vrh = Height - Theme.Dp(88) - Theme.Dp(20);
             for (int i = 0; i < precice.Count; i++)
-                precice[i].Postavi(new Rectangle(LevoDesno + i * (sirina + razmak), vrh, sirina, Theme.Dp(88)));
+            {
+                var okvir = new Rectangle(LevoDesno + i * (sirina + razmak), vrh, sirina, Theme.Dp(88));
+                if (precice[i] is StakloPrecica sp) sp.Postavi(okvir);
+                else if (precice[i] is KarticaStanja ks) ks.PostaviOkvir(okvir);
+            }
+            int sirinaOznake = osvezavanje.ZeljenaSirina();
+            osvezavanje.SetBounds(Width - LevoDesno - sirinaOznake, vrh + Theme.Dp(89), sirinaOznake, Theme.Dp(18));
         }
 
         private void Pripremi()
@@ -320,6 +356,41 @@ namespace Saobracaj.Tema.Controls
         {
             if (disposing) pozadina?.Dispose();
             base.Dispose(disposing);
+        }
+    }
+
+    // Sitno „Ažurirano 21:48“ sa ikonom za ručno osvežavanje, ispod reda kartica stanja.
+    public class OznakaOsvezavanja : Control
+    {
+        private bool pod;
+
+        public OznakaOsvezavanja()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+            Cursor = Cursors.Hand;
+            AccessibleRole = AccessibleRole.PushButton;
+            AccessibleName = "Osveži kartice";
+        }
+
+        private static Font Slova => Theme.Tekstualni(8f);
+
+        public int ZeljenaSirina()
+        {
+            return TextRenderer.MeasureText(Text ?? "", Slova, Size.Empty, TextFormatFlags.NoPadding).Width + Theme.Dp(22);
+        }
+
+        protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); Invalidate(); }
+        protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); pod = true; Invalidate(); }
+        protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); pod = false; Invalidate(); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Color boja = pod ? Color.White : Theme.RozeNaBordo;
+            var red = new Rectangle(0, 0, Width - Theme.Dp(20), Height);
+            TextRenderer.DrawText(e.Graphics, Text, Slova, red, boja, TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
+            float d = Theme.Dp(13);
+            Ikone.Crtaj(e.Graphics, Ikona.Osvezi, new RectangleF(Width - d - 1, (Height - d) / 2, d, d), boja, 2f);
         }
     }
 

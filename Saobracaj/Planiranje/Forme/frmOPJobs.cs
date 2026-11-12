@@ -25,6 +25,7 @@ namespace Saobracaj.Planiranje.Forme
         private readonly DataGridView tabTaskovi = EkranOP.NovaTabela();
         private readonly CheckBox chkSvi = new CheckBox { Text = "Svi JOBS" };
         private readonly CheckBox chkPlatilac = new CheckBox { Text = "Filtriraj po platiocu" };
+        private readonly ComboBox cboTaskovi = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly Label lblStanje = new Label();
         private readonly Label lblTaskovi = new Label { Text = "Izaberite posao." };
 
@@ -38,6 +39,14 @@ namespace Saobracaj.Planiranje.Forme
             PrimeniNoviIzgled();
             Pravo = PraviloPristupa.Proveri(code);
         }
+
+        // Kartica Jobs na ekranu Transport: lista odmah filtrirana po taskovima.
+        internal frmOPJobs(FilterJobsTaskova taskovi) : this()
+        {
+            cboTaskovi.SelectedIndex = (int)taskovi;
+        }
+
+        private FilterJobsTaskova FilterTaskova => cboTaskovi.SelectedIndex < 0 ? FilterJobsTaskova.Svi : (FilterJobsTaskova)cboTaskovi.SelectedIndex;
 
         private IEnumerable<UredjivacReda> SvaPolja { get { return new[] { poljaOpste, poljaRelacija, poljaRoba1, poljaRoba2 }; } }
 
@@ -62,6 +71,7 @@ namespace Saobracaj.Planiranje.Forme
                 poljaRoba1.IzvorIzbora("SerijaKola1", d.S.SerijeKola, "Naziv", "ID", true);
                 poljaRoba2.IzvorIzbora("SerijaKola2", d.S.SerijeKola, "Naziv", "ID", true);
                 Novi();
+                if (d.S.Upozorenje != null) EkranOP.Poruka(this, d.S.Upozorenje);
                 var _ = Osvezi();
             });
         }
@@ -70,13 +80,15 @@ namespace Saobracaj.Planiranje.Forme
         {
             bool svi = chkSvi.Checked;
             int? platilac = filterPlatilac;
+            FilterJobsTaskova taskovi = FilterTaskova;
             int? trenutni = izaberi ?? poljaOpste.ID;
-            await EkranOP.Ucitaj(this, () => JobsRepo.Lista(svi, platilac), t =>
+            await EkranOP.Ucitaj(this, () => JobsRepo.Lista(svi, platilac, taskovi), t =>
             {
                 punjenje = true;
                 tabJobs.DataSource = t;
                 punjenje = false;
-                lblStanje.Text = "Poslova: " + t.Rows.Count + (svi ? " (svi)" : " (bez predatih)") + (platilac.HasValue ? " · filter po platiocu" : "");
+                lblStanje.Text = "Poslova: " + t.Rows.Count + (svi ? " (svi)" : " (bez predatih)") + (platilac.HasValue ? " · filter po platiocu" : "")
+                    + (taskovi == FilterJobsTaskova.BezTaskova ? " · bez taskova" : taskovi == FilterJobsTaskova.SaTaskovima ? " · sa taskovima" : "");
                 if (!trenutni.HasValue) return;
                 foreach (DataGridViewRow r in tabJobs.Rows)
                     if (Convert.ToInt32(r.Cells["Sifra"].Value) == trenutni.Value)

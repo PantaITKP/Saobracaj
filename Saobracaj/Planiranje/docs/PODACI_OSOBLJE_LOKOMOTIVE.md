@@ -20,7 +20,7 @@ Planiranje je novi deo menija **Transport**. Vodi posao od najave do predaje po 
 | Trase | Trase | Uvoz iz Excela, razlike verzija, ad hoc trase |
 | Ostalo | Tablica masa, Parametri, Turnusi | Granice mase po seriji i pruzi, vremena obrade, turnusi 07–19 i 19–07 (13) |
 
-Na radnoj bazi skripte pokreće administrator baze, redom od `OP_001` do `OP_032`. Program ne radi bez skripti `OP_007`, `OP_009`, `OP_011`, `OP_014`, `OP_017`, `OP_022`–`OP_025`, `OP_027`, `OP_029` i `OP_032`.
+Na radnoj bazi skripte pokreće administrator baze, redom od `OP_001` do `OP_033`. Program ne radi bez skripti `OP_007`, `OP_009`, `OP_011`, `OP_014`, `OP_017`, `OP_022`–`OP_025`, `OP_027`, `OP_029`, `OP_032` i `OP_033`.
 
 ---
 
@@ -82,8 +82,10 @@ Ekran: **Transport → Lokomotive**.
 | Podatak | Zašto je potreban |
 |---|---|
 | **Oznaka** (185, 193, 186…) | Po njoj se proverava poznavanje serija kod mašinovođa |
-| **Vrsta vuče** E ili D | Na pruzi bez kontaktne mreže nude se samo dizel lokomotive. Na elektrificiranoj ruti prednost imaju električne. |
-| **Masa (t)** | Ulazi u bruto ako je uključen parametar `MASA_LOK_U_VUCI` |
+| **Pogon** (vrsta vuče) E ili D | Na pruzi bez kontaktne mreže nude se samo dizel lokomotive. Na elektrificiranoj ruti prednost imaju električne. |
+| **Masa (t)** | Masa se vodi samo na seriji. Ulazi u bruto ako je uključen parametar `MASA_LOK_U_VUCI`. |
+| Masa po osovini (t) | Za sada samo evidencija; kasnije će je koristiti rutiranje |
+| Vlasništvo (Sopstvena / Zakup) | Evidencija na nivou serije; ponuda gleda vlasništvo lokomotive |
 | **Aktivna** | Samo aktivne serije su u matrici poznavanja serija |
 
 ### 3.2 Lokomotive (tab Lokomotive)
@@ -95,7 +97,7 @@ Ekran: **Transport → Lokomotive**.
 | **Aktivna** | Samo aktivne se nude | Ne nudi se |
 | **Matična stanica** | Lokacija kad nema GPS-a ni prethodnog posla | „Lokacija nepoznata“: lokomotiva ide na kraj liste, a prazna vožnja se ne računa |
 | **GPS** (čekirano) | Oznaka da lokomotiva šalje poziciju | Samo informacija na planu |
-| Vlasništvo, Zakupodavac, Technodis ID, Masa | Evidencija; masa se koristi ako se razlikuje od mase serije | Ne utiče na ponudu |
+| Vlasništvo, Zakupodavac, Technodis ID | Evidencija (masa se unosi na seriji) | Ne utiče na ponudu |
 
 ### 3.3 Zauzetost (tab Zauzetost)
 

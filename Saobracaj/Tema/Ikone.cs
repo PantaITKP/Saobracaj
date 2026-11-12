@@ -8,7 +8,7 @@ namespace Saobracaj.Tema
     {
         Korisnik, Brava, Oko, StrelicaDesno, Dole, Levo, Desno, Prva, Poslednja, Osvezi, Cekiraj, Plus, Kanta,
         Filter, Lista, Dokument, Mejl, Stampa, Pretraga, Preuzmi, Sat, Zatvori, Minus, Strelice,
-        Knjiga, Klipbord, Voz, Alat, Aktovka, Stit, Kalkulator, Tabla
+        Knjiga, Klipbord, Voz, Alat, Aktovka, Stit, Kalkulator, Tabla, Pin
     }
 
     // Linijske ikone iz dizajn predloga, crtane u mreži 24 x 24.
@@ -193,6 +193,12 @@ namespace Saobracaj.Tema
                     g.DrawRectangle(p, 4, 5, 16, 14);
                     Linija(g, p, 4, 10, 20, 10);
                     Linija(g, p, 10, 10, 10, 19);
+                    break;
+                case Ikona.Pin:
+                    // Krug poluprečnika 6 oko (12, 9); bočne linije su tangente iz vrha (12, 21).
+                    g.DrawArc(p, 6, 3, 12, 12, 150, 240);
+                    Linija(g, p, 6.8f, 12, 12, 21, 17.2f, 12);
+                    g.DrawEllipse(p, 9.5f, 6.5f, 5, 5);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(ikona));

@@ -11,7 +11,7 @@ namespace Saobracaj.Planiranje.Podaci
             using (var c = Db.Open())
                 return Db.Table(c, null,
                     "SELECT l.ID, l.Broj, l.Naziv, l.SerijaID, s.Oznaka AS Serija, s.VrstaVuce, l.Vlasnistvo, l.Zakupodavac, " +
-                    "l.ImaGPS, l.TechnodisID, l.MaticnaStanicaID, m.Naziv AS MaticnaStanica, l.MasaT, l.Aktivna, l.IzvorniSmSifra, l.RowVer " +
+                    "l.ImaGPS, l.TechnodisID, l.MaticnaStanicaID, m.Naziv AS MaticnaStanica, l.Aktivna, l.IzvorniSmSifra, l.RowVer " +
                     "FROM planiranje.OP_Lokomotive l " +
                     "LEFT JOIN planiranje.OP_SerijeLokomotiva s ON s.ID = l.SerijaID " +
                     "LEFT JOIN planiranje.OP_Stanice m ON m.ID = l.MaticnaStanicaID " +
@@ -23,44 +23,49 @@ namespace Saobracaj.Planiranje.Podaci
         {
             using (var c = Db.Open())
                 return Db.Table(c, null,
-                    "SELECT ID, Oznaka, Opis, VrstaVuce, MasaT, SnagaKW, VmaxKmh, DuzinaM, Aktivna, IzvorniID, RowVer " +
+                    "SELECT ID, Oznaka, Opis, VrstaVuce, MasaT, MasaPoOsovini, SnagaKW, VmaxKmh, DuzinaM, Vlasnistvo, Aktivna, IzvorniID, RowVer " +
                     "FROM planiranje.OP_SerijeLokomotiva ORDER BY Oznaka");
         }
 
-        internal static void DodajLokomotivu(string broj, string naziv, int? serija, string vlasnistvo, string zakupodavac, bool gps, string technodis, int? maticna, decimal? masa, bool aktivna)
+        // Masa se vodi samo na seriji; OP_Lokomotive.MasaT ostaje u bazi, ali je program ne koristi (OP_033).
+        internal static void DodajLokomotivu(string broj, string naziv, int? serija, string vlasnistvo, string zakupodavac, bool gps, string technodis, int? maticna, bool aktivna)
         {
             using (var c = Db.Open())
             using (var cmd = Db.Command(c, null,
-                "INSERT planiranje.OP_Lokomotive (Broj, Naziv, SerijaID, Vlasnistvo, Zakupodavac, ImaGPS, TechnodisID, MaticnaStanicaID, MasaT, Aktivna) " +
-                "VALUES (@b, @n, @s, @v, @z, @g, @t, @m, @ma, @a)",
-                "@b", broj, "@n", (object)naziv, "@s", (object)serija, "@v", vlasnistvo, "@z", (object)zakupodavac, "@g", gps, "@t", (object)technodis, "@m", (object)maticna, "@ma", (object)masa, "@a", aktivna))
+                "INSERT planiranje.OP_Lokomotive (Broj, Naziv, SerijaID, Vlasnistvo, Zakupodavac, ImaGPS, TechnodisID, MaticnaStanicaID, Aktivna) " +
+                "VALUES (@b, @n, @s, @v, @z, @g, @t, @m, @a)",
+                "@b", broj, "@n", (object)naziv, "@s", (object)serija, "@v", vlasnistvo, "@z", (object)zakupodavac, "@g", gps, "@t", (object)technodis, "@m", (object)maticna, "@a", aktivna))
                 cmd.ExecuteNonQuery();
         }
 
-        internal static void SacuvajLokomotivu(int id, byte[] rowVer, string broj, string naziv, int? serija, string vlasnistvo, string zakupodavac, bool gps, string technodis, int? maticna, decimal? masa, bool aktivna)
+        internal static void SacuvajLokomotivu(int id, byte[] rowVer, string broj, string naziv, int? serija, string vlasnistvo, string zakupodavac, bool gps, string technodis, int? maticna, bool aktivna)
         {
             using (var c = Db.Open())
                 PlaniranjeDb.IzvrsiSaRowVer(c, null,
-                    "UPDATE planiranje.OP_Lokomotive SET Broj=@b, Naziv=@n, SerijaID=@s, Vlasnistvo=@v, Zakupodavac=@z, ImaGPS=@g, TechnodisID=@t, MaticnaStanicaID=@m, MasaT=@ma, Aktivna=@a " +
+                    "UPDATE planiranje.OP_Lokomotive SET Broj=@b, Naziv=@n, SerijaID=@s, Vlasnistvo=@v, Zakupodavac=@z, ImaGPS=@g, TechnodisID=@t, MaticnaStanicaID=@m, Aktivna=@a " +
                     "WHERE ID=@id AND RowVer=@rv",
-                    "@b", broj, "@n", (object)naziv, "@s", (object)serija, "@v", vlasnistvo, "@z", (object)zakupodavac, "@g", gps, "@t", (object)technodis, "@m", (object)maticna, "@ma", (object)masa, "@a", aktivna, "@id", id, "@rv", rowVer);
+                    "@b", broj, "@n", (object)naziv, "@s", (object)serija, "@v", vlasnistvo, "@z", (object)zakupodavac, "@g", gps, "@t", (object)technodis, "@m", (object)maticna, "@a", aktivna, "@id", id, "@rv", rowVer);
         }
 
-        internal static void DodajSeriju(string oznaka, string opis, string vuca, decimal? masa, decimal? snaga, int? vmax, decimal? duzina, bool aktivna)
+        internal static void DodajSeriju(string oznaka, string opis, string vuca, decimal? masa, decimal? masaOsovine, decimal? snaga, int? vmax, decimal? duzina, string vlasnistvo, bool aktivna)
         {
             using (var c = Db.Open())
             using (var cmd = Db.Command(c, null,
-                "INSERT planiranje.OP_SerijeLokomotiva (Oznaka, Opis, VrstaVuce, MasaT, SnagaKW, VmaxKmh, DuzinaM, Aktivna) VALUES (@o, @op, @v, @m, @s, @x, @d, @a)",
-                "@o", oznaka, "@op", (object)opis, "@v", (object)vuca, "@m", (object)masa, "@s", (object)snaga, "@x", (object)vmax, "@d", (object)duzina, "@a", aktivna))
+                "INSERT planiranje.OP_SerijeLokomotiva (Oznaka, Opis, VrstaVuce, MasaT, MasaPoOsovini, SnagaKW, VmaxKmh, DuzinaM, Vlasnistvo, Aktivna) " +
+                "VALUES (@o, @op, @v, @m, @mo, @s, @x, @d, @vl, @a)",
+                "@o", oznaka, "@op", (object)opis, "@v", (object)vuca, "@m", (object)masa, "@mo", (object)masaOsovine,
+                "@s", (object)snaga, "@x", (object)vmax, "@d", (object)duzina, "@vl", (object)vlasnistvo, "@a", aktivna))
                 cmd.ExecuteNonQuery();
         }
 
-        internal static void SacuvajSeriju(int id, byte[] rowVer, string oznaka, string opis, string vuca, decimal? masa, decimal? snaga, int? vmax, decimal? duzina, bool aktivna)
+        internal static void SacuvajSeriju(int id, byte[] rowVer, string oznaka, string opis, string vuca, decimal? masa, decimal? masaOsovine, decimal? snaga, int? vmax, decimal? duzina, string vlasnistvo, bool aktivna)
         {
             using (var c = Db.Open())
                 PlaniranjeDb.IzvrsiSaRowVer(c, null,
-                    "UPDATE planiranje.OP_SerijeLokomotiva SET Oznaka=@o, Opis=@op, VrstaVuce=@v, MasaT=@m, SnagaKW=@s, VmaxKmh=@x, DuzinaM=@d, Aktivna=@a WHERE ID=@id AND RowVer=@rv",
-                    "@o", oznaka, "@op", (object)opis, "@v", (object)vuca, "@m", (object)masa, "@s", (object)snaga, "@x", (object)vmax, "@d", (object)duzina, "@a", aktivna, "@id", id, "@rv", rowVer);
+                    "UPDATE planiranje.OP_SerijeLokomotiva SET Oznaka=@o, Opis=@op, VrstaVuce=@v, MasaT=@m, MasaPoOsovini=@mo, SnagaKW=@s, VmaxKmh=@x, DuzinaM=@d, Vlasnistvo=@vl, Aktivna=@a " +
+                    "WHERE ID=@id AND RowVer=@rv",
+                    "@o", oznaka, "@op", (object)opis, "@v", (object)vuca, "@m", (object)masa, "@mo", (object)masaOsovine,
+                    "@s", (object)snaga, "@x", (object)vmax, "@d", (object)duzina, "@vl", (object)vlasnistvo, "@a", aktivna, "@id", id, "@rv", rowVer);
         }
 
         internal static DataTable Zauzetosti()
@@ -123,8 +128,8 @@ namespace Saobracaj.Planiranje.Podaci
                         "WHERE NULLIF(RTRIM(ls.Oznaka), N'') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM planiranje.OP_SerijeLokomotiva o WHERE o.Oznaka = LEFT(RTRIM(ls.Oznaka), 20))"))
                         ukupno = cmd.ExecuteNonQuery();
                     using (var cmd = Db.Command(c, tx,
-                        "INSERT planiranje.OP_Lokomotive (Broj, Naziv, MasaT, IzvorniSmSifra) \n" +
-                        "SELECT LEFT(RTRIM(m.SmSifra), 20), NULLIF(RTRIM(m.SmNaziv), N''), CAST(m.SmPogDela AS decimal(10,2)), LEFT(RTRIM(m.SmSifra), 20) \n" +
+                        "INSERT planiranje.OP_Lokomotive (Broj, Naziv, IzvorniSmSifra) \n" +
+                        "SELECT LEFT(RTRIM(m.SmSifra), 20), NULLIF(RTRIM(m.SmNaziv), N''), LEFT(RTRIM(m.SmSifra), 20) \n" +
                         "FROM dbo.Mesta m \n" +
                         "WHERE m.Lokomotiva = 1 AND NULLIF(RTRIM(m.SmSifra), N'') IS NOT NULL \n" +
                         "AND NOT EXISTS (SELECT 1 FROM planiranje.OP_Lokomotive o WHERE o.IzvorniSmSifra = LEFT(RTRIM(m.SmSifra), 20) OR o.Broj = LEFT(RTRIM(m.SmSifra), 20))"))

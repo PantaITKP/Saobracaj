@@ -707,6 +707,7 @@ Skripte su `OP_030_Jobs.sql` (šema, program ne radi bez nje) i `OP_031_FormaJob
 
 **Serija kola (OP_032, 7.11.2026).** Uz broj kola svakog pravca je i serija kola, kao polje pored broja kola na formi Najava (`dbo.Najava.SerijaVagona`, izbor iz `dbo.VagoniSerije`).
 - Kolone su `OP_Jobs.SerijaKola1` i `SerijaKola2`.
+- Ako kolona nema, a to znači da `OP_032` nije puštena, ekran JOBS pri otvaranju to javlja, a Sačuvaj se odbija sa istom porukom umesto SQL greške „Invalid column name“ (B-09, 10.11.2026).
 - Pogledi daju seriju pravca kao `SerijaVagona`, pa je plan, Posao i Taskovi prikazuju kao „Tip kola“.
 - Prenos iz najave upisuje i seriju. `OP_032` je dopisuje i već prenetim poslovima, i pokreće se ponovo posle svakog ponovnog `OP_030`.
 - Serija koje više nema u šifarniku ostaje na poslu i prikazuje se u izboru.
@@ -797,6 +798,51 @@ Bez SQL skripte. U zaglavlju ekrana Taskovi su dugmad „Gantogram lokomotiva“
 - **Preklapanje** zauzetosti u istom redu ima žut okvir; smena se ne računa jer je dostupnost.
 - **Prelaz mišem** preko trake prikazuje opis: task, ulogu, relaciju, vreme i status.
 - Red sa podnaslovom (serija ili uloge) ima visinu za oba reda teksta, pa je i nedeljni plan za to spreman.
+
+## 31. Serije lokomotiva: pogon, masa po osovini, vlasništvo (10.11.2026)
+
+Skripta `OP_033_SerijePogon.sql` se pokreće posle `OP_032`. Program ne radi bez nje.
+
+- `OP_SerijeLokomotiva` dobija dve kolone:
+  - `MasaPoOsovini`: decimal(5,2), u tonama;
+  - `Vlasnistvo`: SOPSTVENA ili ZAKUP, a prazno znači da nije uneto.
+- **Pogon** je postojeća kolona `VrstaVuce` (E električna, D dizel), pa nova kolona nije dodata. Na formi se to polje sada zove „Pogon (E električna, D dizel)“.
+- Na ekranu Lokomotive i serije, tab Serije prikazuje nova polja i omogućava njihov unos.
+- **Masa se vodi samo na seriji.** Polje Masa je skinuto sa taba Lokomotive. Plan i ponuda uzimaju masu serije (`PlanRepo`, ranije `COALESCE(l.MasaT, s.MasaT)`). „Dopuni iz starog šifarnika“ više ne upisuje masu lokomotive.
+- Kolona `OP_Lokomotive.MasaT` ostaje u bazi, ali je program ne čita i ne menja. Skripta na kraju ispisuje lokomotive čija masa nije ista kao masa serije, pa se masa po potrebi ručno prepiše na seriju.
+- Vlasništvo ostaje i na lokomotivi. Ponuda i dalje gleda vlasništvo lokomotive.
+- Masa po osovini se za sada samo evidentira. Korisnik je odlučio da se kasnije koristi u rutiranju. Rutiranje već ume da proveri osovinsko opterećenje deonice (`ZahtevRute.OsovinskoT`), ali ga još ne puni iz serije.
+
+## 32. Kartice stanja na ekranu Transport (10.11.2026)
+
+Zadatak je u `RAZVOJ_Transport_kartice.md`. Skripta nije potrebna: brojevi se čitaju iz postojećih tabela, bez procedure `spTransportKartice`.
+
+- Četiri kartice zamenjuju prečice Novi radni nalog, Centralna tabla, Najavljeni vozovi i Pronađi vagon. Te forme ostaju u grupama i u pretrazi (Ctrl+K). Kartice se vide samo na modulu Transport.
+- Kod: `MainP.Kartice.cs`, kontrola `Tema/Controls/KarticaStanja.cs`, brojevi `Podaci/KarticeRepo.cs`, a pravila `Pravila/KarticeTransporta.cs`. Ista pravila koriste i filteri formi, pa broj na kartici odgovara broju redova na formi.
+- Svaka kartica se učitava posebno. Kad jedan deo ne uspe, samo ta kartica prikazuje „–“. Prava se čitaju bez poruke, a kartica bez prava je zatamnjena.
+- Osvežavanje: pri prikazu, na 60 s dok se Transport vidi, ručno (ikona ispod kartica) i pri povratku na glavni prozor (najviše jednom u 10 s).
+
+| Kartica | Broj | Pravilo (stvarne tabele) | Klik otvara |
+|---|---|---|---|
+| Jobs | novih | `OP_Jobs.Status <> 7` (nije predat), bez taska koji nije storniran (`OP_TaskNajava.NajavaID = OP_Jobs.ID`) | JOBS, filter Taskovi = Bez taskova |
+| | sa taskovima | isto, sa bar jednim takvim taskom | JOBS, Sa taskovima |
+| Taskovi | danas | status OTVOREN ili LANSIRAN, ruta sa bar dve stanice, `ETD ≤ danas ≤ COALESCE(ETA, ETD)` (po datumu servera) | Taskovi, Prikaz = Otvoreni danas |
+| | otvorenih | OTVOREN ili LANSIRAN, bez obzira na datum | Taskovi, Otvoreni (period se širi na sve otvorene) |
+| | kasni (sitno) | otvoren task sa `COALESCE(ETA, ETD) < danas` | Taskovi, Kasne |
+| Mapa mreže | zatvora danas | telegram koji je zatvor (`Ruta.JeZatvor`) i važi sada ili još danas (`ZatvoriMape.Nivo`, sa dnevnim prozorom) | Mreža i stanice, tab Mapa |
+| Osoblje | raspoređeno | aktivna osoba u planiranju (mašinovođa, pregledač, manevrista, vozovođa ili mašinovođa manevre) sa zadatkom POSLAT/PRIHVACEN koji je sada u toku | Dostupnost osoblja, Status sada = Raspoređeni |
+| | slobodno | bez odsustva i slobodnog dana danas, a sada nije raspoređena | Slobodni |
+| | odsutno (sitno) | odsustvo danas (`OP_vOdsustvo`) ili smena SLOBODAN danas | Odsutni |
+
+- Osoba se broji jednom: odsustvo, pa zadatak, pa slobodan dan. Zbir tri broja je broj osoba koje se broje.
+- Ističu se: novi jobovi > 0, kasni > 0 i slobodno = 0. Broj zatvora se ne ističe.
+- Izmene formi:
+  - JOBS ima filter „Taskovi“ (Svi, Bez taskova, Sa taskovima).
+  - Taskovi imaju filter „Prikaz“ (Svi, Otvoreni, Otvoreni danas, Kasne).
+  - Dostupnost osoblja ima filter „Status sada“. Ne primenjuje se na nedelju dalju od dve nedelje od današnje.
+  - Mreža i stanice se otvara na tabu Mapa (`frmOPStanice.NaMapi`).
+- Taskovi za period (`TaskRepo.ZaPeriod`, i na gantogramu) sada obuhvataju i task koji je krenuo pre perioda, a još traje u njemu.
+
 ## Dodatak A. Kolone tabela (iz `SQL/OP_001_Sema.sql`)
 
 Izvučeno automatski iz skripte. Kad se razlikuje, važi skripta.

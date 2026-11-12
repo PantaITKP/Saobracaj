@@ -104,7 +104,7 @@
       <HintPath>..\packages\AjaxMin.5.14.5506.26202\lib\net40\AjaxMin.dll</HintPath>
     </Reference>
     <Reference Include="Bunifu_UI_v1.52">
-      <HintPath>..\..\..\..\Desktop\Bunifu_UI_v1.52.dll</HintPath>
+      <HintPath>Bunifu_UI_v1.52.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.4.4\lib\net45\EntityFramework.dll</HintPath>
@@ -1821,7 +1821,14 @@
     <Compile Include="Tema\Controls\GlavniMeni.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Tema\Controls\KarticaStanja.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="MainP.NoviIzgled.cs">
+      <DependentUpon>MainP.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainP.Kartice.cs">
       <DependentUpon>MainP.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
@@ -2326,6 +2333,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Planiranje\Podaci\DogadjajRepo.cs" />
+    <Compile Include="Planiranje\Podaci\KarticeRepo.cs" />
     <Compile Include="Planiranje\Podaci\LokomotiveRepo.cs" />
     <Compile Include="Planiranje\Podaci\NajaveRepo.cs" />
     <Compile Include="Planiranje\Podaci\OdsustvaRepo.cs" />
@@ -2356,6 +2364,7 @@
     <Compile Include="Planiranje\Pravila\PregledPruga.cs" />
     <Compile Include="Planiranje\Pravila\NaziviRegistra.cs" />
     <Compile Include="Planiranje\Pravila\BrojLokomotiva.cs" />
+    <Compile Include="Planiranje\Pravila\KarticeTransporta.cs" />
     <Compile Include="Planiranje\Pravila\ProverePosla.cs" />
     <Compile Include="Planiranje\Pravila\GpsLokacije.cs" />
     <Compile Include="Planiranje\Pravila\ZatvoriMape.cs" />

@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Saobracaj.Agenti_jobs;
 using Saobracaj.Planiranje.Modeli;
+using Saobracaj.Planiranje.Pravila;
 
 namespace Saobracaj.Planiranje.Podaci
 {
@@ -17,6 +18,7 @@ namespace Saobracaj.Planiranje.Podaci
         internal DataTable Statusi;
         internal DataTable NHM;
         internal DataTable SerijeKola;  // dbo.VagoniSerije
+        internal string Upozorenje;     // null = šema baze je u redu
     }
 
     // JOBS (OP_030). Šifarnici iz dbo se samo čitaju; upis je samo u planiranje.OP_Jobs, OP_JobsLog i OP_Posao.
@@ -39,13 +41,26 @@ namespace Saobracaj.Planiranje.Podaci
                     NHM = Db.Table(c, null, "SELECT ID, RTRIM(Broj) AS Naziv FROM dbo.NHM ORDER BY Broj"),
                     // Kao combo serije vagona na formi Najava: oznaka serije je i šifra i naziv.
                     SerijeKola = Db.Table(c, null, "IF OBJECT_ID(N'dbo.VagoniSerije', N'U') IS NOT NULL SELECT DISTINCT RTRIM(Serija) AS ID, RTRIM(Serija) AS Naziv FROM dbo.VagoniSerije WHERE Serija IS NOT NULL ORDER BY 1 " +
-                        "ELSE SELECT CAST(NULL AS nvarchar(20)) AS ID, CAST(NULL AS nvarchar(20)) AS Naziv WHERE 1 = 0")
+                        "ELSE SELECT CAST(NULL AS nvarchar(20)) AS ID, CAST(NULL AS nvarchar(20)) AS Naziv WHERE 1 = 0"),
+                    Upozorenje = ProveraSeme(c)
                 };
         }
 
-        // Lista: bez predatih poslova, osim kad je izabrano „Svi JOBS“; po želji samo jedan platilac.
-        internal static DataTable Lista(bool svi, int? platilac)
+        // Serija kola dolazi iz OP_032; bez nje svaki upis posla pada na „Invalid column name“.
+        private static string ProveraSeme(SqlConnection c)
         {
+            DataRow r = Db.Table(c, null,
+                "SELECT COL_LENGTH('planiranje.OP_Jobs', 'SerijaKola1') AS s1, COL_LENGTH('planiranje.OP_Jobs', 'SerijaKola2') AS s2").Rows[0];
+            return r.IsNull("s1") || r.IsNull("s2")
+                ? "U bazi nedostaju kolone Serija kola (SerijaKola1, SerijaKola2), pa posao ne može da se sačuva. Administrator baze treba da pokrene skriptu OP_032_JobsSerijaKola.sql."
+                : null;
+        }
+
+        // Lista: bez predatih poslova, osim kad je izabrano „Svi JOBS“; po želji samo jedan platilac i samo poslovi bez taskova ili sa njima.
+        internal static DataTable Lista(bool svi, int? platilac, FilterJobsTaskova taskovi = FilterJobsTaskova.Svi)
+        {
+            string uslovTaskova = taskovi == FilterJobsTaskova.BezTaskova ? " AND NOT " + KarticeRepo.ImaTask
+                : taskovi == FilterJobsTaskova.SaTaskovima ? " AND " + KarticeRepo.ImaTask : "";
             using (var c = Db.Open())
                 return Db.Table(c, null,
                     "SELECT j.ID AS Sifra, RTRIM(pl.PaNaziv) AS Platilac, RTRIM(s1.Opis) AS [Stanica 1], RTRIM(s2.Opis) AS [Stanica 2], RTRIM(s3.Opis) AS [Stanica 3], " +
@@ -56,7 +71,7 @@ namespace Saobracaj.Planiranje.Podaci
                     "LEFT JOIN dbo.Partnerji pl ON pl.PaSifra = j.PlatilacID " +
                     "LEFT JOIN dbo.stanice s1 ON s1.ID = j.Stanica1ID LEFT JOIN dbo.stanice s2 ON s2.ID = j.Stanica2ID LEFT JOIN dbo.stanice s3 ON s3.ID = j.Stanica3ID " +
                     "LEFT JOIN dbo.StatusVoza st ON st.ID = j.Status " +
-                    "WHERE (@svi = 1 OR j.Status <> @predato) AND (@pl IS NULL OR j.PlatilacID = @pl) ORDER BY j.ID DESC",
+                    "WHERE (@svi = 1 OR j.Status <> @predato) AND (@pl IS NULL OR j.PlatilacID = @pl)" + uslovTaskova + " ORDER BY j.ID DESC",
                     "@svi", svi ? 1 : 0, "@predato", StatusPredato, "@pl", (object)platilac);
         }
 
@@ -118,6 +133,9 @@ namespace Saobracaj.Planiranje.Podaci
             if (!j.Stanica2ID.HasValue && j.Stanica1ID == j.Stanica3ID) throw new InvalidOperationException("Bez stanice istovara (2) stanica preuzimanja i stanica predaje moraju biti različite.");
             if (j.Stanica2ID.HasValue && (j.Stanica2ID == j.Stanica1ID || j.Stanica2ID == j.Stanica3ID))
                 throw new InvalidOperationException("Stanica istovara (2) mora biti različita od stanice preuzimanja i stanice predaje.");
+            string sema;
+            using (var c0 = Db.Open()) sema = ProveraSeme(c0);
+            if (sema != null) throw new InvalidOperationException(sema);
             using (var c = Db.Open())
             using (var tx = c.BeginTransaction())
             {

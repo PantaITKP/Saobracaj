@@ -155,7 +155,7 @@ namespace Saobracaj.Planiranje.Podaci
                     });
 
                 foreach (DataRow r in Db.Table(c, null,
-                    "SELECT l.ID, l.Broj, l.SerijaID, s.Oznaka, s.VrstaVuce, COALESCE(l.MasaT, s.MasaT) AS MasaT, l.ImaGPS, l.Vlasnistvo, l.MaticnaStanicaID " +
+                    "SELECT l.ID, l.Broj, l.SerijaID, s.Oznaka, s.VrstaVuce, s.MasaT, l.ImaGPS, l.Vlasnistvo, l.MaticnaStanicaID " +
                     "FROM planiranje.OP_Lokomotive l LEFT JOIN planiranje.OP_SerijeLokomotiva s ON s.ID = l.SerijaID WHERE l.Aktivna = 1 ORDER BY l.Broj").Rows)
                     k.Lokomotive.Add(new LokomotivaOP
                     {

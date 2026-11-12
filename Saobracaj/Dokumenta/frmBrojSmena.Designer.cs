@@ -463,9 +463,9 @@ namespace Saobracaj.Dokumenta
         private System.Windows.Forms.DateTimePicker dtpVremeDo;
         private System.Windows.Forms.DateTimePicker dtpVremeOd;
         private System.Windows.Forms.Label label9;
-        private ns1.BunifuFlatButton bunifuFlatButton1;
+       private ns1.BunifuFlatButton bunifuFlatButton1;
         private ns1.BunifuFlatButton bunifuFlatButton2;
-        private ns1.BunifuFlatButton bunifuFlatButton3;
+       private ns1.BunifuFlatButton bunifuFlatButton3;
         private ns1.BunifuFlatButton Button1;
         private System.Windows.Forms.ComboBox cboRadnaMesta;
     }

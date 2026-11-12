@@ -32,6 +32,23 @@ namespace Saobracaj.Planiranje.Forme
             Pravo = PraviloPristupa.Proveri(code);
         }
 
+        // Kartica Osoblje na ekranu Transport: tekuća nedelja, samo osobe sa izabranim statusom u ovom trenutku.
+        internal frmOPDostupnost(StatusOsobe status) : this()
+        {
+            cboStatus.SelectedIndex = (int)status + 1;
+        }
+
+        private readonly ComboBox cboStatus = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+
+        // Status se računa za ovaj trenutak, isto kao na kartici. Kontekst pokriva izabranu nedelju ± 14 dana,
+        // pa za nedelju daleko od današnje status nije pouzdan i filter se ne primenjuje.
+        private bool ProlaziStatus(OsobaPlan o)
+        {
+            if (cboStatus.SelectedIndex <= 0) return true;
+            if (Math.Abs((Ponedeljak - DateTime.Today).TotalDays) > 14) return true;
+            return KarticeTransporta.Broji(o) && (int)KarticeTransporta.Status(kontekst, o, DateTime.Now) == cboStatus.SelectedIndex - 1;
+        }
+
         private DateTime Ponedeljak
         {
             get
@@ -82,7 +99,7 @@ namespace Saobracaj.Planiranje.Forme
                 t.Columns.Add(dani[(int)d.DayOfWeek] + " " + d.ToString("dd.MM."));
             }
             int filter = cboFilter.SelectedIndex;
-            foreach (OsobaPlan o in kontekst.Osobe.Where(x => filter <= 0 || (filter == 1 ? x.Masinovodja : x.Pregledac)))
+            foreach (OsobaPlan o in kontekst.Osobe.Where(x => (filter <= 0 || (filter == 1 ? x.Masinovodja : x.Pregledac)) && ProlaziStatus(x)))
             {
                 DataRow r = t.NewRow();
                 r[0] = o.DeSifra;

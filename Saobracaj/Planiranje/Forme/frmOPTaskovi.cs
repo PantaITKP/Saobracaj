@@ -69,6 +69,38 @@ namespace Saobracaj.Planiranje.Forme
             Pravo = PraviloPristupa.Proveri(code);
         }
 
+        // Kartica Taskovi na ekranu Transport: svi taskovi perioda, odmah filtrirani.
+        // Za otvorene i taskove koji kasne period se pri otvaranju širi na sve takve taskove.
+        internal frmOPTaskovi(FilterTaskova filter) : this()
+        {
+            chkSvi.Checked = true;
+            cboFilter.SelectedIndex = (int)filter;
+            prosiriPeriod = filter == FilterTaskova.Otvoreni || filter == FilterTaskova.Kasne;
+        }
+
+        private readonly ComboBox cboFilter = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+        private bool prosiriPeriod;
+
+        private FilterTaskova Filter => cboFilter.SelectedIndex < 0 ? FilterTaskova.Svi : (FilterTaskova)cboFilter.SelectedIndex;
+
+        private async Task PrvoOsvezavanje()
+        {
+            if (prosiriPeriod)
+            {
+                bool kasne = Filter == FilterTaskova.Kasne;
+                Tuple<DateTime?, DateTime?> p = null;
+                try { p = await Task.Run(() => TaskRepo.PeriodOtvorenih(kasne)); }
+                catch (Exception) { }
+                DateTime danas = DateTime.Today;
+                if (p != null && p.Item1.HasValue && p.Item1.Value < danas) dtOd.Value = p.Item1.Value;
+                if (p != null && p.Item2.HasValue && !kasne && p.Item2.Value > danas) dtDo.Value = p.Item2.Value;
+                if (kasne) dtDo.Value = danas;
+            }
+            else if (Filter == FilterTaskova.Danas)
+                dtDo.Value = DateTime.Today;
+            await Osvezi();
+        }
+
         private DateTime PeriodOd => dtOd.Value.Date;
         private DateTime PeriodDo => dtDo.Value.Date.AddDays(1);
 
@@ -265,7 +297,9 @@ namespace Saobracaj.Planiranje.Forme
             var redNajave = new Dictionary<int, int>();
             for (int i = 0; i < poslovi.Count; i++)
                 if (!redNajave.ContainsKey(poslovi[i].Posao.NajavaID)) redNajave[poslovi[i].Posao.NajavaID] = i;
-            var redovi = taskovi.SelectMany(t => t.Najave.Select(n => new { T = t, N = n }))
+            FilterTaskova filter = Filter;
+            DateTime danas = DateTime.Today;
+            var redovi = taskovi.Where(t => KarticeTransporta.Prolazi(t, filter, danas)).SelectMany(t => t.Najave.Select(n => new { T = t, N = n }))
                 .Where(x => chkSvi.Checked || x.N.NajavaID == izabranaNajava)
                 .OrderBy(x => redNajave.ContainsKey(x.N.NajavaID) ? redNajave[x.N.NajavaID] : int.MaxValue)
                 .ThenBy(x => x.N.NajavaID)

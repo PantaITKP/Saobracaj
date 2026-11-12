@@ -11,7 +11,7 @@ namespace Saobracaj.Planiranje.Forme
         public static string code = "frmOPLokomotive";
         public bool Pravo { get; }
 
-        private readonly DataGridView tabLokomotive = EkranOP.NovaTabela("ID", "SerijaID", "MaticnaStanicaID");
+        private readonly DataGridView tabLokomotive = EkranOP.NovaTabela("ID", "SerijaID", "MaticnaStanicaID", "MaticnaStanica", "Zakupodavac");
         private readonly DataGridView tabSerije = EkranOP.NovaTabela("ID", "IzvorniID");
         private readonly DataGridView tabZauzetost = EkranOP.NovaTabela("ID", "LokomotivaID");
         private readonly UredjivacReda poljaLok = new UredjivacReda("Lokomotiva");
@@ -31,12 +31,10 @@ namespace Saobracaj.Planiranje.Forme
             {
                 Lok = LokomotiveRepo.Lokomotive(false),
                 Ser = LokomotiveRepo.Serije(),
-                Zau = LokomotiveRepo.Zauzetosti(),
-                Sta = StaniceRepo.ZaIzbor()
+                Zau = LokomotiveRepo.Zauzetosti()
             }, p =>
             {
                 poljaLok.IzvorIzbora("SerijaID", p.Ser, "Oznaka", "ID", true);
-                poljaLok.IzvorIzbora("MaticnaStanicaID", p.Sta, "Naziv", "ID", true);
                 poljaZau.IzvorIzbora("LokomotivaID", p.Lok, "Broj", "ID", false);
                 tabLokomotive.DataSource = p.Lok;
                 tabSerije.DataSource = p.Ser;
@@ -50,13 +48,16 @@ namespace Saobracaj.Planiranje.Forme
             if (broj.Length == 0) { EkranOP.Poruka(this, "Unesite broj lokomotive."); return; }
             string vlasnistvo = poljaLok.Tekst("Vlasnistvo");
             if (vlasnistvo.Length == 0) vlasnistvo = "SOPSTVENA";
+            // Zakupodavac i matična stanica nisu na ekranu; postojeća vrednost se čuva.
+            DataRow red = poljaLok.Red;
+            string zakupodavac = red == null || red["Zakupodavac"] == DBNull.Value ? null : Convert.ToString(red["Zakupodavac"]);
+            int? maticna = red == null || red["MaticnaStanicaID"] == DBNull.Value ? (int?)null : Convert.ToInt32(red["MaticnaStanicaID"]);
             bool uspeh = EkranOP.Izvrsi(this, () =>
             {
-                decimal? masa = poljaLok.DecimalIliNull("MasaT", "Masa");
                 if (poljaLok.ID.HasValue)
-                    LokomotiveRepo.SacuvajLokomotivu(poljaLok.ID.Value, poljaLok.RowVer, broj, poljaLok.TekstIliNull("Naziv"), poljaLok.IzabranID("SerijaID"), vlasnistvo, poljaLok.TekstIliNull("Zakupodavac"), poljaLok.Cek("ImaGPS"), poljaLok.TekstIliNull("TechnodisID"), poljaLok.IzabranID("MaticnaStanicaID"), masa, poljaLok.Cek("Aktivna"));
+                    LokomotiveRepo.SacuvajLokomotivu(poljaLok.ID.Value, poljaLok.RowVer, broj, poljaLok.TekstIliNull("Naziv"), poljaLok.IzabranID("SerijaID"), vlasnistvo, zakupodavac, poljaLok.Cek("ImaGPS"), poljaLok.TekstIliNull("TechnodisID"), maticna, poljaLok.Cek("Aktivna"));
                 else
-                    LokomotiveRepo.DodajLokomotivu(broj, poljaLok.TekstIliNull("Naziv"), poljaLok.IzabranID("SerijaID"), vlasnistvo, poljaLok.TekstIliNull("Zakupodavac"), poljaLok.Cek("ImaGPS"), poljaLok.TekstIliNull("TechnodisID"), poljaLok.IzabranID("MaticnaStanicaID"), masa, poljaLok.Cek("Aktivna"));
+                    LokomotiveRepo.DodajLokomotivu(broj, poljaLok.TekstIliNull("Naziv"), poljaLok.IzabranID("SerijaID"), vlasnistvo, null, poljaLok.Cek("ImaGPS"), poljaLok.TekstIliNull("TechnodisID"), null, poljaLok.Cek("Aktivna"));
             });
             if (uspeh) { var _ = Osvezi(); }
         }
@@ -67,12 +68,14 @@ namespace Saobracaj.Planiranje.Forme
             if (oznaka.Length == 0) { EkranOP.Poruka(this, "Unesite oznaku serije."); return; }
             bool uspeh = EkranOP.Izvrsi(this, () =>
             {
-                decimal? masa = poljaSer.DecimalIliNull("MasaT", "Masa"), snaga = poljaSer.DecimalIliNull("SnagaKW", "Snaga"), duzina = poljaSer.DecimalIliNull("DuzinaM", "Dužina"), vmax = poljaSer.DecimalIliNull("VmaxKmh", "Vmax");
+                decimal? masa = poljaSer.DecimalIliNull("MasaT", "Masa"), masaOsovine = poljaSer.DecimalIliNull("MasaPoOsovini", "Masa po osovini"),
+                    snaga = poljaSer.DecimalIliNull("SnagaKW", "Snaga"), duzina = poljaSer.DecimalIliNull("DuzinaM", "Dužina"), vmax = poljaSer.DecimalIliNull("VmaxKmh", "Vmax");
                 int? v = vmax.HasValue ? (int?)vmax.Value : null;
+                string vlasnistvo = poljaSer.TekstIliNull("Vlasnistvo");
                 if (poljaSer.ID.HasValue)
-                    LokomotiveRepo.SacuvajSeriju(poljaSer.ID.Value, poljaSer.RowVer, oznaka, poljaSer.TekstIliNull("Opis"), poljaSer.TekstIliNull("VrstaVuce"), masa, snaga, v, duzina, poljaSer.Cek("Aktivna"));
+                    LokomotiveRepo.SacuvajSeriju(poljaSer.ID.Value, poljaSer.RowVer, oznaka, poljaSer.TekstIliNull("Opis"), poljaSer.TekstIliNull("VrstaVuce"), masa, masaOsovine, snaga, v, duzina, vlasnistvo, poljaSer.Cek("Aktivna"));
                 else
-                    LokomotiveRepo.DodajSeriju(oznaka, poljaSer.TekstIliNull("Opis"), poljaSer.TekstIliNull("VrstaVuce"), masa, snaga, v, duzina, poljaSer.Cek("Aktivna"));
+                    LokomotiveRepo.DodajSeriju(oznaka, poljaSer.TekstIliNull("Opis"), poljaSer.TekstIliNull("VrstaVuce"), masa, masaOsovine, snaga, v, duzina, vlasnistvo, poljaSer.Cek("Aktivna"));
             });
             if (uspeh) { var _ = Osvezi(); }
         }

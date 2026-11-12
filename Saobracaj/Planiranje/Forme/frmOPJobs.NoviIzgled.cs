@@ -94,12 +94,19 @@ namespace Saobracaj.Planiranje.Forme
                 EkranOP.Dugme("Sačuvaj", (s, e) => { var _ = Sacuvaj(); }),
                 EkranOP.Dugme("Obriši", (s, e) => { var _ = Obrisi(); }),
                 EkranOP.Dugme("Osveži", (s, e) => { var _ = Osvezi(); }),
-                chkPlatilac, chkSvi,
+                chkPlatilac, chkSvi, new Label { Text = "Taskovi" }, cboTaskovi,
                 EkranOP.Dugme("LOG", (s, e) => PrikaziLog()),
                 EkranOP.Dugme("Taskovi", (s, e) => OtvoriTaskove()),
                 EkranOP.Dugme("Prenesi najave u JOBS (privremeno)", (s, e) => { var _ = PrenesiNajave(); }),
                 lblStanje);
             chkSvi.CheckedChanged += (s, e) => { var _ = Osvezi(); };
+            // Redosled stavki prati FilterJobsTaskova.
+            cboTaskovi.Items.AddRange(new object[] { "Svi", "Bez taskova", "Sa taskovima" });
+            cboTaskovi.SelectedIndex = 0;
+            cboTaskovi.Width = Theme.Dp(130);
+            cboTaskovi.Font = Theme.Tekstualni(9.5f);
+            cboTaskovi.Margin = new Padding(0, Theme.Dp(4), Theme.Dp(6), 0);
+            cboTaskovi.SelectedIndexChanged += (s, e) => { if (Visible) { var _ = Osvezi(); } };
             chkPlatilac.CheckedChanged += (s, e) => { if (!punjenje) FiltrirajPoPlatiocu(); };
 
             tabJobs.SelectionChanged += (s, e) => IzabranPosao();
