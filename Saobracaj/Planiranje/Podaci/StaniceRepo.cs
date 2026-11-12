@@ -35,13 +35,6 @@ namespace Saobracaj.Planiranje.Podaci
                 return Db.Table(c, null, "SELECT ID, Naziv FROM planiranje.OP_Stanice WHERE Aktivna = 1 ORDER BY Naziv");
         }
 
-        // Stanje na mreži iz Planera (Operativni plan), samo čitanje; tabela pripada Planeru, pa je prazno kad je nema.
-        internal static DataTable StanjeNaMrezi()
-        {
-            using (var c = Db.Open())
-                return Db.Table(c, null, "IF OBJECT_ID(N'dbo.OperativniPlanMreza', N'U') IS NOT NULL SELECT Stanica, IDVoza, Vagoni, Klijent FROM dbo.OperativniPlanMreza ORDER BY ID ELSE SELECT CAST(NULL AS nvarchar(100)) AS Stanica, CAST(NULL AS nvarchar(100)) AS IDVoza, CAST(NULL AS nvarchar(100)) AS Vagoni, CAST(NULL AS nvarchar(100)) AS Klijent WHERE 1 = 0");
-        }
-
         internal static DataTable ZaIzborSrb()
         {
             using (var c = Db.Open())

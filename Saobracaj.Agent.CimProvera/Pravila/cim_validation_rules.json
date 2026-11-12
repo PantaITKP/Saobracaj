@@ -1,0 +1,1521 @@
+{
+  "meta": {
+    "name": "Pravila validacije CIM tovarnog lista",
+    "source": "Srbija Kargo Spt 51.01 - Priručnik za tovarni list CIM (GLV-CIM), izdanje 1.7.2025, izmena br. 7",
+    "language": "sr-Latn",
+    "severity_levels": {
+      "error": "Dokument nije ispravan dok se ne ispravi",
+      "warning": "Dokument se može prihvatiti, ali pošiljalac treba da proveri",
+      "info": "Napomena, bez obaveze ispravke",
+      "recommendation": "Nije obavezno po prirucniku; korisno za citljivost i automatizaciju (najave, K-200, KOL-65, teretnica)"
+    },
+    "flags": {
+      "O": "obavezan",
+      "U": "uslovan (obavezan ako je uslov ispunjen)",
+      "F": "fakultativan"
+    },
+    "field_naming": "Polja se oznacavaju kao r<broj rubrike>, npr. r1, r21, r58a. Podelementi kao r21.mrn, r7.codes itd.",
+    "reference_lists_required": [
+      "DIUM (šifre stanica)",
+      "UIC 920-14 (šifre zemalja)",
+      "ISO 3166 (šifre zemalja u adresama)",
+      "NHM nomenklatura",
+      "Lista sifara prevoznika CIT",
+      "UN/EDIFACT 1001 (šifre dokumenata)",
+      "UNECE preporuka 21 (vrste ambalaže)",
+      "RID tabela A, pogl. 3.2",
+      "EWC katalog otpada (Odluka 2014/955/EU)"
+    ],
+    "version": "2.5",
+    "updated": "2026-11-11",
+    "company": {
+      "name": "Kombinovani prevoz d.o.o.",
+      "short": "KP",
+      "uic": "3212",
+      "aliases": [
+        "KP",
+        "K prevoz",
+        "K-prevoz",
+        "Kombinovani prevoz",
+        "Kombinovani Prevoz d.o.o.",
+        "KP UIC 3212",
+        "KPUIC3212",
+        "UIC 3212",
+        "3212 KP"
+      ],
+      "address": "Jug Bogdanova 28, 18400 Prokuplje"
+    },
+    "notes": [
+      "KP u spisku kola NIJE obavezan po Prilogu 5 - vidi company_rules (recommendation).",
+      "Identifikacija pošiljke (r62) na spisku kola JESTE obavezna i mora se poklapati sa CIM-om."
+    ],
+    "changelog": [
+      {
+        "version": "2.2",
+        "date": "2026-11-10",
+        "changes": [
+          "Dodato polje 'primer' (primer ispravnog upisa) za pravila - prikazuje se u tabeli izvestaja. Tezine i tekstovi poruka nisu menjani.",
+          "Dodat system_messages.samo_spisak: obavestenje kada je u mailu dostavljen samo spisak kola (CIT 23), bez tovarnog lista CIM/CUV."
+        ]
+      },
+      {
+        "version": "2.1",
+        "date": "2026-11-10",
+        "changes": [
+          "Dodato message_en za sva pravila, response_template_en i recommendations_en (odgovor na engleskom kada je mail pošiljaoca na nemačkom/engleskom).",
+          "Dodat tekst poruke (message) za R22, R26, R27, R28 i sva r21_subrules - do sada je postojao samo 'check'. Tezine nisu menjane.",
+          "Dodat system_messages: necitljivo (warning, nije greška pošiljaoca) i nema_tovarnog_lista.",
+          "Dodato pravilo R20-RUTA (warning): mesto uz Incoterms nije među stanicama prevoznog puta. Osnov: priručnik t. 5.2 - Incoterms u tovarnom listu odnosi se samo na plaćanje troškova i nema drugih pravnih posledica; zato samo upozorenje.",
+          "R29 / X14: priručnik (Prilog 2, rubr. 29) propisuje samo mesto i datum ispostavljanja; redosled u odnosu na r16 nije propisan, pa se prijavljuje samo kroz X14 (warning). R29 'datum nije u budućnosti' prikazuje se zajedno sa X25 (isti problem).",
+          "R21-MRN ostaje error. Osnov: Prilog 2, rubr. 21 - MRN je obavezan kada je podneta izvozna (E MRN) ili tranzitna (T/TS MRN) deklaracija, a 'prateći dokument mora da se upise u rubriku 9'. Uslov se smatra ispunjenim kada je deklaracija u mailu.",
+          "Preklapanja (G3/X9/X20, G2/G11, R23/X1, R29/X25, R58A/KP2, R21-DESC/X2): prikazuje se prvo pojavljivanje, ostala pravila kao referenca 'vidi i'."
+        ]
+      },
+      {
+        "version": "2.3",
+        "date": "2026-11-11",
+        "changes": [
+          "Fajl preimenovan u cim_validation_rules.json (verzija samo u fajlu i u istoriji).",
+          "KP7 (r7) i KP57 (r57) – težina greška, važe za svaki CIM/CUV; zamenjuju KP4 i KP1. Režim „KP popunjava“ ostaje samo za rubrike prevoznika 49, 50, 58a i 62.",
+          "Prepoznavanje KP: KP, K prevoz, K-prevoz, Kombinovani prevoz (d.o.o.), КП, Комбиновани превоз, KP UIC 3212, KPUIC3212, UIC 3212, 3212 KP, IŽS/SRB/ŽS: KP; samo 3212 kao šifra prevoznika u r57 ili uz UIC/Frachtzahler u r7; OCR 3Z12/321Z/32l2 → 3212.",
+          "R21-MRN: upozorenje (odluka KP); prilog koji nije naveden u r9 ostaje greška.",
+          "R1-ISO / R4-ISO (upozorenje): zemlja rečima umesto ISO šifre; R1/R4 su greška samo kada zemlje nema.",
+          "G6: prilozi u r9 rečima bez UN/EDIFACT šifre – upozorenje.",
+          "G2: ne javlja se kada r13.5 ili r14 sadrži broj sporazuma/tarife.",
+          "Nova pravila: X26 (spisak kola naveden, nije priložen – greška), X27 (prilog naveden u r9, nije u mailu – upozorenje), X28 (r20 i uslov isporuke iz fakture/deklaracije – upozorenje), X29 (NHM na spisku kola – greška).",
+          "Primer ispravnog upisa: samo format; konkretan predlog daje agent iz pratećih dokumenata (tarifna oznaka, MRN, rok, Incoterms) ili iz istog lista.",
+          "Dijakritici u svim porukama na srpskom."
+        ]
+      },
+      {
+        "date": "2026-11-11",
+        "version": "2.4",
+        "changes": [
+          "KP5: oznake zemlje/mreže (SRB:, HR:, SI:, FS:, IŽS:, ŽS:, RS:) se uklanjaju pre provere naziva prevoznika.",
+          "KP7: predlog dodaje KP kao prevoznika za RS deonicu; upisani platilac ostaje.",
+          "Otpad: codelists.waste_nhm (7204, 4707, 3915, 7602, 7404) + reči otpad/otpaci/ostaci/scrap/Abfall/rifiuti/waste u r21, Annex VII u r9 ili dozvola za otpad u mailu; R21-EWC/X6 (greška) sa predlogom EWC iz dozvole.",
+          "R21-MRN: za izvoznu JCI bez MRN traži se broj izvozne deklaracije (predlog iz JCI, npr. 42072/C1/23309/2026, CI S. Mitrovica).",
+          "R49: upozorenje (privremeno), poruka sa oba naziva rubrike (šifra plaćanja / šifra frankiranja) i objašnjenjem; samo u internoj kopiji izveštaja (samo_interno).",
+          "meta.company.address: poznati podaci KP za proveru r58a (tolerancija na OCR greške).",
+          "X27: Annex VII i izveštaj o radiološkoj kontroli navedeni u r9, a nisu priloženi – upozorenje (predlog da kod otpada bude greška čeka odobrenje)."
+        ]
+      },
+      {
+        "date": "2026-11-11",
+        "version": "2.5",
+        "changes": [
+          "Novo pravilo G12 (upozorenje): zaglavlje „Nem fuvarlevél“ / „Kein Frachtbrief“ / „Not a consignment note“ / „Küldemény adatok információ“ – informativni ispis podataka pošiljke, a ne tovarni list. Javlja se i kada obrazac nije prepoznat.",
+          "Novo pravilo R20-INCO-ZASTARELO (upozorenje): DAF/DDU nisu u Incoterms 2020; mesto upisano samo brojčanom šifrom (npr. „711“).",
+          "Novo pravilo R21-MRN99 (upozorenje): MRN upisan samo u rubrici 99, a ne u rubrici 21.",
+          "r9: stavka sa UN/EDIFACT šifrom (916 dodatni list, 380 faktura, 822 T2…) računa se samo kao taj dokument.",
+          "Ostale težine nisu menjane."
+        ]
+      }
+    ]
+  },
+  "codelists": {
+    "r7": {
+      "1": {
+        "text": "Primalac nema pravo raspolaganja",
+        "requires": "meaning_text"
+      },
+      "2": {
+        "text": "Ovlašćeni primalac (prema carinskim propisima)",
+        "requires": "meaning_text"
+      },
+      "3": {
+        "text": "Pratilac(i)",
+        "requires": "names (prezime, ime)"
+      },
+      "4": {
+        "text": "Napunjena masa u kg (RID 5.4.1.2.2 c)",
+        "requires": "mass_kg"
+      },
+      "5": {
+        "text": "Telefon za hitne intervencije - opasna roba",
+        "requires": "phone"
+      },
+      "6": {
+        "text": "Ne predati izvršnom prevozniku",
+        "requires": "meaning_text"
+      },
+      "7": {
+        "text": "Prevoznik obavlja utovar",
+        "requires": "meaning_text"
+      },
+      "8": {
+        "text": "Istovar obavlja prevoznik",
+        "requires": "meaning_text"
+      },
+      "9": {
+        "text": "Ugovoreni rok isporuke",
+        "requires": "deadline"
+      },
+      "10": {
+        "text": "Ispunjavanje administrativnih formalnosti",
+        "requires": "documents (UN/EDIFACT 1001) + mesto gde su dostupni"
+      },
+      "11": {
+        "text": "Naročita pošiljka",
+        "requires": "brojevi odobrenja svih prevoznika/upravljaca infrastrukture"
+      },
+      "12": {
+        "text": "Broj ravnih EUR paleta (European Pallet Pool)",
+        "requires": "count"
+      },
+      "13": {
+        "text": "Broj boks EUR paleta",
+        "requires": "count"
+      },
+      "14": {
+        "text": "Pokrivaci prevoznika",
+        "requires": "broj, skracenica prevoznika, brojevi pokrivaca"
+      },
+      "15": {
+        "text": "Remenje prevoznika",
+        "requires": "količina, skracenica prevoznika"
+      },
+      "16": {
+        "text": "Ostale izjave",
+        "requires": "free_text"
+      },
+      "24": {
+        "text": "Opasne materije u ograničenim količinama > 8 t bruto po kolima/UTI",
+        "requires": "meaning_text"
+      },
+      "26": {
+        "text": "Izjava pošiljaoca o prevozu otpada",
+        "requires": "free_text"
+      },
+      "42": {
+        "text": "Podnošenje robe u NCTS postupku",
+        "requires": "naziv/šifra prevoznika + mesto/carinarnica/šifra stanice"
+      }
+    },
+    "r13": {
+      "1": "Prevozni put",
+      "2": "Tok saobraćaja",
+      "3": "Prevoznici ovlašćeni za izvrsenje prevoza, relacija, status",
+      "4": "Odredjene granicne stanice (za narocite pošiljke)",
+      "5": "Drugi uslovi (broj EDI sporazuma, kor. sporazuma ili tarife sa šifrom prevoznika)"
+    },
+    "r20_payment": {
+      "FRANKO": "Franko prevoznina [do X]",
+      "FRANKO_INCL": "Franko prevoznina ukljucujuci ... [do X]",
+      "EXW": "Sve placa primalac",
+      "FCA": "Pošiljalac samo troškove u zemlji otpravljanja (40, 45, 46, 60, 61)",
+      "CPT": "Pošiljalac do mesta isporuke, osim 41, 42, 45, 46, 60, 61 u tranzitu i prispecu",
+      "CIP": "Kao CPT, uz osiguranje",
+      "DAP": "Pošiljalac do secista/mesta isporuke + izvozne dazbine",
+      "DPU": "Pošiljalac do terminala ukljucujuci istovar + izvozne dazbine",
+      "DDP": "Pošiljalac sve do mesta isporuke",
+      "DAF": "PRELAZNO: pošiljalac sve do tarifskog secista",
+      "DDU": "PRELAZNO: pošiljalac sve osim 42, 45, 46, 60, 61 u zemlji prispeca"
+    },
+    "r21_mrn_prefixes": [
+      "E MRN",
+      "T MRN",
+      "TS MRN",
+      "EXS MRN",
+      "ENS MRN"
+    ],
+    "r56_reserves": [
+      "1",
+      "2",
+      "3",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9.1",
+      "9.2",
+      "9.3",
+      "10",
+      "11",
+      "12"
+    ],
+    "r56_reserves_need_description": [
+      "2",
+      "3",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "11",
+      "12"
+    ],
+    "r55_reasons": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "currencies": [
+      "ALL",
+      "AMD",
+      "BAM",
+      "BGN",
+      "CHF",
+      "CZK",
+      "DKK",
+      "DZD",
+      "EUR",
+      "GBP",
+      "GEL",
+      "HRK",
+      "HUF",
+      "IQD",
+      "IRR",
+      "LBP",
+      "MAD",
+      "MKD",
+      "NOK",
+      "PKR",
+      "PLN",
+      "RON",
+      "RSD",
+      "RUB",
+      "SEK",
+      "SYP",
+      "TND",
+      "TRY",
+      "UAH",
+      "USD",
+      "XDR"
+    ],
+    "currencies_deprecated": [
+      "HRK"
+    ],
+    "cost_codes_no_partial_franking": [
+      "10",
+      "15",
+      "54",
+      "87"
+    ],
+    "cost_codes_not_payable_by_consignor": [
+      "43",
+      "84"
+    ],
+    "cost_codes_always_consignor": [
+      "32",
+      "76",
+      "77"
+    ],
+    "cost_codes_always_consignee": [
+      "86"
+    ],
+    "waste_nhm": [
+      "7204",
+      "4707",
+      "3915",
+      "7602",
+      "7404"
+    ]
+  },
+  "general_rules": [
+    {
+      "id": "G1",
+      "severity": "error",
+      "check": "Dokument je popunjen na najmanje jednom od jezika: nemacki, francuski ili engleski (osim ako je drugacije ugovoreno).",
+      "message": "Tovarni list mora biti popunjen i na nemačkom, francuskom ili engleskom jeziku.",
+      "ref": "Prilog 2, t. 1",
+      "message_en": "The consignment note must be completed in German, French or English as well.",
+      "primer": "Podaci upisani i na engleskom ili nemačkom (npr. 'Ugalj / Coal')"
+    },
+    {
+      "id": "G2",
+      "severity": "warning",
+      "check": "Jedan tovarni list po kolima; više kola na jednom listu samo uz korisnički sporazum.",
+      "message": "Na jednom tovarnom listu je više kola. Proverite da li postoji korisnički sporazum koji to dozvoljava.",
+      "ref": "t. 4",
+      "message_en": "The consignment note covers several wagons. Check whether a customer agreement allows this.",
+      "primer": "r14: broj korisničkog sporazuma (počinje sa 1) ili tarife (počinje sa 2); ili 13.5 sa brojem sporazuma"
+    },
+    {
+      "id": "G3",
+      "severity": "error",
+      "check": "Više kola ili >= 3 UTI na jednom listu => priložen Spisak kola i upisan u tovarni list.",
+      "message": "Za više kola ili tri i više UTI potrebno je priložiti Spisak kola (Prilog 5) i navesti ga u rubrici 9.",
+      "ref": "t. 10, Prilog 5",
+      "message_en": "For several wagons or three or more ITUs a wagon list (Annex 5) must be attached and listed in box 9.",
+      "primer": "r9: 271 Spisak kola (CIT 23); r18: po spisku kola"
+    },
+    {
+      "id": "G4",
+      "severity": "error",
+      "check": "Postoje dodatni listovi => u r9 napomena o dodatnim listovima; dodatni listovi sadrze broj pošiljke i datum preuzimanja.",
+      "message": "Dodatni listovi moraju biti navedeni u rubrici 9 i sadržati broj pošiljke i datum preuzimanja.",
+      "ref": "Prilog 2, t. 2",
+      "message_en": "Additional sheets must be listed in box 9 and must contain the consignment number and the date of taking over.",
+      "primer": "r9: Dodatni list (2 lista); na dodatnom listu broj pošiljke i datum preuzimanja"
+    },
+    {
+      "id": "G5",
+      "severity": "error",
+      "check": "Rubrike 7, 13, 14, 55, 56, 57 sadrze šifru (i tekst gde je propisano).",
+      "message": "Rubrika {field} mora biti popunjena u obliku šifre i propisanog teksta.",
+      "ref": "Prilog 2, t. 2",
+      "message_en": "Box {field} must be completed as a code with the prescribed text.",
+      "primer": "šifra + tekst, npr. 7.16 Platilac …"
+    },
+    {
+      "id": "G6",
+      "severity": "warning",
+      "check": "Elektronski list: prilozi (r9) i dokumenti uz šifru 7.10 samo šifrom UN/EDIFACT 1001; papirni list: šifrom i rečima.",
+      "message": "Prilozi u rubrici 9 navedeni su rečima, bez šifre UN/EDIFACT 1001 – dodati šifru (na papirnom listu šifra i reči).",
+      "ref": "Prilog 2, rubr. 7 i 9",
+      "message_en": "Documents in box 9 must be listed with their UN/EDIFACT 1001 code (on paper also in words).",
+      "primer": "šifra UN/EDIFACT 1001 + naziv, npr. 271 Spisak kola; 380 Faktura"
+    },
+    {
+      "id": "G7",
+      "severity": "warning",
+      "check": "Pošiljalac nije popunjavao rubrike 40-99 bez posebnog ugovora.",
+      "message": "Rubrike 40-99 popunjava prevoznik/carina. Proverite da li ste ih popunili greškom.",
+      "ref": "Prilog 2, t. 2",
+      "message_en": "Boxes 40-99 are completed by the carrier/customs. Check whether you completed them by mistake."
+    },
+    {
+      "id": "G9",
+      "severity": "error",
+      "check": "Ispis elektronskog lista ima na vrhu napomenu 'Ispis elektronskog tovarnog lista - GGGG-MM-DD - izdat od strane ...'.",
+      "message": "Ispis elektronskog tovarnog lista nema propisanu napomenu o ispisu na vrhu dokumenta.",
+      "ref": "Prilog 1, t. 4.1",
+      "applies_if": "document_type == 'electronic_printout'",
+      "message_en": "The printout of the electronic consignment note lacks the prescribed printout note at the top of the document.",
+      "primer": "Ispis elektronskog tovarnog lista - 2026-11-05 - izdat od strane ..."
+    },
+    {
+      "id": "G10",
+      "severity": "error",
+      "check": "Prelaz preko carinskog podrucja EU sa robom EU, robom van EU i praznim kolima => odvojeni spiskovi kola.",
+      "message": "Za robu EU, robu van EU i prazna kola potrebni su odvojeni spiskovi kola.",
+      "ref": "Prilog 1, t. 4.4; Prilog 5, t. 4.2",
+      "message_en": "Separate wagon lists are required for EU goods, non-EU goods and empty wagons."
+    },
+    {
+      "id": "G11",
+      "severity": "error",
+      "check": "Jedan CIM pokriva više kola => mora postojati korisnički sporazum (r14 / r13.5 / CIM 6 broj ili ponuda). Bez reference na sporazum: upozorenje.",
+      "message": "Jedan tovarni list za više kola dozvoljen je samo uz korisnički sporazum. Navedite broj sporazuma/ponude (rubrika 14 ili 13.5).",
+      "ref": "t. 4",
+      "severity_if_reference_missing": "warning",
+      "message_en": "One consignment note for several wagons is allowed only under a customer agreement. Enter the agreement/offer number (box 14 or 13.5).",
+      "primer": "r14: broj korisničkog sporazuma (1…) ili 13.5 sa brojem sporazuma"
+    },
+    {
+      "id": "G12",
+      "severity": "warning",
+      "check": "Zaglavlje dokumenta ima natpis informativnog ispisa (nije tovarni list). Proverava se i kada obrazac nije prepoznat.",
+      "header_markers": [
+        "Nem fuvarlevél",
+        "Kein Frachtbrief",
+        "Not a consignment note",
+        "Küldemény adatok információ"
+      ],
+      "message": "Dokument je informativni ispis podataka pošiljke, a ne tovarni list; za proveru je potreban ispis elektronskog tovarnog lista ili original.",
+      "message_en": "The document is an information printout of the consignment data, not a consignment note; a printout of the electronic consignment note or the original is needed for the check.",
+      "primer": "ispis elektronskog tovarnog lista (e-CIM) ili original"
+    }
+  ],
+  "field_rules": [
+    {
+      "id": "R1",
+      "field": "r1",
+      "name": "Pošiljalac",
+      "flag": "O",
+      "severity": "error",
+      "required_parts": [
+        "naziv",
+        "postanska_adresa",
+        "šifra_zemlje_iso3166",
+        "potpis_ili_r62"
+      ],
+      "recommended_parts": [
+        "telefon_ili_faks_sa_medjunarodnim_pozivnim",
+        "email"
+      ],
+      "message": "Rubrika 1: upisati naziv pošiljaoca, punu poštansku adresu sa ISO 3166 šifrom zemlje i potpis (ili broj pošiljke iz rubrike 62).",
+      "message_en": "Box 1: enter the consignor's name, full postal address with ISO 3166 country code and signature (or the consignment number from box 62).",
+      "primer": "naziv, ulica i broj, poštanski broj i mesto, ISO šifra zemlje (npr. RS); kontakt; potpis",
+      "primer_en": "name, street and number, postcode and place, ISO country code (e.g. RS); contact; signature"
+    },
+    {
+      "id": "R1-VAT",
+      "field": "r1.vat",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "pošiljalac i primalac u drzavama clanicama EU",
+      "message": "Rubrika 1: za razmenu robe unutar EU upisati PDV broj pošiljaoca, ako mu je dodeljen.",
+      "message_en": "Box 1: for intra-EU trade enter the consignor's VAT number, if one has been assigned.",
+      "primer": "PDV/VAT broj sa šifrom zemlje"
+    },
+    {
+      "id": "R1-ISO",
+      "field": "1",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "zemlja pošiljaoca upisana rečima, bez ISO 3166 šifre",
+      "then": "ISO 3166 šifra zemlje",
+      "basis": "priručnik Prilog 2, rubr. 1",
+      "message": "Rubrika 1: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. RS).",
+      "message_en": "Box 1: the country is written in words – enter the ISO 3166 country code (e.g. RS).",
+      "primer": "…, 21000 Novi Sad, RS"
+    },
+    {
+      "id": "R2",
+      "field": "r2",
+      "name": "Korisnicka šifra pošiljaoca",
+      "flag": "F"
+    },
+    {
+      "id": "R3",
+      "field": "r3",
+      "name": "Šifra platioca franko troškova",
+      "flag": "F"
+    },
+    {
+      "id": "R4",
+      "field": "r4",
+      "name": "Primalac",
+      "flag": "O",
+      "severity": "error",
+      "required_parts": [
+        "naziv",
+        "postanska_adresa",
+        "šifra_zemlje_iso3166"
+      ],
+      "recommended_parts": [
+        "telefon_ili_faks_sa_medjunarodnim_pozivnim",
+        "email"
+      ],
+      "message": "Rubrika 4: upisati naziv primaoca i punu poštansku adresu sa ISO 3166 šifrom zemlje.",
+      "message_en": "Box 4: enter the consignee's name and full postal address with ISO 3166 country code.",
+      "primer": "naziv, ulica i broj, poštanski broj i mesto, ISO šifra zemlje (npr. HU)",
+      "primer_en": "name, street and number, postcode and place, ISO country code (e.g. HU)"
+    },
+    {
+      "id": "R4-VAT",
+      "field": "r4.vat",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "razmena robe između clanica EU i PDV broj primaoca poznat",
+      "message": "Rubrika 4: za razmenu robe unutar EU upisati PDV broj primaoca.",
+      "message_en": "Box 4: for intra-EU trade enter the consignee's VAT number.",
+      "primer": "PDV/VAT broj sa šifrom zemlje"
+    },
+    {
+      "id": "R4-ISO",
+      "field": "4",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "zemlja primaoca upisana rečima, bez ISO 3166 šifre",
+      "then": "ISO 3166 šifra zemlje",
+      "basis": "priručnik Prilog 2, rubr. 4",
+      "message": "Rubrika 4: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. IT).",
+      "message_en": "Box 4: the country is written in words – enter the ISO 3166 country code (e.g. IT).",
+      "primer": "…, 44042 Cento, IT"
+    },
+    {
+      "id": "R5",
+      "field": "r5",
+      "name": "Korisnicka šifra primaoca",
+      "flag": "F"
+    },
+    {
+      "id": "R6",
+      "field": "r6",
+      "name": "Šifra platioca upucenih troškova",
+      "flag": "F"
+    },
+    {
+      "id": "R7",
+      "field": "r7",
+      "name": "Izjave pošiljaoca",
+      "flag": "U",
+      "severity": "error",
+      "format": "lista {šifra, tekst}; šifra iz codelists.r7; za šifre 1,2,6,7,8,24 tekst = značenje šifre; za ostale šifra + propisani podatak (codelists.r7[*].requires)",
+      "message": "Rubrika 7: šifra {code} mora biti praćena propisanim podatkom: {requires}.",
+      "message_en": "Box 7: code {code} must be followed by the prescribed information: {requires}.",
+      "primer": "šifra 7.x + propisani tekst, npr. 7.16 Platilac za deonicu …"
+    },
+    {
+      "id": "R8",
+      "field": "r8",
+      "name": "Obavestenje/referenca pošiljaoca",
+      "flag": "F"
+    },
+    {
+      "id": "R9",
+      "field": "r9",
+      "name": "Prilozi",
+      "flag": "U",
+      "severity": "error",
+      "condition": "postoje prateći dokumenti (carinski uz MRN/ARC, RID 5.4.2 sertifikat, obrazac RID 5.4.5, dodatni listovi, spisak kola)",
+      "format": "šifra UN/EDIFACT 1001 (+ reci na papirnom listu)",
+      "message": "Rubrika 9: navesti sve prateće dokumente šifrom UN/EDIFACT 1001 (na papiru i rečima).",
+      "message_en": "Box 9: list all accompanying documents with their UN/EDIFACT 1001 code (on paper also in words).",
+      "primer": "šifra UN/EDIFACT 1001 + naziv dokumenta, npr. 271 Spisak kola (CIT 23); 830 Izvozna deklaracija MRN …"
+    },
+    {
+      "id": "R10",
+      "field": "r10",
+      "name": "Mesto isporuke",
+      "flag": "O",
+      "severity": "error",
+      "required_parts": [
+        "uputna_stanica_dium",
+        "zemlja_uic920_14"
+      ],
+      "message": "Rubrika 10: upisati uputnu stanicu prema DIUM-u i zemlju prema UIC objavi 920-14.",
+      "message_en": "Box 10: enter the destination station according to DIUM and the country according to UIC leaflet 920-14.",
+      "primer": "naziv stanice po DIUM-u i zemlja (UIC 920-14, npr. 72)"
+    },
+    {
+      "id": "R11",
+      "field": "r11",
+      "name": "Šifra mesta isporuke",
+      "flag": "F"
+    },
+    {
+      "id": "R12",
+      "field": "r12",
+      "name": "Šifra stanice koja opsluzuje mesto isporuke",
+      "flag": "O",
+      "severity": "warning",
+      "format": "medjunarodna šifra stanice po DIUM",
+      "note": "Ako nedostaje, prevoznik je mora upisati - zato upozorenje, ne blokada.",
+      "message": "Rubrika 12: upisati međunarodnu šifru uputne stanice prema DIUM-u.",
+      "message_en": "Box 12: enter the international code of the destination station according to DIUM.",
+      "primer": "šifra stanice po DIUM-u (6 cifara + kontrolna)"
+    },
+    {
+      "id": "R13",
+      "field": "r13",
+      "name": "Komercijalni uslovi",
+      "flag": "U",
+      "severity": "error",
+      "format": "šifra iz codelists.r13 + tekst",
+      "condition": "ugovoren prevozni put, naročita pošiljka, elektronski list (broj EDI sporazuma) ili drugi uslovi",
+      "message": "Rubrika 13: komercijalni uslov upisati šifrom (1-5) i odgovarajućim tekstom.",
+      "message_en": "Box 13: enter commercial conditions as a code (1-5) with the corresponding text.",
+      "primer": "šifra 1–5 + tekst, npr. 13.3 KP - Kombinovani prevoz d.o.o., UIC 3212, <deonica>"
+    },
+    {
+      "id": "R14",
+      "field": "r14",
+      "name": "Broj korisničkog sporazuma ili tarife",
+      "flag": "U",
+      "severity": "error",
+      "pattern": "^[12]\\s*\\S+",
+      "condition": "prevoz po korisnickom sporazumu ili tarifi",
+      "message": "Rubrika 14: broj sporazuma/tarife mora počinjati sa '1' (korisnički sporazum) ili '2' (tarifa).",
+      "message_en": "Box 14: the agreement/tariff number must start with '1' (customer agreement) or '2' (tariff).",
+      "primer": "1… (korisnički sporazum) ili 2… (tarifa) – samo broj"
+    },
+    {
+      "id": "R15",
+      "field": "r15",
+      "name": "Obavestenja primaocu",
+      "flag": "F"
+    },
+    {
+      "id": "R16",
+      "field": "r16",
+      "name": "Preuzimanje na prevoz",
+      "flag": "O",
+      "severity": "error",
+      "required_parts": [
+        "mesto",
+        "šifra_stanice_dium",
+        "šifra_zemlje_uic920_14",
+        "datum_mesec_dan",
+        "čas"
+      ],
+      "note": "Na papirnom listu dozvoljeni puni nazivi stanice i zemlje.",
+      "message": "Rubrika 16: upisati mesto preuzimanja (stanica po DIUM-u, zemlja po UIC 920-14), datum i vreme (mesec, dan, čas).",
+      "message_en": "Box 16: enter the place of taking over (station according to DIUM, country according to UIC 920-14), date and time (month, day, hour).",
+      "primer": "mesto (stanica po DIUM-u), zemlja; mesec-dan-čas, npr. 10-23-10",
+      "primer_en": "place (DIUM station), country; month-day-hour, e.g. 10-23-10"
+    },
+    {
+      "id": "R17",
+      "field": "r17",
+      "name": "Šifra mesta preuzimanja",
+      "flag": "F"
+    },
+    {
+      "id": "R18",
+      "field": "r18",
+      "name": "Broj kola",
+      "flag": "U",
+      "severity": "error",
+      "pattern": "^\\d{12}$",
+      "condition": "kolska pošiljka",
+      "message": "Rubrika 18: za kolsku pošiljku upisati 12-cifreni broj kola.",
+      "message_en": "Box 18: for a wagon consignment enter the 12-digit wagon number.",
+      "primer": "12-cifreni broj kola (npr. 31 78 6656 001-5) ili „po spisku kola“"
+    },
+    {
+      "id": "R19",
+      "field": "r19",
+      "name": "Fakturisanje tranzita",
+      "flag": "U",
+      "severity": "error",
+      "condition": "deo relacije fakturiše prevoznik koji nije otpravni ni uputni",
+      "format": "levo: šifra prevoznika (CIT) ili šifra zemlje (UIC 920-14); desno: šifra prevoznika koji fakturiše",
+      "message": "Rubrika 19: navesti deo relacije (šifra prevoznika ili zemlje) i šifru prevoznika koji fakturiše.",
+      "message_en": "Box 19: enter the part of the route (carrier or country code) and the code of the invoicing carrier."
+    },
+    {
+      "id": "R20",
+      "field": "r20",
+      "name": "Plaćanje troškova",
+      "flag": "U",
+      "severity": "warning",
+      "format": "jedna od codelists.r20_payment; Incoterms obavezno sa navedenim mestom",
+      "if_missing": "Svi troskovi padaju na pošiljaoca (t. 5.2).",
+      "message": "Rubrika 20: nije navedeno plaćanje troškova - sve troškove snosi pošiljalac. Potvrdite ili upišite napomenu (npr. 'DAP <mesto>').",
+      "message_en": "Box 20: payment of charges is not stated - all charges are borne by the consignor. Confirm or enter a note (e.g. 'DAP <place>').",
+      "primer": "Franko prevoznina … ili Incoterms + mesto"
+    },
+    {
+      "id": "R20-INCO",
+      "field": "r20",
+      "flag": "U",
+      "severity": "error",
+      "condition": "upisana Incoterms šifra",
+      "check": "šifra je iz liste i navedeno je mesto",
+      "message": "Rubrika 20: uz Incoterms šifru {code} mora biti navedeno mesto.",
+      "message_en": "Box 20: the Incoterms code {code} must be followed by a named place.",
+      "primer": "Incoterms + mesto, npr. DAP <mesto>"
+    },
+    {
+      "id": "R20-INCO-ZASTARELO",
+      "field": "r20",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "upisana Incoterms šifra",
+      "check": "šifra je iz važećih Incoterms 2020 (DAF i DDU su ukinuti) i mesto je navedeno nazivom, ne samo brojčanom šifrom",
+      "message": "Rubrika 20: {problem}. Upisati važeću Incoterms 2020 šifru i mesto nazivom (stanica ili granični prelaz).",
+      "message_en": "Box 20: {problem}. Enter a valid Incoterms 2020 code and the named place (station or border point).",
+      "basis": "Incoterms 2020; codelists.r20_payment: DAF/DDU samo prelazno. Priručnik t. 5.2 – Incoterms se odnosi samo na plaćanje troškova, zato upozorenje.",
+      "primer": "DAP <mesto>, npr. DAP Kelebia gr."
+    },
+    {
+      "id": "R20-RUTA",
+      "field": "r20",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "upisana Incoterms šifra sa mestom",
+      "check": "mesto uz Incoterms se pojavljuje među stanicama prevoznog puta na listu (r10, r13, r16, r50, r57)",
+      "basis": "Priručnik t. 5.2: Incoterms u tovarnom listu odnosi se samo na plaćanje troškova i nema drugih pravnih posledica - zato upozorenje, ne greška. Dodato 2026-11-10 (v2.1).",
+      "message": "Rubrika 20: mesto '{place}' uz {code} nije među stanicama prevoznog puta navedenim na listu (rubrike 10, 13, 16, 50, 57). Proverite mesto.",
+      "message_en": "Box 20: the place '{place}' given with {code} is not among the stations of the route on the consignment note (boxes 10, 13, 16, 50, 57). Check the place.",
+      "primer": "DAP <stanica na prevoznom putu, npr. Vršac gr.>"
+    },
+    {
+      "id": "R21",
+      "field": "r21",
+      "name": "Naznačenje robe",
+      "flag": "O",
+      "severity": "error",
+      "message": "Rubrika 21: nedostaje naznačenje robe.",
+      "message_en": "Box 21: the description of the goods is missing.",
+      "primer": "naziv robe, količina, način pakovanja"
+    },
+    {
+      "id": "R22",
+      "field": "r22",
+      "name": "Naročita pošiljka",
+      "flag": "U",
+      "severity": "error",
+      "condition": "pošiljka je naročita (vanredna)",
+      "message": "Rubrika 22: naročita pošiljka zahteva šifru 7.11 sa brojevima odobrenja (vidi X5).",
+      "message_en": "Box 22: an exceptional consignment requires code 7.11 with the authorisation numbers (see X5).",
+      "primer": "X i 7.11 Odobrenje br. ..."
+    },
+    {
+      "id": "R23",
+      "field": "r23",
+      "name": "RID",
+      "flag": "U",
+      "severity": "error",
+      "pattern": "^X$",
+      "condition": "roba podleže RID-u",
+      "message": "Rubrika 23: roba podleže RID-u - upisati 'X'.",
+      "message_en": "Box 23: the goods are subject to RID - enter 'X'.",
+      "primer": "X"
+    },
+    {
+      "id": "R24",
+      "field": "r24",
+      "name": "NHM šifra",
+      "flag": "O",
+      "severity": "error",
+      "pattern": "^\\d{6}$",
+      "message": "Rubrika 24: upisati 6-cifrenu NHM šifru robe.",
+      "message_en": "Box 24: enter the 6-digit NHM code of the goods.",
+      "primer": "6 cifara NHM",
+      "primer_en": "6-digit NHM code"
+    },
+    {
+      "id": "R25",
+      "field": "r25",
+      "name": "Masa",
+      "flag": "O",
+      "severity": "error",
+      "required_parts_cim": [
+        "bruto_masa_po_nhm",
+        "tara_uti_pribora_uredjaja_ako_postoje",
+        "ukupna_masa"
+      ],
+      "required_parts_combined": [
+        "bruto_masa_uti1",
+        "bruto_masa_uti2_ako_postoji",
+        "ukupna_masa"
+      ],
+      "message": "Rubrika 25: upisati bruto masu po svakoj NHM šifri, taru (ako postoji) i ukupnu masu pošiljke.",
+      "message_en": "Box 25: enter the gross mass for each NHM code, the tare (if any) and the total mass of the consignment.",
+      "primer": "bruto masa po NHM šifri, tara, ukupna masa (kg)"
+    },
+    {
+      "id": "R26",
+      "field": "r26",
+      "name": "Izjava o vrednosti",
+      "flag": "U",
+      "severity": "error",
+      "format": "iznos + šifra valute iz codelists.currencies",
+      "condition": "vrednost veca od granice iz cl. 30 par. 2 CIM",
+      "message": "Rubrika 26: uz iznos upisati važeću šifru valute (Prilog 10).",
+      "message_en": "Box 26: enter the amount with a valid currency code (Annex 10).",
+      "primer": "iznos + šifra valute (npr. EUR)"
+    },
+    {
+      "id": "R27",
+      "field": "r27",
+      "name": "Obezbeđenje uredne isporuke",
+      "flag": "U",
+      "severity": "error",
+      "format": "iznos + šifra valute",
+      "message": "Rubrika 27: uz iznos upisati važeću šifru valute.",
+      "message_en": "Box 27: enter the amount with a valid currency code.",
+      "primer": "iznos + šifra valute (npr. EUR)"
+    },
+    {
+      "id": "R28",
+      "field": "r28",
+      "name": "Pouzeće",
+      "flag": "U",
+      "severity": "error",
+      "format": "iznos + šifra valute iz codelists.currencies",
+      "message": "Rubrika 28: uz iznos upisati važeću šifru valute (Prilog 10).",
+      "message_en": "Box 28: enter the amount with a valid currency code (Annex 10).",
+      "primer": "iznos + šifra valute (npr. EUR)"
+    },
+    {
+      "id": "R29",
+      "field": "r29",
+      "name": "Mesto i datum ispostavljanja",
+      "flag": "O",
+      "severity": "error",
+      "required_parts": [
+        "mesto",
+        "datum_godina_mesec_dan"
+      ],
+      "message": "Rubrika 29: upisati mesto i datum ispostavljanja (godina, mesec, dan).",
+      "checks": [
+        "mesto != naziv firme",
+        "datum nije u budućnosti",
+        "datum <= r16 datum (ako postoji)"
+      ],
+      "message_en": "Box 29: enter the place and date of issue (year, month, day).",
+      "note": "Poređenje datuma sa r16 prijavljuje se kroz X14 (warning) - priručnik (Prilog 2, rubr. 29) ne propisuje redosled. 'Datum nije u budućnosti' se prikazuje zajedno sa X25.",
+      "primer": "mesto, godina-mesec-dan",
+      "primer_en": "place, year-month-day"
+    },
+    {
+      "id": "R30",
+      "field": "r30",
+      "name": "Oznaka dokumenta",
+      "flag": "O",
+      "severity": "error",
+      "check": "'X' u polju CIM (CUV samo za prazna kola po pravilima CUV)",
+      "message": "Rubrika 30: označiti 'X' u polju CIM.",
+      "message_en": "Box 30: mark 'X' in the CIM field.",
+      "primer": "X u polju CIM"
+    },
+    {
+      "id": "R58A",
+      "field": "r58a",
+      "name": "Ugovorni prevoznik",
+      "flag": "O",
+      "filled_by": "carrier",
+      "severity": "error",
+      "required_parts": [
+        "šifra_preduzeća_CIT",
+        "naziv",
+        "adresa",
+        "potpis_ili_r62"
+      ],
+      "message": "Rubrika 58a: upisati šifru preduzeća, naziv, adresu i potpis ugovornog prevoznika (samo šifra ili pečat nije dovoljno).",
+      "message_en": "Box 58a: enter the company code, name, address and signature of the contractual carrier (a code or stamp alone is not sufficient).",
+      "primer": "3212 Kombinovani prevoz d.o.o., <adresa>, potpis"
+    },
+    {
+      "id": "R62",
+      "field": "r62",
+      "name": "Identifikacija pošiljke",
+      "flag": "O",
+      "filled_by": "carrier",
+      "severity": "error",
+      "required_parts": [
+        "šifra_zemlje_uic920_14",
+        "šifra_stanice_dium",
+        "šifra_preduzeća",
+        "broj_otpravljanja"
+      ],
+      "pattern_broj_otpravljanja": "^\\d{5}-?\\d$|^\\d{6}$",
+      "message": "Rubrika 62: upisati zemlju, stanicu, šifru preduzeća i broj otpravljanja (5 cifara + kontrolna).",
+      "message_en": "Box 62: enter the country, station, company code and consignment number (5 digits + check digit).",
+      "primer": "zemlja, stanica, preduzeće, broj otpravljanja (5 cifara + kontrolna)"
+    },
+    {
+      "id": "R57",
+      "field": "r57",
+      "name": "Ostali prevoznici",
+      "flag": "U",
+      "filled_by": "carrier",
+      "severity": "error",
+      "condition": "u prevozu učestvuje više prevoznika",
+      "required_parts": [
+        "šifra_preduzeća",
+        "naziv",
+        "deonica",
+        "status_1_ili_2"
+      ],
+      "message": "Rubrika 57: za svakog prevoznika navesti šifru, naziv, deonicu i status (1 uzastopni / 2 izvršni).",
+      "message_en": "Box 57: for each carrier enter the code, name, section and status (1 successive / 2 substitute).",
+      "primer": "šifra, naziv, deonica (stanice), status 1/2, npr. 3212 KP - Kombinovani prevoz d.o.o., <od - do>, 1"
+    },
+    {
+      "id": "R49",
+      "field": "r49",
+      "flag": "O",
+      "filled_by": "carrier",
+      "severity": "warning",
+      "samo_interno": true,
+      "message": "Rubrika 49 (šifra plaćanja / šifra frankiranja): šifra po UIC 920-7 kojom prevoznik označava koje troškove plaća pošiljalac (franko), izvedena iz rubrike 20. Popunjava je prevoznik (KP), nije greška pošiljaoca.",
+      "message_en": "Box 49 (prepayment code / Frankaturcode): UIC 920-7 code by which the carrier marks the charges paid by the consignor (franco), derived from box 20. Filled in by the carrier (KP), not a consignor error.",
+      "note": "Priručnik: obavezna (O), popunjava prevoznik. Privremeno upozorenje; šalje se samo u internoj kopiji izveštaja (samo_interno). Težina čeka odluku KP.",
+      "primer": "šifra frankiranja po UIC 920-7 (popunjava KP)"
+    },
+    {
+      "id": "R50",
+      "field": "r50",
+      "flag": "O",
+      "filled_by": "carrier",
+      "severity": "error",
+      "message": "Rubrika 50: stvarni prevozni put sa šiframa po IRS 40428-1.",
+      "message_en": "Box 50: actual route with codes according to IRS 40428-1.",
+      "primer": "šifre stanica prevoznog puta po IRS 40428-1"
+    }
+  ],
+  "r21_subrules": [
+    {
+      "id": "R21-DESC",
+      "flag": "O",
+      "severity": "error",
+      "check": "postoji opis robe; za opasnu robu po RID 5.4.1 (UN broj, naziv, klasa, grupa pakovanja...)",
+      "message": "Rubrika 21: upisati naznačenje robe; za opasnu robu po RID 5.4.1 (UN broj, naziv, klasa, grupa pakovanja).",
+      "message_en": "Box 21: enter the description of the goods; for dangerous goods according to RID 5.4.1 (UN number, name, class, packing group).",
+      "primer": "za opasnu robu: UN broj, naziv, klasa, grupa pakovanja"
+    },
+    {
+      "id": "R21-WAGON",
+      "flag": "U",
+      "severity": "error",
+      "condition": "kola predata kao roba",
+      "check": "12-cifreni broj kola u r21 i u r18",
+      "message": "Rubrika 21: kola predata kao roba - 12-cifreni broj kola upisati u rubrike 21 i 18.",
+      "message_en": "Box 21: wagon handed over as goods - enter the 12-digit wagon number in boxes 21 and 18.",
+      "primer": "isti 12-cifreni broj kola u r18 i r21"
+    },
+    {
+      "id": "R21-UTI",
+      "flag": "U",
+      "severity": "error",
+      "condition": "prevoz UTI",
+      "check": "količina i oznaka UTI; kod kombinovanog: broj, šifra tipa, duzina, neto masa, tara UTI",
+      "message": "Rubrika 21: upisati količinu i oznaku UTI; kod kombinovanog saobraćaja broj, šifru tipa, dužinu, neto masu i taru UTI.",
+      "message_en": "Box 21: enter the number and marking of the ITUs; for combined transport number, type code, length, net mass and tare of the ITU.",
+      "primer": "broj UTI, šifra tipa, dužina, neto masa, tara"
+    },
+    {
+      "id": "R21-PIECES",
+      "flag": "U",
+      "severity": "error",
+      "condition": "komadna pošiljka",
+      "check": "broj komada, oznake i brojevi",
+      "message": "Rubrika 21: za komadnu pošiljku upisati broj komada, oznake i brojeve.",
+      "message_en": "Box 21: for a part-load consignment enter the number of packages, marks and numbers."
+    },
+    {
+      "id": "R21-PACK",
+      "flag": "U",
+      "severity": "error",
+      "condition": "upakovana roba",
+      "check": "vrsta ambalaže šifrom UNECE rec. 21 (na papiru može opisno)",
+      "message": "Rubrika 21: upisati vrstu ambalaže šifrom UNECE preporuke 21 (na papiru može opisno).",
+      "message_en": "Box 21: enter the type of packaging with the UNECE Recommendation 21 code (on paper it may be described)."
+    },
+    {
+      "id": "R21-IMDG",
+      "flag": "U",
+      "severity": "error",
+      "condition": "opasna roba + pomorska deonica",
+      "check": "izjava IMDG 5.4.1.6; MARINE POLLUTANT za P materije; tačka paljenja <= 60 C u zagradi (c.c.); LTD QTY za ogranicene kolicine",
+      "message": "Rubrika 21: opasna roba sa pomorskom deonicom - upisati izjavu po IMDG 5.4.1.6 (MARINE POLLUTANT, tačka paljenja, LTD QTY gde je potrebno).",
+      "message_en": "Box 21: dangerous goods with a sea leg - enter the declaration according to IMDG 5.4.1.6 (MARINE POLLUTANT, flash point, LTD QTY where applicable).",
+      "primer": "IMDG 5.4.1.6 izjava; MARINE POLLUTANT; (c.c. 23 C)"
+    },
+    {
+      "id": "R21-HS",
+      "flag": "U",
+      "severity": "error",
+      "condition": "trazi carinski propis",
+      "check": "šifra robe po Harmonizovanoj nomenklaturi",
+      "message": "Rubrika 21: upisati šifru robe po Harmonizovanoj nomenklaturi kada to traže carinski propisi.",
+      "message_en": "Box 21: enter the Harmonized System code when required by customs regulations."
+    },
+    {
+      "id": "R21-SEALS",
+      "flag": "U",
+      "severity": "error",
+      "condition": "trazi Carinski zakon",
+      "check": "količina i oznake plombi ili drugih sredstava identifikacije",
+      "note": "Kod CPC 03 zavisi od tehničke izvodljivosti",
+      "message": "Rubrika 21: upisati količinu i oznake plombi (ili drugih sredstava identifikacije).",
+      "message_en": "Box 21: enter the number and marks of the seals (or other means of identification)."
+    },
+    {
+      "id": "R21-MRN",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "trazi carinski zakon",
+      "check": "MRN sa prefiksom iz codelists.r21_mrn_prefixes; T MRN i TS MRN sa rokom za ponovno podnošenje robe",
+      "message": "Rubrika 21: u mailu je {doc}, a u rubrici 21 nema {prefix}. Upisati MRN sa prefiksom (E MRN, T MRN ili TS MRN sa rokom za ponovno podnošenje robe).",
+      "message_en": "Box 21: the mail contains {doc}, but box 21 has no {prefix}. Enter the MRN with its prefix (E MRN, T MRN or TS MRN with the time limit).",
+      "basis": "Prilog 2, rubr. 21: MRN 'potreban po Carinskom zakonu' (E MRN kada je podneta izvozna, T/TS MRN kada je podneta tranzitna deklaracija); '*) Prateći dokument mora da se upise u rubriku 9.'",
+      "primer": "E MRN <broj> / T MRN <broj>, rok <datum> / Izvozna deklaracija (JCI) <broj>, <carinarnica>",
+      "primer_en": "E MRN <number> / T MRN <number>, deadline <date> / Export declaration (JCI) <number>, <customs office>"
+    },
+    {
+      "id": "R21-MRN99",
+      "flag": "U",
+      "severity": "warning",
+      "condition": "MRN je upisan u rubrici 99 (carinske napomene), a rubrika 21 nema MRN",
+      "check": "MRN iz r99 mora biti i u r21 sa prefiksom iz codelists.r21_mrn_prefixes",
+      "message": "Rubrika 21: MRN {mrn} je upisan samo u rubrici 99 (carinske napomene), a ne u rubrici 21. Upisati MRN sa prefiksom u rubriku 21.",
+      "message_en": "Box 21: MRN {mrn} is entered only in box 99 (customs endorsements), not in box 21. Enter the MRN with its prefix in box 21.",
+      "basis": "Prilog 2, rubr. 21: MRN se upisuje u rubriku 21; rubrika 99 je za carinske organe.",
+      "primer": "T MRN <broj> (u rubrici 21)"
+    },
+    {
+      "id": "R21-ARC",
+      "flag": "U",
+      "severity": "error",
+      "condition": "akcizna roba",
+      "check": "ARC sa oznakom 'ARC'",
+      "message": "Rubrika 21: za akciznu robu upisati ARC sa oznakom 'ARC' i prateći dokument u rubriku 9.",
+      "message_en": "Box 21: for excise goods enter the ARC marked 'ARC' and list the accompanying document in box 9."
+    },
+    {
+      "id": "R21-EXPORT",
+      "flag": "U",
+      "severity": "error",
+      "condition": "izvozno carinjenje završeno u carinarnici nadležnoj za mesto preuzimanja (cl. 329 t. 7 UP (EU) 2015/2447)",
+      "check": "napomena 'IZVOZ'/'EXPORT'",
+      "message": "Rubrika 21: upisati napomenu 'IZVOZ'/'EXPORT' kada je izvozno carinjenje završeno u carinarnici nadležnoj za mesto preuzimanja.",
+      "message_en": "Box 21: enter the note 'EXPORT' when export clearance was completed at the customs office responsible for the place of taking over."
+    },
+    {
+      "id": "R21-EWC",
+      "flag": "U",
+      "severity": "error",
+      "condition": "pošiljka otpada",
+      "check": "EWC šifra po Odluci 2014/955/EU",
+      "message": "Rubrika 21: roba je otpad – upisati EWC šifru (indeksni broj otpada, Odluka 2014/955/EU), kako je navedena u dozvoli za kretanje otpada.",
+      "message_en": "Box 21: for a waste consignment enter the EWC code (Decision 2014/955/EU).",
+      "primer": "EWC 12 01 01 (indeksni broj iz dozvole)"
+    },
+    {
+      "id": "R21-CPC",
+      "flag": "F",
+      "severity": "info",
+      "condition": "dogovoreno sa prevoznikom",
+      "check": "'CPC' + šifra carinske procedure",
+      "message": "Rubrika 21: ako je dogovoreno sa prevoznikom, upisati 'CPC' i šifru carinske procedure.",
+      "message_en": "Box 21: if agreed with the carrier, enter 'CPC' and the customs procedure code."
+    },
+    {
+      "id": "R21-CUV",
+      "flag": "U",
+      "severity": "error",
+      "condition": "roba po CIM i prazna kola po CUV na istom listu",
+      "check": "napomena da list CIM ima snagu kolskog lista CUV za kola NHM 9921.xx/9922.xx u Spisku kola",
+      "message": "Rubrika 21: roba po CIM i prazna kola po CUV na istom listu - upisati napomenu da list CIM ima snagu kolskog lista CUV za kola NHM 9921/9922 sa Spiska kola.",
+      "message_en": "Box 21: goods under CIM and empty wagons under CUV on the same note - enter the note that the CIM consignment note has the effect of a CUV wagon note for the NHM 9921/9922 wagons on the wagon list.",
+      "primer": "Ovaj list CIM ima snagu kolskog lista CUV za prazna kola NHM 9921 sa Spiska kola"
+    }
+  ],
+  "cross_rules": [
+    {
+      "id": "X1",
+      "severity": "error",
+      "if": "r21 sadrzi UN broj ili RID klasu",
+      "then": "r23 == 'X' i opis po RID 5.4.1",
+      "message": "U rubrici 21 je opasna roba, a u rubrici 23 nije označen RID ('X').",
+      "message_en": "Box 21 contains dangerous goods, but RID is not marked in box 23 ('X').",
+      "primer": "r23: X"
+    },
+    {
+      "id": "X2",
+      "severity": "warning",
+      "if": "r23 == 'X'",
+      "then": "r21 ima RID naznačenje; preporucena šifra 7.5",
+      "message": "Roba podleže RID-u: proverite RID naznačenje u rubrici 21 i dodajte telefon za hitne slučajeve (šifra 7.5).",
+      "message_en": "The goods are subject to RID: check the RID description in box 21 and add the emergency telephone number (code 7.5).",
+      "primer": "r21: UN broj …; 7.5 telefon za hitne slučajeve"
+    },
+    {
+      "id": "X3",
+      "severity": "error",
+      "if": "RID + pomorska deonica",
+      "then": "IMDG izjava u r21 i sertifikat o pakovanju (RID 5.4.2) u r9",
+      "message": "Za opasnu robu sa pomorskom deonicom potrebni su IMDG izjava (rubr. 21) i sertifikat o pakovanju (rubr. 9).",
+      "message_en": "Dangerous goods with a sea leg require the IMDG declaration (box 21) and the container packing certificate (box 9).",
+      "primer": "r21: IMDG izjava; r9: Sertifikat o pakovanju (RID 5.4.2)"
+    },
+    {
+      "id": "X4",
+      "severity": "error",
+      "if": "r21 sadrzi E MRN, T MRN, TS MRN ili ARC",
+      "then": "odgovarajuci prateći dokument u r9",
+      "message": "U rubrici 21 je naveden {mrn_type}, a prateći dokument nije naveden u rubrici 9.",
+      "message_en": "{mrn_type} is entered in box 21, but the accompanying document is not listed in box 9.",
+      "primer": "r9: 830 Izvozna deklaracija / 820 T1"
+    },
+    {
+      "id": "X5",
+      "severity": "error",
+      "if": "r22 označena",
+      "then": "r7 šifra 11 sa brojevima odobrenja",
+      "message": "Naročita pošiljka: u rubrici 7 upisati šifru 11 sa brojevima odobrenja svih prevoznika.",
+      "message_en": "Exceptional consignment: enter code 11 in box 7 with the authorisation numbers of all carriers.",
+      "primer": "7.11 Odobrenje br. ..."
+    },
+    {
+      "id": "X6",
+      "severity": "error",
+      "if": "roba je otpad: NHM iz codelists.waste_nhm, reči otpad/otpaci/ostaci/scrap/Abfall/rifiuti/waste u r21, Annex VII u r9, dozvola za otpad u mailu ili šifra 7.26",
+      "then": "EWC šifra u r21",
+      "message": "Pošiljka otpada: upisati EWC šifru u rubriku 21 (indeksni broj iz dozvole za kretanje otpada).",
+      "message_en": "For a waste consignment enter the EWC code in box 21.",
+      "primer": "r21: EWC 12 01 01"
+    },
+    {
+      "id": "X7",
+      "severity": "error",
+      "if": "r7 sadrzi šifru 3",
+      "then": "prezime i ime pratioca",
+      "message": "Rubrika 7, šifra 3: upisati prezime i ime pratioca.",
+      "message_en": "Box 7, code 3: enter the surname and first name of the attendant.",
+      "primer": "7.3 prezime i ime pratioca"
+    },
+    {
+      "id": "X8",
+      "severity": "error",
+      "if": "r7 sadrzi šifru 42",
+      "then": "naziv/šifra prevoznika i mesto/carinarnica",
+      "message": "Rubrika 7, šifra 42: navesti prevoznika i mesto/carinarnicu za NCTS.",
+      "message_en": "Box 7, code 42: enter the carrier and the place/customs office for NCTS.",
+      "primer": "7.42 <prevoznik>, carinarnica …"
+    },
+    {
+      "id": "X9",
+      "severity": "error",
+      "if": "više kola ili >= 3 UTI",
+      "then": "Spisak kola priložen i naveden u r9",
+      "message": "Priložite Spisak kola i navedite ga u rubrici 9.",
+      "message_en": "Attach the wagon list and list it in box 9.",
+      "primer": "r9: 271 Spisak kola"
+    },
+    {
+      "id": "X10",
+      "severity": "error",
+      "if": "broj kola u r21 (kola kao roba)",
+      "then": "isti broj u r18; NHM 9921.xx ili 9922.xx",
+      "message": "Kola predata kao roba: isti 12-cifreni broj mora biti u rubrikama 18 i 21.",
+      "message_en": "Wagon handed over as goods: the same 12-digit number must be in boxes 18 and 21.",
+      "primer": "r18 i r21: 31 78 6656 001-5"
+    },
+    {
+      "id": "X11",
+      "severity": "error",
+      "if": "na listu i roba po CIM i prazna kola po CUV",
+      "then": "'X' u CIM polju r30 + CUV napomena u r21",
+      "message": "Označite 'X' u polju CIM i dodajte u rubriku 21 napomenu o snazi kolskog lista CUV.",
+      "message_en": "Mark 'X' in the CIM field and add the note on the CUV wagon note effect in box 21.",
+      "primer": "r30: X u CIM; r21: napomena o snazi kolskog lista CUV"
+    },
+    {
+      "id": "X12",
+      "severity": "error",
+      "if": "popunjena r26, r27 ili r28",
+      "then": "iznos + valuta iz codelists.currencies",
+      "message": "Rubrika {field}: uz iznos upisati važeću šifru valute (Prilog 10).",
+      "message_en": "Box {field}: enter a valid currency code with the amount (Annex 10).",
+      "primer": "iznos + šifra valute"
+    },
+    {
+      "id": "X13",
+      "severity": "error",
+      "if": "r25 popunjena",
+      "then": "zbir masa po NHM == ukupna masa; broj masa == broj NHM sifara u r24",
+      "message": "Rubrika 25: zbir pojedinačnih masa ({sum}) ne odgovara ukupnoj masi ({total}).",
+      "message_en": "Box 25: the sum of the individual masses ({sum}) does not match the total mass ({total}).",
+      "primer": "zbir masa po NHM = ukupna masa"
+    },
+    {
+      "id": "X14",
+      "severity": "warning",
+      "if": "r29 i r16 popunjene",
+      "then": "datum r29 <= datum r16",
+      "message": "Datum ispostavljanja (rubr. 29) je posle datuma preuzimanja (rubr. 16).",
+      "message_en": "The date of issue (box 29) is after the date of taking over (box 16).",
+      "primer": "datum u r29 nije posle datuma u r16"
+    },
+    {
+      "id": "X15",
+      "severity": "warning",
+      "if": "elektronski tovarni list",
+      "then": "r13 šifra 5 sa brojem EDI sporazuma",
+      "message": "Elektronski tovarni list: u rubrici 13 (šifra 5) navesti broj EDI sporazuma.",
+      "message_en": "Electronic consignment note: enter the EDI agreement number in box 13 (code 5).",
+      "primer": "13.5 EDI sporazum br. ..."
+    },
+    {
+      "id": "X16",
+      "severity": "warning",
+      "if": "pošiljalac i primalac u EU",
+      "then": "PDV brojevi u r1 i r4",
+      "message": "Razmena unutar EU: upišite PDV brojeve pošiljaoca i primaoca.",
+      "message_en": "Intra-EU trade: enter the VAT numbers of the consignor and the consignee.",
+      "primer": "r1 i r4: PDV broj sa šifrom zemlje"
+    },
+    {
+      "id": "X17",
+      "severity": "warning",
+      "if": "valuta == 'HRK'",
+      "then": "upozorenje",
+      "message": "Valuta HRK više nije u upotrebi (Hrvatska koristi EUR). Proverite valutu.",
+      "message_en": "The currency HRK is no longer in use (Croatia uses EUR). Check the currency.",
+      "primer": "EUR"
+    },
+    {
+      "id": "X18",
+      "severity": "error",
+      "if": "r20 sadrzi troškove sa šifrom iz cost_codes_not_payable_by_consignor na teret pošiljaoca",
+      "then": "nije dozvoljeno",
+      "message": "Naknadu sa šifrom {code} ne sme preuzeti pošiljalac (Prilog 3).",
+      "message_en": "The charge with code {code} must not be borne by the consignor (Annex 3)."
+    },
+    {
+      "id": "X19",
+      "severity": "error",
+      "if": "postoji spisak kola",
+      "then": "identifikacija pošiljke na spisku (zemlja, stanica, preduzece, broj) == r62 na CIM-u",
+      "message": "Identifikacija pošiljke na spisku kola ({list_value}) ne odgovara rubrici 62 tovarnog lista ({cim_value}).",
+      "message_en": "The consignment identification on the wagon list ({list_value}) does not match box 62 of the consignment note ({cim_value}).",
+      "primer": "ista identifikacija pošiljke na spisku kola i u r62"
+    },
+    {
+      "id": "X20",
+      "severity": "error",
+      "if": "CIM pokriva više kola ili >= 3 UTI",
+      "then": "spisak kola priložen I naveden u r9 i r18",
+      "message": "Za više kola / 3+ UTI spisak kola mora biti priložen i naveden u rubrikama 9 i 18.",
+      "message_en": "For several wagons / 3+ ITUs the wagon list must be attached and referred to in boxes 9 and 18.",
+      "primer": "r9: 271 Spisak kola; r18: po spisku kola"
+    },
+    {
+      "id": "X21",
+      "severity": "error",
+      "if": "RID oznaka na spisku kola",
+      "then": "r23 na CIM-u == 'X' (i obrnuto)",
+      "message": "RID oznaka na spisku kola i u rubrici 23 se ne slažu.",
+      "message_en": "The RID marking on the wagon list and in box 23 do not match.",
+      "primer": "r23: X i RID oznaka na spisku kola (ili nijedno)"
+    },
+    {
+      "id": "X22",
+      "severity": "error",
+      "if": "u mailu ili u r21 postoji carinski dokument (deklaracija, T1, VDD/EX, MRN)",
+      "then": "dokument naveden u r9 ILI r7 šifra 10 sa mestom dostupnosti",
+      "message": "Priložen je carinski dokument ({doc}), a nije naveden u rubrici 9 (ili u rubrici 7, šifra 10).",
+      "message_en": "A customs document is attached ({doc}), but it is not listed in box 9 (or in box 7, code 10).",
+      "primer": "r9: 830 Izvozna deklaracija MRN … ili 7.10 … dostupna kod …"
+    },
+    {
+      "id": "X23",
+      "severity": "warning",
+      "if": "u mailu EUR.1 / uverenje o poreklu / sertifikat / faktura za carinu",
+      "then": "naveden u r9 ako putuje uz pošiljku",
+      "message": "U mailu je priloženo: {doc}. Dokumenti koji putuju uz pošiljku navode se u rubrici 9.",
+      "message_en": "The mail contains: {doc}. Documents travelling with the consignment must be listed in box 9.",
+      "primer": "r9: šifra + naziv dokumenta, npr. 865 EUR.1 br. …; 380 Faktura br. …"
+    },
+    {
+      "id": "X24",
+      "severity": "error",
+      "if": "postoji MRN po kontejneru/kolima (npr. tabela MRN)",
+      "then": "MRN upisan u r21 (ili na spisku kola uz odgovarajuca kola/UTI)",
+      "message": "MRN {mrn} za {uti} nije upisan u rubriku 21 ni na spisak kola.",
+      "message_en": "MRN {mrn} for {uti} is not entered in box 21 or on the wagon list.",
+      "primer": "r21: E MRN <broj> (<UTI>)"
+    },
+    {
+      "id": "X25",
+      "severity": "error",
+      "if": "r29 datum",
+      "then": "nije posle datuma prijema maila",
+      "message": "Datum ispostavljanja ({date}) je u budućnosti.",
+      "message_en": "The date of issue ({date}) is in the future.",
+      "primer": "datum ispostavljanja <= datum slanja"
+    },
+    {
+      "id": "X26",
+      "field": "9",
+      "severity": "error",
+      "filled_by": "sender",
+      "if": "spisak kola naveden u r9 ili r18 (Wagon list, Wagenliste, Spisak kola, CIT 23, siehe Wagenliste, Vidi spisak kola)",
+      "then": "spisak kola priložen u mailu",
+      "basis": "priručnik Prilog 2, rubr. 9 i 18; Prilog 5",
+      "message": "Spisak kola je naveden u rubrici {field}, a nije priložen u mailu. Priložite spisak kola (CIT 23).",
+      "message_en": "The wagon list is referred to in box {field}, but it is not attached to the mail. Please attach the wagon list (CIT 23).",
+      "primer": "spisak kola (CIT 23) kao prilog u istom mailu"
+    },
+    {
+      "id": "X27",
+      "field": "9",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "u r9 naveden prilog (faktura, EUR.1, sertifikat…)",
+      "then": "prilog je u mailu",
+      "basis": "priručnik Prilog 2, rubr. 9",
+      "message": "U rubrici 9 je naveden prilog ({doc}), a nije priložen u mailu. Proverite da li putuje uz pošiljku ili ga priložite.",
+      "message_en": "Box 9 lists an attachment ({doc}) that is not attached to the mail. Check whether it travels with the consignment or attach it.",
+    },
+    {
+      "id": "X28",
+      "field": "20",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "uslov isporuke u fakturi/deklaraciji (Incoterms)",
+      "then": "r20 u skladu sa uslovom isporuke",
+      "basis": "priručnik t. 5.2 (Incoterms se u tovarnom listu odnosi na plaćanje troškova)",
+      "message": "Rubrika 20 ({cim}) se ne slaže sa uslovom isporuke {inco} iz dokumenta: {doc}. Proverite plaćanje troškova.",
+      "message_en": "Box 20 ({cim}) does not match the delivery term {inco} in: {doc}. Please check the payment of charges."
+    },
+    {
+      "id": "X29",
+      "field": "CIT 23",
+      "severity": "error",
+      "filled_by": "sender",
+      "if": "NHM šifra na spisku kola",
+      "then": "6 cifara (kao r24)",
+      "basis": "priručnik Prilog 5 (spisak kola) i rubr. 24",
+      "message": "NHM šifra na spisku kola ({nhm}) nema 6 cifara.",
+      "message_en": "The NHM code on the wagon list ({nhm}) does not have 6 digits.",
+      "primer": "6 cifara NHM u svakom redu spiska"
+    }
+  ],
+  "response_template": {
+    "subject": "Tovarni list CIM {shipment_ref} - {status}",
+    "status_values": {
+      "ok": "ispravan",
+      "errors": "potrebne ispravke ({n_errors} grešaka, {n_warnings} upozorenja)"
+    },
+    "item_format": "Rubrika {field} - {problem}\n   {instruction}",
+    "footer": "Izvor pravila: Priručnik GLV-CIM (Spt 51.01), Prilog 2.",
+    "severity_order": [
+      "error",
+      "warning",
+      "recommendation"
+    ]
+  },
+  "attachment_rules": {
+    "principle": "U r9 se navode sva propratna dokumenta potrebna za obavljanje prevoza koja se prilazu uz tovarni list (Prilog 2, rubrika 9). Ako dokument ne putuje uz list nego je dostupan kod organa/na mestu: r7 šifra 10 + mesto.",
+    "must_be_in_r9": [
+      "izvozna deklaracija / EX / VDD (E MRN)",
+      "tranzitna deklaracija T1/T2/TS (T MRN)",
+      "JCI",
+      "EUR.1 / uverenje o poreklu (kada putuje uz pošiljku)",
+      "faktura kada putuje uz pošiljku zbog carine",
+      "fito/veterinarski/sanitarni sertifikat",
+      "dokumenti za otpad (Aneks VII, notifikacija)",
+      "odobrenje za narocitu pošiljku",
+      "RID 5.4.2 sertifikat o pakovanju (pomorska deonica)",
+      "RID 5.4.5 multimodalni obrazac",
+      "spisak kola (CIT 23)",
+      "dodatni listovi"
+    ],
+    "warning_if_missing_in_r9": [
+      "EUR.1",
+      "uverenje o poreklu",
+      "faktura",
+      "sertifikat o analizi",
+      "uverenje o kontroli tovara"
+    ],
+    "never_in_r9": [
+      "ugovor",
+      "ponuda",
+      "najava prevoza",
+      "prepiska",
+      "faktura samo za obracun",
+      "teretnica",
+      "K-200",
+      "KOL-65",
+      "interne tabele"
+    ],
+    "use_as_data_source": [
+      "ponuda (broj ponude, platilac)",
+      "najava (broj voza, datum)",
+      "tabela MRN po kontejneru"
+    ]
+  },
+  "company_rules": [
+    {
+      "id": "KP7",
+      "field": "7",
+      "severity": "error",
+      "filled_by": "sender",
+      "if": "svaki CIM/CUV (na priprema@ stižu samo pošiljke u kojima KP učestvuje)",
+      "then": "KP naveden u r7 kao platilac ili prevoznik za RS deonicu (KP, K-prevoz, Kombinovani prevoz, КП, KP UIC 3212, IŽS: KP… ili 3212 uz UIC/Frachtzahler)",
+      "basis": "odluka KP 2026-11-11 (zamenjuje KP4)",
+      "message": "Rubrika 7: navesti Kombinovani prevoz (KP / UIC 3212) kao platioca ili prevoznika za deonicu kroz Srbiju.",
+      "message_en": "Box 7: enter Kombinovani prevoz (KP / UIC 3212) as the payer or carrier for the section through Serbia.",
+      "primer": "16. Prevoznik za deonicu SRB: KP – Kombinovani prevoz d.o.o., UIC 3212 (platilac ostaje kako je upisan)"
+    },
+    {
+      "id": "KP57",
+      "field": "57",
+      "severity": "error",
+      "filled_by": "sender",
+      "if": "svaki CIM/CUV; ispunjeno i kada je KP ugovorni prevoznik naveden u r58a",
+      "then": "KP naveden u r57 (naziv u bilo kom obliku ili samo šifra 3212)",
+      "basis": "odluka KP 2026-11-11 (zamenjuje KP1)",
+      "message": "Rubrika 57: navesti Kombinovani prevoz (KP / UIC 3212) sa deonicom kroz Srbiju.",
+      "message_en": "Box 57: enter Kombinovani prevoz (KP / UIC 3212) with its section through Serbia.",
+      "primer": "3212 KP - Kombinovani prevoz d.o.o., <od - do>, 1"
+    },
+    {
+      "id": "KP2",
+      "severity": "error",
+      "if": "r62 šifra preduzeća == 3212 (KP ugovorni prevoznik)",
+      "then": "r58a = KP: šifra 3212, naziv, adresa, potpis",
+      "basis": "priručnik r58a",
+      "message": "Rubrika 58a: KP je ugovorni prevoznik - upisati 3212, Kombinovani prevoz d.o.o., adresu i potpis.",
+      "message_en": "Box 58a: KP is the contractual carrier - enter 3212, Kombinovani prevoz d.o.o., address and signature.",
+      "primer": "58a: 3212 Kombinovani prevoz d.o.o., <adresa>, potpis"
+    },
+    {
+      "id": "KP3",
+      "severity": "warning",
+      "if": "r13.3 popunjen ili su navedeni prevoznici",
+      "then": "KP naveden u r13.3 (i r13.5 ako postoji sporazum/tarifa KP)",
+      "basis": "interno + r13",
+      "message": "Rubrika 13 (tačka 3): navedite Kombinovani prevoz, UIC 3212, kao prevoznika na deonici kroz Srbiju.",
+      "message_en": "Box 13 (point 3): enter Kombinovani prevoz, UIC 3212, as the carrier for the section through Serbia.",
+      "primer": "13.3 KP - Kombinovani prevoz d.o.o., UIC 3212, <deonica>"
+    },
+    {
+      "id": "KP5",
+      "severity": "warning",
+      "if": "uz šifru 3212 stoji drugi naziv",
+      "then": "naziv = Kombinovani prevoz",
+      "basis": "interno",
+      "message": "Uz UIC 3212 upisan je naziv '{name}' - šifra 3212 pripada Kombinovanom prevozu.",
+      "message_en": "The name '{name}' is entered with UIC 3212 - code 3212 belongs to Kombinovani prevoz.",
+      "primer": "3212 Kombinovani prevoz d.o.o."
+    },
+    {
+      "id": "KP6",
+      "severity": "recommendation",
+      "if": "postoji spisak kola",
+      "then": "KP naveden u zaglavlju/polju prevoznika",
+      "basis": "interno (nije u Prilogu 5)",
+      "message": "Preporuka: navedite Kombinovani prevoz (UIC 3212) i na spisku kola.",
+      "message_en": "Recommendation: also state Kombinovani prevoz (UIC 3212) on the wagon list.",
+      "primer": "zaglavlje spiska: KP - Kombinovani prevoz d.o.o., UIC 3212"
+    }
+  ],
+  "recommendations": [
+    "r8: broj voza / ID najave (npr. 004NISBAR26) - kljuc za povezivanje sa najavom",
+    "broj ponude KP i broj CIM 6 ugovora (pun broj) u r7 ili r13.5",
+    "KP uvek u obliku 'KP - Kombinovani prevoz d.o.o., UIC 3212'",
+    "r57: deonica KP šiframa stanica + status",
+    "spisak kola: broj osovina, tara/neto/bruto po kolima, tovaren/prazan, NHM 6 cifara, UTI broj/tip/tara, plombe, MRN po kolima/UTI, duzina preko odbojnika",
+    "spisak kola i u Excel formatu uz PDF",
+    "elektronski PDF sa tekstom; skenovi >= 300 dpi, cela strana",
+    "kontakt (telefon, e-mail) u r1 i r4; korisnicke šifre r2/r3/r5/r6"
+  ],
+  "system_messages": {
+    "necitljivo": {
+      "severity": "warning",
+      "message": "Rubrika {field} nije čitljiva na skenu - pošaljite čitljiviji dokument.",
+      "message_en": "Box {field} is not legible on the scan - please send a more legible document."
+    },
+    "nema_tovarnog_lista": {
+      "message": "U mailu nije pronađen tovarni list CIM/CUV.",
+      "message_en": "No CIM/CUV consignment note was found in the mail."
+    },
+    "samo_spisak": {
+      "message": "U mailu je dostavljen spisak kola (CIT 23), ali nije pronađen tovarni list CIM/CUV. Pošaljite tovarni list zajedno sa spiskom kola.",
+      "message_en": "The mail contains a wagon list (CIT 23), but no CIM/CUV consignment note was found. Please send the consignment note together with the wagon list."
+    },
+    "obrazac_nije_prepoznat": {
+      "severity": "warning",
+      "message": "Tovarni list nije proveren po rubrikama – {opis}.",
+      "message_en": "The consignment note was not checked box by box – {opis}."
+    }
+  },
+  "response_template_en": {
+    "subject": "Consignment note CIM {shipment_ref} - {status}",
+    "status_values": {
+      "ok": "correct",
+      "errors": "corrections required ({n_errors} errors, {n_warnings} warnings)"
+    },
+    "footer": "Source of rules: CIT manual GLV-CIM (Spt 51.01), Annex 2."
+  },
+  "recommendations_en": [
+    "box 8: train number / announcement ID (e.g. 004NISBAR26) - key for linking with the announcement",
+    "KP offer number and the full CIM 6 contract number in box 7 or 13.5",
+    "always write KP as 'KP - Kombinovani prevoz d.o.o., UIC 3212'",
+    "box 57: KP section with station codes + status",
+    "wagon list: number of axles, tare/net/gross per wagon, loaded/empty, 6-digit NHM, ITU number/type/tare, seals, MRN per wagon/ITU, length over buffers",
+    "wagon list also in Excel format together with the PDF",
+    "electronic PDF with text; scans >= 300 dpi, full page",
+    "contact (telephone, e-mail) in boxes 1 and 4; customer codes in boxes 2/3/5/6"
+  ]
+}

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.4" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Saobracaj.Agent.CimProvera\Saobracaj.Agent.CimProvera.csproj" />
+    <ProjectReference Include="..\Saobracaj.Common\Saobracaj.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Saobracaj.Agent.CimProvera\pravila\*.json" Link="pravila\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera\sablon\*.json" Link="sablon\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera\sablon\obrasci\*.json" Link="sablon\obrasci\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera\tessdata\*.traineddata" Link="tessdata\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

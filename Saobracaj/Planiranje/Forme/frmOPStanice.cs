@@ -52,19 +52,13 @@ namespace Saobracaj.Planiranje.Forme
             Pravo = PraviloPristupa.Proveri(code);
         }
 
-        // Kartica Mapa mreže na ekranu Transport: odmah tab Mapa (sloj zatvora je podrazumevano uključen).
+        // Kartica Mapa mreže na ekranu Transport i dugme GRAF (Planer, Dispečer): odmah tab Mapa.
+        // Stanje na mreži i najave crta sloj mape iz baze (PlanMrezeRepo).
         internal static frmOPStanice NaMapi()
         {
             var f = new frmOPStanice();
             f.otvoriMapu = true;
             return f;
-        }
-
-        // Planer (dugme GRAF): tab Mapa, a vagoni na stanicama su iz trenutnog stanja tabele „Stanje na mreži“.
-        public frmOPStanice(DataTable stanjeNaMrezi) : this()
-        {
-            otvoriMapu = true;
-            mapa.PostaviVagone(stanjeNaMrezi);
         }
 
         private async Task Osvezi()

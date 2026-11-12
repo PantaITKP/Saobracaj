@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -33,6 +33,9 @@ namespace Saobracaj.Planiranje.Podaci
         // Prozori od kraćeg ka dužem: dan zapisa jedne lokomotive je ~1 MB, pa se dugi prozor traži samo kad kraći nema ništa.
         private static readonly TimeSpan[] Prozori = { TimeSpan.FromMinutes(15), TimeSpan.FromHours(3), TimeSpan.FromHours(24) };
         internal static readonly TimeSpan Svez = TimeSpan.FromMinutes(15);
+        // Lokomotiva bez signala duže od dana (u radionici, van mreže): traži se dan po dan unazad, do poslednje poznate pozicije.
+        // Prazan dan je mali odgovor, pa je ovo brzo i za lokomotivu koja se ne javlja nedeljama.
+        internal const int NajviseDanaUnazad = 90;
 
         private static readonly HttpClient http = NoviKlijent();
         private static readonly object brava = new object();
@@ -53,6 +56,67 @@ namespace Saobracaj.Planiranje.Podaci
         internal static List<PozicijaLokomotive> Ucitaj()
         {
             return UcitajAsync().GetAwaiter().GetResult();
+        }
+
+        // Ostala vozila (nisu u stablu grupe Lokomotive, ali ih journey/records vraća po idVehicles).
+        // API ne daje naziv vozila, pa su oznaka i model iz Sky Watch spiska vozila (spisak_vozila.csv, grupa VOZILA i BG VAGON):
+        // idVehicles → { oznaka (uz registraciju kad se razlikuje), model }.
+        private static readonly Dictionary<int, string[]> OstalaVozila = new Dictionary<int, string[]>
+        {
+            { 2964, new[] { "BG VAGON", "" } },
+            { 2829, new[] { "BG*1756-NL", "FIAT" } },
+            { 2864, new[] { "BG*1927-TB", "500L" } },
+            { 2865, new[] { "BG*1927-TC", "500L" } },
+            { 2928, new[] { "BG*2452-GC", "FORD" } },
+            { 2936, new[] { "BG*2725-VP", "FIAT" } },
+            { 2817, new[] { "BG*372-BM", "CRAFTER" } },
+            { 2888, new[] { "BG-2153-TB", "" } },
+            { 2887, new[] { "BG-2153-TC", "" } },
+            { 2901, new[] { "BG-2294-EP", "Panda, FIAT" } },
+            { 2902, new[] { "BG-2294-KB", "Panda" } },
+            { 2919, new[] { "BG-2510-UK", "FIAT" } },
+            { 2921, new[] { "BG-2510-UL", "FIAT" } },
+            { 2918, new[] { "BG-2510-UM", "FIAT" } },
+            { 2922, new[] { "BG-2510-UN", "FIAT" } },
+            { 2920, new[] { "BG-2510-UO", "FIAT" } },
+            { 2923, new[] { "BG-2510UJ", "panda" } },
+            { 2924, new[] { "BG-2511NZ", "panda" } },
+            { 2773, new[] { "BG-2741-XM", "" } },
+            { 2930, new[] { "BG-2780-ZR", "DACIA" } },
+            { 2950, new[] { "BG-2908ZR", "500 L" } },
+            { 2948, new[] { "BG-2980ZX", "" } },
+            { 2909, new[] { "BG-HM (BG-2339-HM)", "" } },
+            { 2908, new[] { "BG-HN (BG-2339-HN)", "" } },
+            { 2949, new[] { "BG1758PL", "Dacia Sandero" } },
+            { 2931, new[] { "BG2515VO (BG*2515-VO)", "DACIA" } },
+            { 2910, new[] { "Cisterna (BG-2289-KA)", "" } },
+            { 2849, new[] { "Honda (BG-2807-RI)", "" } },
+            { 2830, new[] { "M/Bgd- JD (BG-2225-JD)", "VW CADDY" } },
+            { 2845, new[] { "M/Bgd-RU (BG-1620-RU)", "FIAT" } },
+            { 2828, new[] { "M/N.Sad-VA (BG*1331-VA)", "FIAT" } },
+            { 2836, new[] { "M/Panč-SK (BG*1506-SK)", "500L" } },
+            { 2844, new[] { "M/Ruma-PN (BG*1579-PN)", "" } },
+            { 2846, new[] { "M/Ruma-RV (BG-1620-RV)", "" } },
+            { 2843, new[] { "M/Zrenj-VD (BG-1818-VD)", "" } },
+            { 2837, new[] { "V/Niš-MF (BG-1513-MF)", "500L" } },
+        };
+
+        internal static List<PozicijaLokomotive> UcitajVozila()
+        {
+            return UcitajVozilaAsync().GetAwaiter().GetResult();
+        }
+
+        private static async Task<List<PozicijaLokomotive>> UcitajVozilaAsync()
+        {
+            string t = await Token().ConfigureAwait(false);
+            List<PozicijaLokomotive> vozila = OstalaVozila.Select(v => new PozicijaLokomotive
+            {
+                IdVozila = v.Key,
+                Oznaka = v.Value[0],
+                Model = v.Value[1].Length > 0 ? v.Value[1] : null
+            }).ToList();
+            await Task.WhenAll(vozila.Select(v => PoslednjiZapis(t, v))).ConfigureAwait(false);
+            return vozila.OrderBy(v => v.Oznaka, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
         private static async Task<List<PozicijaLokomotive>> UcitajAsync()
@@ -148,6 +212,14 @@ namespace Saobracaj.Planiranje.Podaci
                         lock (brava) dugoTrazeno[v.IdVozila] = sada;
                     }
                     if ((zapis = await Zapis(t, v.IdVozila, sada - prozor, sada).ConfigureAwait(false)) != null) break;
+                }
+                // Starije od dana: dan po dan unazad, ali ne dalje od već poznatog zapisa.
+                DateTime? poznato = ranije != null ? (DateTime?)ranije["recordtime"] : null;
+                for (int dan = 1; zapis == null && trazitiDugo && dan < NajviseDanaUnazad; dan++)
+                {
+                    DateTime doVremena = sada.AddDays(-dan);
+                    if (poznato.HasValue && doVremena <= poznato.Value) break;
+                    zapis = await Zapis(t, v.IdVozila, doVremena.AddDays(-1), doVremena).ConfigureAwait(false);
                 }
             }
             catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)

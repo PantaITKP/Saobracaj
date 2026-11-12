@@ -731,6 +731,8 @@ Skripte su `OP_030_Jobs.sql` (šema, program ne radi bez nje) i `OP_031_FormaJob
 
 ## 27. Dorada: GRAF u Planeru i vagoni na stanicama (Zadatak 15, 7.11.2026)
 
+> **Zamenjeno 12.11.2026.** Pri spajanju sa granom `novi-izgled` (commit 7f29ef2, „Mreza,Najave,Automobili nova mapa“) korisnik je izabrao novu `KontrolaMape`: slojevi su u traci na vrhu, a „Stanje na mreži“ i „Najave“ su njeni slojevi koji se čitaju iz baze (`PlanMrezeRepo`, osvežavanje na 2 min). Opcija „Prikaži vagone na stanicama“ opisana ispod je uklonjena, zajedno sa filterom i listom stavki. GRAF u Planeru i dugme Mapa u Dispečeru otvaraju Mreža i stanice na tabu Mapa (`frmOPStanice.NaMapi`), bez kopije tabele iz Planera, pa nesačuvane izmene nisu na mapi. Ostatak odeljka je istorija.
+
 Bez SQL skripte. Na radnoj bazi se iz `dbo.OperativniPlanMreza` samo čita.
 
 **Dugme GRAF** je u Planeru (Operativni plan), desno od „Sačuvaj plan“ (`Planer.NoviIzgled.cs`). Otvara Mreža i stanice u novom prozoru, odmah na tabu Mapa, uz ista prava kao iz menija (`frmOPStanice`).
