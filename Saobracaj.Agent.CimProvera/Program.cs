@@ -40,7 +40,8 @@ namespace Saobracaj.Agent.CimProvera
                                    briše spisak obrađenih mailova i keš (OCR, rezultati), postavlja nultu tačku i
                                    ponovo uključuje zadatak; pravila, šabloni, config, logovi i testovi ostaju
   --test-veze                      proverava pravila, šablon, OCR (tessdata), IMAP i SMTP, bez obrade
-  --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)";
+  --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)
+  Word prilozi (.docx/.doc/.rtf) se pretvaraju u PDF preko Syncfusion DocIO; ključ je u Syncfusion.dpapi (Instaliraj.ps1)";
 
         private static int Main(string[] args)
         {
@@ -52,6 +53,8 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { Console.Error.WriteLine("Greška u config-u: " + ex); return 1; }
             var log = new Log(cfg.LogFolder, cfg.LogDana);
             Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
+            // Syncfusion ključ (Word → PDF) iz Syncfusion.dpapi; greška se upisuje tek kada Word prilog treba pretvoriti
+            try { Prilozi.WordUPdf.UcitajKljuc(); } catch { }
 
             try
             {
@@ -402,6 +405,8 @@ namespace Saobracaj.Agent.CimProvera
                         throw new InvalidOperationException("OCR radi, ali nije pročitao probni tekst (\"" + procitano + "\").");
                 }
             });
+            // nije greška testa: bez ključa agent radi, samo Word prilozi idu na ručnu proveru
+            Console.WriteLine((Prilozi.WordUPdf.KljucUcitan ? "OK    " : "PAŽNJA ") + "Syncfusion ključ (Word → PDF): " + Prilozi.WordUPdf.StanjeKljuca);
             Korak("IMAP " + cfg.ImapHost + ":" + cfg.ImapPort, () =>
             {
                 using (var s = new Sanduce(cfg))

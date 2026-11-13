@@ -203,6 +203,15 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>Tajne iz config-a koje postoje, ali ne mogu da se dešifruju pod trenutnim nalogom.</summary>
         public static readonly List<string> NedesifrovaneTajne = new List<string>();
 
+        /// <summary>DPAPI vrednost (base64, iz --zastiti) → tekst; null ako ne može da se dešifruje pod trenutnim nalogom.</summary>
+        public static string Desifruj(string base64)
+        {
+            if (string.IsNullOrWhiteSpace(base64)) return null;
+            try { return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(base64.Trim()), Entropija, Opseg)); }
+            catch (CryptographicException) { return null; }
+            catch (FormatException) { return null; }
+        }
+
         public static string Zastiti(string vrednost) =>
             Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(vrednost), Entropija, Opseg));
 

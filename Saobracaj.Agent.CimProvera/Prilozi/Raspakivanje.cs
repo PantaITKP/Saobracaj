@@ -17,6 +17,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         public byte[] Sadrzaj;
         public VrstaPriloga Vrsta;
         public string MediaType;      // za Claude: application/pdf, image/jpeg, …
+        /// <summary>PDF nastao pretvaranjem Word priloga: natpisi obrasca su slika (OCR samo za sidra), vrednosti iz tekstualnog sloja.</summary>
+        public bool IzWorda;
         public string Hes => hes ?? (hes = Sha256(Sadrzaj));
         private string hes;
 
@@ -147,7 +149,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 case ".gif": media = "image/gif"; return VrstaPriloga.Slika;
                 case ".webp": media = "image/webp"; return VrstaPriloga.Slika;
                 case ".xls": case ".xlsx": case ".xlsm": return VrstaPriloga.Excel;
-                case ".docx": case ".docm": return VrstaPriloga.Word;
+                // Word i RTF se pretvaraju u PDF (Syncfusion DocIO); .odt ide na ručnu proveru sa razlogom
+                case ".docx": case ".docm": case ".doc": case ".dot": case ".dotx": case ".dotm": case ".rtf": case ".odt": return VrstaPriloga.Word;
             }
             if (b.Length > 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) { media = "image/jpeg"; return VrstaPriloga.Slika; }
             if (b.Length > 8 && b[0] == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') { media = "image/png"; return VrstaPriloga.Slika; }

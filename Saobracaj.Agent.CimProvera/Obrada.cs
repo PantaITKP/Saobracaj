@@ -49,9 +49,9 @@ namespace Saobracaj.Agent.CimProvera
                 fajlovi.AddRange(Raspakivanje.Raspakuj(ime, b, ishod.Preskoceno));
             foreach (var x in ishod.Preskoceno) log?.Info("  prilog " + x + " – preskočen");
 
-            // Prilozi koji se ne čitaju: Word 97–2003, OpenOffice, RTF… nisu dokaz da tovarnog lista nema.
+            // Prilozi koji se ne čitaju: OpenOffice tabela, Pages, XPS, TIFF… nisu dokaz da tovarnog lista nema.
             foreach (var x in ishod.Preskoceno)
-                if (Regex.IsMatch(x, @"\.(doc|odt|ods|rtf|pages|xps|tif|tiff|bmp)\b", RegexOptions.IgnoreCase)) ishod.Neprepoznati.Add(Regex.Replace(x, @"\s*\(.*$", ""));
+                if (Regex.IsMatch(x, @"\.(ods|pages|xps|tif|tiff|bmp)\b", RegexOptions.IgnoreCase)) ishod.Neprepoznati.Add(Regex.Replace(x, @"\s*\(.*$", ""));
             var lc = citac as LokalniCitac;
 
             // Isti fajl dvaput u mailu (npr. i u ZIP-u i kao prilog) čita se jednom.
@@ -64,11 +64,16 @@ namespace Saobracaj.Agent.CimProvera
                     {
                         // Tovarni list CIM/CUV kao Excel/Word obrazac: čita se iz ćelija (bez OCR-a); inače Excel = spisak kola / tabela MRN.
                         var word = f.Vrsta == VrstaPriloga.Word;
-                        var tovarni = lc?.TovarniIzTabele(f, word ? TabelarniCim.IzWorda(f.Sadrzaj) : TabelarniCim.IzExcela(f.Sadrzaj), word ? "word" : "excel");
+                        // Word tabela (.docx/.docm su ZIP); .doc/.rtf nemaju tabelu u XML-u – idu direktno u PDF
+                        List<List<Celija>> celije = null;
+                        if (!word) celije = TabelarniCim.IzExcela(f.Sadrzaj);
+                        else if (f.Sadrzaj.Length > 4 && f.Sadrzaj[0] == 'P' && f.Sadrzaj[1] == 'K') try { celije = TabelarniCim.IzWorda(f.Sadrzaj); } catch { celije = null; }
+                        var tovarni = celije == null ? null : lc?.TovarniIzTabele(f, celije, word ? "word" : "excel");
                         if (tovarni != null) dokumenti.Add(tovarni);
                         else if (!word) dokumenti.AddRange(ExcelCitac.Procitaj(f, pravila.Kp));
-                        else dokumenti.Add(new Dokument { Tip = TipDokumenta.Ostalo, Strane = { 1 }, Fajl = f.Naziv, Izvor = "word", Opis = "Word dokument bez obrasca tovarnog lista" });
-                        log?.Info("  prilog " + f.Naziv + " (" + f.Vrsta + "): " + VrstePoStranama(dokumenti.Skip(pre)) + (tovarni != null ? " – " + tovarni.Opis : ""));
+                        else ProcitajWord(f, dokumenti, ishod);
+                        if (tovarni != null || !word)
+                            log?.Info("  prilog " + f.Naziv + " (" + f.Vrsta + "): " + VrstePoStranama(dokumenti.Skip(pre)) + (tovarni != null ? " – " + tovarni.Opis : ""));
                     }
                     else
                     {
@@ -107,6 +112,40 @@ namespace Saobracaj.Agent.CimProvera
             ishod.Provera = new Motor(pravila, log).Proveri(u);
             ishod.Provera.OpisPriloga = ishod.OpisPriloga;
             return ishod;
+        }
+
+        private static readonly Regex ImeTovarnog = new Regex(@"(^|[^a-z])(cim|cuv|smgs)([^a-z]|$)|frachtbrief|wagenbrief|tovarni|consignment|nakladni|lettre", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Word prilog bez tabele obrasca: pretvara se u PDF (Syncfusion) i čita istim putem kao PDF (klasifikacija strana, šablon,
+        /// vrednosti iz tekstualnog sloja). Neuspelo pretvaranje, ili ime koje liči na tovarni list a obrazac nije prepoznat → ručna
+        /// provera (nikad „nema tovarnog lista“ pošiljaocu). Log: pretvoren, trajanje, broj strana i vrsta svake strane.
+        /// </summary>
+        private void ProcitajWord(Prilog f, List<Dokument> dokumenti, Ishod ishod)
+        {
+            var pdf = WordUPdf.Pretvori(f, out var razlog, out var trajanje);
+            if (pdf == null)
+            {
+                if (WordUPdf.NedostajaoKljuc && !WordUPdf.KljucUcitan) log?.Greska("  prilog " + f.Naziv + " (Word): " + razlog);
+                else log?.Upozorenje("  prilog " + f.Naziv + " (Word): " + razlog);
+                ishod.NisuProcitani.Add(f.Naziv + ": " + razlog);
+                return;
+            }
+            var pp = new Prilog { Naziv = f.Naziv, Sadrzaj = pdf, Vrsta = VrstaPriloga.Pdf, MediaType = "application/pdf", IzWorda = true };
+            var r = citac.Procitaj(pp);
+            foreach (var d in r.Dokumenti) { d.Fajl = f.Naziv; d.Izvor = "word"; }
+            dokumenti.AddRange(r.Dokumenti);
+            var strana = r.StraneOpis.Count > 0 ? r.StraneOpis.Count : r.Dokumenti.SelectMany(d => d.Strane).DefaultIfEmpty(0).Max();
+            log?.Info("  prilog " + f.Naziv + " (Word): pretvoren u PDF za " + (int)trajanje.TotalMilliseconds + " ms, strana " + strana + " – " + VrstePoStranama(r.Dokumenti)
+                      + (r.NeprocitaneStrane > 0 ? ", nepročitano str.: " + r.NeprocitaneStrane : ""));
+            if (r.StraneOpis.Count > 0) log?.Info("    strane: " + string.Join(" | ", r.StraneOpis));
+            if (!r.Dokumenti.Any(d => TipDokumenta.JeTovarniList(d.Tip)) && (r.NeprocitaneStrane > 0 || ImeTovarnog.IsMatch(System.IO.Path.GetFileNameWithoutExtension(f.Naziv) ?? "")))
+            {
+                var zasto = "Word prilog je pretvoren u PDF, ali obrazac tovarnog lista nije prepoznat" + (r.NeprocitaneStrane > 0 ? " (nepročitano strana: " + r.NeprocitaneStrane + ")" : " (ime fajla liči na tovarni list)") + " – potrebna je ručna provera";
+                log?.Upozorenje("  prilog " + f.Naziv + ": " + zasto);
+                ishod.NisuProcitani.Add(f.Naziv + ": " + zasto);
+                if (!ishod.Neprepoznati.Contains(f.Naziv)) ishod.Neprepoznati.Add(f.Naziv);
+            }
         }
 
         /// <summary>

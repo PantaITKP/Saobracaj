@@ -42,6 +42,9 @@
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <PackageReference Include="MsgReader" Version="5.7.1" />
+    <!-- Word → PDF (DocIO, isti major 18.x kao aplikacija Saobracaj; ključ iz Syncfusion.dpapi, nikad u kodu) -->
+    <PackageReference Include="Syncfusion.DocToPDFConverter.WinForms" Version="18.4.0.34" />
+    <PackageReference Include="Syncfusion.Licensing" Version="18.4.0.34" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1311,7 +1311,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     nazivi.Add(Regex.Replace(p, @"(?<!\d)" + k.P.Kp.Uic + @"(?!\d)", "").Trim(' ', '-', ',', ':'));
             // "SRB:", "HR:", "SI:", "FS:", "IŽS:", "ŽS:", "RS:" su oznake zemlje/mreže, ne naziv prevoznika
             string BezOznake(string n) => Regex.Replace(n ?? "", @"^\s*(?:SRB|RS|HR|SI|SLO|FS|IT|IŽS|IZS|ŽS|ZS|SŽ|HU|BG|RO|MK|BIH|BA|AT|DE|ME|CH)\s*:?\s*", "").Trim(' ', ',', ';', ':', '-');
-            foreach (var n in nazivi.Select(BezOznake).Where(x => x.Length > 0 && !k.P.Kp.JeKpNaziv(x) && !k.P.Kp.PominjeNaziv(x)).Distinct(StringComparer.OrdinalIgnoreCase))
+            // naziv ima bar dva slova: „KP(3212)“ ostavlja samo „)“ iza šifre – to nije drugi naziv
+            foreach (var n in nazivi.Select(BezOznake).Where(x => Regex.IsMatch(x, @"\p{L}{2}") && !k.P.Kp.JeKpNaziv(x) && !k.P.Kp.PominjeNaziv(x)).Distinct(StringComparer.OrdinalIgnoreCase))
                 yield return P("57", "kp5-" + N(n)).S("name", n);
         }
 

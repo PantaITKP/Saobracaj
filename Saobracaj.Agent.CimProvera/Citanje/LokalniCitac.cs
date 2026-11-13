@@ -106,7 +106,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             if (strane != null) return strane;
             try
             {
-                if (p.Vrsta == VrstaPriloga.Pdf) strane = PdfStrane.Procitaj(p.Sadrzaj, ocr, 60, uvekOcr, sablon.BrojSidara, TrebaSlika);
+                if (p.Vrsta == VrstaPriloga.Pdf) strane = PdfStrane.Procitaj(p.Sadrzaj, ocr, 60, uvekOcr, sablon.BrojSidara, TrebaSlika, p.IzWorda);
                 else
                 {
                     if (ocr == null) throw new TrajnaGreskaCitanja("fotografija/sken, a OCR nije instaliran (tessdata)");
@@ -393,6 +393,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     var cim = CimParser.Napravi(raspored, s, Pragovi);
                     // Nečitljive rubrike skena: ponovni OCR samo njihovog pravougaonika (veća rezolucija, srp/hrv/deu).
                     if (PonoviNecitljive(p, s, raspored, cim) is CimSablon.Rezultat bolji) { raspored = bolji; cim = CimParser.Napravi(raspored, s, Pragovi); }
+                    // Word → PDF: vrednosti su tekstualni sloj (bez OCR-a) – nema nečitljivih rubrika
+                    if (raspored.IzWorda) CimParser.BezNecitljivih(cim);
                     cim.Sablon = raspored.Obrazac.Id;
                     cim.StranaLista = s.Broj;
                     foreach (var kv in raspored.Obrazac.Rubrike) if (raspored.NaStrani(kv.Value) is double[] ok) cim.Okviri[kv.Key] = ok.Select(v => Math.Round(v, 4)).ToArray();
@@ -415,7 +417,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     var d = new Dokument
                     {
                         Tip = cim.Obrazac == "CUV" ? TipDokumenta.Cuv : TipDokumenta.Cim, Strane = { s.Broj }, Cim = { cim }, Izvor = izvor,
-                        Opis = (cim.Obrazac == "CUV" ? "CUV" : "CIM") + " list " + rb + " (" + (s.Izvor == IzvorTeksta.Ocr ? "OCR, pouzdanost " + s.SrednjaPouzdanost.ToString("0.00") : "tekst iz PDF-a")
+                        Opis = (cim.Obrazac == "CUV" ? "CUV" : "CIM") + " list " + rb + " (" + (p.IzWorda ? "Word pretvoren u PDF, podaci iz tekstualnih okvira" : s.Izvor == IzvorTeksta.Ocr ? "OCR, pouzdanost " + s.SrednjaPouzdanost.ToString("0.00") : "tekst iz PDF-a")
                                + ", obrazac " + raspored.Obrazac.Id + ", " + raspored.Sidara + " sidara)",
                     };
                     rez.Dokumenti.Add(d);
@@ -926,6 +928,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         public List<string> SnimiSlike(Prilog p, string folder, bool uvekOcr = false)
         {
             var poruke = new List<string>();
+            p = KaoPdf(p);
             var strane = Strane(p, uvekOcr);
             var rez = Klasifikuj(p, strane);
             foreach (var d in rez.Dokumenti.Where(x => TipDokumenta.JeTovarniList(x.Tip)))
@@ -971,7 +974,17 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Dijagnostika (komanda "rubrike"): za svaku stranu vrsta, izvor teksta, poravnanje i tekst svake rubrike.</summary>
         public string Dijagnostika(Prilog p, bool uvekOcr = false)
         {
+            p = KaoPdf(p);
             return Dijagnostika(Strane(p, uvekOcr), p.Naziv, p);
+        }
+
+        /// <summary>Word prilog → PDF prilog (Syncfusion) za dijagnostičke komande; ostali prilozi ostaju isti.</summary>
+        internal static Prilog KaoPdf(Prilog p)
+        {
+            if (p.Vrsta != VrstaPriloga.Word) return p;
+            var pdf = Prilozi.WordUPdf.Pretvori(p, out var razlog, out _);
+            if (pdf == null) throw new TrajnaGreskaCitanja(razlog);
+            return new Prilog { Naziv = p.Naziv, Sadrzaj = pdf, Vrsta = VrstaPriloga.Pdf, MediaType = "application/pdf", IzWorda = true };
         }
 
         /// <summary>Dijagnostika nad već pročitanim stranama (npr. iz keša sa servera, komanda "iz-kesa").</summary>
@@ -994,6 +1007,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 if (r.Poravnanje != null)
                     sb.AppendLine(string.Format(System.Globalization.CultureInfo.InvariantCulture, "   izabran: {0}, x = {1:0.0000}·x {2:+0.0000;-0.0000}·y {3:+0.0000;-0.0000}, y = {4:+0.0000;-0.0000}·x {5:0.0000}·y {6:+0.0000;-0.0000}",
                         r.Poravnato ? r.Obrazac.Id : "NIJEDAN (ručna provera)", r.Poravnanje.X[0], r.Poravnanje.X[1], r.Poravnanje.X[2], r.Poravnanje.Y[0], r.Poravnanje.Y[1], r.Poravnanje.Y[2]));
+                if (r.SkriveniPodaci.Count > 0) sb.AppendLine("   skriveni tekst Word okvira (ne vidi se na strani, ne čita se): " + string.Join(" ", r.SkriveniPodaci.Select(x => x.ToString())));
                 if (!r.Poravnato) continue;
                 foreach (var kv in r.Rubrike.OrderBy(k => Regex.Match(k.Key, @"\d+").Success ? int.Parse(Regex.Match(k.Key, @"\d+").Value) : 0).ThenBy(k => k.Key, StringComparer.Ordinal))
                     sb.AppendLine("   r" + kv.Key.PadRight(6) + " " + string.Join(" / ", Raspored.Linije(kv.Value).Select(l => l.Tekst)));

@@ -59,6 +59,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         public sealed class Rezultat
         {
             public Dictionary<string, List<Rec>> Rubrike = new Dictionary<string, List<Rec>>();
+            /// <summary>Word: tekst okvira koji se ne vidi na strani (pokriven) – ne čita se kao podatak.</summary>
+            public List<Rec> SkriveniPodaci = new List<Rec>();
             public ObrazacSablon Obrazac;
             public Poravnanje Poravnanje;
             /// <summary>Svi probani obrasci (za dijagnostiku), od najboljeg.</summary>
@@ -114,9 +116,55 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
             /// <summary>Stanje polja za označavanje iz šablona: oznaceno / prazno / nesigurno; null ako polja nema u šablonu ili nema slike.</summary>
             public string Polje(string id, double pragOznake = 0.15, double pragPraznog = 0.05) =>
+                IzWorda ? PoljeIzX(id) :
                 Gustina(id) is double g ? (g >= pragOznake ? StanjePolja.Oznaceno : g <= pragPraznog ? StanjePolja.Prazno : StanjePolja.Nesigurno) : null;
 
+            /// <summary>Strana iz Word dokumenta (podaci su tekstualni okviri, „X“ je zaseban okvir preko kvadratića).</summary>
+            public bool IzWorda;
+            private Dictionary<string, string> poljaIzX;
+
+            /// <summary>
+            /// Word: polje je označeno ako je u njemu centar „X“ iz tekstualnog sloja (okvir sa X preko kvadratića). Svaki X označava
+            /// samo najbliži kvadratić; tolerancija pola veličine kvadratića (okvir u Word-u nije precizno poravnat sa obrascem).
+            /// </summary>
+            private string PoljeIzX(string id)
+            {
+                if (Obrazac == null || !Obrazac.Polja.ContainsKey(id)) return null;
+                if (poljaIzX == null)
+                {
+                    poljaIzX = new Dictionary<string, string>();
+                    var kutije = Obrazac.Polja.Keys.ToDictionary(k => k, KvadratNaStrani);
+                    foreach (var x in Dodela.Select(d => d.rec).Where(w => w.JePodatak && Regex.IsMatch((w.T ?? "").Trim(), @"^[xX×✕✗]$")))
+                    {
+                        var naj = kutije.Select(kv =>
+                        {
+                            var b = kv.Value; double sw = b[2] - b[0], sh = b[3] - b[1];
+                            var unutra = x.Cx >= b[0] - sw * 0.5 && x.Cx <= b[2] + sw * 0.5 && x.Cy >= b[1] - sh * 0.5 && x.Cy <= b[3] + sh * 0.5;
+                            return (id: kv.Key, unutra, d: Math.Abs(x.Cx - (b[0] + b[2]) / 2) + Math.Abs(x.Cy - (b[1] + b[3]) / 2));
+                        }).Where(t => t.unutra).OrderBy(t => t.d).FirstOrDefault();
+                        if (naj.id != null) poljaIzX[naj.id] = StanjePolja.Oznaceno;
+                    }
+                }
+                return poljaIzX.TryGetValue(id, out var s) ? s : StanjePolja.Prazno;
+            }
+
             private List<Oblik> kvadratici;
+
+            /// <summary>Kvadratić polja na strani: iz šablona; kod univerzalnog šablona nacrtani kvadratić najbliži očekivanom mestu.</summary>
+            private double[] KvadratNaStrani(string poljeId)
+            {
+                var r = NaStrani(Obrazac.Polja[poljeId]);
+                if (Obrazac.Univerzalni && Raster != null)
+                {
+                    kvadratici = kvadratici ?? Raster.Kvadratici();
+                    double cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, sw = r[2] - r[0], sh = r[3] - r[1];
+                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < 0.008
+                                                  && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.6 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.6)
+                                      .OrderBy(o => Math.Abs(o.Cx - cx) + Math.Abs(o.Cy - cy)).FirstOrDefault();
+                    if (k != null) r = new[] { k.X0, k.Y0, k.X1, k.Y1 };
+                }
+                return r;
+            }
 
             /// <summary>Gustina mastila u unutrašnjosti kvadratića (bez ivica okvira).</summary>
             public double? Gustina(string poljeId)
@@ -143,6 +191,19 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         {
             var lista = reci.ToList();
             var rez = new Rezultat { Raster = raster };
+            // Word → PDF: tekst okvira koji se ne vidi (pokriven drugim okvirom sa belom pozadinom ili slikom) nije podatak –
+            // ni Word ga ne prikazuje. Vidljivost = mastilo na mestu reči na iscrtanoj strani.
+            if (raster != null && lista.Any(r => r.Font == Rec.FontWord))
+            {
+                // bez linija okvira obrasca (ivica kvadratića ispod „X“ nije znak da se X vidi); unutrašnjih 70 % okvira reči
+                double Vidljivo(Rec r) { double dx = (r.X1 - r.X0) * 0.15, dy = (r.Y1 - r.Y0) * 0.15; return raster.Gustina(r.X0 + dx, r.Y0 + dy, r.X1 - dx, r.Y1 - dy, true); }
+                // vidljiv tekst: ≥ 0,25 (CUV_exGK33); pokriven „X“ u r20: 0,027 (ostaci natpisa ispod)
+                var skriveno = lista.Where(r => r.Font == Rec.FontWord && Vidljivo(r) < 0.08).ToList();
+                if (Environment.GetEnvironmentVariable("CIMPROVERA_VIDLJIVOST") == "1")
+                    foreach (var r in lista.Where(x => x.Font == Rec.FontWord && x.T.Length <= 2)) Console.WriteLine("vidljivost " + r + " = " + Vidljivo(r).ToString("0.000"));
+                foreach (var r in skriveno) lista.Remove(r);
+                rez.SkriveniPodaci = skriveno;
+            }
             var potpisi = PotpisiNaziva(lista);
             if (Obrasci.Sabloni.Count == 0) return rez;
 
@@ -187,13 +248,24 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }
             var pribliznoNatpisi = new HashSet<Rec>(lista.Where(PribliznoNatpis));
 
+            // 0) blokovi teksta (Word okviri): ceo blok ide u rubriku u kojoj je veći deo njegovog teksta (površina reči), ne po
+            //    početku reda – npr. tekst r13 koji prelazi u r14 ostaje u r13
+            var rubrikaBloka = lista.Where(r => r.Blok > 0).GroupBy(r => r.Blok).ToDictionary(g => g.Key, g => g
+                .Select(r => { var (bx, by) = naj.USablon(r.Cx, r.Cy); return (id: obrazac.RubrikaZa(bx, by), a: Math.Max(1e-6, (r.X1 - r.X0) * (r.Y1 - r.Y0))); })
+                .Where(x => x.id != null).GroupBy(x => x.id).OrderByDescending(x => x.Sum(y => y.a)).Select(x => x.Key).FirstOrDefault());
+
+            // Word → PDF: podaci su samo reči tekstualnog sloja (okviri); sve reči OCR-a slike obrasca su natpisi (nikad podatak)
+            rez.IzWorda = lista.Any(r => r.Font == Rec.FontWord);
+
             // 1) svaka reč → rubrika po centru (koordinate šablona)
             var poRubrici = new Dictionary<string, List<(Rec r, Rec t, VrstaReci v)>>();
             foreach (var r in lista)
             {
                 var vrsta = naMestuSidra.Contains(r) || UKrugu(r) || SitanNatpis(r) || pribliznoNatpisi.Contains(r) ? VrstaReci.Naziv : Vrsta(r, potpisi);
+                if (r.JePodatak) vrsta = VrstaReci.Podatak;
+                else if (rez.IzWorda) vrsta = VrstaReci.Naziv;
                 var (tx, ty) = naj.USablon(r.Cx, r.Cy);
-                var id = obrazac.RubrikaZa(tx, ty);
+                var id = r.Blok > 0 && rubrikaBloka.TryGetValue(r.Blok, out var rb) && rb != null ? rb : obrazac.RubrikaZa(tx, ty);
                 if (vrsta == VrstaReci.Naziv || id == null) { rez.Dodela.Add((r, id, vrsta == VrstaReci.Naziv)); continue; }
                 var (x0, y0) = naj.USablon(r.X0, r.Y0); var (x1, y1) = naj.USablon(r.X1, r.Y1);
                 if (!poRubrici.TryGetValue(id, out var l)) poRubrici[id] = l = new List<(Rec, Rec, VrstaReci)>();
@@ -261,7 +333,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         {
             var rez = new HashSet<string>();
             var kandidati = new List<(string potpis, double udeo)>();
-            foreach (var g in reci.Where(r => r.Velicina > 0 && r.Font != "AcroForm").GroupBy(r => r.Potpis))
+            foreach (var g in reci.Where(r => r.Velicina > 0 && !r.JePodatak).GroupBy(r => r.Potpis))
             {
                 var sve = g.ToList();
                 if (sve.Count >= 10 && sve.Count(r => Regex.IsMatch(r.T, @"^\d{1,2}[ab]?\)?$")) >= sve.Count * 0.8) { rez.Add(g.Key); continue; }
@@ -305,7 +377,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Da li je reč odštampani naziv rubrike, podatak, ili kandidat (font naziva – odluka po segmentu reda).</summary>
         private VrstaReci Vrsta(Rec r, HashSet<string> potpisiNaziva)
         {
-            if (r.Font == "AcroForm") return VrstaReci.Podatak; // vrednost polja PDF obrasca je uvek podatak
+            if (r.JePodatak) return VrstaReci.Podatak; // vrednost polja PDF obrasca / tekst Word okvira je uvek podatak
             if (r.Velicina > 0)
             {
                 if (potpisiNaziva.Contains(r.Potpis)) return VrstaReci.Kandidat;

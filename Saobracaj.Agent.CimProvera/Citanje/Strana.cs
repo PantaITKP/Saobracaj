@@ -16,6 +16,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Naziv fonta (tekst iz PDF-a); prazno za OCR.</summary>
         public string Font = "";
         public string Potpis => Font + "|" + (Math.Round(Velicina * 2) / 2).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        /// <summary>Tekstualni blok (okvir Word-a) kome reč pripada; 0 = bez bloka. Ceo blok ide u rubriku u kojoj je veći deo teksta.</summary>
+        public int Blok;
+        /// <summary>Font reči iz tekstualnog okvira Word dokumenta pretvorenog u PDF (podatak, nikad natpis obrasca).</summary>
+        public const string FontWord = "WordOkvir";
+        /// <summary>Upisan podatak, nikad odštampani natpis: vrednost polja PDF obrasca ili tekst iz Word okvira.</summary>
+        public bool JePodatak => Font == "AcroForm" || Font == FontWord;
         public double Cx => (X0 + X1) / 2;
         public double Cy => (Y0 + Y1) / 2;
         public double Visina => Y1 - Y0;

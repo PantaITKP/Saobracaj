@@ -13,12 +13,15 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     /// </summary>
     internal static class PdfStrane
     {
-        public static List<Strana> Procitaj(byte[] pdf, Ocr ocr, int maxStrana = 60, bool uvekOcr = false, Func<IEnumerable<Rec>, int> brojSidara = null, Func<List<Rec>, bool> trebaSlika = null)
+        /// <param name="izWorda">PDF nastao pretvaranjem Word dokumenta: obrazac je slika (OCR samo za natpise/sidra), a podaci su
+        /// tekstualni okviri – reči tekstualnog sloja su uvek podaci, grupisane u blokove (jedan okvir = jedan blok).</param>
+        public static List<Strana> Procitaj(byte[] pdf, Ocr ocr, int maxStrana = 60, bool uvekOcr = false, Func<IEnumerable<Rec>, int> brojSidara = null, Func<List<Rec>, bool> trebaSlika = null,
+            bool izWorda = false)
         {
-            var rez = ProcitajTekst(pdf, ocr, maxStrana, uvekOcr, brojSidara);
-            // Slika strane (linije okvira, kućice, prazne rubrike) samo za strane koje liče na tovarni list.
+            var rez = ProcitajTekst(pdf, ocr, maxStrana, uvekOcr, brojSidara, izWorda);
+            // Slika strane (linije okvira, kućice, prazne rubrike) samo za strane koje liče na tovarni list (Word: uvek).
             foreach (var s in rez)
-                if (trebaSlika != null && trebaSlika(s.Reci))
+                if (izWorda || trebaSlika != null && trebaSlika(s.Reci))
                     try { s.PostaviRaster(Raster.IzSlike(PdfCrtac.StranaUPng(pdf, s.Broj, 150))); }
                     catch (Exception ex) { s.Napomena += (s.Napomena.Length > 0 ? "; " : "") + "slika strane nije iscrtana (" + ex.Message + ")"; }
             return rez;
@@ -94,7 +97,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return rez;
         }
 
-        private static List<Strana> ProcitajTekst(byte[] pdf, Ocr ocr, int maxStrana, bool uvekOcr, Func<IEnumerable<Rec>, int> brojSidara)
+        private static List<Strana> ProcitajTekst(byte[] pdf, Ocr ocr, int maxStrana, bool uvekOcr, Func<IEnumerable<Rec>, int> brojSidara, bool izWorda = false)
         {
             var rez = new List<Strana>();
             using (var doc = PdfDocument.Open(pdf))
@@ -124,7 +127,25 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         var plus = font.IndexOf('+');
                         if (plus >= 0 && plus < font.Length - 1) font = font.Substring(plus + 1); // podskup fonta "AAAAAD+Arial" → "Arial"
                         t = BezDvostrukihSlova(t, wd.Letters);
-                        s.Reci.Add(new Rec { T = t, X0 = b.Left / w, X1 = b.Right / w, Y0 = 1 - b.Top / h, Y1 = 1 - b.Bottom / h, Pouzdanost = 0.98, Velicina = vel, Font = font });
+                        s.Reci.Add(new Rec { T = t, X0 = b.Left / w, X1 = b.Right / w, Y0 = 1 - b.Top / h, Y1 = 1 - b.Bottom / h, Pouzdanost = 0.98, Velicina = vel, Font = izWorda ? Rec.FontWord : font });
+                    }
+                    if (izWorda)
+                    {
+                        OznaciBlokove(s.Reci, w, h);
+                        s.Izvor = s.Reci.Count > 0 ? IzvorTeksta.Tekst : IzvorTeksta.Nema;
+                        var slikaObrasca = VelikaSlika(page, w, h);
+                        if (slikaObrasca != null && ocr != null)
+                        {
+                            // natpisi obrasca su samo na slici: OCR za sidra/natpise; reč na mestu podatka se ne dodaje (podatak je tekstualni sloj)
+                            var natpisi = OcrSlike(pdf, page.Number, slikaObrasca, ocr, w, h, out var napW);
+                            var podaci = s.Reci.ToList();
+                            bool PrekrivaPodatak(Rec r) => podaci.Any(x => r.Cx >= x.X0 - 0.004 && r.Cx <= x.X1 + 0.004 && r.Cy >= x.Y0 - 0.003 && r.Cy <= x.Y1 + 0.003);
+                            var dodato = natpisi.Where(r => !PrekrivaPodatak(r)).ToList();
+                            s.Reci.AddRange(dodato);
+                            s.Napomena = "Word pretvoren u PDF: podaci iz tekstualnog sloja (" + podaci.Count + " reči, " + podaci.Select(x => x.Blok).Distinct().Count() + " blokova), natpisi obrasca OCR-om slike (" + dodato.Count + " reči)" + (napW.Length > 0 ? ", " + napW : "");
+                        }
+                        rez.Add(s);
+                        continue;
                     }
                     // Popunjen PDF obrazac (AcroForm): podaci su vrednosti polja, ne tekst strane (npr. CIT obrazac popunjen u Acrobatu).
                     s.Reci.AddRange(PoljaObrasca(doc, page.Number, w, h));
@@ -202,6 +223,102 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 }
             }
             return rez;
+        }
+
+        /// <summary>
+        /// OCR slike obrasca (Word → PDF): slika manje rezolucije (EMF iz Word-a je često ~120 dpi) se uvećava na ~300 dpi pre OCR-a,
+        /// jer su natpisi obrasca sitni (5–6 pt). Koordinate su u odnosu na stranu. Ako slika ne može da se pročita direktno, OCR
+        /// iscrtane strane.
+        /// </summary>
+        private static List<Rec> OcrSlike(byte[] pdf, int brojStrane, IPdfImage slika, Ocr ocr, double w, double h, out string nap)
+        {
+            nap = "";
+            try
+            {
+                if (SlikaBajtovi(slika, out var bajtovi))
+                {
+                    var bb = slika.Bounds;
+                    var dpi = slika.WidthInSamples / Math.Max(bb.Width / 72.0, 0.1);
+                    if (dpi < 220)
+                        using (var ulaz = System.Drawing.Image.FromStream(new System.IO.MemoryStream(bajtovi)))
+                        {
+                            var k = 300.0 / dpi;
+                            using (var veca = new System.Drawing.Bitmap((int)(ulaz.Width * k), (int)(ulaz.Height * k)))
+                            using (var g = System.Drawing.Graphics.FromImage(veca))
+                            using (var ms = new System.IO.MemoryStream())
+                            {
+                                g.Clear(System.Drawing.Color.White);
+                                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                g.DrawImage(ulaz, 0, 0, veca.Width, veca.Height);
+                                veca.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                                bajtovi = ms.ToArray();
+                                dpi = 300;
+                            }
+                        }
+                    var reci = ocr.Prepoznaj(bajtovi, out nap, (int)Math.Round(dpi));
+                    foreach (var r in reci)
+                    {
+                        r.X0 = (bb.Left + r.X0 * bb.Width) / w; r.X1 = (bb.Left + r.X1 * bb.Width) / w;
+                        r.Y0 = 1 - (bb.Top - r.Y0 * bb.Height) / h; r.Y1 = 1 - (bb.Top - r.Y1 * bb.Height) / h;
+                    }
+                    if (reci.Count > 0) return reci;
+                }
+                var sve = ocr.Prepoznaj(PdfCrtac.StranaUPng(pdf, brojStrane), out nap, 300);
+                nap = "OCR iscrtane strane" + (nap.Length > 0 ? ", " + nap : "");
+                return sve;
+            }
+            catch (Exception ex) { nap = "OCR slike obrasca nije uspeo (" + ex.Message + ")"; return new List<Rec>(); }
+        }
+
+        /// <summary>
+        /// Blokovi teksta (Word okviri): reči istog reda bez većeg razmaka (≤ 6 mm) čine segment; segmenti jedan ispod drugog
+        /// (razmak manji od visine reda, levi kraj do 4 mm ili preklapanje po širini) čine blok. Rubrika bloka se određuje po
+        /// većem delu teksta (CimSablon.Rasporedi), ne po početku reda.
+        /// </summary>
+        internal static void OznaciBlokove(List<Rec> reci, double sirinaPt, double visinaPt)
+        {
+            if (reci.Count == 0) return;
+            double mmX = 72 / 25.4 / sirinaPt;   // 1 mm u normalizovanim koordinatama (širina)
+            // 1) redovi: reči čiji se centri po visini razlikuju manje od 60 % visine reda (reč malo iznad reda ostaje u redu)
+            var redovi = new List<List<Rec>>();
+            foreach (var r in reci.OrderBy(x => x.Cy))
+            {
+                var red = redovi.LastOrDefault();
+                if (red != null && Math.Abs(red.Average(x => x.Cy) - r.Cy) < Math.Max(r.Visina, red.Max(x => x.Visina)) * 0.6) red.Add(r);
+                else redovi.Add(new List<Rec> { r });
+            }
+            // 2) segmenti: u redu, po širini, razmak do 6 mm
+            var segmenti = new List<List<Rec>>();
+            foreach (var red in redovi)
+            {
+                List<Rec> seg = null;
+                foreach (var r in red.OrderBy(x => x.X0))
+                {
+                    if (seg == null || r.X0 - seg.Max(x => x.X1) > 6 * mmX) segmenti.Add(seg = new List<Rec>());
+                    seg.Add(r);
+                }
+            }
+            // 2) blokovi: segmenti jedan ispod drugog, poravnati levo ili preklopljeni po širini (union-find)
+            var roditelj = Enumerable.Range(0, segmenti.Count).ToArray();
+            int Koren(int i) { while (roditelj[i] != i) i = roditelj[i] = roditelj[roditelj[i]]; return i; }
+            var okv = segmenti.Select(sg => (x0: sg.Min(x => x.X0), x1: sg.Max(x => x.X1), y0: sg.Min(x => x.Y0), y1: sg.Max(x => x.Y1), v: sg.Max(x => x.Visina))).ToList();
+            for (int i = 0; i < segmenti.Count; i++)
+                for (int j = 0; j < segmenti.Count; j++)
+                {
+                    if (i == j || okv[j].y0 < okv[i].y0) continue;
+                    var razmak = okv[j].y0 - okv[i].y1;
+                    if (razmak < -0.5 * okv[i].v || razmak > Math.Max(okv[i].v, okv[j].v) * 1.0) continue;
+                    var preklop = Math.Min(okv[i].x1, okv[j].x1) - Math.Max(okv[i].x0, okv[j].x0);
+                    var uza = Math.Min(okv[i].x1 - okv[i].x0, okv[j].x1 - okv[j].x0);
+                    if (Math.Abs(okv[i].x0 - okv[j].x0) <= 4 * mmX || preklop > 0.5 * uza) roditelj[Koren(j)] = Koren(i);
+                }
+            var brojevi = new Dictionary<int, int>();
+            for (int i = 0; i < segmenti.Count; i++)
+            {
+                var k = Koren(i);
+                if (!brojevi.TryGetValue(k, out var b)) brojevi[k] = b = brojevi.Count + 1;
+                foreach (var r in segmenti[i]) r.Blok = b;
+            }
         }
 
         /// <summary>Slika koja pokriva bar polovinu strane (sken); null ako je nema.</summary>

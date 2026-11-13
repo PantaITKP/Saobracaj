@@ -1,5 +1,35 @@
 ﻿# CimProvera – izmene programa
 
+## 2026-11-13 – tovarni list CIM/CUV kao Word dokument (CUV_exGK33)
+
+Pravila ostaju v2.7.1. Težine pravila nisu menjane. Na server se ne postavlja dok se ne potvrdi da Syncfusion licenca dozvoljava upotrebu na serveru.
+
+- **Word → PDF preko Syncfusion DocIO 18.4.0.34** (`Syncfusion.DocToPDFConverter.WinForms`, isti major kao aplikacija Saobracaj)
+  - Formati: .docx, .docm, .doc, .dot, .dotx, .rtf.
+  - Pretvaranje radi u memoriji: bez Office-a, bez prozora i bez privremenih fajlova. Ograničenje je 60 s po fajlu.
+  - .odt DocIO ne čita, pa ide na ručnu proveru sa razlogom.
+  - Word tabela obrasca (.docx) se i dalje čita direktno iz ćelija. Pretvaranje se koristi tek kada tabele nema.
+- **Licencni ključ**
+  - Čita se samo iz `Syncfusion.dpapi`: DPAPI pod nalogom agenta, upisuje ga `Instaliraj.ps1`, korak 3b. Ključ nije u kodu, config-u, logu ni git-u (`*.dpapi` je u `.gitignore`).
+  - Bez ključa se ništa ne pretvara. Word prilog ide na ručnu proveru, greška se upisuje u log i šalje se jedno interno obaveštenje.
+  - `--test-veze` prikazuje stanje ključa.
+- **PDF dobijen iz Word-a**
+  - Podaci se čitaju samo iz tekstualnog sloja, sa koordinatama.
+  - Natpisi obrasca (slika iz zaglavlja) se prepoznaju OCR-om uvećane slike i služe samo kao sidra; nikad nisu podatak.
+  - Šablon CIT 2006 se poravnava po linijama, brojevima rubrika i natpisima sa slike strane.
+- **Dodela po bloku**
+  - Reči jednog Word okvira čine blok. Ceo blok ide u rubriku u kojoj je veći deo njegovog teksta, npr. tekst r13 koji prelazi u r14 ostaje u r13.
+  - Tekst okvira koji se na strani ne vidi (pokriven drugim okvirom) se ne čita.
+- **Polja za čekiranje (r20, r22, r23, r30, r52, r58b):** označen je kvadratić u kome je centar vidljivog „X“ iz tekstualnog sloja.
+- **r62 na Word strani:** delovi se čitaju po kućicama šablona (zemlja, stanica, preduzeće, broj).
+- **Na Word strani nema „nečitljivih“ rubrika** (isto kao kod Excel tabele).
+- **Prilozi:** Word prilog koji se ne pretvori, ili čije ime liči na tovarni list a obrazac nije prepoznat, ide na ručnu proveru. Pošiljaocu se nikad ne javlja „nema tovarnog lista“.
+- **Log za svaki Word prilog:** da je pretvoren, trajanje, broj strana i vrsta svake strane.
+- **PDF primer:** pravi se i za Word tovarni list, preko PDF-a dobijenog pretvaranjem.
+- **PDF sa poljima obrasca (AcroForm, npr. CIM_draft_GK30):** vrednosti se čitaju iz polja preko PdfPig-a (postojalo je i ranije; sada je pokriveno testom).
+- **Ispravka (svi formati):** „KP(3212)“ u r57 više ne daje lažno upozorenje „naziv ')'“ uz šifru 3212.
+- **Testovi:** novi `WordTests` (13). Bez ključa se 9 testova koji traže pretvaranje preskače, uz razlog.
+
 ## 2026-11-13 – HITNO: obrada sanduča stajala od 08:49
 
 - **Uzrok:** `TekstUtil.BezDijakritika` je normalizovao tekst znak po znak.

@@ -305,8 +305,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             }
             cim.Zaglavlje = string.Join(" ", celije.Where(c => c.Red <= 3).Select(c => c.Tekst));
             // čitanje iz ćelija je pouzdano: nema nečitljivih rubrika zbog OCR-a
-            foreach (var p in typeof(CimList).GetProperties().Where(x => typeof(Rubrika).IsAssignableFrom(x.PropertyType)))
-                if (p.GetValue(cim) is Rubrika r && r.Status == StatusRubrike.Necitljivo) { r.Status = string.IsNullOrWhiteSpace(r.Tekst) ? StatusRubrike.Prazno : StatusRubrike.Popunjeno; r.Pouzdanost = 1; }
+            CimParser.BezNecitljivih(cim);
             return cim;
         }
     }

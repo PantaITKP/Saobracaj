@@ -37,6 +37,8 @@ namespace Saobracaj.Agent.CimProvera
         public int Pokreni()
         {
             var stanje = Stanje.Ucitaj(cfg.StanjeFolder);
+            // ključ je ponovo ispravan: sledeći kvar ključa se opet javlja
+            if (WordUPdf.KljucUcitan) stanje.Upozorenja.Remove("syncfusion-kljuc");
             File.WriteAllText(Path.Combine(cfg.StanjeFolder, "heartbeat.txt"), DateTimeOffset.Now.ToString("o"));
             PravilaSkup pravila;
             try { pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log); }
@@ -263,6 +265,13 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     log.Greska("  UID " + uid.Id + ": obrada nije uspela", ex);
                     ishod = new Ishod { PrivremenaGreska = true, NisuProcitani = { ex.Message } };
+                }
+                if (WordUPdf.NedostajaoKljuc && !WordUPdf.KljucUcitan)
+                {
+                    // jedno interno obaveštenje (dok se ključ ne podesi); Word prilog je već na ručnoj proveri
+                    Upozori(stanje, "syncfusion-kljuc", "Word prilog u mailu „" + m.Subject + "“ od " + od + " nije pretvoren u PDF: Syncfusion licencni ključ nije učitan ("
+                        + WordUPdf.StanjeKljuca + "). Prilog ide na ručnu proveru. Pokrenite Instaliraj.ps1 i unesite Syncfusion ključ.", 24 * 365);
+                    WordUPdf.NedostajaoKljuc = false;
                 }
                 foreach (var x in ishod.Preskoceno) log.Info("    preskočen prilog: " + x);
                 // Režim Test: poređenje sa prvim izveštajem za iste fajlove (prilozi i fajlovi iz ZIP-a).

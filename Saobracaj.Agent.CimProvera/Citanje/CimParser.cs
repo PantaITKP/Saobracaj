@@ -220,6 +220,21 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return spojene;
         }
 
+        /// <summary>
+        /// Podaci iz tekstualnog sloja (Excel/Word tabela, Word okviri pretvoreni u PDF) su pouzdani: nema „nečitljivih“ rubrika.
+        /// Rubrika sa tekstom je popunjena, bez teksta prazna (mastilo iz susedne rubrike nije nečitljiv upis).
+        /// </summary>
+        internal static void BezNecitljivih(CimList cim)
+        {
+            foreach (var p in typeof(CimList).GetProperties().Where(x => typeof(Rubrika).IsAssignableFrom(x.PropertyType)))
+                if (p.GetValue(cim) is Rubrika r && r.Status == StatusRubrike.Necitljivo)
+                {
+                    r.Status = string.IsNullOrWhiteSpace(r.Tekst) ? StatusRubrike.Prazno : StatusRubrike.Popunjeno;
+                    r.Pouzdanost = 1;
+                }
+            if (cim.R16.KuciceStanje == StatusRubrike.Necitljivo) cim.R16.KuciceStanje = StatusRubrike.Prazno;
+        }
+
         public static CimList Napravi(CimSablon.Rezultat r, Strana strana, Pragovi prag = null)
         {
             prag = prag ?? new Pragovi();
@@ -256,6 +271,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             c.R57 = Prevoznici(r.Rubrika("57"));
             c.R58a = Ugovorni(r.Rubrika("58a"));
             c.R62 = Identifikacija(r.Rubrika("62"));
+            if (r.IzWorda) R62PoKucicama(c.R62, r);
             c.R99 = Pop(new TekstRubrika(), r.Rubrika("99"));
 
             // Polja za označavanje: gustina mastila u kvadratiću iz šablona (oznaceno / prazno / nesigurno), ne OCR.
@@ -623,6 +639,26 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             r.Adresa = string.Join(", ", linije.Skip(1).Where(l => !l.Equals(r.Naziv, StringComparison.OrdinalIgnoreCase)));
             r.Potpis = true; // potpis (grafika) lokalno ne može pouzdano da se utvrdi
             return r;
+        }
+
+        /// <summary>
+        /// Word → PDF: delovi r62 po kućicama šablona (62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja) – svaka
+        /// reč ide u najbližu kućicu, pa prazna kućica ostaje prazna (npr. „Exp. №“ bez broja, a „5063“ je preduzeće, ne broj).
+        /// </summary>
+        private static void R62PoKucicama(Identifikacija id, CimSablon.Rezultat r)
+        {
+            var kucice = new[] { "62.1", "62.2", "62.3", "62.4" }.Select(k => (k, o: r.KucicaNaStrani(k))).Where(x => x.o != null).ToList();
+            var reci = r.Rubrika("62").Where(w => Regex.IsMatch(w.T, @"\d")).ToList();
+            if (kucice.Count < 4 || reci.Count == 0) return;
+            var delovi = kucice.ToDictionary(x => x.k, x => "");
+            foreach (var w in reci.OrderBy(w => w.X0))
+            {
+                var naj = kucice.OrderBy(x => Math.Abs(w.Cx - (x.o[0] + x.o[2]) / 2) / 2 + Math.Abs(w.Cy - (x.o[1] + x.o[3]) / 2)).First();
+                delovi[naj.k] += (delovi[naj.k].Length > 0 ? " " : "") + w.T.Trim();
+            }
+            string D(string k) => Regex.Replace(delovi[k], @"\s+", " ").Trim();
+            if (delovi.Values.Count(v => v.Length > 0) < 2) return;
+            id.Zemlja = Regex.Replace(D("62.1"), @"\s", ""); id.Stanica = Regex.Replace(D("62.2"), @"\s", ""); id.Preduzece = Regex.Replace(D("62.3"), @"\s", ""); id.Broj = D("62.4");
         }
 
         internal static Identifikacija Identifikacija(List<Rec> reci)

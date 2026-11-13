@@ -190,8 +190,25 @@ Postavi 'StanjeFolder' $Stanje
 $xml.Save($Cfg)
 Ok 'sifrovana lozinka i StanjeFolder upisani u Saobracaj.Agent.CimProvera.exe.config'
 
+# Syncfusion licencni kljuc (Word -> PDF): DPAPI pod servisnim nalogom, poseban fajl Syncfusion.dpapi (ne config, ne log).
+# Servisni nalog je gore dobio novu lozinku, pa stari Syncfusion.dpapi vise ne moze da se desifruje: kljuc se unosi svaki put.
+Korak '3b. Syncfusion licencni kljuc (Word prilozi -> PDF)'
+$SfFajl = Join-Path $Folder 'Syncfusion.dpapi'
+$sf = Obican (Read-Host '    Syncfusion kljuc (Enter = bez kljuca; Word prilozi tada idu na rucnu proveru)' -AsSecureString)
+if ([string]::IsNullOrWhiteSpace($sf)) {
+    Remove-Item $SfFajl -Force -ErrorAction SilentlyContinue
+    Write-Host '    PAZNJA  kljuc nije unet: Word prilozi se ne pretvaraju u PDF (rucna provera).' -ForegroundColor Yellow
+} else {
+    if ($sf.Contains('"')) { Stop-Greska 'Kljuc sadrzi znak navodnika (") koji skripta ne podrzava.' }
+    $sifra = Zastiti $sf.Trim(); $sf = $null
+    [IO.File]::WriteAllText($SfFajl, $sifra, (New-Object Text.UTF8Encoding($false)))
+    $sifra = $null
+    if ((Alat 'icacls' @($SfFajl, '/inheritance:r', '/grant:r', '*S-1-5-32-544:F', "${Nalog}:R", '/Q')) -ne 0) { Write-Host '    PAZNJA  prava na Syncfusion.dpapi nisu suzena (icacls).' -ForegroundColor Yellow }
+    Ok 'sifrovan kljuc upisan u Syncfusion.dpapi (citaju ga samo administratori i servisni nalog)'
+}
+
 # ------------------------------------------------------------------ 4. test veza i prvo pokretanje
-Korak '4. Test (pravila, sablon, OCR, IMAP, SMTP) pod servisnim nalogom'
+Korak '4. Test (pravila, sablon, OCR, Syncfusion kljuc, IMAP, SMTP) pod servisnim nalogom'
 $out = Join-Path $Folder 'test_veze.txt'
 $kod = KaoServis @('--test-veze') $out
 Get-Content $out -Encoding UTF8 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    $_" }

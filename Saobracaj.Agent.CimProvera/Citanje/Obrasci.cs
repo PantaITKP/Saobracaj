@@ -206,7 +206,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
         /// <summary>Odštampani brojevi rubrika: 1–2 cifre, sitan font (PDF) ili OCR reč; ne vrednosti polja obrasca.</summary>
         private static List<Rec> BrojeviRubrika(List<Rec> reci) =>
-            reci.Where(w => w.Font != "AcroForm" && System.Text.RegularExpressions.Regex.IsMatch(w.T, @"^\d{1,2}$") && (w.Velicina == 0 || w.Velicina < 6.5)).ToList();
+            reci.Where(w => !w.JePodatak && System.Text.RegularExpressions.Regex.IsMatch(w.T, @"^\d{1,2}$") && (w.Velicina == 0 || w.Velicina < 6.5)).ToList();
 
         private static (double ax, double bx, double ay, double by)? Hipoteza(List<ParSidra> t, int max = 120, int minSaglasnih = 3)
         {
