@@ -15,6 +15,10 @@ namespace Saobracaj.Agent.CimProvera
         public RezultatProvere Provera;
         public List<string> Preskoceno = new List<string>();
         public List<string> NisuProcitani = new List<string>();
+        /// <summary>Prilozi koji nisu mogli da se pročitaju ili klasifikuju – nisu dokaz da tovarnog lista nema.</summary>
+        public List<string> Neprepoznati = new List<string>();
+        /// <summary>Svaki prilog i njegova klasifikacija („ime – tovarni list CIM“).</summary>
+        public List<string> OpisPriloga = new List<string>();
         public bool PrivremenaGreska;
         public bool Engleski;
     }
@@ -45,16 +49,26 @@ namespace Saobracaj.Agent.CimProvera
                 fajlovi.AddRange(Raspakivanje.Raspakuj(ime, b, ishod.Preskoceno));
             foreach (var x in ishod.Preskoceno) log?.Info("  prilog " + x + " – preskočen");
 
+            // Prilozi koji se ne čitaju: Word 97–2003, OpenOffice, RTF… nisu dokaz da tovarnog lista nema.
+            foreach (var x in ishod.Preskoceno)
+                if (Regex.IsMatch(x, @"\.(doc|odt|ods|rtf|pages|xps|tif|tiff|bmp)\b", RegexOptions.IgnoreCase)) ishod.Neprepoznati.Add(Regex.Replace(x, @"\s*\(.*$", ""));
+            var lc = citac as LokalniCitac;
+
             // Isti fajl dvaput u mailu (npr. i u ZIP-u i kao prilog) čita se jednom.
             foreach (var f in fajlovi.GroupBy(x => x.Hes).Select(g => g.First()))
             {
+                var pre = dokumenti.Count;
                 try
                 {
-                    if (f.Vrsta == VrstaPriloga.Excel)
+                    if (f.Vrsta == VrstaPriloga.Excel || f.Vrsta == VrstaPriloga.Word)
                     {
-                        var ex = ExcelCitac.Procitaj(f, pravila.Kp);
-                        dokumenti.AddRange(ex);
-                        log?.Info("  prilog " + f.Naziv + " (Excel): " + VrstePoStranama(ex));
+                        // Tovarni list CIM/CUV kao Excel/Word obrazac: čita se iz ćelija (bez OCR-a); inače Excel = spisak kola / tabela MRN.
+                        var word = f.Vrsta == VrstaPriloga.Word;
+                        var tovarni = lc?.TovarniIzTabele(f, word ? TabelarniCim.IzWorda(f.Sadrzaj) : TabelarniCim.IzExcela(f.Sadrzaj), word ? "word" : "excel");
+                        if (tovarni != null) dokumenti.Add(tovarni);
+                        else if (!word) dokumenti.AddRange(ExcelCitac.Procitaj(f, pravila.Kp));
+                        else dokumenti.Add(new Dokument { Tip = TipDokumenta.Ostalo, Strane = { 1 }, Fajl = f.Naziv, Izvor = "word", Opis = "Word dokument bez obrasca tovarnog lista" });
+                        log?.Info("  prilog " + f.Naziv + " (" + f.Vrsta + "): " + VrstePoStranama(dokumenti.Skip(pre)) + (tovarni != null ? " – " + tovarni.Opis : ""));
                     }
                     else
                     {
@@ -77,7 +91,13 @@ namespace Saobracaj.Agent.CimProvera
                     ishod.NisuProcitani.Add(f.Naziv + ": " + ex.Message);
                     log?.Upozorenje("  " + f + ": nije pročitan – " + ex.Message + (ex is TrajnaGreskaCitanja ? "" : Environment.NewLine + ex.StackTrace));
                 }
+                var novi = dokumenti.Skip(pre).ToList();
+                if (novi.Count == 0 && ishod.NisuProcitani.Any(x => x.StartsWith(f.Naziv + ":"))) ishod.Neprepoznati.Add(f.Naziv);
+                ishod.OpisPriloga.Add(System.IO.Path.GetFileName(f.Naziv.Split('/').Last()) + " – " + OpisPriloga(f, novi, ishod.Neprepoznati.Contains(f.Naziv)));
             }
+            foreach (var n in ishod.Neprepoznati.Where(n => !fajlovi.Any(f => f.Naziv == n))) ishod.OpisPriloga.Add(System.IO.Path.GetFileName(n) + " – nije prepoznat");
+
+            IstiListDvaput(dokumenti, log);
 
             var u = new UlazProvere
             {
@@ -85,7 +105,78 @@ namespace Saobracaj.Agent.CimProvera
                 ReferentniDatum = referentniDatum, Engleski = engleski, RezimKp = rezimKp, Prag = prag,
             };
             ishod.Provera = new Motor(pravila, log).Proveri(u);
+            ishod.Provera.OpisPriloga = ishod.OpisPriloga;
             return ishod;
+        }
+
+        /// <summary>
+        /// Isti tovarni list i kao PDF i kao Excel/Word (ista identifikacija r62 ili isto mesto i datum r29): proverava se jednom.
+        /// Prednost ima PDF ako je potpisan ili pečatiran (sken, potpis u r1, pročitana r58a), inače tabela (pouzdano čitanje).
+        /// </summary>
+        internal static void IstiListDvaput(List<Dokument> dokumenti, Log log)
+        {
+            string Kljuc(CimList c) => Regex.Replace((c.R62.Zemlja ?? "") + (c.R62.Stanica ?? "") + (c.R62.Preduzece ?? "") + (c.R62.Broj ?? ""), @"\W", "").ToUpperInvariant() is var k && k.Length >= 8
+                ? k : Regex.Replace((c.R29.Mesto ?? "") + (c.R29.Datum ?? ""), @"\W", "").ToUpperInvariant();
+            var tabele = dokumenti.Where(d => TipDokumenta.JeTovarniList(d.Tip) && (d.Izvor == "excel" || d.Izvor == "word") && d.Cim.Count == 1 && string.IsNullOrEmpty(d.Cim[0].NeprepoznatObrazac)).ToList();
+            foreach (var t in tabele)
+            {
+                var kt = Kljuc(t.Cim[0]);
+                if (kt.Length < 6) continue;
+                var pdf = dokumenti.FirstOrDefault(d => d != t && TipDokumenta.JeTovarniList(d.Tip) && d.Izvor != "excel" && d.Izvor != "word" && d.Cim.Any(c => string.IsNullOrEmpty(c.NeprepoznatObrazac) && Kljuc(c) == kt));
+                if (pdf == null) continue;
+                var c0 = pdf.Cim.First(c => Kljuc(c) == kt);
+                var potpisan = pdf.Izvor == "ocr" || c0.R1.Potpis || c0.R58a.Popunjena;
+                var izbacen = potpisan ? t : pdf;
+                var ostaje = potpisan ? pdf : t;
+                ostaje.Opis += "; isti list je i u " + System.IO.Path.GetFileName(izbacen.Fajl) + " – proveren je " + System.IO.Path.GetFileName(ostaje.Fajl) + (potpisan ? " (potpisan/pečatiran PDF)" : " (čitanje iz ćelija)");
+                if (izbacen.Cim.Count <= 1) { izbacen.Tip = TipDokumenta.Ostalo; izbacen.Opis = "isti tovarni list kao " + System.IO.Path.GetFileName(ostaje.Fajl) + " (proverava se jednom)"; izbacen.Cim.Clear(); }
+                else izbacen.Cim.Remove(izbacen.Cim.First(c => Kljuc(c) == kt));
+                log?.Info("  isti tovarni list u " + izbacen.Fajl + " i " + ostaje.Fajl + " – proverava se " + ostaje.Fajl);
+            }
+        }
+
+        /// <summary>Kako je prilog klasifikovan, za izveštaj: „tovarni list CIM“, „spisak kola“, „izveštaj o sastavu voza (ne proverava se)“…</summary>
+        internal static string OpisPriloga(Prilog f, List<Dokument> docs, bool neprepoznat)
+        {
+            if (neprepoznat || docs.Count == 0) return "nije prepoznat";
+            var ime = (f.Naziv ?? "").ToLowerInvariant();
+            string Naziv(Dokument d)
+            {
+                switch (d.Tip)
+                {
+                    case TipDokumenta.Cim: case TipDokumenta.Cuv:
+                        if (d.Cim.Count == 0) return d.Opis;
+                        var c = d.Cim[0];
+                        if (!string.IsNullOrEmpty(c.NeprepoznatObrazac)) return "tovarni list " + (d.Tip == TipDokumenta.Cuv ? "CUV" : "CIM") + " (obrazac nije automatski prepoznat – ručna provera)";
+                        return "tovarni list " + (d.Tip == TipDokumenta.Cuv ? "CUV" : "CIM") + (d.Cim.Count > 1 ? " (" + d.Cim.Count + " lista)" : "") + (d.Izvor == "excel" ? " (Excel)" : d.Izvor == "word" ? " (Word)" : "");
+                    case TipDokumenta.SpisakKola:
+                        return Regex.IsMatch(ime, @"train ?list|load ?list|ladeliste") || d.Spisak.Any(s => s.Kola.Count > 0 && s.Kola.All(k => k.Uti.Count > 0) && Regex.IsMatch(ime, "train|load"))
+                            ? "spisak tovarnih jedinica" : "spisak kola";
+                    case TipDokumenta.SastavVoza: return "izveštaj o sastavu voza (ne proverava se)";
+                    case TipDokumenta.DodatniList: return "dodatni list";
+                    case TipDokumenta.IzvoznaDeklaracija: return "izvozna deklaracija";
+                    case TipDokumenta.TranzitnaDeklaracija: return "tranzitna deklaracija";
+                    case TipDokumenta.DrugaCarinska: return "carinski dokument";
+                    case TipDokumenta.Eur1: return "EUR.1";
+                    case TipDokumenta.UverenjeOPoreklu: return "uverenje o poreklu";
+                    case TipDokumenta.Sertifikat: return "sertifikat";
+                    case TipDokumenta.Faktura: return "faktura";
+                    case TipDokumenta.TabelaMrn: return "tabela MRN";
+                    case TipDokumenta.DozvolaOtpad: return "dozvola za otpad";
+                    case TipDokumenta.AnnexVii: return "dokument o kretanju otpada (Annex VII)";
+                    case TipDokumenta.IzvestajRadioloski: return "izveštaj o radiološkoj kontroli";
+                    case TipDokumenta.Poledjina: return "poleđina lista";
+                    case TipDokumenta.Najava: return "najava";
+                    case TipDokumenta.Interni: return "interni obrazac KP";
+                    case TipDokumenta.Ugovor: return "ugovor";
+                    case TipDokumenta.Ponuda: return "ponuda";
+                    default: return string.IsNullOrEmpty(d.Opis) || !d.Opis.StartsWith("isti tovarni list") ? "ostalo (ne proverava se)" : d.Opis;
+                }
+            }
+            var nazivi = docs.Select(Naziv).Distinct().ToList();
+            // „ostalo“ uz prepoznate dokumente iz istog PDF-a se ne navodi posebno
+            if (nazivi.Count > 1) nazivi.Remove("ostalo (ne proverava se)");
+            return string.Join(", ", nazivi);
         }
 
         /// <summary>Vrsta dokumenta po stranama za log, npr. "str.1 izvozna_deklaracija, str.5-6 tranzitna_deklaracija, str.7 cim, str.8 spisak_kola".</summary>

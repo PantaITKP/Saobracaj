@@ -86,7 +86,7 @@ namespace Saobracaj.Agent.CimProvera
             {
                 if (r.BrojGresaka + r.BrojUpozorenja == 0) { rez.Razlog = "bez_nalaza"; return rez; }
                 var listovi = r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac) && l.Cim.Okviri.Count > 0).ToList();
-                if (listovi.Count == 0) { rez.Razlog = "neprepoznat"; return rez; }
+                if (listovi.Count == 0) { rez.Razlog = r.Listovi.Any(l => l.Cim?.Sablon == "TABELA" && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac)) ? "tabela" : "neprepoznat"; return rez; }
 
                 var ispravke = Izvestaj.RedoviIspravki(r, p, en);
                 var napomene = Izvestaj.RedoviNapomena(r, p, en);

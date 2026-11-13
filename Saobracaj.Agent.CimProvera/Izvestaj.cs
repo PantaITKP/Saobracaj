@@ -88,7 +88,8 @@ namespace Saobracaj.Agent.CimProvera
         {
             var i = c.R62;
             var pouzdan = i.Status == StatusRubrike.Popunjeno && i.Pouzdanost >= 0.6 && Regex.IsMatch(i.Zemlja ?? "", @"^\d{2}$") && Regex.IsMatch(Regex.Replace(i.Stanica ?? "", @"\D", ""), @"^\d{5,6}$")
-                          && Regex.IsMatch(i.Preduzece ?? "", @"^\d{4}$") && Regex.IsMatch(Regex.Replace(i.Broj ?? "", @"[\s\-]", ""), @"^\d{5,6}$");
+                          && Regex.IsMatch(i.Preduzece ?? "", @"^\d{4}$") && (Regex.IsMatch(Regex.Replace(i.Broj ?? "", @"[\s\-]", ""), @"^\d{5,6}$")
+                              || (c.Sablon == "TABELA" && Regex.IsMatch(i.Broj ?? "", @"^[A-Za-z0-9][A-Za-z0-9\-/]{3,15}$")));   // tabela: broj otpravljanja može biti alfanumerički
             if (!pouzdan) return null;
             string SaKontrolnom(string x) { var c6 = Regex.Replace(x ?? "", @"\D", ""); return c6.Length == 6 ? c6.Substring(0, 5) + "-" + c6.Substring(5) : x; }
             return string.Join(" ", i.Zemlja, SaKontrolnom(i.Stanica), i.Preduzece, SaKontrolnom(i.Broj));
@@ -365,6 +366,22 @@ namespace Saobracaj.Agent.CimProvera
                       : "Proverili smo tovarn" + (vise ? "e listove " : "i list ") + obr + " i nismo utvrdili nedostatke.";
         }
 
+        private static readonly (string sr, string en)[] PriloziEn =
+        {
+            ("tovarni list", "consignment note"), ("obrazac nije automatski prepoznat – ručna provera", "form not recognised automatically – manual check"),
+            ("spisak tovarnih jedinica", "load list"), ("spisak kola", "wagon list"), ("izveštaj o sastavu voza (ne proverava se)", "train composition report (not checked)"),
+            ("dodatni list", "additional sheet"), ("izvozna deklaracija", "export declaration"), ("tranzitna deklaracija", "transit declaration"),
+            ("carinski dokument", "customs document"), ("uverenje o poreklu", "certificate of origin"), ("sertifikat", "certificate"), ("faktura", "invoice"),
+            ("dozvola za otpad", "waste permit"), ("poleđina lista", "back of the note"), ("ostalo (ne proverava se)", "other (not checked)"), ("nije prepoznat", "not recognised"),
+        };
+
+        /// <summary>„Prilozi: CIM … .xlsx – tovarni list CIM (Excel); … .xls – spisak kola; VTK….pdf – izveštaj o sastavu voza (ne proverava se).“</summary>
+        internal static string PriloziTekst(RezultatProvere r, bool en)
+        {
+            var stavke = r.OpisPriloga.Select(x => en ? PriloziEn.Aggregate(x, (s, p) => s.Replace(p.sr, p.en)) : x);
+            return (en ? "Attachments: " : "Prilozi: ") + string.Join("; ", stavke) + ".";
+        }
+
         internal static string PrimerIstaknuto(bool en) => en ? "sample of the correctly completed consignment note" : "primer ispravno popunjenog tovarnog lista";
 
         /// <summary>
@@ -429,6 +446,7 @@ namespace Saobracaj.Agent.CimProvera
             Tabela(NaslovNapomena(en), RedoviNapomena(r, p, en));
 
             foreach (var t in Informacije(r)) sb.AppendLine(t);
+            if (r.OpisPriloga.Count > 0) sb.AppendLine(PriloziTekst(r, en)).AppendLine();
             if (Informacije(r).Count > 0) sb.AppendLine();
             if (nisuProcitani != null && nisuProcitani.Count > 0) sb.AppendLine(NisuProcitaniTekst(nisuProcitani, en)).AppendLine();
             foreach (var t in RucnaProvera(r, en)) sb.AppendLine(t).AppendLine();
@@ -481,6 +499,7 @@ namespace Saobracaj.Agent.CimProvera
 
             var info = Informacije(r);
             if (info.Count > 0) sb.Append("<p style=\"margin-top:14px\">" + string.Join("<br>", info.Select(H)) + "</p>");
+            if (r.OpisPriloga.Count > 0) sb.Append("<p>" + H(PriloziTekst(r, en)) + "</p>");
             if (nisuProcitani != null && nisuProcitani.Count > 0) sb.Append("<p>" + H(NisuProcitaniTekst(nisuProcitani, en)) + "</p>");
             foreach (var t in RucnaProvera(r, en)) sb.Append("<p>" + H(t) + "</p>");
 

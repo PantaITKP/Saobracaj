@@ -93,6 +93,27 @@ namespace Saobracaj.Agent.CimProvera
                                 Console.WriteLine("  " + l.Oznaka + " | " + n.Tezina + " | " + n.Pravilo + " | r" + n.Rubrika + " | " + n.Vrednost + " | " + n.Detalj + " | takođe: " + string.Join(",", n.Takodje.Select(t => t.Pravilo)));
                     return 0;
                 }
+                if (a.Count > 1 && a[0] == "tabela")
+                {
+                    // tabela <fajl.xlsx|.xls|.docx>: dijagnostika tovarnog lista iz tabele – prepoznavanje, natpisi, rubrike
+                    var pr = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, null);
+                    var b = File.ReadAllBytes(a[1]);
+                    var word = a[1].EndsWith(".docx", StringComparison.OrdinalIgnoreCase);
+                    var listovi = word ? Prilozi.TabelarniCim.IzWorda(b) : Prilozi.TabelarniCim.IzExcela(b);
+                    using (var c = new LokalniCitac(cfg, log, pr.Kp))
+                        foreach (var cel in listovi.Where(x => x.Count > 0))
+                        {
+                            Console.WriteLine("=== list: " + cel.Count + " ćelija; tovarni list: " + Prilozi.TabelarniCim.JeTovarniList(cel, out var razlog) + " (" + razlog + ")");
+                            if (a.Contains("--celije")) { foreach (var red in cel.GroupBy(x => x.Red).OrderBy(g => g.Key).Take(60)) Console.WriteLine("  " + (red.Key + 1) + ": " + string.Join(" | ", red.OrderBy(x => x.Kol).Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " ")))); continue; }
+                            var cim = Prilozi.TabelarniCim.Procitaj(cel, c.JeNatpisCelije, c.Pragovi, out var po);
+                            foreach (var kv in po.OrderBy(k => Regex.Match(k.Key, @"\d+").Success ? int.Parse(Regex.Match(k.Key, @"\d+").Value) : 0))
+                                Console.WriteLine("  r" + kv.Key.PadRight(6) + string.Join(" | ", kv.Value.Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " "))));
+                            Console.WriteLine("  natpisi: " + string.Join(" | ", cel.Where(x => c.JeNatpisCelije(x.Tekst)).Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " "))));
+                            Console.WriteLine("  → obrazac " + cim.Obrazac + ", r62 " + cim.R62.Zemlja + "/" + cim.R62.Stanica + "/" + cim.R62.Preduzece + "/" + cim.R62.Broj + ", r16 " + cim.R16.Mesto + " " + cim.R16.Datum
+                                + ", r22 " + cim.R22.Tekst + ", r24 " + cim.R24.Tekst + ", r25 " + cim.R25.Tekst + ", r29 " + cim.R29.Mesto + " " + cim.R29.Datum + ", r30 CIM=" + cim.R30.Cim + " CUV=" + cim.R30.Cuv);
+                        }
+                    return 0;
+                }
                 if (a.Count > 1 && a[0] == "pdf-polja")
                 {
                     // pdf-polja <fajl>: dijagnostika polja PDF obrasca (AcroForm) i anotacija po stranama

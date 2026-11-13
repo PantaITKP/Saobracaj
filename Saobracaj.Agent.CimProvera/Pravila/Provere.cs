@@ -24,7 +24,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 ["R7"] = R7, ["R9"] = R9, ["R10"] = R10,
                 ["R12"] = R12, ["R14"] = R14, ["R16"] = R16, ["R18-SPISAK"] = R18Spisak, ["R20"] = R20,
                 ["X30"] = X30,
-                ["R20-INCO"] = R20Inco, ["R20-INCO-ZASTARELO"] = R20IncoZastarelo, ["R21-MRN99"] = R21Mrn99, ["R20-RUTA"] = R20Ruta, ["R21"] = R21, ["R22"] = X5, ["R23"] = R23,
+                ["R20-INCO"] = R20Inco, ["R20-INCO-ZASTARELO"] = R20IncoZastarelo, ["R21-MRN99"] = R21Mrn99, ["R20-RUTA"] = R20Ruta, ["R21"] = R21, ["R22"] = R22, ["R23"] = R23,
                 ["R24"] = R24, ["R24-NHM6"] = R24Nhm6, ["R25-MASA"] = R25Masa,
                 ["R26"] = k => Iznos(k, k.C.R26, "26"), ["R27"] = k => Iznos(k, k.C.R27, "27"), ["R28"] = k => Iznos(k, k.C.R28, "28"),
                 ["R29"] = R29, ["R30"] = R30, ["R58A"] = R58A, ["R62"] = R62, ["R49"] = R49, ["R50"] = R50,
@@ -884,6 +884,12 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private static IEnumerable<Pogodak> X5(Kontekst k)
         {
             if (k.C.R22.Popunjena && !R7Stavke(k, "11").Any(s => !Prazno(s.Tekst))) yield return P("7", "r7-11");
+        }
+
+        /// <summary>R22 (upozorenje, v2.7): označena naročita pošiljka – poseban red za r22 (šifra 7.11 je X5, rubrika 7).</summary>
+        private static IEnumerable<Pogodak> R22(Kontekst k)
+        {
+            if (k.C.R22.Popunjena) yield return P("22", "r22");
         }
 
         private static IEnumerable<Pogodak> X6(Kontekst k) => R21Ewc(k);

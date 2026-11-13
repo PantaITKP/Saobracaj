@@ -48,8 +48,21 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             var redovi = new List<string[]>();
             foreach (DataTable t in ds.Tables)
                 foreach (DataRow row in t.Rows)
-                    redovi.Add(row.ItemArray.Select(c => Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture)?.Trim() ?? "").ToArray());
+                    redovi.Add(SpojeniBrojKola(row.ItemArray.Select(c => Convert.ToString(c, System.Globalization.CultureInfo.InvariantCulture)?.Trim() ?? "").ToArray()));
             return AnalizaRedova(redovi, kp, p.Naziv, "excel", "Excel");
+        }
+
+        /// <summary>
+        /// Broj kola upisan u pet susednih ćelija (UIC: 2 | 2 | 4 | 3 | 1, npr. „37 | 84 | 4956 | 011 | 9“, HSL Wagenliste):
+        /// spojeni 12-cifreni broj se dodaje kao nova ćelija reda.
+        /// </summary>
+        internal static string[] SpojeniBrojKola(string[] red)
+        {
+            var dodati = new List<string>();
+            for (int i = 0; i + 4 < red.Length; i++)
+                if (Regex.IsMatch(red[i], @"^\d{2}$") && Regex.IsMatch(red[i + 1], @"^\d{2}$") && Regex.IsMatch(red[i + 2], @"^\d{4}$") && Regex.IsMatch(red[i + 3], @"^\d{3}$") && Regex.IsMatch(red[i + 4], @"^\d$"))
+                { dodati.Add(red[i] + red[i + 1] + red[i + 2] + red[i + 3] + red[i + 4]); i += 4; }
+            return dodati.Count == 0 ? red : red.Concat(dodati).ToArray();
         }
 
         private static readonly Regex MrnRx = new Regex(@"\b\d{2}[A-Z]{2}[A-Z0-9]{14}\b", RegexOptions.Compiled);

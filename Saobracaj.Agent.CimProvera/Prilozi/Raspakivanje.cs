@@ -8,7 +8,7 @@ using MimeKit;
 
 namespace Saobracaj.Agent.CimProvera.Prilozi
 {
-    internal enum VrstaPriloga { Pdf, Slika, Excel, Ostalo }
+    internal enum VrstaPriloga { Pdf, Slika, Excel, Word, Ostalo }
 
     /// <summary>Jedan fajl za proveru (posle raspakivanja ZIP/EML/MSG).</summary>
     internal sealed class Prilog
@@ -147,6 +147,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 case ".gif": media = "image/gif"; return VrstaPriloga.Slika;
                 case ".webp": media = "image/webp"; return VrstaPriloga.Slika;
                 case ".xls": case ".xlsx": case ".xlsm": return VrstaPriloga.Excel;
+                case ".docx": case ".docm": return VrstaPriloga.Word;
             }
             if (b.Length > 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) { media = "image/jpeg"; return VrstaPriloga.Slika; }
             if (b.Length > 8 && b[0] == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') { media = "image/png"; return VrstaPriloga.Slika; }

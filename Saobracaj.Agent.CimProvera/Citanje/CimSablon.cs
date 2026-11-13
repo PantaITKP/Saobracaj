@@ -277,6 +277,19 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return rez;
         }
 
+        /// <summary>
+        /// Tekst ćelije tabelarnog obrasca (Excel/Word) je natpis obrasca: sve reči od 3+ slova su u rečniku natpisa, ili tekst
+        /// ima samo kratke reči bez cifara (npr. „ja“, „E mail“).
+        /// </summary>
+        internal bool JeNatpisCelije(string tekst)
+        {
+            var t = tekst ?? "";
+            if (Regex.IsMatch(t.Trim(), @"^[xX×]$")) return false;
+            var duge = Regex.Matches(t, @"\p{L}{3,}").Cast<Match>().Select(m => Norm(m.Value)).Where(x => x.Length >= 3).ToList();
+            if (duge.Count == 0) return !Regex.IsMatch(t, @"\d") && Regex.IsMatch(t, @"\p{L}");
+            return duge.All(recnik.Contains);
+        }
+
         /// <summary>Odštampani naziv rubrike (za sidra): u fontu naziva i iz rečnika, ili (OCR) iz rečnika.</summary>
         internal bool JeNaziv(Rec r, HashSet<string> potpisi)
         {

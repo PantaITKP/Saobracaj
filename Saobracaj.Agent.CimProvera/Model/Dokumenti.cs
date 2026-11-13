@@ -315,6 +315,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         /// <summary>Dokument o kretanju otpada (Annex VII / Prilog VII).</summary>
         public const string AnnexVii = "annex_vii";
         public const string IzvestajRadioloski = "izvestaj_radioloski";
+        /// <summary>Izveštaj o sastavu voza / tehnički spisak voza (MÁV VTK, Zugvorbereitung, Meldezettel) – nije prateći dokument pošiljke, ne proverava se.</summary>
+        public const string SastavVoza = "sastav_voza";
         public const string Ostalo = "ostalo";
 
         public static readonly string[] Sve =

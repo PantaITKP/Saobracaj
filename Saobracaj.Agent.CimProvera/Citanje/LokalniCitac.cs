@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L16";
+        public const string VerzijaCitaca = "L17";
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L15";
 
@@ -234,6 +234,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var naslov = " " + TekstUtil.Kljuc(string.Join(" ", s.Reci.Where(w => w.Cy < 0.06).Select(w => w.T))) + " ";
             if (DodatniNaslov.Any(k => naslov.Contains(TekstUtil.Kljuc(k))) && Regex.IsMatch(s.Tekst, @"(?im)^\s*(?:rovat|feld|rubrika|рубрика|box|case)\s*\d{1,2}\b"))
             { nadjeno.Add("naslov dodatnog lista"); return Vrati(TipDokumenta.DodatniList); }
+            // Izveštaj o sastavu voza / tehnički spisak voza (MÁV VTK „vonatterhelési kimutatás“, Zugvorbereitung, Meldezettel):
+            // nije prateći dokument pošiljke – ne proverava se, ne traži se u r9.
+            if (!formaCim && Ima("vonatterhelesi kimutatas", "vonatterhelési kimutatás", "vonatosszeallitas", "vonatösszeállítás", "tehervonat vonatterhelesi", "zugvorbereitung", "meldezettel"))
+            { nadjeno.Add("izveštaj o sastavu voza"); return Vrati(TipDokumenta.SastavVoza); }
             // Spisak kola po NASLOVU na vrhu strane („Kocsijegyzék / Wagenliste“) – i kada ima mnogo natpisa polja kao obrazac
             if (SpisakNaslov.Any(k => naslov.Contains(TekstUtil.Kljuc(k))) && !CimKljucevi.Any(k => naslov.Contains(TekstUtil.Kljuc(k))))
             { nadjeno.Add("naslov spiska kola"); return Vrati(TipDokumenta.SpisakKola); }
@@ -932,6 +936,36 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 poruke.Add(p.Naziv + " str. " + s.Broj + ": " + (r.Poravnanje?.Opis ?? "bez poravnanja") + (d.Cim.FirstOrDefault()?.NeprepoznatObrazac is string n && n.Length > 0 ? " → " + n : ""));
             }
             return poruke;
+        }
+
+        /// <summary>Tekst ćelije tabelarnog obrasca je natpis (rečnik natpisa šablona).</summary>
+        internal bool JeNatpisCelije(string tekst) => sablon.JeNatpisCelije(tekst);
+
+        /// <summary>
+        /// Tovarni list CIM/CUV iz tabele (Excel list ili Word tabele): prvi list koji je tovarni list. Naslov obrasca bez
+        /// dovoljno brojeva rubrika → list na ručnu proveru (obrazac nije pouzdano pročitan). Null kada tabela nije tovarni list.
+        /// </summary>
+        internal Dokument TovarniIzTabele(Prilog p, List<List<Prilozi.Celija>> listovi, string izvor)
+        {
+            string razlogNaslova = null;
+            foreach (var cel in listovi.Where(x => x.Count > 0))
+            {
+                if (Prilozi.TabelarniCim.JeTovarniList(cel, out var razlog))
+                {
+                    var cim = Prilozi.TabelarniCim.Procitaj(cel, sablon.JeNatpisCelije, Pragovi, out var po);
+                    cim.RedniBroj = 1;
+                    var naziv = izvor == "word" ? "Word obrazac" : "Excel obrazac";
+                    return new Dokument
+                    {
+                        Tip = cim.Obrazac == "CUV" ? TipDokumenta.Cuv : TipDokumenta.Cim, Strane = { 1 }, Cim = { cim }, Izvor = izvor, Fajl = p.Naziv,
+                        Opis = "tovarni list " + cim.Obrazac + " (" + naziv + ", čitano iz ćelija; " + razlog + "; rubrika sa vrednošću " + po.Count + ")",
+                    };
+                }
+                if (razlog.StartsWith("naslov")) razlogNaslova = razlog;
+            }
+            if (razlogNaslova == null) return null;
+            var nep = new CimList { RedniBroj = 1, NeprepoznatObrazac = (izvor == "word" ? "Word" : "Excel") + " obrazac tovarnog lista nije pouzdano pročitan (" + razlogNaslova + ")", Sablon = "TABELA" };
+            return new Dokument { Tip = TipDokumenta.Cim, Strane = { 1 }, Cim = { nep }, Izvor = izvor, Fajl = p.Naziv, Opis = "tovarni list – " + nep.NeprepoznatObrazac };
         }
 
         /// <summary>Dijagnostika (komanda "rubrike"): za svaku stranu vrsta, izvor teksta, poravnanje i tekst svake rubrike.</summary>

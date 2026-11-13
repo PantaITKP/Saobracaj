@@ -73,6 +73,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public List<Dokument> Dokumenti = new List<Dokument>();
         public List<string> NijeImplementirano = new List<string>();
         public List<string> GreskePravila = new List<string>();
+        /// <summary>Svi prilozi maila i kako je svaki klasifikovan („Trainlist.xlsx – spisak tovarnih jedinica“) – za izveštaj.</summary>
+        public List<string> OpisPriloga = new List<string>();
         public bool ImaTovarniList => Listovi.Count > 0;
         public int BrojGresaka => Listovi.Sum(l => l.Nalazi.Count(n => n.Tezina == Tezina.Greska));
         public int BrojUpozorenja => Listovi.Sum(l => l.Nalazi.Count(n => n.Tezina == Tezina.Upozorenje));
@@ -83,7 +85,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// <summary>Isti rezultat bez nalaza "samo interno" (izveštaj za spoljnog pošiljaoca).</summary>
         public RezultatProvere BezInternih() => new RezultatProvere
         {
-            Dokumenti = Dokumenti, NijeImplementirano = NijeImplementirano, GreskePravila = GreskePravila,
+            Dokumenti = Dokumenti, NijeImplementirano = NijeImplementirano, GreskePravila = GreskePravila, OpisPriloga = OpisPriloga,
             Listovi = Listovi.Select(l => new RezultatLista { Dokument = l.Dokument, Cim = l.Cim, Oznaka = l.Oznaka, KpRezim = l.KpRezim, ZaRucnuProveru = l.ZaRucnuProveru, Nalazi = l.Nalazi.Where(n => !n.SamoInterno).ToList() }).ToList(),
         };
     }
