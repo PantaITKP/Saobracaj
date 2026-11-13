@@ -31,6 +31,19 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             ["austrija"] = "AT", ["austria"] = "AT", ["österreich"] = "AT", ["nemacka"] = "DE", ["nemačka"] = "DE", ["germany"] = "DE", ["deutschland"] = "DE",
             ["ceska"] = "CZ", ["češka"] = "CZ", ["czech"] = "CZ", ["tschechien"] = "CZ", ["slovacka"] = "SK", ["slovakia"] = "SK", ["slowakei"] = "SK",
             ["italija"] = "IT", ["italy"] = "IT", ["italien"] = "IT", ["italia"] = "IT", ["poljska"] = "PL", ["poland"] = "PL", ["polen"] = "PL",
+            // rečnik zemalja za r1, r4, r10 (oblici na jezicima CIT obrazaca)
+            ["italie"] = "IT", ["olaszország"] = "IT", ["italien"] = "IT", ["românia"] = "RO", ["roumanie"] = "RO", ["románia"] = "RO", ["rumunjska"] = "RO", ["rumunsko"] = "RO", ["rumänien"] = "RO",
+            ["görögország"] = "GR", ["grèce"] = "GR", ["grecia"] = "GR", ["grčija"] = "GR", ["ελλάδα"] = "GR", ["гърция"] = "GR",
+            ["szerbia"] = "RS", ["serbija"] = "RS", ["srbsko"] = "RS", ["sırbistan"] = "RS", ["сърбия"] = "RS",
+            ["magyarország"] = "HU", ["ungheria"] = "HU", ["maďarsko"] = "HU", ["madžarska"] = "HU", ["ungaria"] = "HU", ["унгария"] = "HU",
+            ["bulgarie"] = "BG", ["bulharsko"] = "BG", ["bulgária"] = "BG", ["българия"] = "BG", ["bugaristan"] = "BG",
+            ["croatie"] = "HR", ["croazia"] = "HR", ["horvátország"] = "HR", ["chorvatsko"] = "HR", ["hırvatistan"] = "HR",
+            ["slovénie"] = "SI", ["slovenien"] = "SI", ["szlovénia"] = "SI", ["slovinsko"] = "SI", ["slovenija"] = "SI",
+            ["autriche"] = "AT", ["ausztria"] = "AT", ["rakousko"] = "AT", ["allemagne"] = "DE", ["germania"] = "DE", ["németország"] = "DE", ["německo"] = "DE",
+            ["république tchèque"] = "CZ", ["csehország"] = "CZ", ["česko"] = "CZ", ["slovaquie"] = "SK", ["szlovákia"] = "SK", ["slovensko"] = "SK",
+            ["turquie"] = "TR", ["turchia"] = "TR", ["törökország"] = "TR", ["turecko"] = "TR", ["türkiye cumhuriyeti"] = "TR",
+            ["macédoine du nord"] = "MK", ["north macedonia"] = "MK", ["severna makedonija"] = "MK", ["bosnia"] = "BA", ["bosna i hercegovina"] = "BA",
+            ["pologne"] = "PL", ["polonia"] = "PL", ["lengyelország"] = "PL", ["polsko"] = "PL",
         };
 
         private static readonly Regex Datum = new Regex(@"\b(?<d>[0-3]?\d)\s?[./-]\s?(?<m>[01]?\d)\s?[./-]\s?(?<g>(?:20)?\d{2})\b", RegexOptions.Compiled);
@@ -558,6 +571,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         if (st.Length == 0 && m2.Success && Regex.IsMatch(m2.Groups[1].Value, @"\p{L}")) { deon = m2.Groups[1].Value; st = m2.Groups[2].Value; }
                         var naz = mc.Groups["n"].Value.Trim(' ', '-', '–', ',');
                         if (naz.Length == 0) naz = mc.Groups["pre"].Value.Trim(' ', '-', '–', ',');
+                        // naziv u posebnoj koloni (polja obrasca): „2179 | SZ - 2178 HZ CARGO | BUSCA“ – kratak naziv velikim slovima
+                        if (naz.Length == 0 && celije.Count >= 2 && Regex.IsMatch(celije[1], @"^\p{Lu}{2,}[\p{Lu}\d\s\-–./]{0,40}$") && !Regex.IsMatch(celije[1], @"\d{2}\s?\d{4,6}"))
+                        {
+                            naz = celije[1].Trim(' ', '-', '–', ',');
+                            deon = string.Join(" ", celije.Skip(2).Take(Math.Max(0, celije.Count - 2 - (st.Length > 0 ? 1 : 0))));
+                        }
                         r.Prevoznici.Add(new Prevoznik { Sifra = mc.Groups["s"].Value, Naziv = naz, Deonica = deon.Trim(' ', '-', '–'), StatusPrevoznika = st });
                         continue;
                     }

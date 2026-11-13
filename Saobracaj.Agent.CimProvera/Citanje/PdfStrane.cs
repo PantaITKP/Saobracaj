@@ -24,6 +24,76 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return rez;
         }
 
+        /// <summary>
+        /// Vrednosti polja PDF obrasca (AcroForm) na strani kao reči na položaju polja: tekst po redovima od vrha polja,
+        /// označeno polje za krstić kao „X“. Font „AcroForm“ (veličina ≥ 7) – podatak, nikad natpis rubrike.
+        /// </summary>
+        internal static List<Rec> PoljaObrasca(PdfDocument doc, int strana, double w, double h)
+        {
+            var rez = new List<Rec>();
+            UglyToad.PdfPig.AcroForms.AcroForm form;
+            try { if (!doc.TryGetForm(out form) || form == null) return rez; } catch { return rez; }
+            IEnumerable<UglyToad.PdfPig.AcroForms.Fields.AcroFieldBase> Svi(IEnumerable<UglyToad.PdfPig.AcroForms.Fields.AcroFieldBase> polja)
+            {
+                foreach (var f in polja)
+                    if (f is UglyToad.PdfPig.AcroForms.Fields.AcroNonTerminalField nt) { foreach (var x in Svi(nt.Children)) yield return x; }
+                    else yield return f;
+            }
+            // vrednosti polja po imenu (polje bez strane/položaja: položaj daje widget anotacija na strani)
+            var vrednosti = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var f in Svi(form.Fields))
+            {
+                var ime = f.Information?.PartialName;
+                if (string.IsNullOrEmpty(ime) || vrednosti.ContainsKey(ime)) continue;
+                if (f is UglyToad.PdfPig.AcroForms.Fields.AcroTextField tf) vrednosti[ime] = tf.Value ?? "";
+                else if (f is UglyToad.PdfPig.AcroForms.Fields.AcroCheckboxField cb) vrednosti[ime] = cb.IsChecked ? "\u0001X" : "";
+                else if (f is UglyToad.PdfPig.AcroForms.Fields.AcroComboBoxField cf) vrednosti[ime] = string.Join(" ", cf.SelectedOptions?.Select(o => o.ToString()) ?? new string[0]);
+            }
+            string Tekst(UglyToad.PdfPig.Tokens.DictionaryToken d, string kljuc) =>
+                d != null && d.TryGet(UglyToad.PdfPig.Tokens.NameToken.Create(kljuc), out var t) ? (t as UglyToad.PdfPig.Tokens.StringToken)?.Data ?? (t as UglyToad.PdfPig.Tokens.HexToken)?.Data ?? (t as UglyToad.PdfPig.Tokens.NameToken)?.Data : null;
+            UglyToad.PdfPig.Tokens.DictionaryToken Roditelj(UglyToad.PdfPig.Tokens.DictionaryToken d)
+            {
+                if (d == null || !d.TryGet(UglyToad.PdfPig.Tokens.NameToken.Parent, out var p)) return null;
+                if (p is UglyToad.PdfPig.Tokens.DictionaryToken pd) return pd;
+                if (p is UglyToad.PdfPig.Tokens.IndirectReferenceToken r) try { return doc.Structure.GetObject(r.Data)?.Data as UglyToad.PdfPig.Tokens.DictionaryToken; } catch { }
+                return null;
+            }
+            var stranaPdf = doc.GetPage(strana);
+            IEnumerable<UglyToad.PdfPig.Annotations.Annotation> anotacije;
+            try { anotacije = stranaPdf.ExperimentalAccess.GetAnnotations().Where(a => a.Type == UglyToad.PdfPig.Annotations.AnnotationType.Widget).ToList(); } catch { return rez; }
+            foreach (var an in anotacije)
+            {
+                var d = an.AnnotationDictionary;
+                var ime = Tekst(d, "T") ?? Tekst(Roditelj(d), "T");
+                if (ime == null || !vrednosti.TryGetValue(ime, out var vrednost)) continue;
+                var b = an.Rectangle;
+                double x0 = Math.Min(b.Left, b.Right), x1 = Math.Max(b.Left, b.Right), gore = Math.Max(b.Top, b.Bottom), dole = Math.Min(b.Top, b.Bottom);
+                if (vrednost.StartsWith("\u0001") || vrednost.Length == 0 && Tekst(d, "AS") is string st && st != "Off")
+                {
+                    // polje za krstić: stanje widgeta (/AS) ili vrednost polja
+                    var stanje = Tekst(d, "AS");
+                    if (stanje != null && stanje != "Off" || stanje == null && vrednost.StartsWith("\u0001"))
+                        rez.Add(new Rec { T = "X", X0 = x0 / w, X1 = x1 / w, Y0 = 1 - gore / h, Y1 = 1 - dole / h, Pouzdanost = 0.99, Velicina = 8, Font = "AcroForm" });
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(vrednost)) continue;
+                var redovi = vrednost.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+                var visinaReda = Math.Min((gore - dole) / Math.Max(1, redovi.Length), 11.0);
+                var vel = Math.Max(7, visinaReda * 0.8);
+                for (int i = 0; i < redovi.Length; i++)
+                {
+                    double y1 = gore - i * visinaReda, y0 = y1 - visinaReda, x = x0 + 2;
+                    var sirinaZnaka = Math.Min(vel * 0.55, (x1 - x0 - 2) / Math.Max(1, redovi[i].Length));
+                    foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(redovi[i], @"\S+"))
+                    {
+                        double a = x0 + 2 + m.Index * sirinaZnaka, z = a + m.Length * sirinaZnaka;
+                        rez.Add(new Rec { T = m.Value, X0 = a / w, X1 = Math.Min(z, x1) / w, Y0 = 1 - y1 / h, Y1 = 1 - y0 / h, Pouzdanost = 0.99, Velicina = vel, Font = "AcroForm" });
+                    }
+                }
+            }
+            return rez;
+        }
+
         private static List<Strana> ProcitajTekst(byte[] pdf, Ocr ocr, int maxStrana, bool uvekOcr, Func<IEnumerable<Rec>, int> brojSidara)
         {
             var rez = new List<Strana>();
@@ -48,13 +118,16 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         var b = wd.BoundingBox;
                         var vel = wd.Letters.Count > 0 ? wd.Letters.Average(l => l.PointSize) : 0;
                         if (wd.Letters.Any(l => (l.FontName ?? "").IndexOf("Wingdings", StringComparison.OrdinalIgnoreCase) >= 0)) continue; // oznake polja
-                        if (wd.TextOrientation != TextOrientation.Horizontal) continue; // uspravno odštampani natpisi obrasca (npr. uz r19)
+                        // uspravno odštampani natpisi obrasca (npr. uz r19) se preskaču – osim oznake „© 200x CIT“ (sidro univerzalnog šablona)
+                        if (wd.TextOrientation != TextOrientation.Horizontal && !System.Text.RegularExpressions.Regex.IsMatch(t, @"CIT")) continue;
                         var font = wd.Letters.Count > 0 ? (wd.Letters[0].FontName ?? "") : "";
                         var plus = font.IndexOf('+');
                         if (plus >= 0 && plus < font.Length - 1) font = font.Substring(plus + 1); // podskup fonta "AAAAAD+Arial" → "Arial"
                         t = BezDvostrukihSlova(t, wd.Letters);
                         s.Reci.Add(new Rec { T = t, X0 = b.Left / w, X1 = b.Right / w, Y0 = 1 - b.Top / h, Y1 = 1 - b.Bottom / h, Pouzdanost = 0.98, Velicina = vel, Font = font });
                     }
+                    // Popunjen PDF obrazac (AcroForm): podaci su vrednosti polja, ne tekst strane (npr. CIT obrazac popunjen u Acrobatu).
+                    s.Reci.AddRange(PoljaObrasca(doc, page.Number, w, h));
                     s.Izvor = s.Reci.Count > 0 ? IzvorTeksta.Tekst : IzvorTeksta.Nema;
 
                     // Pokvaren tekst (font bez ispravne mape znakova): strana se iscrtava i čita OCR-om.

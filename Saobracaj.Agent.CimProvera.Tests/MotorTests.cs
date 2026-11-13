@@ -37,6 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             public bool Interni;
             public DateTime Datum = Danas;
             public string IzvorCim = "tekst";
+            public string Fajl = "cim.pdf";
         }
 
         private static T F<T>(T r, string tekst = null) where T : Rubrika
@@ -52,7 +53,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var c = new CimList { Obrazac = "CIM", JeziciPopunjavanja = { "sr", "en" } };
             c.R1 = F(new Strana { Naziv = "Pošiljalac d.o.o.", Adresa = "Ulica 1, 18000 Niš", SifraZemlje = "RS", Potpis = true, Telefon = "+381 18 123456" });
             c.R4 = F(new Strana { Naziv = "Primalac AD", Adresa = "Ulica 2, 1000 Sofija", SifraZemlje = "BG", Email = "a@b.bg" });
-            c.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Ponuda KP br. 15/26" } } });
+            c.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Platilac za deonicu SRB: Lokomotiva d.o.o. Ponuda KP br. 15/26" } } }, "16 Platilac za deonicu SRB: Lokomotiva d.o.o.; Ponuda KP br. 15/26");
             c.R8 = F(new TekstRubrika(), "004NISBAR26");
             c.R10 = F(new MestoIsporuke { Stanica = "Dimitrovgrad gr.", SifraStanice = "721234", Zemlja = "72" });
             c.R12 = F(new TekstRubrika(), "721234");
@@ -78,7 +79,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var u = new UlazProvere
             {
-                Dokumenti = new List<Dokument> { new Dokument { Tip = TipDokumenta.Cim, Fajl = "cim.pdf", Izvor = s.IzvorCim, Strane = { 1 }, Cim = { s.C } } }.Concat(s.Ostali).ToList(),
+                Dokumenti = new List<Dokument> { new Dokument { Tip = TipDokumenta.Cim, Fajl = s.Fajl, Izvor = s.IzvorCim, Strane = { 1 }, Cim = { s.C } } }.Concat(s.Ostali).ToList(),
                 RezimKp = s.Rezim, InterniPosiljalac = s.Interni, ReferentniDatum = s.Datum, Prag = 0.7,
             };
             return new Motor(pravila).Proveri(u);
@@ -108,9 +109,11 @@ namespace Saobracaj.Agent.CimProvera.Tests
         public void Ispravan_list_nema_nalaza()
         {
             var r = Proveri(new Scenario());
-            var svi = Svi(r).ToList();
+            var svi = Svi(r).Where(n => n.Tezina != Tezina.Info).ToList();
             Assert.AreEqual(0, svi.Count, "Ispravan list ne sme imati nalaze, a ima: " + string.Join(" | ", svi));
             Assert.IsTrue(r.Ispravan);
+            // jedina informacija: platilac za deonicu kroz Srbiju
+            Assert.AreEqual("Platilac za deonicu kroz Srbiju: Lokomotiva d.o.o.", Prvi(r, "KP7-INFO").Tekst);
         }
 
         [TestMethod]
@@ -141,7 +144,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsFalse(Ima(Proveri(s), "R58A"), "spoljni pošiljalac, r62 ≠ 3212 → r58a se ne proverava");
         }
 
-        [TestMethod] public void Prolaz_R14_pocinje_sa_1() { var s = new Scenario(); s.C.R14.Tekst = "1 264410"; Assert.IsFalse(Ima(Proveri(s), "R14")); }
+        [TestMethod] public void Prolaz_R14_bilo_koji_broj() { foreach (var t in new[] { "1 264410", "KP 2026", "ŽRS 264410.02" }) { var s = new Scenario(); s.C.R14.Tekst = t; Assert.IsFalse(Ima(Proveri(s), "R14"), t); } }
         [TestMethod] public void Prolaz_R20_INCO_sa_mestom_na_putu() { var s = new Scenario(); s.C.R20.Tekst = "DAP Dimitrovgrad gr."; var r = Proveri(s); Assert.IsFalse(Ima(r, "R20-INCO")); Assert.IsFalse(Ima(r, "R20-RUTA")); }
         [TestMethod] public void Prolaz_G3_vise_kola_sa_spiskom_u_r9_i_r18()
         {
@@ -182,13 +185,11 @@ namespace Saobracaj.Agent.CimProvera.Tests
         private static readonly Dictionary<string, Action<Scenario>> Kvarovi = new Dictionary<string, Action<Scenario>>
         {
             ["G1"] = s => s.C.JeziciPopunjavanja = new List<string> { "sr" },
-            ["G2"] = s => { DvaKola(s); s.C.R14 = new TekstRubrika(); s.C.R7.Stavke.Clear(); },
             ["G3"] = DvaKola,
             ["G4"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.DodatniList, Fajl = "dodatni.pdf", DodatniList = { new DodatniListPodaci { BrojPosiljke = true, DatumPreuzimanja = true } } }),
             ["G5"] = s => s.C.R7.Stavke.Add(new SifraTekst { Tekst = "Platilac za deonicu u Srbiji je X" }),
             ["G6"] = s => s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Tekst = "Faktura" } } }),
             ["G9"] = s => s.C.ElektronskiIspis = true,
-            ["G11"] = s => { DvaKola(s); s.C.R14 = new TekstRubrika(); s.C.R7.Stavke.Clear(); },
             ["R1"] = s => s.C.R1.SifraZemlje = "",
             ["R1-VAT"] = s => { s.C.R1.SifraZemlje = "HU"; s.C.R4.SifraZemlje = "AT"; },
             ["R4"] = s => s.C.R4 = new Strana(),
@@ -197,21 +198,22 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R9"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.IzvoznaDeklaracija, Fajl = "VDD.pdf" }),
             ["R10"] = s => s.C.R10.Stanica = "",
             ["R12"] = s => { s.C.R12 = new TekstRubrika(); s.C.R10.SifraStanice = ""; },
-            ["R13"] = s => s.C.R13.Stavke.Add(new SifraTekst { Sifra = "7", Tekst = "nešto" }),
-            ["R14"] = s => s.C.R14.Tekst = "ŽRS 264410.02",
+            ["R14"] = s => s.C.R14 = new TekstRubrika(),
             ["R16"] = s => s.C.R16.Datum = "",
-            ["R18"] = s => s.C.R18.Stavke = new List<SifraTekst> { new SifraTekst { Tekst = "3178665600" } },
             ["R20"] = s => s.C.R20 = new TekstRubrika(),
             ["R20-INCO"] = s => s.C.R20.Tekst = "DAP",
             ["R20-RUTA"] = s => s.C.R20.Tekst = "DAP Curtici Gr",
             ["R20-INCO-ZASTARELO"] = s => s.C.R20.Tekst = "X D A F 711",
             ["R21-MRN99"] = s => { s.C.R21.Mrn.Clear(); s.C.R99 = F(new TekstRubrika(), "T2@26HU4110004THDTAK8"); },
             ["G12"] = s => s.C.Zaglavlje = "Küldemény adatok információ / Nem fuvarlevél",
+            ["X30"] = s => { s.Fajl = "LDV Busca - Carpinis_31 wgs.pdf"; s.C.R21.Tekst = "Nr. 30 empty private wagons NHM 9922"; },
             ["R21"] = s => s.C.R21 = new NaznacenjeRobe(),
             ["R22"] = s => s.C.R22 = F(new TekstRubrika(), "X"),
             ["R23"] = s => s.C.R23 = F(new TekstRubrika(), "Y"),
-            ["R24"] = s => s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2520" } },
-            ["R25"] = s => s.C.R25 = new Masa(),
+            ["R24"] = s => s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "252" } },
+            ["R24-NHM6"] = s => s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2520" } },
+            ["R18-SPISAK"] = s => s.C.R18 = F(new ListaRubrika { Stavke = { new SifraTekst { Tekst = "po spisku kola" } } }, "po spisku kola"),
+            ["R25-MASA"] = s => s.C.R25 = new Masa(),
             ["R26"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }),
             ["R27"] = s => s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }),
             ["R28"] = s => s.C.R28 = F(new Iznos { Vrednost = "", Valuta = "EUR" }),
@@ -219,11 +221,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R30"] = s => s.C.R30.Cim = false,
             ["R49"] = s => s.C.R49 = new TekstRubrika(),
             ["R50"] = s => s.C.R50 = new TekstRubrika(),
-            ["R57"] = s => s.C.R57.Prevoznici[0].StatusPrevoznika = "",
-            ["R58A"] = s => s.C.R58a = F(new UgovorniPrevoznik { Sifra = "0075" }, "0075"),
+            ["R58A"] = s => s.C.R58a = F(new UgovorniPrevoznik(), "- / -"),
             ["R62"] = s => { s.C.R62.Zemlja = ""; s.C.R62.Stanica = ""; s.C.R62.Preduzece = ""; },
             ["R21-DESC"] = s => { s.C.R21.ZaostaliTekstSablona = true; s.C.R21.ZaostaliTekst = "XXXX naziv robe"; },
-            ["R21-WAGON"] = s => s.C.R21.BrojeviKola.Add("317866560023"),
             ["R21-UTI"] = s => s.C.R21.Uti.Add(new Uti { Tip = "22G1" }),
             ["R21-IMDG"] = s => { s.C.R23 = F(new TekstRubrika(), "X"); s.C.R21.UnBrojevi.Add("1203"); s.C.PomorskaDeonica = true; },
             ["R21-MRN"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.TranzitnaDeklaracija, Fajl = "T1.pdf" }),
@@ -238,12 +238,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["X7"] = s => s.C.R7.Stavke.Add(new SifraTekst { Sifra = "3", Tekst = "" }),
             ["X8"] = s => s.C.R7.Stavke.Add(new SifraTekst { Sifra = "42", Tekst = "" }),
             ["X9"] = DvaKola,
-            ["X10"] = s => s.C.R21.BrojeviKola.Add("317866560023"),
             ["X11"] = s => s.Ostali.Add(Spisak(Kola("317866560015"), Kola("317866560023", "992100", true))),
             ["X12"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }),
             ["X13"] = s => { s.C.R25.Pojedinacne = new List<string> { "30000", "20000" }; s.C.R25.Ukupno = "60000"; },
             ["X14"] = s => s.C.R29.Datum = "2026-11-06",
-            ["X15"] = s => { s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true; },
             ["X16"] = s => { s.C.R1.SifraZemlje = "HU"; s.C.R4.SifraZemlje = "AT"; },
             ["X17"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "HRK" }),
             ["X19"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].R62.Preduzece = "3121"; s.Ostali.Add(d); },
@@ -253,20 +251,23 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["X26"] = s => { s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "271", Tekst = "Wagon list" } } }, "271 Wagon list"); },
             ["X27"] = s => { s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "380", Tekst = "Faktura/Invoice" } } }, "380 Faktura/Invoice"); },
             ["X28"] = s => { s.C.R20 = F(new TekstRubrika(), "Franko prevoznina"); s.Ostali.Add(new Dokument { Tip = TipDokumenta.Faktura, Fajl = "faktura.pdf", Incoterms = "DAP Alesd" }); },
-            ["X29"] = s => { var d = Spisak(Kola("317866560015", "2620")); s.Ostali.Add(d); },
+            ["X29"] = s => { var d = Spisak(Kola("317866560015", "262")); s.Ostali.Add(d); },
+            ["X29-NHM6"] = s => { var d = Spisak(Kola("317866560015", "2620")); s.Ostali.Add(d); },
             ["R1-ISO"] = s => { s.C.R1.SifraZemlje = ""; s.C.R1.NazivZemlje = "srbija"; s.C.R1.Tekst = "Pošiljalac d.o.o.\nBulevar 12\n11000 Beograd, Srbija"; },
             ["R4-ISO"] = s => { s.C.R4.SifraZemlje = ""; s.C.R4.NazivZemlje = "italy"; s.C.R4.Tekst = "Primalac SPA\nVia Roma 1\n45100 Rovigo, Italy"; },
             ["X23"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.Eur1, Fajl = "EUR1.pdf" }),
             ["X24"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.TabelaMrn, Fajl = "TABELICA.xlsx", Carinski = { new CarinskiPodaci { Mrn = { "26RS000000000009A9" }, MrnPoUti = { new Mrn { Broj = "26RS000000000009A9", Uz = "MSCU1234567" } } } } }),
             ["X25"] = s => { s.C.R29.Datum = "2026-11-16"; s.C.R16.Datum = "2026-11-16"; },
             ["KP57"] = s => { s.C.R62.Preduzece = "2154"; s.C.R58a.Sifra = "2154"; s.C.R58a.Naziv = "SŽ Cargo"; s.C.R58a.Tekst = "2154 SŽ Cargo"; s.C.R57.Prevoznici.Clear(); s.C.R57.Tekst = "2154 SŽ Cargo"; },
-            ["KP2"] = s => s.C.R58a.Naziv = "VTG Railtrain",
+            ["KP2"] = s => s.C.R58a = F(new UgovorniPrevoznik { Sifra = "2154", Naziv = "VTG Railtrain" }, "2154 VTG Railtrain"),
             ["KP3"] = s => s.C.R13.Stavke[0].Tekst = "SŽ Cargo, Niš - Dimitrovgrad",
-            ["KP7"] = s => { s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Platilac za deonicu Niš - Dimitrovgrad: Firma X" } } }, "7.16 Platilac za deonicu Niš - Dimitrovgrad: Firma X"); },
+            ["KP7-PLATILAC"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Frachtzahler HU: Kombinovani prevoz" } } }, "16 Frachtzahler HU: Kombinovani prevoz"),
+            ["KP7-NIJE-PLATILAC"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Frachtzahler SRB: Kombinovani prevoz" } } }, "16 Frachtzahler SRB: Kombinovani prevoz"),
+            ["KP7-NEJASNO"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "IŽS: KP 3212" } } }, "16. IŽS: KP 3212"),
+            ["KP7-INFO"] = s => { },
             ["KP5"] = s => s.C.R57.Prevoznici[0].Naziv = "VTG Railtrain",
             ["KP6"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].KpNaveden = false; s.Ostali.Add(d); },
             ["REC1"] = s => s.C.R8 = new TekstRubrika(),
-            ["REC2"] = s => s.C.R7.Stavke.Clear(),
             ["REC3"] = s => s.C.R13.Stavke[0].Tekst = "KP, Niš - Dimitrovgrad",
             ["REC4"] = s => s.C.R57.Prevoznici[0].Deonica = "Niš - Dimitrovgrad",
             ["REC6"] = s => { var d = Spisak(Kola("317866560015")); d.Izvor = "ocr"; s.Ostali.Add(d); },
@@ -285,7 +286,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r = Proveri(s);
             Assert.IsTrue(Ima(r, id), id + " se nije javilo. Nalazi: " + string.Join(" | ", Svi(r)));
             var def = pravila.PoId[id];
-            var ocekivano = id == "G11" ? (string)def.Json["severity_if_reference_missing"] : def.Tezina;
+            var ocekivano = def.Tezina;
             Assert.AreEqual(ocekivano, Prvi(r, id).TezinaPravila, "težina mora biti iz JSON-a");
         }
 
@@ -293,6 +294,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DynamicData(nameof(SvaPravila))]
         public void Prolaz_pravilo_se_ne_javlja_na_ispravnom_listu(string id)
         {
+            if (pravila.PoId[id].Tezina == Tezina.Info) return; // informacija (npr. platilac za SRB) postoji i na ispravnom listu
             Assert.IsFalse(Ima(Proveri(new Scenario()), id));
         }
 
@@ -322,22 +324,186 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         [TestMethod]
-        public void R57_vazi_i_za_spoljnog_posiljaoca_jedna_stavka_za_sve_bez_statusa()
+        public void R57_bez_statusa_i_deonice_nije_greska()
         {
             var s = new Scenario { Rezim = "spoljni" };
-            s.C.R57.Prevoznici = new List<Prevoznik> { new Prevoznik { Sifra = "3212", Naziv = "KP", Deonica = "Šid - Dobova" }, new Prevoznik { Sifra = "2179", Naziv = "SŽ", Deonica = "Dobova - Sežana" } };
+            s.C.R57.Prevoznici = new List<Prevoznik> { new Prevoznik { Sifra = "3212", Naziv = "KP" }, new Prevoznik { Sifra = "2179", Naziv = "SŽ" } };
+            s.C.R57.Tekst = "3212 KP\n2179 SŽ";
             var r = Proveri(s);
-            Assert.AreEqual(1, r.Listovi[0].Nalazi.Count(n => n.Rubrika == "57" && n.Tezina == Tezina.Greska));
-            StringAssert.Contains(Prvi(r, "R57").Detalj, "3212 KP, 2179 SŽ");
+            Assert.AreEqual(0, r.Listovi[0].Nalazi.Count(n => n.Rubrika == "57"), string.Join(" | ", Svi(r)));
         }
+
+        // ------------------------------------------------------------------------------------------- r7: platilac za Srbiju (v2.7)
+
+        private static RezultatProvere SaR7(string r7)
+        {
+            var s = new Scenario(); s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = r7 } } }, r7);
+            return Proveri(s);
+        }
+
+        private static string Kp7(RezultatProvere r) => string.Join(",", new[] { "KP7-PLATILAC", "KP7-NIJE-PLATILAC", "KP7-NEJASNO" }.Where(id => Ima(r, id)));
 
         [DataTestMethod]
         [DataRow("KP UIC 3212")] [DataRow("KP-UIC 3212")] [DataRow("KPUIC3212")] [DataRow("UIC 3212")] [DataRow("3212 KP")] [DataRow("IŽS: KP 3212")]
         [DataRow("Kombinovani Prevoz d.o.o.")] [DataRow("K-prevoz")] [DataRow("КП")] [DataRow("Комбиновани превоз")] [DataRow("3Z12 KP")] [DataRow("K P 32l2")]
-        public void KP7_prihvata_sve_oblike(string oblik)
+        public void KP7_kp_kao_platilac_za_srbiju_u_svim_oblicima_je_greska(string oblik)
         {
-            var s = new Scenario(); s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Frachtzahler für RS ist " + oblik } } }, "7.16 Frachtzahler für RS ist " + oblik);
-            Assert.IsFalse(Ima(Proveri(s), "KP7"), oblik);
+            Assert.AreEqual("KP7-NIJE-PLATILAC", Kp7(SaR7("16. Frachtzahler für RS ist " + oblik)), oblik);
+        }
+
+        [DataTestMethod]
+        [DataRow("16. Platilac za deonicu SRB: Lokomotiva d.o.o.", "Lokomotiva d.o.o")]
+        [DataRow("16. Payer SRB/HR/SI/IT is Lokomotiva doo. Export in S.Mitrovica", "Lokomotiva doo")]
+        [DataRow("16. Frachtzahler auf EVM, SŽTP, HŽC und KP ist EurologSystem", "EurologSystem")]
+        [DataRow("16. Frachtzahler fuer SRB: VTG Rail Logistics Austria GmbH", "VTG Rail Logistics Austria GmbH")]
+        [DataRow("16. Frachtzahler fuer: SRB: VTG Rail\nLogistics Austria Gmbh", "VTG Rail Logistics Austria Gmbh")]
+        [DataRow("16. Költségviselő SRB: Lokomotiva d.o.o.", "Lokomotiva d.o.o")]
+        [DataRow("16. Platilac za Kombinovani prevoz: MBOX", "MBOX")]
+        [DataRow("16. Frachtzahler: Budamar", "Budamar")]
+        [DataRow("16. Frachtzahler HU: Kombinovani prevoz d.o.o.; Frachtzahler SRB: Lokomotiva d.o.o.", "Lokomotiva d.o.o")]
+        [DataRow("16. Payer for MK/GR is KP 3212, payer for SRB is MBOX", "MBOX")]
+        public void KP7_platilac_za_srbiju_pronadjen_bez_greske(string r7, string platilac)
+        {
+            var r = SaR7(r7);
+            Assert.AreEqual("", Kp7(r), r7 + " | " + string.Join(" | ", Svi(r)));
+            Assert.AreEqual("Platilac za deonicu kroz Srbiju: " + platilac + ".", Prvi(r, "KP7-INFO").Tekst, r7);
+        }
+
+        [DataTestMethod]
+        [DataRow("16. Frachtzahler RS: Kombinovani Prevoz d.o.o., UIC 3212", "KP7-NIJE-PLATILAC")]
+        [DataRow("16. Frachtzahler: Kombinovani prevoz", "KP7-NIJE-PLATILAC")]
+        [DataRow("16. Payer for HU/SRB: KP", "KP7-NIJE-PLATILAC")]
+        [DataRow("16. Frachtzahler HU: Kombinovani prevoz", "KP7-PLATILAC")]
+        [DataRow("16: Payer for SZ is Ferest Rail,\nCIM 6§6: EVM 3832, KP 3212", "KP7-PLATILAC")]
+        [DataRow("16. Beförderer strecke SRB KP 3212", "KP7-PLATILAC")]
+        [DataRow("16. Prevoznik za deonicu SRB: KP", "KP7-PLATILAC")]
+        [DataRow("16.IŽS: KP 3212; BDZ:BMRC 3057", "KP7-NEJASNO")]
+        public void KP7_nalazi(string r7, string ocekivano)
+        {
+            var r = SaR7(r7);
+            Assert.AreEqual(ocekivano, Kp7(r), r7 + " | " + string.Join(" | ", Svi(r)));
+            Assert.IsFalse(Ima(r, "KP7-INFO"), "bez informacije kada platilac za Srbiju nije ispravno naveden");
+        }
+
+        [TestMethod]
+        public void KP7_prazna_r7_je_greska_platilac()
+        {
+            var s = new Scenario(); s.C.R7 = new ListaRubrika();
+            Assert.AreEqual("KP7-PLATILAC", Kp7(Proveri(s)));
+        }
+
+        [TestMethod]
+        public void KP3_kp_bilo_gde_u_r13_bez_tacke_i_deonice()
+        {
+            foreach (var t in new[] { "3. SRB: KP UIC 3212", "KP 3212", "5. EVM 3832, KP 3212, PSP RO 3414", "Kombinovani prevoz" })
+            {
+                var s = new Scenario(); s.C.R13 = F(new ListaRubrika(), t);
+                var r = Proveri(s);
+                Assert.IsFalse(Ima(r, "KP3"), t); Assert.IsFalse(Ima(r, "G5"), t);
+            }
+            var bez = new Scenario(); bez.C.R13 = F(new ListaRubrika(), "1. via Šid gr.; 3. HŽC 2178");
+            Assert.AreEqual(Tezina.Greska, Prvi(Proveri(bez), "KP3").Tezina);
+        }
+
+        [TestMethod]
+        public void R58A_dovoljna_sifra_ili_naziv()
+        {
+            foreach (var (sifra, tekst) in new[] { ("3212", "3212"), ("", "Kombinovani prevoz"), ("3832", "3832 EVM"), ("", "EVM Rail") })
+            {
+                var s = new Scenario(); s.C.R58a = F(new UgovorniPrevoznik { Sifra = sifra }, tekst);
+                var r = Proveri(s);
+                Assert.IsFalse(Ima(r, "R58A"), tekst);
+            }
+            var kp = new Scenario(); kp.C.R58a = F(new UgovorniPrevoznik { Sifra = "3212" }, "3212");
+            Assert.IsFalse(Ima(Proveri(kp), "KP2"), "KP2: 3212 je dovoljno, adresa i potpis se ne traže");
+        }
+
+        [TestMethod]
+        public void R24_cetiri_cifre_je_preporuka_sa_sifrom_iz_T1()
+        {
+            var s = new Scenario(); s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2620" } };
+            s.Ostali.Add(new Dokument { Tip = TipDokumenta.TranzitnaDeklaracija, Fajl = "T1.pdf", Carinski = { new CarinskiPodaci { Tarife = { "262190" } } } });
+            s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "820", Tekst = "T1" } } }, "820 T1");
+            var r = Proveri(s);
+            Assert.IsFalse(Ima(r, "R24"));
+            var n = Prvi(r, "R24-NHM6");
+            Assert.AreEqual(Tezina.Preporuka, n.Tezina);
+            StringAssert.Contains(n.Tekst, "poželjno je upisati NHM šifru sa 6 cifara (u T1: 262190)");
+            Assert.AreEqual("262190", n.Primer);
+            var p = new Scenario(); p.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "9922" } };
+            Assert.AreEqual("992200", Prvi(Proveri(p), "R24-NHM6").Primer);
+        }
+
+        // ------------------------------------------------------------------------------------------- R25-MASA (v2.7.1)
+
+        private static string R25Nalaz(Action<Scenario> izmena)
+        {
+            var s = new Scenario(); s.C.R25 = new Masa(); izmena(s);
+            var n = Svi(Proveri(s)).Where(x => x.Rubrika == "25").ToList();
+            return string.Join(",", n.Select(x => x.Pravilo + ":" + x.Tezina));
+        }
+
+        [TestMethod] public void R25_tovarena_kola_prazna_r25_greska() => Assert.AreEqual("R25-MASA:error", R25Nalaz(s => { }));
+        [TestMethod] public void R25_nhm_9922_samo_preporuka() => Assert.AreEqual("R25-MASA:recommendation", R25Nalaz(s => s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "99 22" } }));
+        [TestMethod] public void R25_cuv_u_r30_samo_preporuka() => Assert.AreEqual("R25-MASA:recommendation", R25Nalaz(s => { s.C.R30.Cim = false; s.C.R30.Cuv = true; s.C.Obrazac = "CUV"; }));
+        [TestMethod] public void R25_r21_prazna_kola_samo_preporuka() => Assert.AreEqual("R25-MASA:recommendation", R25Nalaz(s => s.C.R21.Tekst = "20 prazna kola, serija Eanos"));
+
+        [TestMethod]
+        public void R25_masa_na_prilozenom_spisku_bez_nalaza()
+        {
+            Assert.AreEqual("", R25Nalaz(s =>
+            {
+                s.C.R25 = F(new Masa(), "po spisku kola");
+                var d = Spisak(Kola("317866560015")); d.Spisak[0].MasaUpisana = true; s.Ostali.Add(d);
+                s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "271", Tekst = "Spisak kola" } } }, "271 Spisak kola");
+            }));
+        }
+
+        [TestMethod]
+        public void R25_spisak_naveden_a_nije_prilozen_greska() => Assert.AreEqual("R25-MASA:error", R25Nalaz(s => s.C.R25 = F(new Masa(), "po spisku kola")));
+
+        [TestMethod]
+        public void R25_prazna_kola_poruka_i_primer()
+        {
+            var s = new Scenario(); s.C.R25 = new Masa(); s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "9922" } };
+            var n = Prvi(Proveri(s), "R25-MASA");
+            StringAssert.StartsWith(n.Tekst, "Rubrika 25: poželjno je upisati masu (taru) praznih kola.");
+            Assert.AreEqual("Tara: 24 500 kg", n.Primer);
+            Assert.AreEqual(0, Proveri(s).BrojGresaka + Proveri(s).BrojUpozorenja - Svi(Proveri(s)).Count(x => x.Tezina != Tezina.Preporuka && x.Tezina != Tezina.Info && x.Rubrika != "25"), "r25 prazna kola nije greška ni upozorenje");
+        }
+
+        [TestMethod]
+        public void R25_necitljiva_je_upozorenje_citljivosti()
+        {
+            var s = new Scenario { IzvorCim = "ocr" }; s.C.R25 = F(new Masa(), "~~"); s.C.R25.Pouzdanost = 0.3;
+            var r = Proveri(s);
+            Assert.IsFalse(Ima(r, "R25-MASA"));
+            Assert.IsTrue(Svi(r).Any(n => n.Pravilo == "CITLJIVOST" && n.Rubrika == "25" && n.Tezina == Tezina.Upozorenje));
+        }
+
+        // ------------------------------------------------------------------------------------------- A2: jedan nalaz = jedan red
+
+        [TestMethod]
+        public void Razlicita_pravila_iste_rubrike_su_posebni_redovi()
+        {
+            var s = new Scenario(); s.C.R23 = F(new TekstRubrika(), "X"); s.C.R21.UnBrojevi.Add("1203");
+            s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "IŽS: KP 3212" } } }, "16.IŽS: KP 3212");
+            var r = Proveri(s);
+            var r7 = r.Listovi[0].Nalazi.Where(n => n.Rubrika == "7").ToList();
+            CollectionAssert.AreEquivalent(new[] { "X2", "KP7-NEJASNO" }, r7.Select(n => n.Pravilo).ToList(), string.Join(" | ", r7));
+            Assert.IsTrue(r7.All(n => n.Takodje.Count == 0));
+            var telo = Izvestaj.Telo(r, pravila, false);
+            Assert.AreEqual(2, telo.Split('\n').Count(l => l.StartsWith("") && l.Contains("Rubrika 7 – Izjave pošiljaoca")), telo);
+        }
+
+        [TestMethod]
+        public void Nazivi_r26_r28_upozorenja_r27_greska()
+        {
+            var s = new Scenario(); s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }); s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }); s.C.R28 = F(new Iznos { Vrednost = "", Valuta = "EUR" });
+            var r = Proveri(s);
+            Assert.AreEqual(Tezina.Upozorenje, r.Listovi[0].Nalazi.First(n => n.Rubrika == "26").Tezina);
+            Assert.AreEqual(Tezina.Upozorenje, r.Listovi[0].Nalazi.First(n => n.Rubrika == "28").Tezina);
+            Assert.AreEqual(Tezina.Greska, r.Listovi[0].Nalazi.First(n => n.Rubrika == "27").Tezina);
         }
 
         [TestMethod]
@@ -407,9 +573,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Niska_pouzdanost_je_necitljivo()
         {
-            var s = new Scenario(); s.C.R14.Tekst = "ŽRS 264410.02"; s.C.R14.Pouzdanost = 0.4;
+            var s = new Scenario(); s.C.R29.Mesto = ""; s.C.R29.Pouzdanost = 0.4;
             var r = Proveri(s);
-            Assert.IsFalse(Ima(r, "R14"));
+            Assert.IsFalse(Ima(r, "R29"));
             Assert.IsTrue(Ima(r, "CITLJIVOST"));
         }
 
@@ -450,25 +616,53 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika();
             var r = Proveri(s);
-            var naslov = Izvestaj.NaslovMaila("CIM Niš", new[] { "cim.pdf" }, false, r);
-            Assert.AreEqual("CIM Niš – cim.pdf – 1 greška, 1 upozorenje", naslov, string.Join(" | ", Svi(r)));
-            Assert.AreEqual("CIM Niš – cim.pdf – ispravan", Izvestaj.NaslovMaila("CIM Niš", new[] { "cim.pdf" }, false, Proveri(new Scenario())));
-            StringAssert.StartsWith(Izvestaj.Telo(r, pravila, false), "Pošiljka: 72 72345-6 3212 12345-6");
+            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – potrebne ispravke", Izvestaj.Naslov(r, pravila, false), string.Join(" | ", Svi(r)));
+            var samoUpoz = new Scenario(); samoUpoz.C.R20 = new TekstRubrika();
+            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – napomene", Izvestaj.Naslov(Proveri(samoUpoz), pravila, false));
+            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – ispravan", Izvestaj.Naslov(Proveri(new Scenario()), pravila, false));
+            var bezRef = new Scenario(); bezRef.C.R8 = new TekstRubrika(); bezRef.C.R16.Datum = "";
+            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 – potrebne ispravke", Izvestaj.Naslov(Proveri(bezRef), pravila, false), "bez reference nema zagrade");
+            Assert.AreEqual("Consignment note CIM 72 72345-6 3212 12345-6 (004NISBAR26) – corrections required", Izvestaj.Naslov(r, pravila, true));
         }
 
         [TestMethod]
-        public void Html_izvestaj_je_tabela_sa_upisanom_vrednoscu_i_primerom()
+        public void Mail_sa_tabelama_zahvalnicom_informacijom_i_potpisom()
         {
-            var s = new Scenario(); s.C.R14.Tekst = "ŽRS 264410.02"; s.C.R20 = new TekstRubrika();
+            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R14 = new TekstRubrika(); s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2620" } };
             var r = Proveri(s);
-            var n = Prvi(r, "R14");
-            Assert.AreEqual("ŽRS 264410.02", n.Vrednost);
-            Assert.IsTrue(n.Primer.Length > 0, "primer iz JSON-a");
+            var telo = Izvestaj.Telo(r, pravila, false);
+            StringAssert.StartsWith(telo, "Poštovani,");
+            StringAssert.Contains(telo, "zahvaljujemo na dostavljenoj dokumentaciji za pošiljku Niš – Dimitrovgrad gr (NHM 2620, referenca 004NISBAR26).");
+            StringAssert.Contains(telo, "POTREBNE ISPRAVKE\r\n1. Rubrika 16 – Preuzimanje na prevoz\r\n   Šta nije u redu: ");
+            StringAssert.Contains(telo, "Nedostaje: datum.");
+            StringAssert.Contains(telo, "   Kako treba da izgleda (primer): ");
+            StringAssert.Contains(telo, "NAPOMENE (molimo proverite)");
+            StringAssert.Contains(telo, "Rubrika 14 – Broj sporazuma ili tarife");
+            StringAssert.Contains(telo, "Rubrika 24 – NHM šifra");
+            StringAssert.Contains(telo, "Platilac za deonicu kroz Srbiju: Lokomotiva d.o.o.");
+            StringAssert.Contains(telo, "S poštovanjem,\r\n\r\nPriprema saobraćaja\r\nKombinovani prevoz d.o.o.\r\nJug Bogdanova 28, 18400 Prokuplje\r\npriprema@kprevoz.co.rs");
+            Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(telo, @"\[(Ime|ime|Name|Telefon)[^\]]*\]"), "bez placeholdera");
             var html = Izvestaj.Html(r, pravila, false);
-            foreach (var k in new[] { "<table", "Dokument", "cim.pdf", "Rubrika", "Upisana vrednost", "Primer ispravnog upisa", "Opis greške", "ŽRS 264410.02", "UPOZORENJA" })
-                StringAssert.Contains(html, System.Net.WebUtility.HtmlEncode(k).Replace("&lt;", "<"), k);
-            Assert.IsFalse(html.Contains(">Pravilo<") || html.Contains("[R14]"), "kolona Pravilo i šifre pravila se ne prikazuju");
-            Assert.IsFalse(html.Contains(">Rubrika 14:"), "opis bez ponovljenog broja rubrike");
+            foreach (var k in new[] { "<table", ">Rb.<", ">Rubrika<", ">Šta nije u redu<", ">Kako treba da izgleda (primer)<", "POTREBNE ISPRAVKE", "NAPOMENE (molimo proverite)", "16 – Preuzimanje na prevoz", "background-color:#d9d9d9", "border:1px solid", "Arial" })
+                StringAssert.Contains(html, k.Replace("Š", System.Net.WebUtility.HtmlEncode("Š")), k);
+            Assert.IsFalse(html.Contains("class=") || html.Contains("<img") || html.Contains("<script"), "bez CSS klasa, slika i skripti");
+            Assert.IsFalse(html.Contains("[R16]") || html.Contains(">Pravilo<"), "šifre pravila se ne prikazuju");
+            // engleski: iste tabele sa engleskim kolonama
+            var en = Izvestaj.Html(r, pravila, true);
+            foreach (var k in new[] { ">No.<", ">Box<", ">Issue<", ">Correct entry (example)<" }) StringAssert.Contains(en, k);
+        }
+
+        [TestMethod]
+        public void Potpis_iz_podesavanja()
+        {
+            var stari = Izvestaj.Potpis;
+            try
+            {
+                Izvestaj.Potpis = new PotpisIzvestaja { Ime = "Petar Petrović", Telefon = "+381 27 123 456" };
+                var telo = Izvestaj.Telo(Proveri(new Scenario()), pravila, false);
+                StringAssert.Contains(telo, "S poštovanjem,\r\n\r\nPetar Petrović\r\nPriprema saobraćaja\r\nTel. +381 27 123 456\r\nKombinovani prevoz d.o.o.");
+            }
+            finally { Izvestaj.Potpis = stari; }
         }
 
         [TestMethod]

@@ -159,6 +159,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private HashSet<string> Lista(string kljuc) =>
             new HashSet<string>((Json["codelists"]?[kljuc] as JArray)?.Select(x => ((string)x).ToUpperInvariant()) ?? Enumerable.Empty<string>());
 
+        /// <summary>Naziv rubrike za tabelu u mailu (codelists.box_names / box_names_en): "16" → "Preuzimanje na prevoz".</summary>
+        public string NazivRubrike(string rubrika, bool en) =>
+            (string)((Json["codelists"]?[en ? "box_names_en" : "box_names"] as JObject)?[rubrika ?? ""]) ?? "";
+
         /// <summary>Sistemska poruka (system_messages u JSON-u), npr. necitljivo, nema_tovarnog_lista.</summary>
         public string Sistemska(string kljuc, bool en, string podrazumevano)
         {

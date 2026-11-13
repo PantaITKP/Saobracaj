@@ -1,0 +1,13 @@
+grešaka 4, upozorenja 5, listova 1
+warning	G6	r9
+warning	R1-ISO	r1
+warning	R4-ISO	r4
+error	R16	r16
+warning	R18-SPISAK	r18
+error	R25-MASA	r25
+error	R29	r29
+error	X26	r9
+warning	X27	r9
+info	KP7-INFO	r7
+recommendation	REC3	r–
+recommendation	REC8	r1

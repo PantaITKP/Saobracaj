@@ -1,0 +1,19 @@
+grešaka 4, upozorenja 7, listova 1
+warning	R1-ISO	r1
+warning	R4-ISO	r4
+error	R9	r9
+warning	R14	r14
+recommendation	R24-NHM6	r24
+error	R29	r29
+warning	R58A	r58a
+warning	R21-MRN	r21
+error	X19	r62
+warning	X23	r9
+warning	X28	r20
+recommendation	X29-NHM6	rCIT 23
+error	KP7-NIJE-PLATILAC	r7
+recommendation	REC1	r8
+recommendation	REC3	r–
+recommendation	REC4	r57
+recommendation	REC6	r–
+recommendation	REC8	r1

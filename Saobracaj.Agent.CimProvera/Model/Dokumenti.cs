@@ -194,6 +194,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je na listu navedena pomorska deonica (luka, brod, IMDG).")] public bool PomorskaDeonica { get; set; }
         /// <summary>Šablon obrasca po kom su rubrike pročitane (K-504, K-505, ZS-EUROLOG…).</summary>
         [Interni] public string Sablon { get; set; } = "";
+        /// <summary>Okviri rubrika na strani lista (normalizovano 0–1: x0, y0, x1, y1) po poravnatom šablonu – za PDF primer.</summary>
+        [Interni] public Dictionary<string, double[]> Okviri { get; set; } = new Dictionary<string, double[]>();
+        /// <summary>Strana originalnog priloga na kojoj je list (prva strana lista).</summary>
+        [Interni] public int StranaLista { get; set; }
         /// <summary>Ako obrazac nije prepoznat ili poravnanje nije pouzdano: opis (rubrike se tada ne proveravaju – ručna provera).</summary>
         [Interni] public string NeprepoznatObrazac { get; set; } = "";
         /// <summary>Tekst zaglavlja strane (gornjih ~9 %): natpisi kao „Nem fuvarlevél / Kein Frachtbrief“ (G12).</summary>
@@ -257,6 +261,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je na spisku negde označen RID.")] public bool RidOznaka { get; set; }
         [Interni] public List<string> UnBrojevi { get; set; } = new List<string>();
         [Opis("Datum na spisku YYYY-MM-DD, ako postoji.")] public string Datum { get; set; } = "";
+        /// <summary>Na spisku je upisana masa kola (bruto/neto/tara) – r25 tada može da uputi na spisak (R25-MASA).</summary>
+        [Interni] public bool MasaUpisana { get; set; }
         [Opis("Kola na spisku.")] public List<KolaNaSpisku> Kola { get; set; } = new List<KolaNaSpisku>();
     }
 

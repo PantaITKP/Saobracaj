@@ -1,0 +1,11 @@
+grešaka 0, upozorenja 6, listova 1
+warning	G6	r9
+warning	G12	r–
+warning	R20-INCO-ZASTARELO	r20
+warning	R21-MRN	r21
+warning	R21-MRN99	r21
+warning	X28	r20
+info	KP7-INFO	r7
+recommendation	REC3	r–
+recommendation	REC6	r–
+recommendation	REC8	r1

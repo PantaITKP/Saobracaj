@@ -58,6 +58,18 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         internal static readonly string[] SpisakKljucevi =
             { "cit 23", "cit23", "cit-23", "spisak kola", "wagon list", "list of wagons", "wagenliste", "liste des wagons", "vagon listesi", "списак кола", "vykaz vozu" };
 
+        /// <summary>
+        /// Na spisku je upisana masa kola: kolona/natpis mase (bruto, neto, tara, masa, Gewicht, weight, poids, tömeg, kg) i bar jedan
+        /// red sa brojem mase (3–6 cifara, ili sa decimalama/„t“/„kg“).
+        /// </summary>
+        internal static bool MasaNaSpisku(IEnumerable<string> redovi)
+        {
+            var lista = redovi.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            var natpis = lista.Any(r => Regex.IsMatch(r, @"(?<!\p{L})(bruto|brutto|gross|neto|netto|net|tara|tare|masa|mase|težina|tezina|gewicht|weight|poids|t[öo]meg|kg)(?!\p{L})", RegexOptions.IgnoreCase));
+            var broj = lista.Count(r => Regex.IsMatch(r, @"(?<![\d.,])\d{1,3}(?:[.,]\d{1,3})\s*(?:t|kg)?(?![\d.,])|(?<![\d.,])\d{4,6}\s*kg\b|(?<![\d.,/-])\d{4,5}(?![\d.,/-])", RegexOptions.IgnoreCase));
+            return natpis && broj >= 1;
+        }
+
         /// <summary>Spisak kola i/ili tabela MRN iz redova tabele (ćelije). Izvor: "excel" ili "tekst"/"ocr".</summary>
         internal static List<Dokument> AnalizaRedova(List<string[]> redovi, PraviloKp kp, string fajl, string izvor, string opisIzvora, double pouzdanost = 0.9)
         {
@@ -117,6 +129,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                     Broj = Regex.Replace(r62.Groups[4].Value, @"\s", ""),
                 };
             spisak.KpNaveden = sviTekstovi.Any(kp.JeKp);
+            spisak.MasaUpisana = MasaNaSpisku(sviTekstovi);
 
             if (spisak.Kola.Count > 0 && (kljucSpiska || spisak.Kola.Count >= 2))
                 rez.Add(new Dokument { Tip = TipDokumenta.SpisakKola, Strane = { 1 }, Opis = "spisak kola (" + opisIzvora + ", " + spisak.Kola.Count + " kola)", Spisak = { spisak }, Fajl = fajl, Izvor = izvor });

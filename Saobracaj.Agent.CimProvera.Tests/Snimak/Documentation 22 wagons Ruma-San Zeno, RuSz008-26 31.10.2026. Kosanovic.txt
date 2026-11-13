@@ -1,0 +1,17 @@
+grešaka 3, upozorenja 8, listova 1
+warning	G6	r9
+warning	R1-ISO	r1
+warning	R4-ISO	r4
+warning	R14	r14
+error	R16	r16
+error	R29	r29
+warning	R49	r49
+warning	R21-MRN	r21
+error	R21-EWC	r21
+warning	X27	r9
+warning	X28	r20
+info	KP7-INFO	r7
+recommendation	REC3	r–
+recommendation	REC4	r57
+recommendation	REC6	r–
+recommendation	REC8	r1

@@ -37,9 +37,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L13";
+        public const string VerzijaCitaca = "L16";
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
-        public const string VerzijaTeksta = "L12";
+        public const string VerzijaTeksta = "L15";
 
         private readonly AgentConfig cfg;
         private readonly Log log;
@@ -187,6 +187,29 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var list = rez.Dokumenti.LastOrDefault(x => TipDokumenta.JeTovarniList(x.Tip))?.Cim.LastOrDefault();
             if (list == null || !string.IsNullOrEmpty(list.NeprepoznatObrazac)) return null;
             return CimParser.DopuniIzDodatnogLista(list, s);
+        }
+
+        /// <summary>
+        /// Nazivi primeraka CIM/CUV lista (polje „primerak“ u dnu obrasca) na jezicima CIT obrazaca: 1 Original, 2 Feuille de route,
+        /// 3 Bulletin d'arrivée/Douane, 4 Duplicata, 5 Souche d'expédition (IT/FR/DE/HU/SR…).
+        /// </summary>
+        private static readonly (string kljuc, string naziv)[] PrimerakNazivi =
+        {
+            ("foglio di via", "Foglio di via / Feuille de route"), ("feuille de route", "Feuille de route"),
+            ("bollettino d arrivo", "Bollettino d'arrivo / Bulletin d'arrivée"), ("bulletin d arrivee", "Bulletin d'arrivée"),
+            ("duplicato", "Duplicato / Duplicata"), ("duplicata", "Duplicata"), ("matrice", "Matrice / Souche d'expédition"), ("souche", "Souche d'expédition"),
+            ("frachtbriefdoppel", "Frachtbriefdoppel"), ("ankunftsschein", "Ankunftsschein"), ("versandschein", "Versandschein"), ("empfangsschein", "Empfangsschein"),
+            ("menetlevel", "Menetlevél"), ("erkezesi ertesito", "Érkezési értesítő"), ("masodlat", "Másodlat"), ("feladasi szelveny", "Feladási szelvény"),
+            ("izvestaj o prispecu", "Izveštaj o prispeću"), ("duplikat", "Duplikat"), ("primerak za otpravnu", "Primerak za otpravnu stanicu"),
+            ("originale", "Originale / Original"), ("eredeti", "Eredeti"), ("original", "Original"),
+        };
+
+        /// <summary>Naziv primerka sa strane (donji deo obrasca), ili null.</summary>
+        internal static string NazivPrimerka(Strana s)
+        {
+            var dno = " " + TekstUtil.Kljuc(string.Join(" ", s.Reci.Where(w => w.Cy > 0.9).Select(w => w.T))) + " ";
+            foreach (var (k, n) in PrimerakNazivi) if (dno.Contains(" " + TekstUtil.Kljuc(k))) return n;
+            return null;
         }
 
         private static readonly string[] SpisakNaslov = { "kocsijegyzek", "wagenliste", "spisak kola", "списак кола", "wagon list", "liste des wagons", "vykaz vozu" };
@@ -345,6 +368,16 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                             prethodni = null; prethodniTip = null;
                             continue;
                         }
+                        // Drugi primerak istog (neprepoznatog) lista: strana sa nazivom primerka iza neprepoznatog lista iz istog fajla – nije novi list.
+                        var primerakNep = NazivPrimerka(s);
+                        var poslednji = rez.Dokumenti.LastOrDefault();
+                        // (samo primerci 2–5; „Original“ može biti prvi primerak sledećeg lista)
+                        if (primerakNep != null && !primerakNep.StartsWith("Original") && primerakNep != "Eredeti" && poslednji != null && TipDokumenta.JeTovarniList(poslednji.Tip) && poslednji.Cim.Count == 1 && !string.IsNullOrEmpty(poslednji.Cim[0].NeprepoznatObrazac))
+                        {
+                            poslednji.Strane.Add(s.Broj); poslednji.Opis += "; str. " + s.Broj + " primerak „" + primerakNep + "“";
+                            prethodni = null; prethodniTip = null;
+                            continue;
+                        }
                         // Obrazac nije prepoznat ili poravnanje nije pouzdano: rubrike se ne proveravaju (ne nasumično) – ručna provera.
                         var opis = OpisNeprepoznatog(s, raspored);
                         var nep = new CimList { RedniBroj = ++rb, NeprepoznatObrazac = opis, Sablon = raspored.Poravnanje?.Obrazac ?? "", Zaglavlje = Zaglavlje(s) };
@@ -357,13 +390,22 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     // Nečitljive rubrike skena: ponovni OCR samo njihovog pravougaonika (veća rezolucija, srp/hrv/deu).
                     if (PonoviNecitljive(p, s, raspored, cim) is CimSablon.Rezultat bolji) { raspored = bolji; cim = CimParser.Napravi(raspored, s, Pragovi); }
                     cim.Sablon = raspored.Obrazac.Id;
+                    cim.StranaLista = s.Broj;
+                    foreach (var kv in raspored.Obrazac.Rubrike) if (raspored.NaStrani(kv.Value) is double[] ok) cim.Okviri[kv.Key] = ok.Select(v => Math.Round(v, 4)).ToArray();
                     cim.Zaglavlje = Zaglavlje(s);
                     // Prednja strana lista: ima pošiljaoca ili primaoca i bar jednu od rubrika 62/16/29 (prazan obrazac nema).
                     var imaPodataka = (cim.R1.Popunjena || cim.R4.Popunjena) && (cim.R62.Popunjena || cim.R16.Popunjena || cim.R29.Popunjena || cim.R21.Popunjena);
                     if (!imaPodataka) { prethodni = null; prethodniTip = null; continue; }
                     // Drugi primerak istog lista (original, duplikat…): OCR ga pročita sa malo drugačijim šumom, pa se poredi tolerantno.
                     var primerak = Primerak.Od(cim);
-                    if (primerci.Any(x => x.IstiList(primerak))) { prethodni = null; continue; }
+                    var isti = primerci.FirstOrDefault(x => x.IstiList(primerak));
+                    if (isti != null)
+                    {
+                        // primerak („Foglio di via“, „Duplicata“, „Ankunftsschein“…): strana ide uz isti list
+                        var dl = rez.Dokumenti.LastOrDefault(x => x.Cim.Any(c => Primerak.Od(c).IstiList(primerak)));
+                        if (dl != null) { dl.Strane.Add(s.Broj); dl.Opis += "; str. " + s.Broj + " primerak" + (NazivPrimerka(s) is string np ? " „" + np + "“" : ""); }
+                        prethodni = null; continue;
+                    }
                     primerci.Add(primerak);
                     cim.RedniBroj = ++rb;
                     var d = new Dokument
@@ -536,6 +578,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             sp.RidOznaka |= linije.Any(l => Regex.IsMatch(l.Tekst, @"\bRID\b[^\n]{0,20}\b[XxХх]\b"));
             sp.Prevoznici = linije.Select(l => l.Tekst).Where(t => Regex.IsMatch(t, @"(?<!\d)\d{4}(?!\d)") && (kp.JeKp(t) || Regex.IsMatch(t, @"cargo|rail|prevoz|train|logistic", RegexOptions.IgnoreCase))).Take(10).ToList();
             sp.Datum = CimParser.NadjiDatum(string.Join("\n", linije.Select(l => l.Tekst)), out _, out _);
+            sp.MasaUpisana |= ExcelCitac.MasaNaSpisku(linije.Select(l => l.Tekst));
             d.Spisak.Clear(); d.Spisak.Add(sp);
             d.Carinski.Clear();
             var mrn = docs.FirstOrDefault(x => x.Tip == TipDokumenta.TabelaMrn);

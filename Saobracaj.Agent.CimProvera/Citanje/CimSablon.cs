@@ -116,11 +116,24 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             public string Polje(string id, double pragOznake = 0.15, double pragPraznog = 0.05) =>
                 Gustina(id) is double g ? (g >= pragOznake ? StanjePolja.Oznaceno : g <= pragPraznog ? StanjePolja.Prazno : StanjePolja.Nesigurno) : null;
 
+            private List<Oblik> kvadratici;
+
             /// <summary>Gustina mastila u unutrašnjosti kvadratića (bez ivica okvira).</summary>
             public double? Gustina(string poljeId)
             {
                 if (Raster == null || Obrazac == null || !Obrazac.Polja.TryGetValue(poljeId, out var r0)) return null;
                 var r = NaStrani(r0);
+                // Univerzalni šablon: u drugom izdanju/štampi obrasca kvadratić može biti malo pomeren – uzima se nacrtani kvadratić
+                // slične veličine najbliži očekivanom mestu (do ±0,035 vodoravno, ±0,008 uspravno).
+                if (Obrazac.Univerzalni)
+                {
+                    kvadratici = kvadratici ?? Raster.Kvadratici();
+                    double cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, sw = r[2] - r[0], sh = r[3] - r[1];
+                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < 0.008
+                                                  && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.6 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.6)
+                                      .OrderBy(o => Math.Abs(o.Cx - cx) + Math.Abs(o.Cy - cy)).FirstOrDefault();
+                    if (k != null) r = new[] { k.X0, k.Y0, k.X1, k.Y1 };
+                }
                 double dw = (r[2] - r[0]) * 0.22, dh = (r[3] - r[1]) * 0.22;
                 return Raster.Gustina(r[0] + dw, r[1] + dh, r[2] - dw, r[3] - dh, false);
             }
@@ -135,7 +148,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
             // Sidra za poravnanje: samo odštampani nazivi (ne podaci koji slučajno liče na naziv).
             var nazivi = lista.Where(r => JeNaziv(r, potpisi)).ToList();
-            rez.Probe = Obrasci.Probaj(nazivi.Count >= 5 ? nazivi : lista, raster);
+            rez.Probe = Obrasci.Probaj(nazivi.Count >= 5 ? nazivi : lista, raster, lista);
             var naj = rez.Probe.FirstOrDefault();
             if (naj == null || !naj.Pouzdano)
             {
@@ -247,15 +260,20 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         internal HashSet<string> PotpisiNaziva(List<Rec> reci)
         {
             var rez = new HashSet<string>();
-            foreach (var g in reci.Where(r => r.Velicina > 0).GroupBy(r => r.Potpis))
+            var kandidati = new List<(string potpis, double udeo)>();
+            foreach (var g in reci.Where(r => r.Velicina > 0 && r.Font != "AcroForm").GroupBy(r => r.Potpis))
             {
                 var sve = g.ToList();
                 if (sve.Count >= 10 && sve.Count(r => Regex.IsMatch(r.T, @"^\d{1,2}[ab]?\)?$")) >= sve.Count * 0.8) { rez.Add(g.Key); continue; }
                 var duge = sve.Where(r => Norm(r.T).Length >= 3 && !Regex.IsMatch(Norm(r.T), @"^\d+$")).ToList();
                 if (duge.Count < 5) continue;
                 var uRecniku = duge.Count(r => recnik.Contains(Norm(r.T)));
-                if (uRecniku >= 5 && uRecniku >= duge.Count * 0.2) rez.Add(g.Key);
+                if (uRecniku >= 5 && uRecniku >= duge.Count * 0.2) kandidati.Add((g.Key, (double)uRecniku / duge.Count));
             }
+            // Višejezični rečnik: i podaci ponekad sadrže reči iz rečnika (Számla, fuvarlevél…). Font naziva ima daleko najveći udeo
+            // reči iz rečnika – font sa manje od polovine tog udela je font podataka.
+            var najbolji = kandidati.Select(x => x.udeo).DefaultIfEmpty(0).Max();
+            foreach (var (potpis, udeo) in kandidati) if (udeo >= najbolji * 0.5) rez.Add(potpis);
             return rez;
         }
 
@@ -274,6 +292,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Da li je reč odštampani naziv rubrike, podatak, ili kandidat (font naziva – odluka po segmentu reda).</summary>
         private VrstaReci Vrsta(Rec r, HashSet<string> potpisiNaziva)
         {
+            if (r.Font == "AcroForm") return VrstaReci.Podatak; // vrednost polja PDF obrasca je uvek podatak
             if (r.Velicina > 0)
             {
                 if (potpisiNaziva.Contains(r.Potpis)) return VrstaReci.Kandidat;

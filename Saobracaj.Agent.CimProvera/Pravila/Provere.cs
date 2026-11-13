@@ -17,26 +17,30 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             new Dictionary<string, Func<Kontekst, IEnumerable<Pogodak>>>(StringComparer.OrdinalIgnoreCase)
             {
                 // general_rules
-                ["G1"] = G1, ["G2"] = G2, ["G3"] = G3, ["G4"] = G4, ["G5"] = G5, ["G6"] = G6, ["G9"] = G9, ["G11"] = G11, ["G12"] = G12,
+                // v2.7 (interna odluka KP 2026-11-12): G2, G11, R13, R18, R21-WAGON, X10, X15, R57, R57-DEONICA i KP7 se ne proveravaju.
+                ["G1"] = G1, ["G3"] = G3, ["G4"] = G4, ["G5"] = G5, ["G6"] = G6, ["G9"] = G9, ["G12"] = G12,
                 // field_rules
                 ["R1"] = R1, ["R1-VAT"] = R1Vat, ["R1-ISO"] = k => ZemljaRecima(k, k.C.R1, "1"), ["R4"] = R4, ["R4-VAT"] = R4Vat, ["R4-ISO"] = k => ZemljaRecima(k, k.C.R4, "4"),
                 ["R7"] = R7, ["R9"] = R9, ["R10"] = R10,
-                ["R12"] = R12, ["R13"] = R13, ["R14"] = R14, ["R16"] = R16, ["R18"] = R18, ["R20"] = R20,
-                ["R20-INCO"] = R20Inco, ["R20-INCO-ZASTARELO"] = R20IncoZastarelo, ["R21-MRN99"] = R21Mrn99, ["R20-RUTA"] = R20Ruta, ["R21"] = R21, ["R22"] = X5, ["R23"] = R23, ["R24"] = R24, ["R25"] = R25,
+                ["R12"] = R12, ["R14"] = R14, ["R16"] = R16, ["R18-SPISAK"] = R18Spisak, ["R20"] = R20,
+                ["X30"] = X30,
+                ["R20-INCO"] = R20Inco, ["R20-INCO-ZASTARELO"] = R20IncoZastarelo, ["R21-MRN99"] = R21Mrn99, ["R20-RUTA"] = R20Ruta, ["R21"] = R21, ["R22"] = X5, ["R23"] = R23,
+                ["R24"] = R24, ["R24-NHM6"] = R24Nhm6, ["R25-MASA"] = R25Masa,
                 ["R26"] = k => Iznos(k, k.C.R26, "26"), ["R27"] = k => Iznos(k, k.C.R27, "27"), ["R28"] = k => Iznos(k, k.C.R28, "28"),
-                ["R29"] = R29, ["R30"] = R30, ["R58A"] = R58A, ["R62"] = R62, ["R57"] = R57, ["R49"] = R49, ["R50"] = R50,
+                ["R29"] = R29, ["R30"] = R30, ["R58A"] = R58A, ["R62"] = R62, ["R49"] = R49, ["R50"] = R50,
                 // r21_subrules
-                ["R21-DESC"] = R21Desc, ["R21-WAGON"] = R21Wagon, ["R21-UTI"] = R21Uti, ["R21-IMDG"] = R21Imdg,
+                ["R21-DESC"] = R21Desc, ["R21-UTI"] = R21Uti, ["R21-IMDG"] = R21Imdg,
                 ["R21-MRN"] = R21Mrn, ["R21-EWC"] = R21Ewc, ["R21-CUV"] = R21Cuv,
                 // cross_rules
                 ["X1"] = X1, ["X2"] = X2, ["X3"] = X3, ["X4"] = X4, ["X5"] = X5, ["X6"] = X6, ["X7"] = X7, ["X8"] = X8,
-                ["X9"] = X9, ["X10"] = X10, ["X11"] = X11, ["X12"] = X12, ["X13"] = X13, ["X14"] = X14, ["X15"] = X15,
+                ["X9"] = X9, ["X11"] = X11, ["X12"] = X12, ["X13"] = X13, ["X14"] = X14,
                 ["X16"] = X16, ["X17"] = X17, ["X19"] = X19, ["X20"] = X20, ["X21"] = X21, ["X22"] = X22, ["X23"] = X23,
-                ["X24"] = X24, ["X25"] = X25, ["X26"] = X26, ["X27"] = X27, ["X28"] = X28, ["X29"] = X29,
+                ["X24"] = X24, ["X25"] = X25, ["X26"] = X26, ["X27"] = X27, ["X28"] = X28, ["X29"] = X29, ["X29-NHM6"] = X29Nhm6,
                 // company_rules
-                ["KP7"] = KP7, ["KP57"] = KP57, ["KP2"] = KP2, ["KP3"] = KP3, ["KP5"] = KP5, ["KP6"] = KP6,
-                // recommendations (REC = redni broj u JSON listi)
-                ["REC1"] = Rec1, ["REC2"] = Rec2, ["REC3"] = Rec3, ["REC4"] = Rec4, ["REC6"] = Rec6, ["REC7"] = Rec7, ["REC8"] = Rec8,
+                ["KP7-PLATILAC"] = KP7Platilac, ["KP7-NIJE-PLATILAC"] = KP7NijePlatilac, ["KP7-NEJASNO"] = KP7Nejasno, ["KP7-INFO"] = KP7Info,
+                ["KP57"] = KP57, ["KP2"] = KP2, ["KP3"] = KP3, ["KP5"] = KP5, ["KP6"] = KP6,
+                // recommendations (stalni ID iz JSON-a; REC2 obrisan u v2.7)
+                ["REC1"] = Rec1, ["REC3"] = Rec3, ["REC4"] = Rec4, ["REC6"] = Rec6, ["REC7"] = Rec7, ["REC8"] = Rec8,
             };
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public static readonly HashSet<string> SamoKp = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "R49", "R50", "R58A", "R62", "KP2", "REC4" };
 
         /// <summary>Pravila sa filled_by = carrier u JSON-u koja ipak važe uvek (ne zavise od režima KP).</summary>
-        public static readonly HashSet<string> UvekVazi = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "R57", "KP7", "KP57" };
+        public static readonly HashSet<string> UvekVazi = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "KP57" };
 
         private static readonly string[] Incoterms = { "EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "DAF", "DDU" };
         private static readonly HashSet<string> Eu = new HashSet<string>
@@ -174,7 +178,16 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 .Where(x => x.Length == 12).Distinct().ToList();
 
         private static int BrojKolaUkupno(Kontekst k) =>
-            Math.Max(KolaR18(k).Count, k.Spiskovi.Select(s => s.s.Kola.Select(x => Cifre(x.Broj)).Distinct().Count()).DefaultIfEmpty(0).Max());
+            Math.Max(Math.Max(KolaR18(k).Count, BrojKolaUR21(k)), k.Spiskovi.Select(s => s.s.Kola.Select(x => Cifre(x.Broj)).Distinct().Count()).DefaultIfEmpty(0).Max());
+
+        /// <summary>Broj kola naveden rečima u r21: „Nr. 30 empty private wagons“, „30 kola“, „(6 Kocsi)“, „6 Wg“, „31 carri“. 0 ako ga nema.</summary>
+        internal static int BrojKolaUR21(Kontekst k) => BrojKolaUTekstu(k.C.R21.Tekst);
+
+        internal static int BrojKolaUTekstu(string t)
+        {
+            var m = Regex.Match(t ?? "", @"(?<![\d.,/])(\d{1,3})\s*(?:\p{L}+\s+){0,3}?(?:kola|vagona|vagon[ai]?|wagons?|wgs?\.?|wagen|kocsi|carri|wagons|vozů|vozu|vagoane|вагона|кола)\b", RegexOptions.IgnoreCase);
+            return m.Success && int.TryParse(m.Groups[1].Value, out var n) && n > 0 && n < 200 ? n : 0;
+        }
 
         private static int BrojUti(Kontekst k) =>
             Math.Max(k.C.R21.Uti.Select(u => N(u.Broj)).Where(x => x.Length > 0).Distinct().Count(),
@@ -199,29 +212,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 yield return P("–", "jezik").D("(" + string.Join(", ", j) + ")");
         }
 
-        private static IEnumerable<Pogodak> G2(Kontekst k)
-        {
-            var n = BrojKolaUkupno(k);
-            if (n > 1 && !ImaReferencuSporazuma(k))
-                yield return P("14", "visekola").D(k.C.R14.Popunjena
-                    ? (k.U.Engleski ? "On the note: " + n + " wagons." : "Na listu: " + n + " kola.")
-                    : (k.U.Engleski ? "Box 14 is empty, and the note covers " + n + " wagons." : "Rubrika 14 je prazna, a na listu je " + n + " kola."));
-        }
-
-        /// <summary>
-        /// Broj korisničkog sporazuma/tarife u r14 ili r13.5 ("BM-348/260401", "KP 2026", "240/2026"). Samo šifre prevoznika
-        /// ("UIC 3212, PSP RO UIC 3414") nisu broj sporazuma.
-        /// </summary>
-        private static bool ImaReferencuSporazuma(Kontekst k)
-        {
-            // šifre prevoznika ("UIC 3212", "KP UIC 3212") nisu broj sporazuma
-            bool Broj(string t) => Regex.Matches(Regex.Replace(t ?? "", @"\bUIC\W{0,3}\d{4}\b", " ", RegexOptions.IgnoreCase), @"(?<![\dA-Za-z])[A-Za-z]{0,4}[-\s]?\d[\d/.\-]{2,}").Cast<Match>()
-                .Any(m => !Regex.IsMatch(m.Value.Trim(), @"^\d{4}$"));
-            return (k.C.R14.Popunjena && Broj(k.C.R14.Tekst))
-                || k.C.R13.Stavke.Any(s => Cifre(s.Sifra) == "5" && Broj(s.Tekst))
-                || Regex.IsMatch(N(Tekst(k.C.R7) + " " + Tekst(k.C.R13)), @"\b(cim ?6|ponud\w*|offer|angebot|sporazum\w*|agreement|vereinbarung|ugovor\w*)\b");
-        }
-
         /// <summary>Rubrika 9 je prazna, a u mailu su prateći dokumenti: R9 ih navodi sve u jednoj stavci (G3/X9/X20/X22 se tada ne ponavljaju).</summary>
         private static bool R9PraznaObuhvata(Kontekst k) => !k.C.R9.Popunjena && R9Potrebni(k).Count > 0;
 
@@ -232,6 +222,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             if (!ViseKolaIliTriUti(k) || R9PraznaObuhvata(k)) yield break;
             if (k.Spiskovi.Count > 0 && R9Pominje(k, TipDokumenta.SpisakKola)) yield break;
+            if (k.Spiskovi.Count == 0 && SpisakNaveden(k) == "18" && !k.C.R9.Popunjena)
+            {
+                // r9 prazna, a r18 upućuje na spisak („WAGON LIST“): spisak se navodi i u r9 (nepriloženost prijavljuje X26)
+                yield return P("9", "spisak-r9").D((k.U.Engleski ? "Box 9 is empty, but box 18 says „" : "Rubrika 9 je prazna, a u rubrici 18 piše „") + (k.C.R18.Tekst ?? "").Replace("\n", " / ").Trim()
+                    + (k.U.Engleski ? "“ – the wagon list must also be listed in box 9." : "“ – spisak kola se navodi i u rubrici 9."));
+                yield break;
+            }
             if (k.Spiskovi.Count == 0 && SpisakNaveden(k) != null) yield break; // naveden, a nije priložen: X26
             yield return P("9", "spisak-r9").D(k.Spiskovi.Count > 0
                 ? (k.U.Engleski ? "The wagon list is attached (" : "Spisak kola je priložen (") + Fajlovi(k.Spiskovi.Select(s => s.dok)) + (k.U.Engleski ? "), but it is not listed in box 9." : "), ali nije naveden u rubrici 9.")
@@ -246,11 +243,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 yield return P("9", "dodatni-list");
         }
 
+        /// <summary>G5: rubrika 7 sa šifrom. Od v2.7 se ne odnosi na r13 i r57 (šifra i broj tačke nisu obavezni).</summary>
         private static IEnumerable<Pogodak> G5(Kontekst k)
         {
             if (k.C.R7.Stavke.Any(s => Prazno(s.Sifra) && !Prazno(s.Tekst))) yield return P("7", "sifra-7").S("field", "7");
-            if (k.C.R13.Stavke.Any(s => Prazno(s.Sifra) && !Prazno(s.Tekst))) yield return P("13", "sifra-13").S("field", "13");
-            if (k.Kp && k.C.R57.Prevoznici.Any(x => Prazno(x.Sifra) && !Prazno(x.Naziv))) yield return P("57", "sifra-57").S("field", "57");
         }
 
         private static IEnumerable<Pogodak> G6(Kontekst k)
@@ -275,16 +271,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private static IEnumerable<Pogodak> G12(Kontekst k)
         {
             if (JeInformativniIspis(k.P, k.C)) yield return P("–", "g12");
-        }
-
-        private static IEnumerable<Pogodak> G11(Kontekst k)
-        {
-            if (BrojKolaUkupno(k) <= 1) yield break;
-            if (!ImaReferencuSporazuma(k))
-            {
-                var t = (string)k.P.PoId["G11"].Json["severity_if_reference_missing"];
-                yield return new Pogodak("14", "visekola") { Tezina = t ?? Tezina.Upozorenje };
-            }
         }
 
         // =========================================================================================== field_rules
@@ -319,15 +305,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var iso = IsoPoNazivu.TryGetValue(s.NazivZemlje.Trim(), out var x) ? x : "";
             var upisano = Regex.Match(s.Tekst ?? "", @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje) + @"(?!\p{L})", RegexOptions.IgnoreCase).Value;
             if (upisano.Length == 0) upisano = s.NazivZemlje;
-            // predlog: isti upis, zemlja (poslednje pojavljivanje u adresi, ne u nazivu firme) zamenjena ISO šifrom
-            string predlog = null;
-            if (iso.Length > 0)
-            {
-                var adresa = s.Adresa ?? "";
-                var poslednje = Regex.Matches(adresa, @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje) + @"(?!\p{L})", RegexOptions.IgnoreCase).Cast<Match>().LastOrDefault();
-                if (poslednje != null) adresa = adresa.Substring(0, poslednje.Index) + iso + adresa.Substring(poslednje.Index + poslednje.Length);
-                predlog = Regex.Replace(string.Join(", ", new[] { s.Naziv, adresa }.Where(t => !Prazno(t))), @"\s*,(\s*,)+", ",").Replace(" ,", ",").Trim(' ', ',');
-            }
+            // predlog: ISO šifra sa nazivom zemlje („RS (Srbija)“) – adresa sa lista se ne prepisuje (OCR može biti nepouzdan)
+            var naziv = upisano == upisano.ToUpperInvariant() ? CultureInfo.GetCultureInfo("sr-Latn-RS").TextInfo.ToTitleCase(upisano.ToLowerInvariant()) : upisano;
+            string predlog = iso.Length > 0 ? iso + " (" + naziv + ")" : null;
             yield return P(broj, "iso-" + broj).S("country", upisano)
                 .D((k.U.Engleski ? "Country entered in words („" : "Zemlja je upisana rečima („") + upisano + "“" + (iso.Length > 0 ? (k.U.Engleski ? ") instead of the ISO 3166 code " : ") umesto ISO 3166 šifre ") + iso + "." : ")."))
                 .Pr(predlog);
@@ -402,23 +382,12 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!k.C.R12.Popunjena && Prazno(k.C.R10.SifraStanice)) yield return P("12", "r12");
         }
 
-        private static IEnumerable<Pogodak> R13(Kontekst k)
-        {
-            if (!k.C.R13.Popunjena || !k.Citljivo(k.C.R13, "13")) yield break;
-            foreach (var s in k.C.R13.Stavke)
-            {
-                var c = Cifre(s.Sifra);
-                if (c.Length == 0) continue; // bez šifre: G5
-                if (!Regex.IsMatch(c, "^[1-5]$") || Prazno(s.Tekst)) { yield return P("13", "r13"); yield break; }
-            }
-        }
-
+        /// <summary>R14 (upozorenje, v2.7): samo kada je r14 prazna – preporuka da se upiše broj ponude KP. Bilo kakav broj je dovoljan.</summary>
         private static IEnumerable<Pogodak> R14(Kontekst k)
         {
             var r = k.C.R14;
-            if (!r.Popunjena || !k.Citljivo(r, "14")) yield break;
-            var obrazac = (string)k.P.PoId["R14"].Json["pattern"] ?? @"^[12]\s*\S+";
-            if (!Regex.IsMatch(r.Tekst.Trim(), obrazac)) yield return P("14", "r14").D("(" + (k.U.Engleski ? "entered: " : "upisano: ") + "„" + r.Tekst.Trim() + "“)");
+            if (r.Popunjena || r.Status == StatusRubrike.Necitljivo) yield break;
+            yield return P("14", "r14");
         }
 
         private static IEnumerable<Pogodak> R16(Kontekst k)
@@ -439,21 +408,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (fali.Count > 0) yield return P("16", "r16").D((k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".");
         }
 
-        private static IEnumerable<Pogodak> R18(Kontekst k)
+        /// <summary>R18-SPISAK (upozorenje, v2.7 – jedini nalaz za r18): r18 upućuje na spisak kola, a spisak nije priložen.</summary>
+        private static IEnumerable<Pogodak> R18Spisak(Kontekst k)
         {
-            var r = k.C.R18;
-            if (!k.Citljivo(r, "18")) yield break;
-            if (!r.Popunjena)
-            {
-                if (k.C.Obrazac != "CUV" && k.Spiskovi.Count == 0) yield return P("18", "r18");
-                yield break;
-            }
-            foreach (var s in r.Stavke)
-            {
-                var c = Cifre(s.Sifra + s.Tekst);
-                if (c.Length >= 8 && c.Length != 12 && !Pominje(s.Tekst, TipDokumenta.SpisakKola))
-                    yield return P("18", "r18-" + c).D("(" + (s.Sifra + " " + s.Tekst).Trim() + ")");
-            }
+            if (k.Spiskovi.Count > 0 || !R18PominjeSpisak(k)) yield break;
+            yield return P("18", "r18-spisak").D((k.U.Engleski ? "Entered: „" : "Upisano: „") + Regex.Replace(k.C.R18.Tekst ?? "", @"\s+", " ").Trim() + "“.");
         }
 
         private static IEnumerable<Pogodak> R20(Kontekst k)
@@ -484,6 +443,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var inc = Incoterm(k);
             if (inc != null && Prazno(inc.Value.mesto))
                 yield return P("20", "r20-inco").S("code", inc.Value.kod);
+        }
+
+        /// <summary>X30 (upozorenje): broj kola u r21 i broj u nazivu fajla („…_31 wgs.pdf“) se razlikuju.</summary>
+        private static IEnumerable<Pogodak> X30(Kontekst k)
+        {
+            var r21 = BrojKolaUR21(k);
+            var fajl = k.Dok?.Fajl ?? "";
+            var m = Regex.Match(System.IO.Path.GetFileNameWithoutExtension(fajl), @"(?<!\d)(\d{1,3})\s*[_\- ]?\s*(?:wgs?|wagons?|wagen|kola|vagona|kocsi|carri)\b", RegexOptions.IgnoreCase);
+            if (r21 == 0 || !m.Success || !int.TryParse(m.Groups[1].Value, out var uFajlu) || uFajlu == r21) yield break;
+            var opis = Regex.Match(k.C.R21.Tekst ?? "", @"(?<![\d.,/])\d{1,3}\s*(?:\p{L}+\s+){0,3}?(?:kola|vagona|vagon[ai]?|wagons?|wgs?\.?|wagen|kocsi|carri|vagoane)\b", RegexOptions.IgnoreCase).Value;
+            yield return P("21", "x30").S("r21", "„" + opis + "“").S("fajl", System.IO.Path.GetFileName(fajl)).S("broj", m.Value);
         }
 
         /// <summary>R20-INCO-ZASTARELO: DAF/DDU (nisu u Incoterms 2020) ili mesto samo brojčanom šifrom („711“) – upozorenje.</summary>
@@ -555,13 +525,63 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!r.Popunjena && Pominje(k.C.R21.Tekst, TipDokumenta.SpisakKola) && k.Spiskovi.Any(x => x.s.Kola.Count > 0 && x.s.Kola.All(kk => !Prazno(kk.Nhm)))) yield break;
             if (!r.Popunjena) { yield return P("24", "r24"); yield break; }
             if (!k.Citljivo(r, "24")) yield break;
-            var sifre = r.Stavke.Select(s => Regex.Replace(s.Sifra + s.Tekst, @"[\s\.]", "")).Where(x => x.Length > 0).ToList();
-            if (sifre.Count == 0) sifre.Add(Regex.Replace(r.Tekst, @"[\s\.]", ""));
-            foreach (var s in sifre.Where(s => !Regex.IsMatch(s, @"^\d{6}$")))
-                yield return P("24", "r24").D(Regex.IsMatch(s, @"^\d+$")
-                        ? (k.U.Engleski ? "NHM code has " + s.Length + " digits („" + s + "“), 6 are required." : "NHM šifra ima " + s.Length + " cifre („" + s + "“), potrebno je 6.")
-                        : "(" + (k.U.Engleski ? "entered: " : "upisano: ") + "„" + s + "“)")
+            // v2.7: greška samo kada NHM ima manje od 4 cifre (4–5 cifara: preporuka R24-NHM6)
+            foreach (var s in SifreR24(k).Where(s => Cifre(s).Length < 4))
+                yield return P("24", "r24").D((k.U.Engleski ? "Entered: " : "Upisano: ") + s + " (" + Cifre(s).Length + (k.U.Engleski ? " digits)." : (Cifre(s).Length == 1 ? " cifra)." : " cifre).")))
                     .Pr(PredlogNhm(k, s));
+        }
+
+        private static List<string> SifreR24(Kontekst k)
+        {
+            var r = k.C.R24;
+            var sifre = r.Stavke.Select(s => Regex.Replace(s.Sifra + s.Tekst, @"[\s\.]", "")).Where(x => x.Length > 0).ToList();
+            if (sifre.Count == 0) sifre.Add(Regex.Replace(r.Tekst ?? "", @"[\s\.]", ""));
+            return sifre.Where(x => x.Length > 0).ToList();
+        }
+
+        /// <summary>R24-NHM6 (preporuka): NHM u r24 ima 4 ili 5 cifara – poželjno 6 (sa šifrom iz pratećeg dokumenta ako postoji).</summary>
+        private static IEnumerable<Pogodak> R24Nhm6(Kontekst k)
+        {
+            var r = k.C.R24;
+            if (!r.Popunjena || !k.Citljivo(r, "24")) yield break;
+            foreach (var s in SifreR24(k).Select(Cifre).Where(c => c.Length == 4 || c.Length == 5).Distinct())
+            {
+                var (sest, izvor) = Nhm6(k, s);
+                yield return P("24", "r24-nhm6-" + s).S("izvor", izvor ?? "")
+                    .D((k.U.Engleski ? "Entered: " : "Upisano: ") + s + " (" + s.Length + (k.U.Engleski ? " digits)." : " cifre)."))
+                    .Pr(sest);
+            }
+        }
+
+        /// <summary>
+        /// NHM sa 6 cifara za upisanu šifru od 4–5 cifara: iz carinskog dokumenta (T1, JCI) ili sa spiska kola; za prazna kola
+        /// (9921/9922) dopuna nulama. Izvor: „ (u T1: 262190)“.
+        /// </summary>
+        internal static (string sifra, string izvor) Nhm6(Kontekst k, string upisano)
+        {
+            var cif = Cifre(upisano);
+            if (Regex.IsMatch(cif, "^992[12]")) return (cif.PadRight(6, '0'), null);   // prazna kola: 9922 → 992200
+            string Oznaka(string tip)
+            {
+                switch (tip)
+                {
+                    case TipDokumenta.TranzitnaDeklaracija: return "T1";
+                    case TipDokumenta.IzvoznaDeklaracija: return "JCI";
+                    case TipDokumenta.SpisakKola: return k.U.Engleski ? "wagon list" : "spisku kola";
+                    default: return k.U.Engleski ? "customs document" : "carinskom dokumentu";
+                }
+            }
+            var tarife = k.Svi.Where(d => TipDokumenta.JeCarinski(d.Tip)).SelectMany(d => d.Carinski.SelectMany(c => c.Tarife.Select(t => (t: Cifre(t), d.Tip))))
+                .Concat(k.Spiskovi.SelectMany(s => s.s.Kola.Select(x => (t: Cifre(x.Nhm), Tip: TipDokumenta.SpisakKola))))
+                .Where(x => x.t.Length >= 6).ToList();
+            // najduže poklapanje početka (NHM 2620 → tarifna oznaka 262190 u T1), najmanje 3 cifre
+            IGrouping<string, (string t, string Tip)> nadjeno = null;
+            for (var duz = cif.Length; duz >= 3 && nadjeno == null; duz--)
+                nadjeno = tarife.Where(x => x.t.StartsWith(cif.Substring(0, duz), StringComparison.Ordinal)).GroupBy(x => x.t.Substring(0, 6)).OrderByDescending(g => g.Count()).FirstOrDefault();
+            if (nadjeno != null)
+                return (nadjeno.Key, " (" + (k.U.Engleski ? "in " : "u ") + Oznaka(nadjeno.OrderBy(x => x.Tip == TipDokumenta.SpisakKola ? 1 : 0).First().Tip) + ": " + nadjeno.Key + ")");
+            if (Regex.IsMatch(cif, "^992[12]")) return (cif.PadRight(6, '0'), null);
+            return (null, null);
         }
 
         /// <summary>Predlog NHM iz carinskog dokumenta u mailu: tarifna oznaka (prvih 6 cifara HS) koja počinje kao upisana šifra.</summary>
@@ -579,13 +599,43 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             return null;
         }
 
-        private static IEnumerable<Pogodak> R25(Kontekst k)
+        /// <summary>
+        /// Prazna kola (R25-MASA): NHM 9922 u r24 („9922“, „992200“, „99 22“), u r30 označen CUV (a ne CIM), ili u r21/r24 izričito
+        /// „prazna kola / empty wagons / Leerwagen / üres kocsi / wagons vides / vagoni vuoti…“.
+        /// </summary>
+        internal static bool PraznaKola(Kontekst k)
+        {
+            var nhm = k.C.R24.Stavke.Select(s => Cifre(s.Sifra + s.Tekst)).Concat(new[] { Cifre(k.C.R24.Tekst) });
+            if (nhm.Any(x => x.StartsWith("9922", StringComparison.Ordinal))) return true;
+            if ((k.C.R30.Cuv && !k.C.R30.Cim) || k.C.Obrazac == "CUV") return true;
+            var t = (k.C.R21.Tekst ?? "") + " " + (k.C.R24.Tekst ?? "");
+            return Regex.IsMatch(t, @"(?<!\p{L})(prazn\p{L}* (kola|vagon\p{L}*)|empty (private )?wagons?|leerwagen\p{L}*|leere wagen|[üu]res kocsi\p{L}*|wagons? vides?|vagoni vuoti)(?!\p{L})", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// R25-MASA (v2.7.1, zamenjuje R25): masa je obavezna za tovarena kola (greška), za prazna kola poželjna (preporuka).
+        /// Prazna r25 koja upućuje (r25/r21) na priloženi spisak kola sa upisanom masom nije greška. Nečitljiva r25 → CITLJIVOST.
+        /// </summary>
+        private static IEnumerable<Pogodak> R25Masa(Kontekst k)
         {
             var r = k.C.R25;
-            // Kolski list CUV (prazna kola): tara se navodi uz kola (r21/r18), r25 nije obavezna.
-            if (k.C.Obrazac == "CUV" && Regex.IsMatch((k.C.R21.Tekst ?? "") + " " + (k.C.R18.Tekst ?? ""), @"\b(tara|tare|eigengewicht)\b", RegexOptions.IgnoreCase)) yield break;
-            if (!r.Popunjena) { yield return P("25", "r25"); yield break; }
-            if (k.Citljivo(r, "25") && Prazno(r.Ukupno) && r.Pojedinacne.Count == 0) yield return P("25", "r25");
+            if (r.Popunjena && !k.Citljivo(r, "25")) yield break;          // nečitljivo (OCR): upozorenje „Rubrika 25 nije čitljiva“, ne greška
+            var prazna = !r.Popunjena || (Prazno(r.Ukupno) && r.Pojedinacne.Count == 0 && Prazno(r.Tara));
+            if (!prazna) yield break;
+            if (PraznaKola(k))
+            {
+                var def = k.P.PoId["R25-MASA"].Json;
+                yield return new Pogodak("25", "r25-masa") { Tezina = Tezina.Preporuka, Poruka = (string)def[k.U.Engleski ? "message_prazna_en" : "message_prazna"] }
+                    .Pr((string)def[k.U.Engleski ? "primer_prazna_en" : "primer_prazna"]);
+                yield break;
+            }
+            // masa na priloženom spisku kola, na koji upućuje r25 ili r21
+            var upucuje = Pominje(r.Tekst, TipDokumenta.SpisakKola) || Pominje(k.C.R21.Tekst, TipDokumenta.SpisakKola)
+                          || Regex.IsMatch(N((r.Tekst ?? "") + " " + (k.C.R21.Tekst ?? "")), @"\b(po spisku|prema spisku|vidi spisak|siehe|see (wagon )?list|lt spisak)\b");
+            if (upucuje && k.Spiskovi.Any(s => s.s.MasaUpisana)) yield break;
+            yield return P("25", "r25-masa").D(r.Status == StatusRubrike.Oznake ? (k.U.Engleski ? "Only the form labels are entered, without values." : "Upisane su samo oznake, bez vrednosti.")
+                : upucuje ? (k.U.Engleski ? "Box 25 refers to the wagon list, but no wagon list with masses is attached." : "Rubrika 25/21 upućuje na spisak kola, a spisak sa masom nije priložen.")
+                : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"));
         }
 
         private static IEnumerable<Pogodak> Iznos(Kontekst k, Iznos r, string broj)
@@ -604,7 +654,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var fali = new List<string>();
             if (Prazno(r.Mesto)) fali.Add(k.U.Engleski ? "place" : "mesto");
             if (Prazno(r.Datum)) fali.Add(k.U.Engleski ? "date of issue (year-month-day)" : "datum ispostavljanja (godina-mesec-dan)");
-            if (fali.Count > 0) yield return P("29", "r29").D((k.U.Engleski ? "Entered: " : "Upisano: ") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim() + ". " + (k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".");
+            if (fali.Count > 0) yield return P("29", "r29").D((k.U.Engleski ? "Entered: " : "Upisano: ") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim() + ". " + (k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".")
+                .Pr(!Prazno(r.Mesto) && Prazno(r.Datum) && k.Citljivo(r, "29") ? r.Mesto.Trim() + (k.U.Engleski ? ", year-month-day" : ", godina-mesec-dan") : null);
             // "mesto != naziv firme"
             if (!Prazno(r.Mesto) && (N(r.Mesto) == N(k.C.R1.Naziv) || k.P.Kp.JeKpNaziv(r.Mesto) || Regex.IsMatch(N(r.Mesto), @"\b(d o o|doo|a d|gmbh|ltd|s a|srl|kft|as)\b")))
                 yield return P("29", "r29-mesto").D((k.U.Engleski ? "Instead of a place, a company name is entered: „" : "Umesto mesta upisan je naziv firme: „") + r.Mesto + "“.");
@@ -636,46 +687,34 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!k.C.R50.Popunjena) yield return P("50", "r50");
         }
 
-        private static IEnumerable<Pogodak> R57(Kontekst k)
-        {
-            var r = k.C.R57;
-            if (!r.Popunjena || !k.Citljivo(r, "57")) yield break;
-            // Jedna stavka po rubrici: spisak prevoznika bez statusa (i bez ostalih obaveznih delova).
-            string Ime(Prevoznik x) => string.Join(" ", new[] { x.Sifra, x.Naziv }.Where(s => !Prazno(s)));
-            var bezStatusa = r.Prevoznici.Where(x => !Regex.IsMatch(x.StatusPrevoznika ?? "", "^[12]$")).Select(Ime).ToList();
-            var ostalo = new List<string>();
-            foreach (var x in r.Prevoznici)
-            {
-                var fali = new List<string>();
-                if (Prazno(x.Sifra)) fali.Add(k.U.Engleski ? "code" : "šifra");
-                if (Prazno(x.Naziv)) fali.Add(k.U.Engleski ? "name" : "naziv");
-                if (Prazno(x.Deonica)) fali.Add(k.U.Engleski ? "section" : "deonica");
-                if (fali.Count > 0) ostalo.Add(Ime(x) + " – " + string.Join(", ", fali));
-            }
-            var delovi = new List<string>();
-            if (bezStatusa.Count > 0) delovi.Add((k.U.Engleski ? "No status (1 successive / 2 performing): " : "Bez statusa (1 uzastopni / 2 izvršni): ") + string.Join(", ", bezStatusa) + ".");
-            if (ostalo.Count > 0) delovi.Add((k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join("; ", ostalo) + ".");
-            if (delovi.Count > 0) yield return P("57", "r57").D(string.Join(" ", delovi));
-        }
-
         private static IEnumerable<Pogodak> R58A(Kontekst k)
         {
             var r = k.C.R58a;
             if (!r.Popunjena) { yield return P("58a", "r58a").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
             if (!k.Citljivo(r, "58a")) yield break;
-            var fali = new List<string>();
-            if (Prazno(r.Sifra)) fali.Add(k.U.Engleski ? "company code" : "šifra preduzeća");
-            if (Prazno(r.Naziv)) fali.Add(k.U.Engleski ? "name" : "naziv");
-            if (Prazno(r.Adresa)) fali.Add(k.U.Engleski ? "address" : "adresa");
-            if (!r.Potpis && !k.C.R62.Popunjena) fali.Add(k.U.Engleski ? "signature" : "potpis");
-            if (fali.Count == 0) yield break;
-            var pg = P("58a", "r58a").D((k.U.Engleski ? "Entered: „" : "Upisano: „") + r.Tekst.Trim() + (k.U.Engleski ? "“. Missing: " : "“. Nedostaje: ") + string.Join(", ", fali) + ".");
+            // v2.7: dovoljna je šifra preduzeća (UIC) ili prepoznatljiv naziv prevoznika; naziv, adresa i potpis nisu obavezni.
+            if (ImaPrevoznika58a(k, r)) yield break;
+            var pg = P("58a", "r58a").D((k.U.Engleski ? "Entered: „" : "Upisano: „") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim()
+                + (k.U.Engleski ? "“ – no company code (UIC) and no carrier name." : "“ – nema šifre preduzeća (UIC) ni naziva prevoznika."));
             if (PecatNecitljiv(k, r))
             {
                 pg.Tezina = Tezina.Upozorenje;
                 pg.Dodatak += k.U.Engleski ? " (OCR reading of the stamp is unreliable – check manually.)" : " (OCR čitanje pečata nije pouzdano – proveriti ručno.)";
             }
             yield return pg;
+        }
+
+        /// <summary>r58a ima šifru preduzeća (UIC, 4 cifre) ili prepoznatljiv naziv prevoznika (KP u bilo kom obliku, ili reč od 4+ slova).</summary>
+        private static bool ImaPrevoznika58a(Kontekst k, Rubrika r58)
+        {
+            var r = k.C.R58a;
+            if (Regex.IsMatch(Cifre(r.Sifra), @"^\d{4}$")) return true;
+            var t = k.P.Kp.OcrIspravka(r.Tekst ?? "");
+            if (Regex.IsMatch(t, @"(?<![\d.,/\-])\d{4}(?![\d.,/\-])")) return true;
+            if (k.P.Kp.PominjeNaziv(t)) return true;
+            var reci = Regex.Matches(r.Naziv + " " + t, @"\p{L}{4,}").Cast<Match>().Select(m => m.Value.ToLowerInvariant())
+                .Where(w => !new[] { "ugovorni", "prevoznik", "naziv", "adresa", "potpis", "carrier", "contractual", "name", "address", "signature", "frachtf" }.Any(w.StartsWith));
+            return reci.Any();
         }
 
         private static IEnumerable<Pogodak> R62(Kontekst k)
@@ -707,13 +746,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 yield return P("21", "r21-sablon").D((k.U.Engleski ? "Leftover template text: „" : "Zaostali tekst šablona: „") + r.ZaostaliTekst + "“.");
             if (N(k.C.R23.Tekst) == "x" && r.UnBrojevi.Count == 0 && !UnNaSpisku(k))
                 yield return P("21", "r21-un").D(k.U.Engleski ? "Box 23 (RID) is marked, but box 21 has no UN number." : "Rubrika 23 (RID) je označena, a u rubrici 21 nema UN broja.");
-        }
-
-        private static IEnumerable<Pogodak> R21Wagon(Kontekst k)
-        {
-            var r18 = KolaR18(k);
-            var nema = k.C.R21.BrojeviKola.Select(Cifre).Where(x => x.Length == 12 && !r18.Contains(x)).ToList();
-            if (nema.Count > 0) yield return P("18", "kola-r18").D("(" + string.Join(", ", nema) + ")");
         }
 
         private static IEnumerable<Pogodak> R21Uti(Kontekst k)
@@ -873,8 +905,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (k.Spiskovi.Count == 0 || !R9Pominje(k, TipDokumenta.SpisakKola)) yield return P("9", "spisak-r9");
         }
 
-        private static IEnumerable<Pogodak> X10(Kontekst k) => R21Wagon(k);
-
         private static IEnumerable<Pogodak> X11(Kontekst k)
         {
             if (k.C.Obrazac == "CUV" || !PraznaKolaNaSpisku(k)) yield break;
@@ -906,11 +936,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!d29.HasValue) yield break;
             var d16 = Datum(k.C.R16.Datum, d29.Value.Year);
             if (d16.HasValue && d29.Value.Date > d16.Value.Date) yield return P("29", "x14");
-        }
-
-        private static IEnumerable<Pogodak> X15(Kontekst k)
-        {
-            if (k.C.ElektronskiIspis && !k.C.R13.Stavke.Any(s => Cifre(s.Sifra) == "5" && !Prazno(s.Tekst))) yield return P("13", "x15");
         }
 
         private static IEnumerable<Pogodak> X16(Kontekst k)
@@ -959,7 +984,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!ViseKolaIliTriUti(k)) yield break;
             if (k.Spiskovi.Count == 0 && SpisakNaveden(k) != null) yield break; // X26
             if (!R9PraznaObuhvata(k) && (k.Spiskovi.Count == 0 || !R9Pominje(k, TipDokumenta.SpisakKola))) yield return P("9", "spisak-r9");
-            if (!R18PominjeSpisak(k) && KolaR18(k).Count < BrojKolaUkupno(k)) yield return P("18", "spisak-r18");
         }
 
         private static IEnumerable<Pogodak> X21(Kontekst k)
@@ -1004,18 +1028,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             return null;
         }
 
-        /// <summary>X26: spisak kola je naveden u r9/r18, a nije priložen u mailu.</summary>
+        /// <summary>X26: spisak kola je naveden u r9, a nije priložen u mailu (za r18 od v2.7 važi R18-SPISAK, upozorenje).</summary>
         private static IEnumerable<Pogodak> X26(Kontekst k)
         {
-            if (k.Spiskovi.Count > 0) yield break;
-            var gde = SpisakNaveden(k);
-            if (gde == null) yield break;
-            var obe = gde == "9" && R18PominjeSpisak(k);
-            string Pomen(ListaRubrika r) => r.Stavke.Select(s => (s.Sifra + " " + s.Tekst).Trim()).Concat(new[] { (r.Tekst ?? "").Replace("\n", " / ") })
-                .FirstOrDefault(x => Pominje(x, TipDokumenta.SpisakKola) || Regex.IsMatch(N(x), @"\b(po spisku|vidi spisak|siehe)\b")) ?? "";
-            var navodi = new[] { gde == "9" || obe ? "r9 „" + Pomen(k.C.R9) + "“" : null, obe || gde == "18" ? "r18 „" + Pomen(k.C.R18) + "“" : null }.Where(x => x != null);
-            yield return P(gde, "spisak-nije-prilozen").S("field", obe ? "9 i 18" : gde)
-                .D((k.U.Engleski ? "Listed: " : "Navedeno: ") + string.Join(", ", navodi) + (k.U.Engleski ? "; no wagon list is attached to the mail." : "; spisak kola nije priložen u mailu."));
+            if (k.Spiskovi.Count > 0 || !R9Pominje(k, TipDokumenta.SpisakKola)) yield break;
+            var pomen = k.C.R9.Stavke.Select(s => (s.Sifra + " " + s.Tekst).Trim()).Concat(new[] { (k.C.R9.Tekst ?? "").Replace("\n", " / ") })
+                .FirstOrDefault(x => Pominje(x, TipDokumenta.SpisakKola)) ?? "";
+            yield return P("9", "spisak-nije-prilozen")
+                .D((k.U.Engleski ? "Box 9: „" : "U rubrici 9 piše „") + pomen + (k.U.Engleski ? "“, but no wagon list is attached to the mail." : "“, a spisak kola nije priložen u mailu."));
         }
 
         /// <summary>X27: prilog naveden u r9 (faktura, EUR.1, sertifikat…), a nije u mailu – upozorenje.</summary>
@@ -1045,17 +1065,29 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 .D("(" + string.Join(", ", docs.Select(d => NazivTipa(d.Tip, k.U.Engleski) + " " + Fajlovi(new[] { d }))) + ")").Pr(uslov);
         }
 
-        /// <summary>X29: NHM na spisku kola nema 6 cifara (ista provera kao r24).</summary>
-        private static IEnumerable<Pogodak> X29(Kontekst k)
+        /// <summary>X29 (greška): NHM na spisku kola ima manje od 4 cifre; X29-NHM6 (preporuka): 4–5 cifara (kao r24, v2.7).</summary>
+        private static IEnumerable<Pogodak> X29(Kontekst k) => NhmSpisak(k, x => x.Length < 4, "x29-", false);
+
+        private static IEnumerable<Pogodak> X29Nhm6(Kontekst k) => NhmSpisak(k, x => x.Length == 4 || x.Length == 5, "x29-nhm6-", true);
+
+        private static IEnumerable<Pogodak> NhmSpisak(Kontekst k, Func<string, bool> los, string kljuc, bool sest)
         {
             foreach (var (dok, s) in k.Spiskovi)
             {
-                var lose = s.Kola.Select(x => Cifre(x.Nhm)).Where(x => x.Length > 0 && x.Length != 6 && !(x.Length == 8)).ToList();
+                var lose = s.Kola.Select(x => Cifre(x.Nhm)).Where(x => x.Length > 0 && los(x)).ToList();
                 if (lose.Count == 0) continue;
                 var g = lose.GroupBy(x => x).OrderByDescending(x => x.Count()).First();
-                yield return P("CIT 23", "x29-" + dok.Fajl).S("nhm", g.Key)
-                    .D((k.U.Engleski ? "Wagon list (" : "Spisak kola (") + Fajlovi(new[] { dok }) + "): NHM „" + g.Key + "“ " + (k.U.Engleski ? "has " + g.Key.Length + " digits in " + lose.Count + " rows." : "ima " + g.Key.Length + " cifre u " + lose.Count + " redova."))
-                    .Pr(PredlogNhm(k, g.Key));
+                var opis = (k.U.Engleski ? "Wagon list (" : "Spisak kola (") + Fajlovi(new[] { dok }) + "): " + (k.U.Engleski ? "entered " : "upisano ") + g.Key + " (" + g.Key.Length
+                           + (k.U.Engleski ? " digits) in " + lose.Count + " rows." : " cifre) u " + lose.Count + " " + (lose.Count % 10 == 1 && lose.Count % 100 != 11 ? "redu." : "redova."));
+                var pg = P("CIT 23", kljuc + dok.Fajl).S("nhm", g.Key).D(opis);
+                if (sest)
+                {
+                    var (sifra, izvor) = Nhm6(k, g.Key);
+                    pg.S("izvor", izvor ?? "").Pr(sifra);
+                    if (izvor != null) pg.Dodatak = pg.Dodatak.TrimEnd('.') + (k.U.Engleski ? "; 6 digits preferred" : "; poželjno 6 cifara") + izvor + ".";
+                }
+                else pg.Pr(PredlogNhm(k, g.Key));
+                yield return pg;
             }
         }
 
@@ -1080,23 +1112,141 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         private static bool KpUgovorni(Kontekst k) => k.P.Kp.JeKpSifra(k.C.R62.Preduzece) || k.P.Kp.JeKpSifra(k.C.R58a.Sifra);
 
-        /// <summary>
-        /// KP7: u r7 mora biti naveden KP kao platilac ili prevoznik za RS deonicu – bilo kojim oblikom naziva (KP, K-prevoz,
-        /// Kombinovani prevoz, КП, IŽS: KP…) ili šifrom 3212 uz „UIC“ / „Frachtzahler“. Važi za svaki CIM/CUV.
-        /// </summary>
-        private static IEnumerable<Pogodak> KP7(Kontekst k)
+        // ------------------------------------------------------------------ r7: platilac za deonicu kroz Srbiju (v2.7)
+
+        /// <summary>Jedan zapis o platiocu u r7: „Frachtzahler RS ist …“, „Payer SRB/HR/SI/IT is …“, „16. Frachtzahler: …“.</summary>
+        internal sealed class PlatilacR7
+        {
+            public string Zapis = "", Opseg = "", Naziv = "";
+            /// <summary>Opseg pokriva Srbiju (SRB, RS, IŽS, ŽS, Srbija… ili deonica KP).</summary>
+            public bool Srbija;
+            /// <summary>Platilac za ceo put, bez deonica (pokriva i Srbiju).</summary>
+            public bool CeoPut;
+            /// <summary>Platilac je KP (KP, K prevoz, Kombinovani prevoz, КП, 3212).</summary>
+            public bool Kp;
+            public bool PokrivaSrbiju => Srbija || CeoPut;
+        }
+
+        internal sealed class AnalizaR7
+        {
+            public List<PlatilacR7> Platioci = new List<PlatilacR7>();
+            /// <summary>Zapisi bez reči platilac/prevoznik sa KP uz oznaku srpske deonice („16. IŽS: KP 3212“).</summary>
+            public List<string> Nejasni = new List<string>();
+            public IEnumerable<PlatilacR7> ZaSrbiju => Platioci.Where(p => p.PokrivaSrbiju && p.Naziv.Length > 0);
+        }
+
+        private static readonly Regex RecPlatioca = new Regex(@"(?<!\p{L})(?:freight\s*payer|payeur\s+du\s+fret|frachtzahler|platilac|platioc\p{L}*|payeur|payer|zahler|k[öo]lts[ée]gvisel[őöo]\p{L}*)(?!\p{L})", RegexOptions.IgnoreCase);
+        private static readonly Regex RecPrevoznika = new Regex(@"(?<!\p{L})(?:prevoznik\p{L}*|bef[öo]e?rderer|carrier|transporteur|vettore|fuvaroz[óo]\p{L}*)(?!\p{L})", RegexOptions.IgnoreCase);
+        private static readonly Regex Razdvajac = new Regex(@"\s*(?::|=|(?<!\p{L})(?:is|ist|je|est)(?!\p{L})|\s[–-]\s)\s*", RegexOptions.IgnoreCase);
+        private static readonly HashSet<string> SrpskeOznake = new HashSet<string> { "srb", "rs", "srbija", "srbiji", "srbije", "serbia", "serbien", "szerbia", "izs", "zs" };
+        private static readonly HashSet<string> ReciOpsega = new HashSet<string>
+        {
+            "za", "deonicu", "deonica", "deonici", "deonice", "ceo", "celu", "put", "relaciju", "relacija", "for", "the", "section", "sections", "whole", "route", "entire",
+            "fuer", "fur", "auf", "die", "der", "strecke", "ganze", "gesamte", "pour", "la", "le", "de", "du", "sur", "az", "a", "szakaszon", "szakasz", "on", "in", "i", "und", "and", "et",
+        };
+
+        /// <summary>Platioci iz teksta r7 (sa opsegom deonica) i nejasni zapisi KP uz oznaku srpske deonice.</summary>
+        internal static AnalizaR7 AnalizirajR7(string tekst, PraviloKp kp)
+        {
+            var a = new AnalizaR7();
+            // red koji se završava zarezom/tačkom-zarezom završava zapis („Payer for SZ is Ferest Rail,⏎CIM 6§6: …“)
+            var t = Regex.Replace(Regex.Replace(tekst ?? "", @"\s*[,;]\s*\r?\n\s*", "; "), @"\s*\r?\n\s*", " ");
+            t = Regex.Replace(t, @"[ \t]{2,}", " ");
+            var granice = RecPlatioca.Matches(t).Cast<Match>().Select(m => m.Index)
+                .Concat(RecPrevoznika.Matches(t).Cast<Match>().Select(m => m.Index))
+                .Concat(Regex.Matches(t, ";").Cast<Match>().Select(m => m.Index)).OrderBy(x => x).ToList();
+            bool SamoOpseg(string s) => Regex.Matches(s, @"\p{L}+").Count > 0 && Regex.Matches(s, @"[\p{L}\d]+").Cast<Match>().All(w =>
+                ReciOpsega.Contains(PraviloKp.Normalizuj(w.Value)) || Regex.IsMatch(w.Value, @"^[A-ZŠĐČĆŽÁÉÖŐÜ]{2,5}$"));
+            foreach (Match m in RecPlatioca.Matches(t))
+            {
+                var kraj = granice.FirstOrDefault(g => g > m.Index);
+                if (kraj <= m.Index) kraj = t.Length;
+                var zapis = t.Substring(m.Index, kraj - m.Index).Trim(' ', ';', ',');
+                var klauza = t.Substring(m.Index + m.Length, kraj - m.Index - m.Length);
+                var predznak = Regex.Match(t.Substring(0, m.Index), @"([A-Z]{2,4})_$").Groups[1].Value;   // „CH_Freightpayer:“
+                var raz = Razdvajac.Match(klauza);
+                if (!raz.Success) continue;
+                var opseg = (predznak + " " + klauza.Substring(0, raz.Index)).Trim();
+                var ostatak = klauza.Substring(raz.Index + raz.Length);
+                // „Frachtzahler fuer: SRB: VTG …“ – oznaka deonice posle prvog razdvajača
+                for (Match x; (x = Regex.Match(ostatak, @"^\s*([^:;,]{1,30}?)\s*(?::|(?<!\p{L})(?:is|ist)(?!\p{L}))\s*", RegexOptions.IgnoreCase)).Success && SamoOpseg(x.Groups[1].Value);)
+                {
+                    opseg = (opseg + " " + x.Groups[1].Value).Trim();
+                    ostatak = ostatak.Substring(x.Length);
+                }
+                var naziv = Regex.Split(ostatak, @"(?<=\p{L}{2}|\d)\.\s+(?=\p{Lu}\p{Ll})|,\s*(?:[A-Z]{2,4})\s+(?:ist|is)\s|\s/\s")[0].Trim(' ', ',', ';', '.', ':', '-', '–');
+                if (naziv.Length > 80) naziv = naziv.Substring(0, 77).TrimEnd() + "…";
+                var sep = raz.Value.Trim();
+                zapis = Regex.Replace(m.Value + " " + opseg + (sep == ":" ? ": " : " " + sep + " ") + naziv, @"\s+", " ").Replace(" :", ":").Trim();
+                var tokeni = PraviloKp.Normalizuj(opseg).Split(' ').Where(x => x.Length > 0).ToList();
+                var p = new PlatilacR7
+                {
+                    Zapis = zapis, Opseg = opseg, Naziv = naziv,
+                    Srbija = tokeni.Any(SrpskeOznake.Contains) || kp.PominjeNaziv(opseg),
+                    CeoPut = tokeni.All(x => ReciOpsega.Contains(x) || Regex.IsMatch(x, @"^\d+$")),
+                    Kp = naziv.Length > 0 && (kp.PominjeNaziv(naziv) || Regex.IsMatch(kp.OcrIspravka(naziv), @"(?<!\d)" + kp.Uic + @"(?!\d)")),
+                };
+                a.Platioci.Add(p);
+            }
+            // „16. IŽS: KP 3212“ – bez reči platilac/prevoznik
+            foreach (var seg in Regex.Split(tekst ?? "", @"[;\n]").Select(x => x.Trim()).Where(x => x.Length > 0))
+            {
+                if (RecPlatioca.IsMatch(seg) || RecPrevoznika.IsMatch(seg)) continue;
+                var m = Regex.Match(seg, @"(?<!\p{L})(?:SRB|RS|IŽS|IZS|ŽS|ZS|Srbija|Serbia|Serbien)\s*:\s*(.+)$", RegexOptions.IgnoreCase);
+                if (m.Success && kp.JeKp(m.Groups[1].Value)) a.Nejasni.Add(seg);
+            }
+            return a;
+        }
+
+        private static AnalizaR7 R7Analiza(Kontekst k)
+        {
+            var r = k.C.R7;
+            var t = !Prazno(r.Tekst) ? r.Tekst : string.Join("\n", r.Stavke.Select(s => (s.Sifra + " " + s.Tekst).Trim()));
+            return AnalizirajR7(t, k.P.Kp);
+        }
+
+        /// <summary>KP7-PLATILAC (greška): u r7 nije naveden platilac za deonicu kroz Srbiju (ni platilac za ceo put).</summary>
+        private static IEnumerable<Pogodak> KP7Platilac(Kontekst k)
         {
             var r = k.C.R7;
             if (r.Popunjena && !k.Citljivo(r, "7")) yield break;
-            var t = Tekst(r);
-            if (k.P.Kp.PominjeNaziv(t) || k.P.Kp.SifraUzOznaku(t)) yield break;
-            // Platilac koji je već upisan ostaje; KP se dodaje kao PREVOZNIK za RS deonicu (ne menja se platilac).
-            var platilac = Regex.Match(t ?? "", @"(?:payer|frachtzahler|platilac|platioc\w*|zahler)\b[^.;\n]*?\b(?:is|ist|je|:)\s+([^.,;\n]{3,60})", RegexOptions.IgnoreCase).Groups[1].Value.Trim();
-            var detalj = !r.Popunjena ? (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")
-                : (k.U.Engleski ? "KP is not mentioned in box 7" : "U rubrici 7 KP nije naveden")
-                  + (platilac.Length > 0 ? (k.U.Engleski ? " (payer: " + platilac + " – keep it, add KP as the carrier)." : " (platilac: " + platilac + " – ostaje, dodati KP kao prevoznika).") : ".");
-            yield return P("7", "kp7").D(detalj)
-                .Pr(k.U.Engleski ? "16. Carrier for section SRB: KP – Kombinovani prevoz d.o.o., UIC 3212" : "16. Prevoznik za deonicu SRB: KP – Kombinovani prevoz d.o.o., UIC 3212");
+            var a = R7Analiza(k);
+            if (a.ZaSrbiju.Any() || a.Nejasni.Count > 0) yield break;
+            var ostali = a.Platioci.Where(p => p.Naziv.Length > 0).Select(p => p.Zapis).ToList();
+            yield return P("7", "kp7-platilac").D(!r.Popunjena ? (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")
+                : ostali.Count > 0 ? (k.U.Engleski ? "No payer is stated for the section through Serbia; entered only: „" : "Nije naveden platilac za deonicu kroz Srbiju; upisano je samo: „") + string.Join("“; „", ostali) + "“."
+                : (k.U.Engleski ? "No payer for the section through Serbia is stated in box 7." : "U rubrici 7 nije naveden platilac za deonicu kroz Srbiju."));
+        }
+
+        /// <summary>KP7-NIJE-PLATILAC (greška): KP je naveden kao platilac za srpsku deonicu ili za ceo put.</summary>
+        private static IEnumerable<Pogodak> KP7NijePlatilac(Kontekst k)
+        {
+            var r = k.C.R7;
+            if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
+            var kp = R7Analiza(k).ZaSrbiju.Where(p => p.Kp).ToList();
+            if (kp.Count > 0) yield return P("7", "kp7-nije-platilac").D((k.U.Engleski ? "Kombinovani prevoz is stated as the payer for the section through Serbia: „" : "Kombinovani prevoz je naveden kao platilac za deonicu kroz Srbiju: „")
+                + string.Join("“; „", kp.Select(p => p.Zapis)) + (k.U.Engleski ? "“. KP can be the payer only for sections outside Serbia." : "“. KP može biti platilac samo za deonice van Srbije."));
+        }
+
+        /// <summary>KP7-NEJASNO (upozorenje): „16. IŽS: KP 3212“ – nije jasno da li je KP platilac ili prevoznik.</summary>
+        private static IEnumerable<Pogodak> KP7Nejasno(Kontekst k)
+        {
+            var r = k.C.R7;
+            if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
+            var a = R7Analiza(k);
+            if (a.Nejasni.Count > 0 && !a.ZaSrbiju.Any()) yield return P("7", "kp7-nejasno").D((k.U.Engleski ? "It is not clear whether KP is stated as the payer or as the carrier: „" : "Nije jasno da li je KP naveden kao platilac ili kao prevoznik: „")
+                + string.Join("“; „", a.Nejasni) + "“.");
+        }
+
+        /// <summary>KP7-INFO (informacija): platilac za deonicu kroz Srbiju (nije KP).</summary>
+        private static IEnumerable<Pogodak> KP7Info(Kontekst k)
+        {
+            var r = k.C.R7;
+            if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
+            var za = R7Analiza(k).ZaSrbiju.ToList();
+            if (za.Count == 0 || za.Any(p => p.Kp)) yield break;
+            var p0 = za.FirstOrDefault(p => p.Srbija) ?? za[0];
+            yield return P("7", "kp7-info").S("payer", p0.Naziv);
         }
 
         /// <summary>
@@ -1118,7 +1268,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!k.P.Kp.JeKpSifra(k.C.R62.Preduzece)) yield break;
             var r = k.C.R58a;
             if (r.Popunjena && !k.Citljivo(r, "58a")) yield break; // nečitljivo → samo upozorenje CITLJIVOST
-            if (!r.Popunjena || !k.P.Kp.JeKpSifra(r.Sifra) || !k.P.Kp.JeKpNaziv(r.Naziv) || Prazno(r.Adresa) || !r.Potpis)
+            // v2.7: dovoljno je 3212 ili bilo koji oblik naziva KP; adresa i potpis se ne traže
+            if (!r.Popunjena || !(k.P.Kp.JeKpSifra(r.Sifra) || k.P.Kp.JeKp(r.Tekst) || k.P.Kp.JeKp(r.Naziv)))
             {
                 var pg = P("58a", "r58a");
                 if (r.Popunjena && PecatNecitljiv(k, r)) pg.Tezina = Tezina.Upozorenje;
@@ -1129,11 +1280,16 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// <summary>Skenirani pečat r58a koji OCR ne čita (nema ni jedne reči od 4+ slova): nesigurno čitanje – upozorenje, ne greška.</summary>
         private static bool PecatNecitljiv(Kontekst k, Rubrika r) => k.Ocr && Regex.Matches(r.Tekst ?? "", @"\p{L}{4,}").Count == 0;
 
+        /// <summary>
+        /// KP3 (greška, v2.7): KP mora biti naveden u r13 kao prevoznik – bilo koji oblik (KP, K prevoz, Kombinovani prevoz, КП,
+        /// UIC 3212, samo 3212), u bilo kom delu r13 (i sa dodatnog lista); deonica i broj tačke nisu potrebni.
+        /// </summary>
         private static IEnumerable<Pogodak> KP3(Kontekst k)
         {
-            var t3 = k.C.R13.Stavke.Where(s => Cifre(s.Sifra) == "3").ToList();
-            if (t3.Count == 0 && k.C.R57.Prevoznici.Count == 0) yield break;
-            if (!t3.Any(s => k.P.Kp.JeKp(s.Tekst))) yield return P("13", "kp-r13");
+            var r = k.C.R13;
+            if (r.Popunjena && !k.Citljivo(r, "13")) yield break;
+            if (k.P.Kp.JeKp(Tekst(r))) yield break;
+            yield return P("13", "kp-r13").D(r.Popunjena ? (k.U.Engleski ? "KP is not stated in box 13." : "U rubrici 13 KP nije naveden.") : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"));
         }
 
         private static IEnumerable<Pogodak> KP5(Kontekst k)
@@ -1161,11 +1317,6 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         // =========================================================================================== recommendations
 
         private static IEnumerable<Pogodak> Rec1(Kontekst k) { if (!k.C.R8.Popunjena) yield return P("8", "rec1"); }
-
-        private static IEnumerable<Pogodak> Rec2(Kontekst k)
-        {
-            if (!Regex.IsMatch(N(Tekst(k.C.R7) + " " + Tekst(k.C.R13) + " " + k.C.R14.Tekst), @"\b(ponud\w*|offer|angebot|cim ?6)\b")) yield return P("7", "rec2");
-        }
 
         private static IEnumerable<Pogodak> Rec3(Kontekst k)
         {

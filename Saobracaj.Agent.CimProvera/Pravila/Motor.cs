@@ -98,6 +98,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Dodatak;
         /// <summary>Predlog ispravnog upisa iz pratećih dokumenata ili drugog dela lista (ima prednost nad formatom iz JSON-a).</summary>
         public string Predlog;
+        /// <summary>Poruka za ovaj slučaj umesto poruke pravila (npr. R25-MASA za prazna kola).</summary>
+        public string Poruka;
 
         public Pogodak(string rubrika, string kljuc = null) { Rubrika = rubrika; Kljuc = kljuc; }
         public Pogodak S(string k, string v) { V[k] = v; return this; }
@@ -192,8 +194,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         }
 
         /// <summary>
-        /// Jedna rubrika, jedna stavka: nalazi iste rubrike i iste težine se spajaju (prvi ostaje, konkretni nalazi ostalih se
-        /// dopisuju, ostala pravila idu u Takodje). Opšti nalazi (bez rubrike) i preporuke se ne spajaju, ali se ne ponavljaju.
+        /// Jedan nalaz = jedan red (v2.7.1): spajaju se samo pogoci ISTOG pravila u istoj rubrici i iste težine (npr. dve NHM šifre);
+        /// različita pravila iste rubrike su posebni redovi. Opšti nalazi (bez rubrike) i preporuke se ne ponavljaju.
         /// </summary>
         internal static List<Nalaz> SpojiPoRubrici(List<Nalaz> nalazi)
         {
@@ -202,7 +204,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             {
                 var prvi = n.Rubrika == "–" || n.Tezina == Tezina.Preporuka || n.Tezina == Tezina.Info
                     ? rez.FirstOrDefault(x => x.Tezina == n.Tezina && x.Tekst == n.Tekst)
-                    : rez.FirstOrDefault(x => x.Rubrika == n.Rubrika && x.Tezina == n.Tezina && x.Pravilo != "CITLJIVOST" && n.Pravilo != "CITLJIVOST");
+                    : rez.FirstOrDefault(x => x.Rubrika == n.Rubrika && x.Tezina == n.Tezina && x.Pravilo == n.Pravilo && n.Pravilo != "CITLJIVOST");
                 if (prvi == null) { rez.Add(n); continue; }
                 if (prvi.Tekst == n.Tekst) continue;
                 var dodatak = !string.IsNullOrEmpty(n.Detalj) ? n.Detalj : n.Uputstvo;
@@ -211,7 +213,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     prvi.Detalj = string.IsNullOrEmpty(prvi.Detalj) ? dodatak : prvi.Detalj.TrimEnd() + (Regex.IsMatch(prvi.Detalj, @"[.!?)]$") ? " " : "; ") + dodatak;
                     prvi.Tekst = prvi.Uputstvo + " " + prvi.Detalj;
                 }
-                if (string.IsNullOrEmpty(prvi.Primer) && !string.IsNullOrEmpty(n.Primer)) prvi.Primer = n.Primer;
+                // svaki spojeni nalaz zadržava svoj primer ispravnog upisa
+                if (string.IsNullOrEmpty(prvi.Primer)) prvi.Primer = n.Primer ?? "";
+                else if (!string.IsNullOrEmpty(n.Primer) && prvi.Primer.IndexOf(n.Primer, StringComparison.OrdinalIgnoreCase) < 0) prvi.Primer += " / " + n.Primer;
                 prvi.Takodje.Add(n);
                 prvi.Takodje.AddRange(n.Takodje);
             }
@@ -245,7 +249,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var v = new Dictionary<string, string>(pg.V);
             if (!v.ContainsKey("field")) v["field"] = pg.Rubrika;
-            var uputstvo = Regex.Replace(def.Poruka(en), @"\{(\w+)\}", m => v.TryGetValue(m.Groups[1].Value, out var x) ? x : m.Value);
+            var uputstvo = Regex.Replace(pg.Poruka ?? def.Poruka(en), @"\{(\w+)\}", m => v.TryGetValue(m.Groups[1].Value, out var x) ? x : m.Value);
             // Upisane su samo oznake obrasca bez vrednosti („Tara: … Netto: …“): konkretan opis umesto „rubrika je prazna“.
             var dodatak = pg.Dodatak;
             if (RubrikaLista(cim, pg.Rubrika)?.Status == StatusRubrike.Oznake && (string.IsNullOrEmpty(dodatak) || dodatak.Contains("prazna") || dodatak.Contains("empty")))
