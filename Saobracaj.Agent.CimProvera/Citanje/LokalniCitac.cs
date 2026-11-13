@@ -497,6 +497,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     case TipDokumenta.DozvolaOtpad:
                         var co = new CarinskiPodaci(); DopuniEwc(co, s); dok.Carinski.Add(co);
                         break;
+                    case TipDokumenta.Cit7:
+                        // v2.8.1: naknadni zahtev se čita (izmene, identifikacija, podnosilac) – proverava se uz tovarni list na koji se odnosi
+                        dok.Cit7 = Cit7Citac.Procitaj(s);
+                        dok.Opis = "CIT 7 – naknadni zahtev" + (dok.Cit7.Identifikacija.Length > 0 ? " za " + dok.Cit7.Identifikacija : "")
+                                   + (dok.Cit7.Izmene.Count > 0 ? " (izmena r" + string.Join(", r", dok.Cit7.Izmene.Select(x => x.Rubrika)) + ")" : "");
+                        break;
                     case TipDokumenta.DodatniList:
                         dok.DodatniList.Add(new DodatniListPodaci
                         {
@@ -770,17 +776,36 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     var o = r.NaStrani(kv.Value);
                     bool Unutra(Rec w) => w.Cx >= o[0] && w.Cx <= o[2] && w.Cy >= o[1] && w.Cy <= o[3];
                     var postojece = r.Rubrika(rub).Where(Unutra).ToList();
-                    var isecak = Slike.Isecak(slika, o[0], o[1], o[2], o[3], true);
-                    var (t, pouzd) = ocr.Cifre(isecak, "0123456789-");
-                    var dbg = Environment.GetEnvironmentVariable("CIMPROVERA_ISECCI");
-                    if (!string.IsNullOrEmpty(dbg)) { Directory.CreateDirectory(dbg); File.WriteAllBytes(Path.Combine(dbg, Regex.Replace(p.Naziv, @"[^\w]", "_") + "_s" + s.Broj + "_k" + kv.Key + "_" + Regex.Replace(t ?? "", @"\W", "") + "_" + (int)(pouzd * 100) + ".png"), isecak); }
-                    t = Regex.Replace(t ?? "", @"[^\d\- ]", "").Trim();
-                    var cifara = t.Count(char.IsDigit);
-                    // Tesseract sa ograničenim skupom znakova često ne daje pouzdanost – prihvata se kada broj cifara odgovara kućici.
                     var ocekivano = OcekivanoCifara(kv.Key);
-                    var odgovara = ocekivano != null && ocekivano.Contains(cifara) && Regex.IsMatch(t, @"^[\d\-]+$");
+                    var dbg = Environment.GetEnvironmentVariable("CIMPROVERA_ISECCI");
+                    // dva isečka: osnovni i očišćen (proširen, bez isprekidanih pregrada i tačaka) – v2.8.1
+                    var pokusaji = new List<(string t, double p, bool odg)>();
+                    var cist = Slike.IsecakCifara(slika, o[0], o[1], o[2], o[3]);
+                    foreach (var (vrsta, isecak, rec) in new[] { ("a", Slike.Isecak(slika, o[0], o[1], o[2], o[3], true), false), ("b", cist, false), ("c", cist, true) })
+                    {
+                        var (t0, p0) = ocr.Cifre(isecak, "0123456789-", rec);
+                        if (!string.IsNullOrEmpty(dbg)) { Directory.CreateDirectory(dbg); File.WriteAllBytes(Path.Combine(dbg, Regex.Replace(p.Naziv, @"[^\w]", "_") + "_s" + s.Broj + "_k" + kv.Key + vrsta + "_" + Regex.Replace(t0 ?? "", @"\W", "") + "_" + (int)(p0 * 100) + ".png"), isecak); }
+                        t0 = Regex.Replace(t0 ?? "", @"[^\d\- ]", "").Trim();
+                        var n0 = t0.Count(char.IsDigit);
+                        pokusaji.Add((t0, p0, ocekivano != null && ocekivano.Contains(n0) && Regex.IsMatch(t0, @"^[\d\-]+$")));
+                    }
+                    // i cifre opšteg OCR-a u kućici su jedan glas (kada imaju očekivan broj cifara)
+                    var opste = string.Concat(postojece.OrderBy(w => w.X0).Select(w => Regex.Replace(w.T, @"[^\d]", "")));
+                    if (ocekivano != null && ocekivano.Contains(opste.Length)) pokusaji.Add((opste, postojece.Average(w => w.Pouzdanost), true));
+                    // glasanje: čitanje sa očekivanim brojem cifara koje daje više isečaka; nerešeno → veća pouzdanost
+                    var odg = pokusaji.Where(x => x.odg).ToList();
+                    var glasovi = odg.GroupBy(x => x.t).Select(g => (t: g.Key, n: g.Count(), p: g.Max(x => x.p))).OrderByDescending(g => g.n).ThenByDescending(g => g.p).ToList();
+                    var izbor = glasovi.Count > 0 ? pokusaji.First(x => x.odg && x.t == glasovi[0].t) : pokusaji.OrderByDescending(x => x.p).First();
+                    var t = izbor.t; var pouzd = glasovi.Count > 0 ? glasovi[0].p : izbor.p;
+                    var cifara = t.Count(char.IsDigit);
+                    var odgovara = izbor.odg;
                     if (cifara == 0 || (!odgovara && pouzd < 0.6)) continue;
-                    if (odgovara) pouzd = Math.Max(pouzd, 0.85);
+                    // Tesseract sa ograničenim skupom znakova često ne daje pouzdanost – prihvata se kada broj cifara odgovara kućici.
+                    // v2.8.1: kada isečci daju RAZLIČITE brojeve bez većine („498900“ / „158900“), čitanje nije pouzdano (≤ 0,5).
+                    var vecina = glasovi.Count > 0 && glasovi[0].n >= 2;
+                    var sporno = glasovi.Count > 1 && !vecina;
+                    if (odgovara && !sporno) pouzd = Math.Max(pouzd, vecina ? 0.9 : 0.85);
+                    else if (sporno) pouzd = Math.Min(pouzd, 0.5);
                     if (cifara < postojece.Sum(w => w.T.Count(char.IsDigit)) && postojece.Average(w => w.Pouzdanost) >= pouzd) continue;
                     var nova = new Rec { T = t, X0 = o[0], Y0 = o[1], X1 = o[2], Y1 = o[3], Pouzdanost = Math.Round(pouzd, 2) };
                     if (!r.Rubrike.TryGetValue(rub, out var lista)) r.Rubrike[rub] = lista = new List<Rec>();

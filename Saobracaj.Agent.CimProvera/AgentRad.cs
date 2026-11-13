@@ -45,10 +45,11 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { log.Greska("Pravila nisu učitana", ex); Upozori(stanje, "pravila", "Pravila nisu učitana: " + ex.Message); return 1; }
 
             using var citac = new LokalniCitac(cfg, log, pravila.Kp);
-            var obrada = new Obrada(pravila, citac, log, cfg.PragPouzdanosti);
+            var obrada = new Obrada(pravila, citac, log, cfg.PragPouzdanosti) { RanijiListovi = () => IstorijaListova.Ucitaj(cfg.StanjeFolder) };
             int obradjeno = 0;
             try
             {
+                log.Info("Program " + VerzijaPrograma + ", pravila " + pravila.Verzija + ".");
                 log.Info("Sanduče: " + cfg.Nalog + " (From " + cfg.PosiljalacIzvestaja + ", Reply-To " + cfg.ReplyTo + (cfg.Rezim == Rezim.Test ? ", test primalac " + cfg.IzvestajAdresa : "") + ", režim " + cfg.Rezim + ")");
                 using (var s = new Sanduce(cfg))
                 {
@@ -143,6 +144,27 @@ namespace Saobracaj.Agent.CimProvera
         }
 
         private static string Regex(string s) => System.Text.RegularExpressions.Regex.Replace(s ?? "", @"\s+", " ").Trim();
+
+        /// <summary>Verzija programa (csproj &lt;Version&gt;), npr. „2.8.1“.</summary>
+        internal static string VerzijaPrograma
+        {
+            get
+            {
+                var v = typeof(AgentRad).Assembly.GetName().Version;
+                return v == null ? "?" : v.Major + "." + v.Minor + "." + v.Build;
+            }
+        }
+
+        /// <summary>Telo maila kao običan tekst (TextBody, inače HtmlBody bez oznaka; citat u HTML-u – blockquote – se izbacuje).</summary>
+        internal static string TeloMaila(MimeMessage m)
+        {
+            if (!string.IsNullOrWhiteSpace(m.TextBody)) return TekstUtil.Ocisti(m.TextBody);
+            var h = m.HtmlBody ?? "";
+            h = System.Text.RegularExpressions.Regex.Replace(h, @"<(blockquote|style|script|head)\b.*?</\1>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+            h = System.Text.RegularExpressions.Regex.Replace(h, @"<br\s*/?>|</p>|</div>|</tr>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            h = System.Text.RegularExpressions.Regex.Replace(h, @"<[^>]+>", "");
+            return TekstUtil.Ocisti(System.Net.WebUtility.HtmlDecode(h));
+        }
 
         private int ObradiFolder(IMailFolder f, bool odlazni, Obrada obrada, PravilaSkup pravila, Stanje stanje, Sanduce sanduce, IndeksPrvih indeks)
         {
@@ -255,12 +277,14 @@ namespace Saobracaj.Agent.CimProvera
                 if (neispravnih > 0) log.Upozorenje("  UID " + uid.Id + ": naslov/telo maila ima " + neispravnih + " neispravnih Unicode znakova (usamljeni surogat) – zamenjeni znakom U+FFFD.");
                 var vanBmp = ZnakoviVanBmp(tekstMaila);
                 if (vanBmp.Length > 0) log.Info("  UID " + uid.Id + ": naslov/telo sadrži znakove van osnovne ravni (emoji i sl.): " + vanBmp);
-                // v2.8: jezik po pošiljaocu (interni i .rs/.ba/.me/.hr/.si → srpski), ne po citiranom tekstu maila
-                var en = Obrada.EngleskiZaPosiljaoca(od, cfg.JeInterni);
+                // v2.8: jezik po pošiljaocu (interni i .rs/.ba/.me/.hr/.si → srpski), ne po citiranom tekstu maila;
+                // v2.8.1: opšti domeni (gmail.com…) – po tekstu koji je pošiljalac sam napisao (bez citata i potpisa)
+                var en = Obrada.EngleskiZaPosiljaoca(od, cfg.JeInterni, m.Subject, TeloMaila(m));
                 var datum = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime;
                 log.Info("  UID " + uid.Id + " " + kljuc + ": " + prilozi.Count + " priloga, od " + od + (jeOdlazni ? " (odlazni)" : ""));
 
                 Ishod ishod;
+                obrada.NaslovMaila = m.Subject;
                 try { ishod = obrada.Proveri(prilozi, od, cfg.JeInterni(od), datum, en); }
                 catch (Exception ex)
                 {
@@ -287,6 +311,14 @@ namespace Saobracaj.Agent.CimProvera
                 }
 
                 var r = ishod.Provera;
+                // v2.8.1: CIT 7 – interni izveštaj (veza sa listom, izmene, upozorenja); pošiljaocu ništa
+                if (r.Cit7.Count > 0 && !ps.Cit7Poslat)
+                    try { PosaljiCit7(m, r, pravila); if (!dryRun) ps.Cit7Poslat = true; }
+                    catch (Exception ex) { log.Greska("  UID " + uid.Id + ": interni izveštaj o CIT 7 nije poslat: " + ex.Message); }
+                // v2.8.1: istorija obrađenih listova (za CIT 7 koji stigne kasnije, bez lista u mailu)
+                if (r.ImaTovarniList && !dryRun)
+                    try { IstorijaListova.Dodaj(cfg.StanjeFolder, r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac)).Select(l => IstorijaListova.Iz(l, r.Dokumenti, datum, Regex(m.Subject)))); }
+                    catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": istorija listova nije upisana: " + ex.Message); }
                 if (!r.ImaTovarniList && (ishod.NisuProcitani.Count > 0 || ishod.Neprepoznati.Count > 0 || ishod.NisaPouzdanost.Count > 0))
                 {
                     // Ne sme se zaključiti "nema CIM-a" ako neki prilog nije ni pročitan ni prepoznat: samo interna poruka, ne pošiljaocu.
@@ -379,6 +411,21 @@ namespace Saobracaj.Agent.CimProvera
             if (dryRun) { log.Info("    [dry-run] interni izveštaj za " + string.Join(", ", primaoci) + ": " + naslov); Console.WriteLine(telo); return; }
             Slanje.Posalji(cfg, poruka);
             log.Info("    interni izveštaj (" + (razlog == Izvestaj.RazlogKp ? "KP tovarni list, r62 = 3212" : "ručna provera") + ") poslat na " + string.Join(", ", primaoci) + ": " + naslov);
+        }
+
+        /// <summary>v2.8.1: interni izveštaj o CIT 7 (Test – IzvestajAdresa; Live – KopijaNa i UpozorenjaNa). Uvek na srpskom, nikad pošiljaocu.</summary>
+        private void PosaljiCit7(MimeMessage m, RezultatProvere r, PravilaSkup pravila)
+        {
+            var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
+            var primaoci = cfg.Rezim == Rezim.Test ? new List<string> { cfg.IzvestajAdresa }
+                : cfg.KopijaNa.Concat(new[] { cfg.UpozorenjaNa }).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (primaoci.Count == 0) { log.Upozorenje("    interni izveštaj o CIT 7 nema primaoca (KopijaNa/UpozorenjaNa)."); return; }
+            var naslov = Cit7Provera.Naslov(r.Cit7, m.Subject);
+            var uvod = (cfg.Rezim == Rezim.Test ? "[TEST] " : "") + "Interni izveštaj – ne ide pošiljaocu (" + od + "). Mail „" + m.Subject + "“, " + m.Date.LocalDateTime.ToString("dd.MM.yyyy HH:mm") + ".";
+            var poruka = Slanje.Nova(cfg, primaoci, null, naslov, Cit7Provera.Tekst(r.Cit7, pravila, uvod), odgovorNa: m, html: Cit7Provera.Html(r.Cit7, pravila, uvod));
+            if (dryRun) { log.Info("    [dry-run] interni izveštaj o CIT 7 za " + string.Join(", ", primaoci) + ": " + naslov); return; }
+            Slanje.Posalji(cfg, poruka);
+            log.Info("    interni izveštaj o CIT 7 poslat na " + string.Join(", ", primaoci) + ": " + naslov + " (" + string.Join("; ", r.Cit7.Select(c => (c.Veza != null ? "veza " + System.IO.Path.GetFileName(c.Veza.Fajl) : "list nije pronađen") + ", upozorenja " + c.Upozorenja.Count)) + ")");
         }
 
         /// <summary>Puni izveštaj (sa nalazima "samo interno") za KopijaNa, bez odgovora pošiljaocu.</summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -54,7 +54,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public static readonly HashSet<string> UvekVazi = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "KP57", "R58A", "R62", "KP2" };
 
         private static readonly string[] Incoterms = { "EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "DAF", "DDU" };
-        private static readonly HashSet<string> Eu = new HashSet<string>
+        internal static readonly HashSet<string> Eu = new HashSet<string>
         {
             "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"
         };
@@ -306,7 +306,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         }
 
         /// <summary>UIC 920-14 šifra zemlje → ISO 3166 (za primer zemlje u r1/r4).</summary>
-        private static readonly Dictionary<string, string> UicIso = new Dictionary<string, string>
+        internal static readonly Dictionary<string, string> UicIso = new Dictionary<string, string>
         {
             ["72"] = "RS", ["55"] = "HU", ["54"] = "CZ", ["56"] = "SK", ["53"] = "RO", ["52"] = "BG", ["78"] = "HR", ["79"] = "SI", ["80"] = "DE", ["81"] = "AT",
             ["83"] = "IT", ["51"] = "PL", ["44"] = "BA", ["50"] = "BA", ["62"] = "ME", ["65"] = "MK", ["73"] = "GR", ["75"] = "TR", ["87"] = "FR", ["88"] = "BE",
@@ -323,7 +323,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                                : IzNaziva(k.C.R16.Zemlja) ?? IzSifre(k.C.R16.SifraStanice);
         }
 
-        private static readonly Dictionary<string, string> IsoPoNazivu = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        internal static readonly Dictionary<string, string> IsoPoNazivu = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["srbija"] = "RS", ["serbia"] = "RS", ["serbien"] = "RS", ["србија"] = "RS", ["madjarska"] = "HU", ["mađarska"] = "HU", ["hungary"] = "HU",
             ["romania"] = "RO", ["rumunija"] = "RO", ["bulgaria"] = "BG", ["bugarska"] = "BG", ["italy"] = "IT", ["italia"] = "IT", ["italija"] = "IT",
@@ -688,9 +688,16 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     .Pr(k.U.Engleski ? "e.g. 1 082 918 kg, see wagon list" : "npr. 1 082 918 kg, vidi spisak kola");
                 yield break;
             }
-            yield return P("25", "r25-masa").D(r.Status == StatusRubrike.Oznake ? (k.U.Engleski ? "Only the form labels are entered, without values." : "Upisane su samo oznake, bez vrednosti.")
-                : upucuje ? (k.U.Engleski ? "Box 25 refers to the wagon list, but no wagon list with masses is attached." : "Rubrika 25/21 upućuje na spisak kola, a spisak sa masom nije priložen.")
-                : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"));
+            // v2.8.1 (CIM COAL 16 + wagon list 16.xlsx): spisak je priložen, ali bez mase robe – konkretan opis umesto „spisak nije priložen“
+            var spisakBezMase = k.Spiskovi.Count > 0
+                ? (k.U.Engleski ? " The attached wagon list (" : " Priloženi spisak kola (") + Fajlovi(k.Spiskovi.Select(s => s.dok)) + (k.U.Engleski ? ") has no mass of the goods" : ") nema masu robe")
+                  + (k.Spiskovi.All(s => s.s.Kola.Count > 0 && s.s.Kola.All(x => x.Prazna)) && !PraznaKola(k)
+                      ? (k.U.Engleski ? " – all wagons on it are marked as empty (only the tare is entered), although box 21 describes goods." : " – sva kola su na njemu označena kao prazna (upisana je samo tara), a u rubrici 21 je roba.")
+                      : ".")
+                : "";
+            yield return P("25", "r25-masa").D((r.Status == StatusRubrike.Oznake ? (k.U.Engleski ? "Only the form labels are entered, without values." : "Upisane su samo oznake, bez vrednosti.")
+                : upucuje && k.Spiskovi.Count == 0 ? (k.U.Engleski ? "Box 25 refers to the wagon list, but no wagon list with masses is attached." : "Rubrika 25/21 upućuje na spisak kola, a spisak sa masom nije priložen.")
+                : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")) + spisakBezMase);
         }
 
         private static IEnumerable<Pogodak> Iznos(Kontekst k, Iznos r, string broj)
@@ -781,6 +788,18 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var r = k.C.R62;
             if (!r.Popunjena) { yield return P("62", "r62").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
+            // v2.8.1: sken na kome cifre r62 nisu pouzdano pročitane – interna napomena „r62 nečitljiva – proveriti ručno“, ne greška
+            var nepotpuna = Prazno(r.Zemlja) || Prazno(r.Stanica) || Prazno(r.Preduzece) || Prazno(r.Broj);
+            if (k.Ocr && (r.NepouzdanoCitanje || ((r.Status == StatusRubrike.Necitljivo || r.Pouzdanost < k.U.Prag || r.OcrSum) && nepotpuna)))
+            {
+                var procitano = string.Join(" / ", new[] { r.Zemlja, r.Stanica, r.Preduzece, r.Broj }.Select(x => Prazno(x) ? "?" : x));
+                yield return new Pogodak("62", "r62-necitljivo")
+                {
+                    Tezina = Tezina.Info, SamoInterno = true,
+                    Poruka = k.U.Engleski ? "Box 62 is not readable on the scan – check manually." : "r62 nečitljiva – proveriti ručno.",
+                }.D((k.U.Engleski ? "Agent read: " : "Agent je pročitao: ") + procitano + " („" + Motor.TekstRubrike(k.C, "62") + "“).");
+                yield break;
+            }
             if (!k.Citljivo(r, "62")) yield break;
             var fali = new List<string>();
             if (Prazno(r.Zemlja)) fali.Add(k.U.Engleski ? "country" : "zemlja");

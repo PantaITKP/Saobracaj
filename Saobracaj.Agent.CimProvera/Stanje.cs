@@ -33,6 +33,8 @@ namespace Saobracaj.Agent.CimProvera
             public int Upozorenja { get; set; }
             /// <summary>Tekst poslednje greške obrade (vrsta i poruka izuzetka, bez sadržaja dokumenta).</summary>
             public string PoslednjaGreska { get; set; }
+            /// <summary>v2.8.1: interni izveštaj o CIT 7 je poslat (ne ponavlja se pri ponovnom pokušaju obrade).</summary>
+            public bool Cit7Poslat { get; set; }
         }
 
         public Dictionary<string, FolderStanje> Folderi { get; set; } = new Dictionary<string, FolderStanje>();

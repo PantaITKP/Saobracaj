@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -417,7 +417,7 @@ namespace Saobracaj.Agent.CimProvera
             ("dodatni list", "additional sheet"), ("izvozna deklaracija", "export declaration"), ("tranzitna deklaracija", "transit declaration"),
             ("carinski dokument", "customs document"), ("uverenje o poreklu", "certificate of origin"), ("sertifikat", "certificate"), ("faktura", "invoice"),
             ("dozvola za otpad", "waste permit"), ("poleđina lista", "back of the note"), ("ostalo (ne proverava se)", "other (not checked)"), ("nije prepoznat", "not recognised"),
-            ("slika iz potpisa/logo (ne proverava se)", "signature image/logo (not checked)"), ("CIT 7 – naknadni nalog (ne proverava se)", "CIT 7 – subsequent order (not checked)"),
+            ("slika iz potpisa/logo (ne proverava se)", "signature image/logo (not checked)"), ("CIT 7 – naknadni zahtev (interni izveštaj)", "CIT 7 – subsequent order (internal report)"),
         };
 
         /// <summary>„Prilozi: CIM … .xlsx – tovarni list CIM (Excel); … .xls – spisak kola; VTK….pdf – izveštaj o sastavu voza (ne proverava se).“</summary>

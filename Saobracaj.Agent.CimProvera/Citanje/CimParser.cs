@@ -670,7 +670,11 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }).ToList();
             var r = PopBroj(new Identifikacija(), ciste);
             if (!r.Popunjena) return r;
-            PopuniR62(r, Raspored.Linije(Ocisti(ciste)), ciste.All(w => string.IsNullOrEmpty(w.Font)));
+            var ocr = ciste.All(w => string.IsNullOrEmpty(w.Font));
+            PopuniR62(r, Raspored.Linije(Ocisti(ciste)), ocr);
+            // v2.8.1: na skenu – broj (2+ cifre, bez slova) niske pouzdanosti; OCR šum od slova i cifara („jj2“; „6350.1“ je u redu)
+            r.NepouzdanoCitanje = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}") && w.Pouzdanost < 0.55);
+            r.OcrSum = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\p{L}\p{L}?\d|\d\p{L}"));
             return r;
         }
 

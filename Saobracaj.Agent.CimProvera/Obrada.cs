@@ -49,7 +49,9 @@ namespace Saobracaj.Agent.CimProvera
             var fajlovi = new List<Prilog>();
             foreach (var (ime, b) in prilozi)
                 fajlovi.AddRange(Raspakivanje.Raspakuj(ime, b, ishod.Preskoceno));
-            foreach (var x in ishod.Preskoceno) log?.Info("  prilog " + x + " – preskočen");
+            foreach (var x in ishod.Preskoceno)
+                if (x.Contains(Raspakivanje.NedozvoljenTip)) log?.Upozorenje("  prilog " + x + " – preskočen (pročitane strane .strane.json se prihvataju samo u testovima)");
+                else log?.Info("  prilog " + x + " – preskočen");
 
             // Prilozi koji se ne čitaju: OpenOffice tabela, Pages, XPS, TIFF… nisu dokaz da tovarnog lista nema.
             foreach (var x in ishod.Preskoceno)
@@ -128,8 +130,16 @@ namespace Saobracaj.Agent.CimProvera
                 ishod.Provera = new Motor(pravila, log).Proveri(u);
             }
             ishod.Provera.OpisPriloga = ishod.OpisPriloga;
+            // v2.8.1: CIT 7 – veza sa listom iz istog maila ili iz ranije obrađenih (stanje\listovi.json), izmene i provere (interno)
+            try { ishod.Provera.Cit7 = Cit7Provera.Proveri(ishod.Provera, RanijiListovi?.Invoke(), referentniDatum, NaslovMaila); }
+            catch (Exception ex) { log?.Upozorenje("  CIT 7 nije proveren: " + ex.Message); }
             return ishod;
         }
+
+        /// <summary>v2.8.1: ranije obrađeni tovarni listovi (za CIT 7 bez lista u istom mailu); null = nema istorije.</summary>
+        public Func<List<ZapisLista>> RanijiListovi;
+        /// <summary>Naslov maila koji se obrađuje (za istoriju listova).</summary>
+        public string NaslovMaila;
 
         private static readonly Regex ImeTovarnog = new Regex(@"(^|[^a-z])(cim|cuv|smgs)([^a-z]|$)|frachtbrief|wagenbrief|tovarni|consignment|nakladni|lettre", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -209,7 +219,7 @@ namespace Saobracaj.Agent.CimProvera
                         return Regex.IsMatch(ime, @"train ?list|load ?list|ladeliste") || d.Spisak.Any(s => s.Kola.Count > 0 && s.Kola.All(k => k.Uti.Count > 0) && Regex.IsMatch(ime, "train|load"))
                             ? "spisak tovarnih jedinica" : "spisak kola";
                     case TipDokumenta.SastavVoza: return "izveštaj o sastavu voza (ne proverava se)";
-                    case TipDokumenta.Cit7: return "CIT 7 – naknadni nalog (ne proverava se)";
+                    case TipDokumenta.Cit7: return "CIT 7 – naknadni zahtev (interni izveštaj)";
                     case TipDokumenta.DodatniList: return "dodatni list";
                     case TipDokumenta.IzvoznaDeklaracija: return "izvozna deklaracija";
                     case TipDokumenta.TranzitnaDeklaracija: return "tranzitna deklaracija";
@@ -251,13 +261,77 @@ namespace Saobracaj.Agent.CimProvera
         /// v2.8: jezik izveštaja po POŠILJAOCU, ne po (citiranom) tekstu maila: interni domen (@kprevoz.co.rs) uvek srpski;
         /// spoljni po vršnom domenu – .rs, .ba, .me, .hr, .si srpski, ostali engleski. Vraća true za engleski.
         /// </summary>
-        public static bool EngleskiZaPosiljaoca(string adresa, Func<string, bool> jeInterni)
+        public static bool EngleskiZaPosiljaoca(string adresa, Func<string, bool> jeInterni) => EngleskiZaPosiljaoca(adresa, jeInterni, null, null);
+
+        /// <summary>
+        /// v2.8.1: opšti mail domeni (gmail.com, yahoo.com, outlook.com, hotmail.com, live.com, icloud.com…) ne govore ništa o
+        /// jeziku – jezik se određuje po tekstu koji je pošiljalac SAM napisao (naslov i telo bez citiranog dela i potpisa):
+        /// srpska slova (č, ć, š, ž, đ, ćirilica) ili srpske reči („poštovani“, „pozdrav“, „vagon“, „tovarni“, „izvoz“) → srpski.
+        /// </summary>
+        public static bool EngleskiZaPosiljaoca(string adresa, Func<string, bool> jeInterni, string naslov, string telo)
         {
             if (string.IsNullOrWhiteSpace(adresa)) return false;
             if (jeInterni != null && jeInterni(adresa)) return false;
             var domen = adresa.Substring(adresa.LastIndexOf('@') + 1).Trim().TrimEnd('>', '.').ToLowerInvariant();
             var tld = domen.Substring(domen.LastIndexOf('.') + 1);
-            return !SrpskiDomeni.Contains(tld);
+            if (SrpskiDomeni.Contains(tld)) return false;
+            if (JeOpstiDomen(domen)) return !JeSrpskiTekst(TekstPosiljaoca(naslov, telo));
+            return true;
+        }
+
+        private static readonly Regex OpstiDomen = new Regex(@"^(gmail|googlemail|yahoo|ymail|rocketmail|outlook|hotmail|live|msn|icloud|me|mac|aol|gmx|web|mail|email|proton|protonmail|pm|zoho|yandex|inbox|t-online|freemail|seznam|libero|virgilio|orange|wanadoo|free)\.[a-z.]{2,6}$", RegexOptions.Compiled);
+
+        /// <summary>Opšti (besplatni) mail domen – ne pripada firmi i ne govori ništa o jeziku pošiljaoca.</summary>
+        public static bool JeOpstiDomen(string domen) => OpstiDomen.IsMatch((domen ?? "").Trim().ToLowerInvariant());
+
+        private static readonly Regex Citat = new Regex(
+            @"^\s*(-{2,}\s*(original message|forwarded message|izvorna poruka|originalna poruka|prosle[dđ]ena poruka|urspr[uü]ngliche nachricht|weitergeleitete nachricht|message d'origine)"
+            + @"|_{5,}"
+            + @"|(from|od|šalje|salje|von|de|sent|poslato|gesendet|envoy[eé])\s*:\s*\S"
+            + @"|on .{4,120}wrote:|dana .{4,120}(je )?napisa[oela]|am .{4,120}schrieb|le .{4,120}a [eé]crit)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex Pozdrav = new Regex(
+            @"^\s*(s po[sš]tovanjem|srda[cč]an pozdrav|srda[cč]no|pozdrav|pozdravi|lp|best regards|kind regards|regards|best wishes|mit freundlichen gr[uü](ß|ss)en|freundliche gr[uü](ß|ss)e|viele gr[uü](ß|ss)e|lg|cordialement|[uü]dv[oö]zlettel|pozdrawiam|s pozdravom)\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Tekst koji je pošiljalac sam napisao: naslov (bez RE:/FW:) i telo do citiranog dela („From:“, „-----Original Message-----“,
+        /// „On … wrote:“, redovi sa „&gt;“) i bez potpisa (posle „-- “ ili posle reda sa pozdravom).
+        /// </summary>
+        public static string TekstPosiljaoca(string naslov, string telo)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(Regex.Replace(naslov ?? "", @"^\s*((re|fw|fwd|aw|wg|tr|odg|sv)\s*:\s*)+", "", RegexOptions.IgnoreCase));
+            foreach (var red0 in (telo ?? "").Replace("\r", "").Split('\n'))
+            {
+                var red = red0.TrimEnd();
+                if (Citat.IsMatch(red) || Regex.IsMatch(red, @"^--\s*$")) break;
+                if (red.TrimStart().StartsWith(">")) continue;
+                sb.AppendLine(red);
+                if (red.Trim().Length <= 40 && Pozdrav.IsMatch(red)) break;
+            }
+            return sb.ToString();
+        }
+
+        private static readonly string[] SrpskeReci =
+        {
+            "postovani", "postovana", "pozdrav", "pozdravi", "pozdravom", "srdacan", "srdacno", "molim", "molimo", "hvala", "prilogu", "prilog",
+            "dostavljam", "dostavljamo", "saljem", "saljemo", "vagon", "vagona", "vagoni", "vagone", "tovarni", "tovarnog", "tovarne", "tovarnih",
+            "izvoz", "uvoz", "kola", "voz", "voza", "vozu", "carina", "carinjenje", "otprema", "isporuka", "dokumentacija", "dokumentaciju",
+            "dokumenta", "spisak", "lp", "danas", "sutra", "ispravka", "ispravljen", "ispravljeni",
+        };
+
+        /// <summary>Tekst je na srpskom (i srodnim jezicima regiona): srpska slova ili ćirilica, ili bar jedna srpska reč.</summary>
+        public static bool JeSrpskiTekst(string tekst)
+        {
+            if (string.IsNullOrWhiteSpace(tekst)) return false;
+            if (Regex.IsMatch(tekst, @"[Ѐ-ӿ]")) return true;
+            // č/š/ž postoje i u češkom, slovačkom, poljskom – ali tada ima i slova kojih u srpskom nema (ř, ě, ů, ľ, ą, ł, ő…)
+            var tudja = Regex.IsMatch(tekst, "[řěůľťďňôäąęłńśźżőűșțăŘĚŮĽŤĎŇÔÄĄĘŁŃŚŹŻŐŰȘȚĂ]");
+            if (!tudja && Regex.IsMatch(tekst, "[čćšžđČĆŠŽĐ]")) return true;
+            var t = " " + PraviloKp.Normalizuj(tekst) + " ";
+            return SrpskeReci.Any(r => Regex.IsMatch(t, @"(?<![a-z0-9])" + r + @"(?![a-z0-9])"));
         }
 
         /// <summary>Engleski odgovor ako je mail pošiljaoca na nemačkom ili engleskom (prosta procena po rečima).</summary>

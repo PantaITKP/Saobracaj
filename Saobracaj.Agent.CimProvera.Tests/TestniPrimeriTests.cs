@@ -13,7 +13,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
     /// <summary>
     /// v2.8 – ispravke posle testa 13.11.2026 („Testni primeri“): lažne i propuštene greške na 9 stvarnih dokumenata.
     /// Podaci: testovi\nezavisni\2026-11-13\ (*.strane.json = pročitane strane iz keša agenta, isti tekst/OCR kao u radu).
-    /// Napomena: Excel spiskovi kola iz tih mailova nisu dostupni (55 16261, CUV_257, CIM COAL 16) – X26 se zato ne proverava.
+    /// v2.8.1: dodati originali (CUV_255/257, CIT 7, print0, CUV exLDC7) i Excel spiskovi kola (55 16261, CUV_257, CIM COAL 16).
     /// </summary>
     [TestClass]
     public class TestniPrimeriTests
@@ -37,17 +37,26 @@ namespace Saobracaj.Agent.CimProvera.Tests
 
         [ClassCleanup] public static void Kraj() => citac?.Dispose();
 
-        /// <summary>Slučaj (folder) kao jedan mail: svi *.strane.json (ili original kada keša nema), pošiljalac iz loga.</summary>
-        private static Ishod Mail(string slucaj, string posiljalac)
+        /// <summary>
+        /// Slučaj (folder) kao jedan mail: za PDF koji ima *.strane.json koristi se keš (brže), ostali PDF-ovi i Excel spiskovi kola
+        /// (v2.8.1) kao originali. <paramref name="original"/> = samo originali (ciljani OCR kućica radi samo nad originalnim PDF-om).
+        /// </summary>
+        private static Ishod Mail(string slucaj, string posiljalac, bool original = false, string naslov = null)
         {
-            if (kes.TryGetValue(slucaj, out var i)) return i;
+            var kljuc = slucaj + (original ? "|orig" : "");
+            if (kes.TryGetValue(kljuc, out var i)) return i;
             var d = Path.Combine(Primeri, slucaj);
             if (!Directory.Exists(d)) Assert.Inconclusive("Nema " + d);
-            var json = Directory.GetFiles(d, "*.strane.json");
-            var fajlovi = json.Length > 0 ? json : Directory.GetFiles(d, "*.pdf");
+            var svi = Directory.GetFiles(d);
+            var json = original ? new string[0] : svi.Where(f => f.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase)).ToArray();
+            var pokriveni = new HashSet<string>(json.Select(f => Path.GetFileName(f).Substring(0, Path.GetFileName(f).Length - ".strane.json".Length)), StringComparer.OrdinalIgnoreCase);
+            var fajlovi = json.Concat(svi.Where(f => Regex.IsMatch(f, @"\.(pdf|xlsx?|docx?)$", RegexOptions.IgnoreCase) && !pokriveni.Contains(Path.GetFileName(f))));
+            if (original && !svi.Any(f => f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))) Assert.Inconclusive("Nema originalnog PDF-a u " + d);
             var prilozi = fajlovi.Select(f => (Path.GetFileName(f), File.ReadAllBytes(f))).ToList();
-            var en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni);
-            return kes[slucaj] = new Obrada(pravila, citac, null, 0.6).Proveri(prilozi, posiljalac, cfg.JeInterni(posiljalac), new DateTime(2026, 11, 13), en);
+            var en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslov, null);
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = true;   // samo u testovima (v2.8.1)
+            try { return kes[kljuc] = new Obrada(pravila, citac, null, 0.6).Proveri(prilozi, posiljalac, cfg.JeInterni(posiljalac), new DateTime(2026, 11, 13), en); }
+            finally { Prilozi.Raspakivanje.DozvoliProcitaneStrane = false; }
         }
 
         private static List<Nalaz> Nalazi(Ishod i) => i.Provera.Listovi.SelectMany(l => l.Nalazi).ToList();
@@ -104,7 +113,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsTrue(i.Provera.Dokumenti.Any(d => d.Tip == TipDokumenta.Cit7));
             Assert.AreEqual(2, i.Provera.Listovi.Count, "1.CUV_257_1 i 1.CUV_255_1");
             Assert.IsFalse(Nalazi(i).Any(n => n.Pravilo == "OBRAZAC"), Opis(i));
-            Assert.IsTrue(i.OpisPriloga.Any(x => x.Contains("CIT 7 – naknadni nalog")), string.Join(" | ", i.OpisPriloga));
+            Assert.IsTrue(i.OpisPriloga.Any(x => x.Contains("CIT 7 – naknadni zahtev")), string.Join(" | ", i.OpisPriloga));
         }
 
         // ------------------------------------------------------------------------------------------- 3. KP izdao list → interno
@@ -272,6 +281,226 @@ namespace Saobracaj.Agent.CimProvera.Tests
             foreach (var d in pravila.Sva)
                 foreach (var k in new[] { "primer", "primer_en" })
                     Assert.IsFalse(Regex.IsMatch((string)d.Json[k] ?? "", @"271 (Spisak|Wagon)"), d.Id + " " + k);
+        }
+
+        // =========================================================================================== v2.8.1
+
+        // ------------------------------------------------------------------------------------------- 1. .strane.json samo u testovima
+
+        [TestMethod]
+        public void StraneJson_van_testova_je_nedozvoljen_tip_priloga()
+        {
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = false;
+            var preskoceno = new List<string>();
+            var p = Prilozi.Raspakivanje.Raspakuj("CIM.pdf.strane.json", System.Text.Encoding.UTF8.GetBytes("[{\"Broj\":1,\"Reci\":[]}]"), preskoceno);
+            Assert.AreEqual(0, p.Count);
+            Assert.AreEqual(1, preskoceno.Count);
+            StringAssert.Contains(preskoceno[0], "nedozvoljen tip priloga");
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void StraneJson_u_mailu_ne_utice_na_rezultat()
+        {
+            var d = Path.Combine(Primeri, "CUV_257");
+            var gk = Path.Combine(Primeri, "GK30", "CIM draft GK30 Futog -Lovosice.pdf");
+            if (!File.Exists(gk) || !Directory.Exists(d)) Assert.Inconclusive("Nema test podataka");
+            // izmišljen „pročitan“ tovarni list: pravi keš jednog CUV-a pod drugim imenom
+            var lazni = File.ReadAllBytes(Path.Combine(d, "1.CUV_257_1.pdf.strane.json"));
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = false;
+            var obrada = new Obrada(pravila, citac, null, 0.6);
+            var sam = obrada.Proveri(new[] { ("CIM.pdf.strane.json", lazni) }, "x@firma.com", false, new DateTime(2026, 11, 13), true);
+            Assert.IsFalse(sam.Provera.ImaTovarniList, "samo .strane.json – nema tovarnog lista");
+            Assert.IsTrue(sam.Preskoceno.Any(x => x.Contains("nedozvoljen tip priloga")), string.Join(" | ", sam.Preskoceno));
+
+            var bez = obrada.Proveri(new[] { ("GK30.pdf", File.ReadAllBytes(gk)) }, "x@firma.com", false, new DateTime(2026, 11, 13), true);
+            var sa = obrada.Proveri(new[] { ("GK30.pdf", File.ReadAllBytes(gk)), ("CUV.pdf.strane.json", lazni) }, "x@firma.com", false, new DateTime(2026, 11, 13), true);
+            Assert.AreEqual(bez.Provera.Listovi.Count, sa.Provera.Listovi.Count);
+            CollectionAssert.AreEqual(bez.Provera.Listovi.SelectMany(l => l.Nalazi).Select(n => n.Pravilo + "|" + n.Rubrika + "|" + n.Tezina).ToList(),
+                                      sa.Provera.Listovi.SelectMany(l => l.Nalazi).Select(n => n.Pravilo + "|" + n.Rubrika + "|" + n.Tezina).ToList());
+            Assert.IsFalse(sa.Provera.Dokumenti.Any(x => x.Fajl.Contains("CUV.pdf")), "prilog .strane.json nije dokument");
+        }
+
+        // ------------------------------------------------------------------------------------------- 2. GIPS r62
+
+        [TestMethod, TestCategory("Regresija")]
+        public void GIPS_r62_iz_originala_cita_sve_kucice()
+        {
+            var i = Mail("GIPS", "bosstradezonasabac@gmail.com", original: true, naslov: "IZVOZ");
+            var c = i.Provera.Listovi.Single().Cim;
+            Assert.AreEqual("72", c.R62.Zemlja); Assert.AreEqual("163501", c.R62.Stanica); Assert.AreEqual("3212", c.R62.Preduzece); Assert.AreEqual("158900", c.R62.Broj);
+            Assert.IsFalse(Nalazi(i).Any(n => n.Rubrika == "62"), "r62 je ispravna\n" + Opis(i));
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void GIPS_r62_nepouzdano_citanje_je_interna_napomena_a_ne_greska()
+        {
+            // keš strana bez ciljanog OCR-a kućica: „jj2 1 63501 / 3212) 498900“
+            var i = Mail("GIPS", "bosstradezonasabac@gmail.com");
+            NemaGreske(i, "62");
+            var n = Nalazi(i).Single(x => x.Rubrika == "62");
+            Assert.AreEqual(Tezina.Info, n.Tezina); Assert.IsTrue(n.SamoInterno);
+            StringAssert.StartsWith(n.Tekst, "r62 nečitljiva – proveriti ručno");
+            StringAssert.Contains(Izvestaj.Telo(i.Provera, pravila, false), "r62 nečitljiva – proveriti ručno");
+        }
+
+        [TestMethod]
+        public void R62_OCR_sum_slova_i_cifara_je_nepouzdano_citanje()
+        {
+            Rec W(string t, double x, double p = 0.9) => new Rec { T = t, X0 = x, X1 = x + 0.03, Y0 = 0.9, Y1 = 0.91, Pouzdanost = p };
+            var sum = CimParser.Identifikacija(new List<Rec> { W("jj2", 0.1), W("163501", 0.2), W("3212", 0.4) });
+            Assert.IsTrue(sum.OcrSum); Assert.AreEqual("", sum.Zemlja, "„jj2“ nije zemlja");
+            Assert.IsTrue(CimParser.Identifikacija(new List<Rec> { W("72", 0.1), W("163501", 0.2, 0.4) }).NepouzdanoCitanje, "niska pouzdanost cifara");
+            var cisto = CimParser.Identifikacija(new List<Rec> { W("72", 0.1), W("163501", 0.2), W("3212", 0.4) });
+            Assert.IsFalse(cisto.NepouzdanoCitanje || cisto.OcrSum);
+        }
+
+        // ------------------------------------------------------------------------------------------- 3. jezik za opšte domene
+
+        [DataTestMethod]
+        [DataRow("bosstradezonasabac@gmail.com", "IZVOZ", "", false, "naslov „IZVOZ“")]
+        [DataRow("ste.obr06@gmail.com", "Test", "", true, "bez srpskog teksta")]
+        [DataRow("x@gmail.com", "CIM", "Poštovani,\nu prilogu CIM.\nPozdrav", false, "srpska slova")]
+        [DataRow("x@yahoo.com", "CIM", "Dear Sir,\nplease find attached the consignment note.\nBest regards\nMarko Šapčanin, Šabac", true, "srpska slova samo u potpisu")]
+        [DataRow("x@outlook.com", "RE: CIM", "Please check.\n\nFrom: priprema@kprevoz.co.rs\nSent: Friday\nPoštovani, tovarni list ima greške.", true, "srpski samo u citatu")]
+        [DataRow("x@hotmail.com", "RE: CIM", "OK\n> Poštovani, šaljemo tovarni list", true, "citat sa >")]
+        [DataRow("x@live.com", "Товарни лист", "", false, "ćirilica")]
+        [DataRow("x@icloud.com", "wagons", "saljem vagone za sutra", false, "srpske reči bez dijakritika")]
+        [DataRow("x@gmail.com", "Frachtbrief", "Sehr geehrte Damen und Herren, anbei der Frachtbrief. Mit freundlichen Grüßen", true, "nemački")]
+        [DataRow("x@gmail.com", "CIM", "Dobrý den, posílám nákladní list. Děkuji", true, "češki (č, ř, ě nije srpski)")]
+        [DataRow("x@pspcargo.ro", "IZVOZ", "Poštovani", true, "domen firme: po domenu, ne po tekstu")]
+        public void Jezik_za_opste_domene_po_tekstu_posiljaoca(string adresa, string naslov, string telo, bool engleski, string opis)
+        {
+            var c = AgentConfig.Ucitaj(new System.Collections.Specialized.NameValueCollection { ["InterniDomeni"] = "kprevoz.co.rs" });
+            Assert.AreEqual(engleski, Obrada.EngleskiZaPosiljaoca(adresa, c.JeInterni, naslov, telo), opis);
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void GIPS_sa_gmail_IZVOZ_je_na_srpskom()
+        {
+            var c = AgentConfig.Ucitaj(new System.Collections.Specialized.NameValueCollection { ["InterniDomeni"] = "kprevoz.co.rs" });
+            Assert.IsFalse(Obrada.EngleskiZaPosiljaoca("bosstradezonasabac@gmail.com", c.JeInterni, "IZVOZ", null));
+        }
+
+        [TestMethod]
+        public void Telo_maila_iz_HTML_bez_citata()
+        {
+            var m = new MimeKit.MimeMessage();
+            m.Body = new MimeKit.TextPart("html") { Text = "<p>Please see attached.</p><blockquote>Poštovani, tovarni list</blockquote>" };
+            var t = AgentRad.TeloMaila(m);
+            StringAssert.Contains(t, "Please see attached");
+            Assert.IsFalse(t.Contains("Poštovani"));
+        }
+
+        // ------------------------------------------------------------------------------------------- 4. Excel spiskovi kola
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Excel_spiskovi_X26_vise_nije_greska()
+        {
+            foreach (var (s, od) in new[] { ("55_16261", "filep.veronika@rthkft.hu"), ("CUV_257", "stefan.janjic@eurologsystem.rs"), ("CIM COAL 16", "tibor.tasnadi@pspcargo.ro") })
+            {
+                var i = Mail(s, od);
+                Assert.IsTrue(i.Provera.Dokumenti.Any(d => d.Tip == TipDokumenta.SpisakKola && d.Izvor == "excel"), s + ": Excel spisak kola pročitan");
+                Assert.IsFalse(Nalazi(i).Any(n => n.Pravilo == "X26"), s + ": spisak je priložen\n" + Opis(i));
+            }
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void COAL_16_spisak_bez_mase_robe_r25_ostaje_greska_sa_tacnim_opisom()
+        {
+            // wagon list 16.xlsx: 33 kola, sva „Empty“, upisana samo tara – mase robe nema (CIM: STEAM COAL IN BULK, NHM 2702)
+            var i = Mail("CIM COAL 16", "tibor.tasnadi@pspcargo.ro");
+            var sp = i.Provera.Dokumenti.Single(d => d.Tip == TipDokumenta.SpisakKola).Spisak.Single();
+            Assert.AreEqual(33, sp.Kola.Count);
+            Assert.IsFalse(sp.MasaUpisana, "na spisku je samo tara");
+            Assert.IsTrue(sp.Kola.All(k => k.Prazna), "kola su označena „Empty“");
+            var n = Nalazi(i).Single(x => x.Pravilo == "R25-MASA");
+            Assert.AreEqual(Tezina.Greska, n.Tezina);
+            StringAssert.Contains(n.Detalj, "wagon list 16.xlsx");
+            StringAssert.Contains(n.Detalj, "marked as empty");
+        }
+
+        // ------------------------------------------------------------------------------------------- 5. CIT 7
+
+        [TestMethod, TestCategory("Regresija")]
+        public void CIT7_procitan_izmene_r4_r10_r12()
+        {
+            var i = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
+            var z = i.Provera.Dokumenti.Single(d => d.Tip == TipDokumenta.Cit7).Cit7;
+            Assert.IsNotNull(z);
+            Assert.IsTrue(z.Cuv, "označen kolski list CUV");
+            Assert.AreEqual("79", z.Zemlja); Assert.AreEqual("422113", z.Stanica); Assert.AreEqual("2179", z.Preduzece); Assert.AreEqual("", z.Broj);
+            CollectionAssert.AreEqual(new[] { 6 }, z.Sifre);
+            Assert.IsTrue(z.BezCarine, "„Nije neophodno obavestiti otpravnu carinu“");
+            StringAssert.Contains(z.Primalac, "DELTA AGRAR DOO");
+            StringAssert.Contains(z.MestoIzdavanja, "RUMA");
+            StringAssert.Contains(z.Podnosilac, "EurologSystem");
+            CollectionAssert.AreEqual(new[] { "4", "10", "12" }, z.Izmene.Select(x => x.Rubrika).ToList());
+            StringAssert.StartsWith(z.Izmene[0].Vrednost, "GRANEXPORT D.O.O.");
+            StringAssert.Contains(z.Izmene[0].Vrednost, "26000 Pančevo");
+            Assert.AreEqual("Sremska Mitrovica", z.Izmene[1].Vrednost);
+            Assert.AreEqual("72 16509-2", z.Izmene[2].Vrednost);
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void CIT7_veza_sa_CUV_257_i_upozorenja_samo_interno()
+        {
+            var i = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
+            var c = i.Provera.Cit7.Single();
+            Assert.IsNotNull(c.Veza);
+            StringAssert.Contains(c.Veza.Fajl, "1.CUV_257_1");
+            Assert.IsTrue(c.Veza.IzIstogMaila);
+            Assert.AreEqual("72 16503-5", c.Izmene.Single(x => x.rubrika == "12").stara);
+            StringAssert.Contains(c.Izmene.Single(x => x.rubrika == "4").stara, "DELTA AGRAR");
+            Assert.IsTrue(c.Upozorenja.Any(x => x.Contains("duplikat")), string.Join("\n", c.Upozorenja));
+            Assert.IsTrue(c.Upozorenja.Any(x => x.Contains("Primalac nema pravo raspolaganja")), string.Join("\n", c.Upozorenja));
+            Assert.IsFalse(c.Upozorenja.Any(x => x.Contains("deli")), "pošiljka se ne deli\n" + string.Join("\n", c.Upozorenja));
+            Assert.IsFalse(c.Upozorenja.Any(x => x.Contains("carinsko područje")), "RS → RS");
+            Assert.IsTrue(c.Napomene.Any(x => x.Contains("Carinsko područje se ne menja")));
+            // ništa od CIT 7 pošiljaocu: nema nalaza o CIT 7 u listovima, izveštaj za pošiljaoca ga ne pominje
+            Assert.IsFalse(Nalazi(i).Any(n => (n.Tekst ?? "").Contains("CIT 7") && n.Tezina == Tezina.Greska));
+            Assert.AreEqual(0, i.Provera.BezInternih().Cit7.Count);
+            Assert.IsFalse(Izvestaj.Telo(i.Provera.BezInternih(), pravila, false).Contains("GRANEXPORT"));
+            var t = Cit7Provera.Tekst(i.Provera.Cit7, pravila);
+            StringAssert.Contains(t, "Rubrika 4 – Primalac");
+            StringAssert.Contains(t, "→");
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void CIT7_bez_lista_u_mailu_veza_sa_ranije_obradjenim()
+        {
+            var cuv = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
+            var ranije = cuv.Provera.Listovi.Select(l => IstorijaListova.Iz(l, cuv.Provera.Dokumenti, new DateTime(2026, 11, 12), "RE: Status najave")).ToList();
+            var cit7 = Path.Combine(Primeri, "CUV_257", "CIT7 for the empty train Ljubljana Zalog-Stara Pazova (Sremska Mitrovica, IK AGRIUM).pdf.strane.json");
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = true;
+            Ishod i;
+            try { i = new Obrada(pravila, citac, null, 0.6) { RanijiListovi = () => ranije }.Proveri(new[] { (Path.GetFileName(cit7), File.ReadAllBytes(cit7)) }, "x@eurologsystem.rs", false, new DateTime(2026, 11, 13), false); }
+            finally { Prilozi.Raspakivanje.DozvoliProcitaneStrane = false; }
+            Assert.IsFalse(i.Provera.ImaTovarniList);
+            var c = i.Provera.Cit7.Single();
+            Assert.IsNotNull(c.Veza, "list iz ranijeg maila");
+            Assert.IsFalse(c.Veza.IzIstogMaila);
+            StringAssert.Contains(c.Veza.Opis, "ranije obrađen 12.11.2026");
+            StringAssert.Contains(c.Veza.Fajl, "1.CUV_257_1");
+        }
+
+        [TestMethod]
+        public void CIT7_carinsko_podrucje_deljenje_i_r7()
+        {
+            var lista = new ZapisLista { Fajl = "CIM.pdf", R1 = "Firma A d.o.o., Beograd", R4 = "Primalac B, Wien", R10 = "Wien", R12 = "81 01234-5", R7 = "Primalac nema pravo raspolaganja", Kola = { "338407649205", "338407648942", "338407649007" }, IzIstogMaila = true };
+            var z = new Cit7Zahtev { Primalac = "Primalac B", MestoIzdavanja = "Wien", StanicaIzdavanja = "81 01234-5", Podnosilac = "Firma A d.o.o.", Napomene = "Box 10: Beograd\nBox 12: 72 12345-6" };
+            z.Izmene = Citanje.Cit7Citac.Izmene(z.Napomene);
+            var r = new RezultatProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cit7, Fajl = "CIT7.pdf", Cit7 = z } } };
+            var c = Cit7Provera.Proveri(r, new List<ZapisLista> { lista }, new DateTime(2026, 11, 13), "x").Single();
+            Assert.IsNotNull(c.Veza);
+            Assert.AreEqual("pošiljalac", c.Podnosilac);
+            Assert.IsTrue(c.Upozorenja.Any(x => x.Contains("menja carinsko područje") && x.Contains("potreban pristanak carinarnice")), string.Join("\n", c.Upozorenja));
+            Assert.IsFalse(c.Upozorenja.Any(x => x.Contains("Primalac nema pravo")), "r7 to navodi");
+
+            // deljenje: CIT 7 navodi samo deo kola sa lista
+            var z2 = new Cit7Zahtev { Primalac = "Primalac B", MestoIzdavanja = "Wien", StanicaIzdavanja = "81 01234-5", BrojeviKola = { "338407649205" }, Izmene = { new Cit7Izmena { Rubrika = "10", Vrednost = "Linz" } } };
+            var r2 = new RezultatProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cit7, Fajl = "CIT7.pdf", Cit7 = z2 } } };
+            var c2 = Cit7Provera.Proveri(r2, new List<ZapisLista> { lista }, new DateTime(2026, 11, 13), "x").Single();
+            Assert.IsTrue(c2.Upozorenja.Any(x => x.Contains("pošiljka deli")), string.Join("\n", c2.Upozorenja));
         }
     }
 }

@@ -1,5 +1,23 @@
 ﻿# CimProvera – izmene programa
 
+## 2026-11-13 – v2.8.1 (program i pravila): dopune posle prihvatanja v2.8
+
+Detalji su u `cim_validation_rules.json` → `meta.changelog` (v2.8.1). Program ima verziju 2.8.1 (csproj `<Version>`), a log svakog kruga počinje redom „Program 2.8.1, pravila 2.8.1“.
+
+- **`.strane.json` samo u testovima.** U obradi maila takav prilog se ignoriše; u log ide upozorenje „nedozvoljen tip priloga“. `validate` ga prihvata samo uz `--test-strane`.
+- **r62 na skenu (GIPS)**
+  - Ciljani OCR kućica čita dva isečka: osnovni i očišćen (proširen za 30 % gore i dole, bez isprekidanih pregrada i tačaka). Glasa i sa ciframa opšteg OCR-a.
+  - GIPS: 72 / 163501 / 3212 / 158900, umesto „jj2 1 6350.1 / 3212“.
+  - Nepouzdano čitanje daje internu napomenu „r62 nečitljiva – proveriti ručno“ (sa onim što je agent pročitao), a ne grešku.
+- **Jezik za opšte domene** (gmail.com, yahoo.com, outlook.com, hotmail.com, live.com, icloud.com…): određuje se po tekstu koji je pošiljalac sam napisao (naslov i telo, bez citata i potpisa). Primer: „IZVOZ“ daje srpski. `validate --naslov … --telo …`.
+- **Excel spiskovi kola** (55 16261, CUV_257, CIM COAL 16) dodati su u test podatke; X26 više nije greška.
+  - COAL 16: `wagon list 16.xlsx` nema mase robe (sva kola „Empty“, samo tara), pa R25-MASA ostaje greška. Poruka to sada kaže.
+- **CIT 7 – naknadni zahtev**
+  - Čitač obrasca: `Citanje\Cit7Citac.cs`.
+  - Veza sa tovarnim listom iz istog maila ili iz istorije obrađenih listova (`stanje\listovi.json`, najviše 3000 zapisa i 180 dana; samo r62, strane, relacija, r7 i brojevi kola).
+  - Poseban interni izveštaj „[INTERNO] CIT 7 – naknadni zahtev – …“: šta se menja (stara → nova vrednost), razlike između CIT 7 i lista i upozorenja (duplikat lista, r7 „Primalac nema pravo raspolaganja“ / 7.1, deljenje pošiljke, carinsko područje). Pošiljaocu ništa.
+- **Testovi**: `TestniPrimeriTests` +17.
+
 ## 2026-11-13 – pravila v2.8: ispravke posle testa („Testni primeri“, 9 dokumenata)
 
 Detaljan spisak izmena pravila je u `cim_validation_rules.json` → `meta.changelog` (v2.8). Ukratko:

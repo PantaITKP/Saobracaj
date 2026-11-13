@@ -26,8 +26,8 @@
       "RID tabela A, pogl. 3.2",
       "EWC katalog otpada (Odluka 2014/955/EU)"
     ],
-    "version": "2.8",
-    "updated": "2026-11-12",
+    "version": "2.8.1",
+    "updated": "2026-11-13",
     "company": {
       "name": "Kombinovani prevoz d.o.o.",
       "short": "KP",
@@ -174,6 +174,18 @@
           "R50: samo interna napomena (popunjava prevoznik), nikad greška pošiljaocu.",
           "Obrisani (šum u izveštaju): REC3 (KP u propisanom obliku), KP6 (KP na spisku kola), REC6 (spisak i u Excelu). REC1 (r8) i REC8 (kontakt) – samo interno.",
           "primer_en za sva pravila; spisak kola u primerima bez nepotvrđene šifre 271 („<šifra> Spisak kola“ – 271 je u UN/EDIFACT 1001 „packing list“, priručnik GLV-CIM šifru za spisak kola ne navodi)."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.8.1",
+        "basis": "dopune posle prihvatanja v2.8 (2026-11-13)",
+        "changes": [
+          "Prilog „<ime>.strane.json“ (već pročitane strane) prihvata se samo u testovima; u obradi maila se ignoriše i beleži u log kao „nedozvoljen tip priloga“.",
+          "R62 na skenu: ciljani OCR kućica čita i očišćen isečak (bez isprekidanih pregrada, proširen) i glasa sa opštim OCR-om; kada čitanje nije pouzdano (OCR šum „jj2“ uz nepotpunu r62, niska pouzdanost cifara, isečci daju različite brojeve) – interna napomena „r62 nečitljiva – proveriti ručno“, ne greška.",
+          "Jezik izveštaja za opšte mail domene (gmail.com, yahoo.com, outlook.com, hotmail.com, live.com, icloud.com…): po tekstu koji je pošiljalac sam napisao (naslov i telo bez citata i potpisa) – srpska slova, ćirilica ili srpske reči („poštovani“, „pozdrav“, „vagon“, „tovarni“, „izvoz“) → srpski, inače engleski.",
+          "R25-MASA: kada je priložen spisak kola bez mase robe, poruka navodi spisak (i da su sva kola na njemu označena kao prazna, a u r21 je roba). Kola označena „Empty / Leer / prazna / gol“ u Excel spisku su prazna kola.",
+          "CIT 7 (naknadni zahtev, GLV-CIM Prilog 7, čl. 18 i 19 CIM): čitaju se identifikacija, pošiljalac, primalac, mesto izdavanja, šifre zahteva, tražene izmene („Box 4: …“) i podnosilac; veza sa tovarnim listom iz istog maila ili iz ranije obrađenih (stanje\\listovi.json) po r62, broju kola, relaciji i stranama. Poseban interni izveštaj: šta se menja (stara → nova vrednost) i upozorenja – nije priložen duplikat lista sa istim izmenama, zahtev ne podnosi primalac a u r7 nema „Primalac nema pravo raspolaganja“ (ili šifre 7.1), pošiljka se deli, izmena menja carinsko područje („potreban pristanak carinarnice“). Ništa od toga se ne šalje pošiljaocu."
         ]
       }
     ]

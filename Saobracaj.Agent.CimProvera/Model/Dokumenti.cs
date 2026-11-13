@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Saobracaj.Agent.CimProvera.Model
 {
@@ -177,6 +179,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Šifra stanice (DIUM).")] public string Stanica { get; set; } = "";
         [Opis("Šifra preduzeća (4 cifre).")] public string Preduzece { get; set; } = "";
         [Opis("Broj otpravljanja (npr. 12345-6).")] public string Broj { get; set; } = "";
+        /// <summary>v2.8.1: sken – cifre r62 niske pouzdanosti (i kada ciljani OCR isečaka kućica daje različite brojeve): proverava čovek.</summary>
+        [Interni] public bool NepouzdanoCitanje { get; set; }
+        /// <summary>v2.8.1: sken – u rubrici je OCR šum od slova i cifara („jj2“) – razlog za ručnu proveru samo kada neki deo r62 nije pročitan.</summary>
+        [Interni] public bool OcrSum { get; set; }
     }
 
     /// <summary>Jedan tovarni list CIM ili kolski list CUV (jedan list, ne ceo PDF).</summary>
@@ -293,6 +299,47 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li dodatni list sadrži datum preuzimanja.")] public bool DatumPreuzimanja { get; set; }
     }
 
+    /// <summary>
+    /// CIT 7 – naknadni zahtev (GLV-CIM, Prilog 7; čl. 18 i 19 CIM): podaci pročitani sa obrasca. Polja su prazna kada nisu upisana.
+    /// </summary>
+    internal sealed class Cit7Zahtev
+    {
+        /// <summary>Zahtev se odnosi na kolski list CUV (inače tovarni list CIM).</summary>
+        public bool Cuv { get; set; }
+        public string Posiljalac { get; set; } = "";
+        public string Primalac { get; set; } = "";
+        /// <summary>Mesto izdavanja (uputna) kako je navedeno u zaglavlju CIT 7 – važeće pre izmene.</summary>
+        public string MestoIzdavanja { get; set; } = "";
+        /// <summary>Uputna stanica (šifra i zemlja) iz zaglavlja CIT 7, npr. „72 16503-5 Serbia“.</summary>
+        public string StanicaIzdavanja { get; set; } = "";
+        public string Preuzimanje { get; set; } = "";
+        public string Kola { get; set; } = "";
+        public List<string> BrojeviKola { get; set; } = new List<string>();
+        public string Zemlja { get; set; } = "";
+        public string Stanica { get; set; } = "";
+        public string Preduzece { get; set; } = "";
+        public string Broj { get; set; } = "";
+        /// <summary>Označene šifre zahteva (1 zaustaviti, 2 odložiti izdavanje, 3 izdati drugom primaocu, 4 otpremiti u drugo mesto, 5 carinske formalnosti, 6 ostale izmene).</summary>
+        public List<int> Sifre { get; set; } = new List<int>();
+        /// <summary>Tražene izmene po rubrikama tovarnog lista: („4“, „GRANEXPORT D.O.O., Luka Dunav br.5, 26000 Pančevo, Srbija“).</summary>
+        public List<Cit7Izmena> Izmene { get; set; } = new List<Cit7Izmena>();
+        public string Napomene { get; set; } = "";
+        /// <summary>Označeno „Nije neophodno obavestiti otpravnu carinu“.</summary>
+        public bool BezCarine { get; set; }
+        /// <summary>Označeno „Odobrenje otpravne carine“.</summary>
+        public bool OdobrenjeCarine { get; set; }
+        /// <summary>Ko je potpisao zahtev (polje „Potpis pošiljaoca / primaoca“), i mesto/datum.</summary>
+        public string Podnosilac { get; set; } = "";
+        public string Datum { get; set; } = "";
+        public string Identifikacija => Regex.Replace(string.Join(" ", new[] { Zemlja, Stanica, Preduzece, Broj }.Where(x => !string.IsNullOrWhiteSpace(x))), @"\s+", " ").Trim();
+    }
+
+    internal sealed class Cit7Izmena
+    {
+        public string Rubrika { get; set; } = "";
+        public string Vrednost { get; set; } = "";
+    }
+
     internal static class TipDokumenta
     {
         public const string Cim = "cim";
@@ -358,6 +405,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         /// <summary>Uslov isporuke iz fakture / deklaracije (npr. "DAP Alesd").</summary>
         [Interni] public string Incoterms { get; set; } = "";
         [Interni] public string Izvor { get; set; } = "claude"; // claude | excel
+        /// <summary>Za cit7: pročitan naknadni zahtev (v2.8.1).</summary>
+        [Interni] public Cit7Zahtev Cit7 { get; set; }
     }
 
     /// <summary>Odgovor Claude-a za jedan prilog.</summary>

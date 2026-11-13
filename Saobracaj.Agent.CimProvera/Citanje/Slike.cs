@@ -83,6 +83,86 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }
         }
 
+        /// <summary>
+        /// v2.8.1: očišćen isečak kućica sa ciframa (r62, r16, r24…) – drugi pokušaj ciljanog OCR-a. Isečak se proširuje
+        /// za 30 % visine gore i dole (kućica šablona na skenu često odseče vrh cifara), brišu se tanke uspravne pregrade
+        /// (isprekidane linije kućica, do 3 piksela širine) i sve povezane mrlje znatno niže od cifara (tačke, ostaci linija, sitni natpisi).
+        /// </summary>
+        public static byte[] IsecakCifara(Bitmap strana, double x0, double y0, double x1, double y1)
+        {
+            var dy = (y1 - y0) * 0.3;
+            int a = Math.Max(0, (int)(x0 * strana.Width)), b = Math.Max(0, (int)((y0 - dy) * strana.Height));
+            int c = Math.Min(strana.Width, (int)Math.Ceiling(x1 * strana.Width)), d = Math.Min(strana.Height, (int)Math.Ceiling((y1 + dy) * strana.Height));
+            int w = Math.Max(1, c - a), h = Math.Max(1, d - b);
+            var ink = new bool[w * h];
+            using (var crop = strana.Clone(new Rectangle(a, b, w, h), PixelFormat.Format24bppRgb))
+            {
+                var data = crop.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+                try
+                {
+                    var red = new byte[data.Stride];
+                    for (int y = 0; y < h; y++)
+                    {
+                        Marshal.Copy(data.Scan0 + y * data.Stride, red, 0, data.Stride);
+                        for (int x = 0; x < w; x++) ink[y * w + x] = (red[x * 3] * 114 + red[x * 3 + 1] * 587 + red[x * 3 + 2] * 299) / 1000 < 150;
+                    }
+                }
+                finally { crop.UnlockBits(data); }
+            }
+            // dugi vodoravni nizovi (linije okvira i kućica)
+            for (int y = 0; y < h; y++) { int poc = -1; for (int x = 0; x <= w; x++) { var je = x < w && ink[y * w + x]; if (je && poc < 0) poc = x; if (!je && poc >= 0) { if (x - poc >= w * 0.3) for (int k = poc; k < x; k++) ink[y * w + k] = false; poc = -1; } } }
+            // povezane mrlje (4-susedstvo): zadržavaju se samo one visoke bar 45 % najviše mrlje i šire od 3 piksela
+            var oznaka = new int[w * h];
+            var mrlje = new List<(int x0, int y0, int x1, int y1, List<int> px)>();
+            var stek = new Stack<int>();
+            for (int i = 0; i < ink.Length; i++)
+            {
+                if (!ink[i] || oznaka[i] != 0) continue;
+                var px = new List<int>(); int mx0 = w, my0 = h, mx1 = 0, my1 = 0;
+                oznaka[i] = mrlje.Count + 1; stek.Push(i);
+                while (stek.Count > 0)
+                {
+                    var j = stek.Pop(); px.Add(j);
+                    int x = j % w, y = j / w;
+                    if (x < mx0) mx0 = x; if (x > mx1) mx1 = x; if (y < my0) my0 = y; if (y > my1) my1 = y;
+                    foreach (var n in new[] { x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, y > 0 ? j - w : -1, y < h - 1 ? j + w : -1 })
+                        if (n >= 0 && ink[n] && oznaka[n] == 0) { oznaka[n] = mrlje.Count + 1; stek.Push(n); }
+                }
+                mrlje.Add((mx0, my0, mx1, my1, px));
+            }
+            var najvisa = mrlje.Count == 0 ? 0 : mrlje.Where(m => m.x1 - m.x0 >= 3).Select(m => m.y1 - m.y0 + 1).DefaultIfEmpty(0).Max();
+            var cisto = new bool[w * h];
+            foreach (var m in mrlje)
+            {
+                int mw = m.x1 - m.x0 + 1, mh = m.y1 - m.y0 + 1;
+                if (mw <= 3 || mh < najvisa * 0.45) continue;
+                foreach (var j in m.px) cisto[j] = true;
+            }
+            var uvecanje = h < 40 ? 3 : h < 70 ? 2 : 1;
+            int rub = 20, W = w * uvecanje + 2 * rub, H = h * uvecanje + 2 * rub;
+            using (var izlaz = new Bitmap(W, H, PixelFormat.Format24bppRgb))
+            {
+                var data = izlaz.LockBits(new Rectangle(0, 0, W, H), ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
+                try
+                {
+                    var red = new byte[data.Stride];
+                    for (int y = 0; y < H; y++)
+                    {
+                        for (int x = 0; x < W; x++)
+                        {
+                            int sx = (x - rub) / uvecanje, sy = (y - rub) / uvecanje;
+                            var crno = x >= rub && y >= rub && sx < w && sy < h && cisto[sy * w + sx];
+                            red[x * 3] = red[x * 3 + 1] = red[x * 3 + 2] = crno ? (byte)0 : (byte)255;
+                        }
+                        Marshal.Copy(red, 0, data.Scan0 + y * data.Stride, data.Stride);
+                    }
+                }
+                finally { izlaz.UnlockBits(data); }
+                izlaz.SetResolution(300, 300);
+                using (var ms = new MemoryStream()) { izlaz.Save(ms, ImageFormat.Png); return ms.ToArray(); }
+            }
+        }
+
         public static Bitmap Ucitaj(byte[] png) { using (var ms = new MemoryStream(png)) return new Bitmap(new Bitmap(ms)); }
 
         // ------------------------------------------------------------------------------------------- crtanje za proveru

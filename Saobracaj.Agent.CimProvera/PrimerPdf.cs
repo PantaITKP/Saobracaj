@@ -140,7 +140,8 @@ namespace Saobracaj.Agent.CimProvera
 
         private static Bitmap Podloga(Prilog p, int strana)
         {
-            if (p == null || p.Sadrzaj == null) return null;
+            // test podaci „.strane.json“ (pročitane strane bez originala) nisu podloga
+            if (p == null || p.Sadrzaj == null || p.Strane != null) return null;
             // Word: podloga je PDF dobijen pretvaranjem (isti kao za čitanje; WordUPdf ga čuva u memoriji)
             if (p.Vrsta == VrstaPriloga.Word)
             {

@@ -126,6 +126,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                         nhm = celije.Select(c => Regex.Match(c, @"\b(?:NHM|HS|NHM-?code)\b\W{0,3}(\d{2}(?:[ .]?\d{2}){1,3})(?![\d.,])", RegexOptions.IgnoreCase))
                             .Where(m => m.Success).Select(m => Regex.Replace(m.Groups[1].Value, @"[ .]", "")).FirstOrDefault();
                     if (nhm != null) { stavka.Nhm = nhm; stavka.Prazna = nhm.StartsWith("9921") || nhm.StartsWith("9922"); }
+                    // v2.8.1: kola označena kao prazna u svojoj vrsti („Empty“, „Leer“, „prazna“, rum. „gol“)
+                    if (celije.Any(c => Regex.IsMatch(c.Trim(), @"^(empty|leer|leere?|prazn[ao]?|gol|goale|vide|[üu]res)$", RegexOptions.IgnoreCase))) stavka.Prazna = true;
                     spisak.Kola.Add(stavka);
                 }
             }

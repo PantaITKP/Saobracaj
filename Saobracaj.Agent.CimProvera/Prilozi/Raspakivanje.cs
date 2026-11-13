@@ -41,11 +41,25 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
     {
         private const int MaxDubina = 5;
 
+        /// <summary>
+        /// v2.8.1: „&lt;ime&gt;.strane.json“ (već pročitane strane) se prihvata SAMO u testovima (jedinični testovi i
+        /// <c>validate --test-strane</c>). U obradi maila je uvek isključeno – inače bi svako mogao da pošalje izmišljen
+        /// „pročitan“ sadržaj koji bi agent proverio kao pravi tovarni list.
+        /// </summary>
+        internal static bool DozvoliProcitaneStrane;
+
+        public const string NedozvoljenTip = "nedozvoljen tip priloga";
+
         public static List<Prilog> Raspakuj(string naziv, byte[] sadrzaj, List<string> preskoceno, int dubina = 0)
         {
             var rez = new List<Prilog>();
             if (sadrzaj == null || sadrzaj.Length == 0) return rez;
             var ext = (Path.GetExtension(naziv) ?? "").ToLowerInvariant();
+            if (naziv.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase) && !DozvoliProcitaneStrane)
+            {
+                preskoceno.Add(naziv + " (" + NedozvoljenTip + ")");
+                return rez;
+            }
             // test podaci: pročitane strane iz keša agenta („CIM.pdf.strane.json“ = prilog „CIM.pdf“ čiji original nije dostupan)
             if (naziv.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase))
             {

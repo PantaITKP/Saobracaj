@@ -250,9 +250,15 @@ namespace Saobracaj.Agent.CimProvera
             var datumArg = Opcija("--datum");
             var izlaz = Opcija("--izlaz");
             var posiljalac = Opcija("--posiljalac");
+            // v2.8.1: naslov i telo maila (za jezik kod opštih domena: gmail.com…)
+            var naslovMaila = Opcija("--naslov");
+            var teloMaila = Opcija("--telo");
+            var istorija = Opcija("--istorija");
             var en = Zastavica("--en");
             var sr = Zastavica("--sr");
             var podfolderi = Zastavica("--podfolderi");
+            // v2.8.1: test podaci „<ime>.strane.json“ samo uz izričitu zastavicu (u radu nad sandučetom nikad)
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = Zastavica("--test-strane");
             if (a.Count == 0) { Console.Error.WriteLine("Upotreba: validate <fajl|folder>… (vidi --help)"); return 1; }
 
             var slucajevi = new List<(string ime, List<string> fajlovi)>();
@@ -270,10 +276,12 @@ namespace Saobracaj.Agent.CimProvera
             }
 
             // jezik: --en / --sr, inače po pošiljaocu (--posiljalac) kao u radu nad sandučetom (v2.8)
-            if (!en && !sr && posiljalac != null) en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni);
+            if (!en && !sr && posiljalac != null) en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslovMaila, teloMaila);
             var pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log);
             using var citac = new LokalniCitac(cfg, log, pravila.Kp);
             var obrada = new Obrada(pravila, citac, log, cfg.PragPouzdanosti);
+            // v2.8.1: CIT 7 bez lista u mailu – ranije obrađeni listovi iz zadatog foldera stanja (listovi.json)
+            if (istorija != null) obrada.RanijiListovi = () => IstorijaListova.Ucitaj(istorija);
             int ukupnoGresaka = 0;
 
             foreach (var (ime, fajlovi) in slucajevi)
@@ -285,6 +293,7 @@ namespace Saobracaj.Agent.CimProvera
                     : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
+                obrada.NaslovMaila = naslovMaila ?? ime;
                 var ishod = obrada.Proveri(prilozi, posiljalac, posiljalac != null && cfg.JeInterni(posiljalac), datum, en, rezim);
                 var rPuni = ishod.Provera;
                 // v2.8: isto kao u radu nad sandučetom – interni izveštaj (KP tovarni list / ručna provera) ili izveštaj za pošiljaoca bez nalaza „samo interno“
@@ -311,6 +320,13 @@ namespace Saobracaj.Agent.CimProvera
                     sb.AppendLine(Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani));
                 }
                 if (r.GreskePravila.Count > 0) sb.AppendLine("Pravila sa greškom u izvršavanju: " + string.Join("; ", r.GreskePravila));
+                // v2.8.1: CIT 7 – poseban interni izveštaj
+                string cit7Tekst = null;
+                if (rPuni.Cit7.Count > 0)
+                {
+                    cit7Tekst = Cit7Provera.Tekst(rPuni.Cit7, pravila, "[TEST] Interni izveštaj – ne ide pošiljaocu" + (posiljalac != null ? " (" + posiljalac + ")" : "") + ".");
+                    sb.AppendLine().AppendLine("================ " + Cit7Provera.Naslov(rPuni.Cit7, naslovMaila ?? ime)).AppendLine(cit7Tekst);
+                }
                 Console.WriteLine(sb.ToString());
                 ukupnoGresaka += r.BrojGresaka;
 
@@ -345,6 +361,15 @@ namespace Saobracaj.Agent.CimProvera
                         mail.WriteTo(Path.Combine(izlaz, ime + ".eml"));
                         File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
                             + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus), Encoding.UTF8);
+                    }
+                    if (cit7Tekst != null)
+                    {
+                        var uvodC = "[TEST] Interni izveštaj – ne ide pošiljaocu" + (posiljalac != null ? " (" + posiljalac + ")" : "") + ".";
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".cit7.txt"), cit7Tekst, Encoding.UTF8);
+                        var html7 = Cit7Provera.Html(rPuni.Cit7, pravila, uvodC);
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".cit7.html"), "<!doctype html><meta charset=\"utf-8\"><title>CIT 7</title>" + html7, Encoding.UTF8);
+                        Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Cit7Provera.Naslov(rPuni.Cit7, naslovMaila ?? ime), Cit7Provera.Tekst(rPuni.Cit7, pravila, uvodC), html: html7)
+                            .WriteTo(Path.Combine(izlaz, ime + ".cit7.eml"));
                     }
                     File.WriteAllText(Path.Combine(izlaz, ime + ".json"), Json.U(new
                     {

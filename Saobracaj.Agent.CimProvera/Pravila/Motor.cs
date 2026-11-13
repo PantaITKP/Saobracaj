@@ -81,6 +81,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public bool Ispravan => ImaTovarniList && BrojGresaka == 0;
         public bool ZaRucnuProveru => Listovi.Any(l => l.ZaRucnuProveru);
         public bool ImaInternih => Listovi.Any(l => l.Nalazi.Any(n => n.SamoInterno));
+        /// <summary>v2.8.1: CIT 7 (naknadni zahtevi) iz maila – veza sa tovarnim listom, izmene, provere. Samo interno.</summary>
+        public List<Cit7Rezultat> Cit7 = new List<Cit7Rezultat>();
 
         /// <summary>Isti rezultat bez nalaza "samo interno" (izveštaj za spoljnog pošiljaoca).</summary>
         public RezultatProvere BezInternih() => new RezultatProvere
@@ -102,6 +104,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Predlog;
         /// <summary>Poruka za ovaj slučaj umesto poruke pravila (npr. R25-MASA za prazna kola).</summary>
         public string Poruka;
+        /// <summary>Samo za interni izveštaj (npr. „r62 nečitljiva – proveriti ručno“), i kada pravilo inače ide pošiljaocu.</summary>
+        public bool SamoInterno;
 
         public Pogodak(string rubrika, string kljuc = null) { Rubrika = rubrika; Kljuc = kljuc; }
         public Pogodak S(string k, string v) { V[k] = v; return this; }
@@ -274,7 +278,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var uputstvo = Regex.Replace(pg.Poruka ?? def.Poruka(en), @"\{(\w+)\}", m => v.TryGetValue(m.Groups[1].Value, out var x) ? x : m.Value);
             // Upisane su samo oznake obrasca bez vrednosti („Tara: … Netto: …“): konkretan opis umesto „rubrika je prazna“.
             var dodatak = pg.Dodatak;
-            if (RubrikaLista(cim, pg.Rubrika)?.Status == StatusRubrike.Oznake && (string.IsNullOrEmpty(dodatak) || dodatak.Contains("prazna") || dodatak.Contains("empty")))
+            if (RubrikaLista(cim, pg.Rubrika)?.Status == StatusRubrike.Oznake && (string.IsNullOrEmpty(dodatak) || Regex.IsMatch(dodatak, @"^\s*\(?(rubrika je prazna|(the )?box is empty)", RegexOptions.IgnoreCase)))
                 dodatak = en ? "Only the form labels are entered, without values." : "Upisane su samo oznake, bez vrednosti.";
             var tekst = uputstvo + (string.IsNullOrEmpty(dodatak) ? "" : " " + dodatak);
             return new Nalaz
@@ -284,7 +288,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 Vrednost = TekstRubrike(cim, pg.Rubrika),
                 Primer = !string.IsNullOrEmpty(pg.Predlog) ? pg.Predlog : (en ? (string)def.Json["primer_en"] : null) ?? (string)def.Json["primer"] ?? "",
                 Kljuc = pg.Kljuc ?? def.Id + "|" + pg.Rubrika + "|" + tekst,
-                SamoInterno = (bool?)def.Json["samo_interno"] == true,
+                SamoInterno = pg.SamoInterno || (bool?)def.Json["samo_interno"] == true,
             };
         }
 
