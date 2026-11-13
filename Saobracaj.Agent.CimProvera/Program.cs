@@ -35,6 +35,10 @@ namespace Saobracaj.Agent.CimProvera
                                    nacrt šablona novog obrasca iz uzorka: linije okvira, brojevi rubrika, rubrike,
                                    kvadratići i sidra (JSON + slika); posle provere kopirati u ObrasciFolder
   preuzmi <uid> [--odlazni] [--izlaz f]  čuva priloge jedne poruke (IMAP samo za čitanje)
+  reset-stanje [--zadatak ""ime""] [--bez-zadatka]
+                                   zaustavlja zadatak, pravi rezervnu kopiju stanja (stanje\arhiva\datum_vreme),
+                                   briše spisak obrađenih mailova i keš (OCR, rezultati), postavlja nultu tačku i
+                                   ponovo uključuje zadatak; pravila, šabloni, config, logovi i testovi ostaju
   --test-veze                      proverava pravila, šablon, OCR (tessdata), IMAP i SMTP, bez obrade
   --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)";
 
@@ -47,6 +51,7 @@ namespace Saobracaj.Agent.CimProvera
             try { cfg = AgentConfig.Ucitaj(); }
             catch (Exception ex) { Console.Error.WriteLine("Greška u config-u: " + ex); return 1; }
             var log = new Log(cfg.LogFolder, cfg.LogDana);
+            Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
 
             try
             {
@@ -86,6 +91,23 @@ namespace Saobracaj.Agent.CimProvera
                         foreach (var l in r.Listovi)
                             foreach (var n in l.Nalazi)
                                 Console.WriteLine("  " + l.Oznaka + " | " + n.Tezina + " | " + n.Pravilo + " | r" + n.Rubrika + " | " + n.Vrednost + " | " + n.Detalj + " | takođe: " + string.Join(",", n.Takodje.Select(t => t.Pravilo)));
+                    return 0;
+                }
+                if (a.Count > 1 && a[0] == "pdf-polja")
+                {
+                    // pdf-polja <fajl>: dijagnostika polja PDF obrasca (AcroForm) i anotacija po stranama
+                    using (var doc = UglyToad.PdfPig.PdfDocument.Open(File.ReadAllBytes(a[1])))
+                    {
+                        Console.WriteLine("AcroForm: " + (doc.TryGetForm(out var form) && form != null ? form.Fields.Count + " polja" : "nema"));
+                        if (form != null)
+                            foreach (var f in form.Fields.Take(40))
+                                Console.WriteLine("  " + f.GetType().Name + " | " + f.Information?.PartialName + " | str " + f.PageNumber + " | " + f.Bounds
+                                    + (f is UglyToad.PdfPig.AcroForms.Fields.AcroTextField t ? " | „" + t.Value + "“" : "")
+                                    + (f is UglyToad.PdfPig.AcroForms.Fields.AcroNonTerminalField nt ? " | deca " + nt.Children.Count : ""));
+                        foreach (var p in doc.GetPages().Take(2))
+                            foreach (var an in p.ExperimentalAccess.GetAnnotations().Take(10))
+                                Console.WriteLine("  str " + p.Number + " anotacija " + an.Type + " " + an.Rectangle + " „" + an.Content + "“ ap=" + (an.HasNormalAppearance));
+                    }
                     return 0;
                 }
                 if (a.Count > 1 && a[0] == "preuzmi")
@@ -157,6 +179,11 @@ namespace Saobracaj.Agent.CimProvera
                                     foreach (var poruka in c.SnimiSlike(pp, izlaz, uvekOcr)) Console.WriteLine(poruka);
                     Console.WriteLine("Rezultati: " + izlaz);
                     return 0;
+                }
+                if (a.Count > 0 && a[0] == "reset-stanje")
+                {
+                    var zi = a.IndexOf("--zadatak");
+                    return ResetStanja.Pokreni(cfg, log, zi > 0 && zi + 1 < a.Count ? a[zi + 1] : ResetStanja.PodrazumevaniZadatak, a.Contains("--bez-zadatka"));
                 }
                 if (a.Contains("--test-veze")) return TestVeze(cfg, log);
 
@@ -247,7 +274,7 @@ namespace Saobracaj.Agent.CimProvera
                 else
                 {
                     sb.AppendLine("Režim KP: " + string.Join(", ", r.Listovi.Select(l => l.KpRezim ? "da" : "ne").Distinct()));
-                    sb.AppendLine("Predmet: " + Izvestaj.NaslovMaila(ime, Izvestaj.FajloviListova(r), en, r));
+                    sb.AppendLine("Predmet: " + Izvestaj.Naslov(r, pravila, en));
                     sb.AppendLine();
                     sb.AppendLine(Izvestaj.Telo(r, pravila, en, null, ishod.NisuProcitani));
                 }
@@ -260,8 +287,33 @@ namespace Saobracaj.Agent.CimProvera
                     Directory.CreateDirectory(izlaz);
                     File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), sb.ToString(), Encoding.UTF8);
                     if (r.ImaTovarniList)
-                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.NaslovMaila(ime, Izvestaj.FajloviListova(r), en, r))
+                    {
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
                             + "</title>" + Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani), Encoding.UTF8);
+                        // PDF primer (B2) + slike strana (PNG, 150 dpi) u izlaz\primeri
+                        var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? PrimerPdf.Napravi(r, pravila, en, prilozi) : null;
+                        if (primer != null)
+                        {
+                            var pd = Path.Combine(izlaz, "primeri"); Directory.CreateDirectory(pd);
+                            if (primer.Napravljen)
+                            {
+                                File.WriteAllBytes(Path.Combine(pd, primer.Ime), primer.Pdf);
+                                for (int si = 0; si < primer.Strane.Count; si++)
+                                    File.WriteAllBytes(Path.Combine(pd, Path.GetFileNameWithoutExtension(primer.Ime) + "_str" + (si + 1) + ".png"), primer.Strane[si]);
+                            }
+                            Console.WriteLine("PDF primer: " + (primer.Napravljen ? primer.Ime + " (" + primer.Pdf.Length / 1024 + " KB, strana " + primer.Strane.Count + "; "
+                                + string.Join("; ", primer.PoListu.Select(x => x.list + ": ispravki " + x.ispravki + ", napomena " + x.napomena + ", samo u legendi " + x.samoULegendi)) + ")"
+                                : "nije napravljen – " + primer.Razlog + (primer.Greska != null ? " (" + primer.Greska + ")" : "")));
+                        }
+                        // isti mail kao što ga agent šalje (multipart/alternative, UTF-8; sa PDF primerom kao prilogom) – otvara se u Outlook-u (.eml)
+                        var pasus = Izvestaj.PasusPrimera(primer, en);
+                        var mail = Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Izvestaj.Naslov(r, pravila, en),
+                            Izvestaj.Telo(r, pravila, en, null, ishod.NisuProcitani, pasus), html: Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani, pasus));
+                        if (primer?.Napravljen == true) Slanje.DodajPrilog(mail, primer.Ime, primer.Pdf);
+                        mail.WriteTo(Path.Combine(izlaz, ime + ".eml"));
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
+                            + "</title>" + Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani, pasus), Encoding.UTF8);
+                    }
                     File.WriteAllText(Path.Combine(izlaz, ime + ".json"), Json.U(new
                     {
                         slucaj = ime, datum, rezim, dokumenti = r.Dokumenti,

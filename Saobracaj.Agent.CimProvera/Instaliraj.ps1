@@ -147,7 +147,8 @@ $xml = New-Object Xml.XmlDocument
 $xml.PreserveWhitespace = $true
 $xml.Load($Cfg)
 $app = $xml.SelectSingleNode('/configuration/appSettings')
-$mail = $app.SelectSingleNode("add[@key='Nalog']").GetAttribute('value')
+$cs = $app.SelectSingleNode("add[@key='CitajSanduce']")   # v2.7.1: CitajSanduce (stari kljuc: Nalog)
+if ($cs -ne $null -and $cs.GetAttribute('value').Trim().Length -gt 0) { $mail = $cs.GetAttribute('value').Trim() } else { $mail = $app.SelectSingleNode("add[@key='Nalog']").GetAttribute('value') }
 
 Korak "3. Lozinka sanduceta $mail"
 $loz = Obican (Read-Host "    Lozinka za $mail" -AsSecureString)

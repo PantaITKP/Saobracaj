@@ -33,9 +33,10 @@ namespace Saobracaj.Agent.CimProvera
         public string DolazniFolder;
         public string OdlazniFolder;       // prazno = poseban folder "Sent" sa servera
         public bool CitajOdlazne;
-        public string PosiljalacIzvestaja; // From izveštaja (podrazumevano = Nalog)
+        public string PosiljalacIzvestaja; // From izveštaja (ključ From ili PosiljalacIzvestaja; podrazumevano = sanduče)
+        public string ReplyTo;             // Reply-To izveštaja (ključ ReplyTo; podrazumevano = From)
         public Rezim Rezim;
-        public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde
+        public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde (ključ TestPrimalac ili IzvestajAdresa)
         public List<string> KopijaNa = new List<string>();
         public List<string> InterniDomeni = new List<string>();
         public bool OdgovoriNaIspravanDolazni;
@@ -74,12 +75,19 @@ namespace Saobracaj.Agent.CimProvera
         public string RezultatiFolder;
         /// <summary>Kratka potvrda pošiljaocu kada je dolazni CIM ispravan („tovarni list je ispravan“).</summary>
         public bool PotvrdaIspravnogDolaznog;
+        /// <summary>Potpis u mailu sa izveštajem: ime (prazno = potpis počinje odeljenjem), telefon, odeljenje, e-mail.</summary>
+        public string PotpisIme, PotpisTelefon, PotpisOdeljenje, PotpisEmail;
 
         public string Bazni => AppDomain.CurrentDomain.BaseDirectory;
 
-        public static AgentConfig Ucitaj()
+        public static AgentConfig Ucitaj() => Ucitaj(ConfigurationManager.AppSettings);
+
+        /// <summary>
+        /// Podešavanja iz appSettings. Adrese nisu u kodu: CitajSanduce (ili Nalog) = sanduče koje se čita i nalog za IMAP/SMTP,
+        /// From (ili PosiljalacIzvestaja), ReplyTo, TestPrimalac (ili IzvestajAdresa); prazno = isto kao sanduče.
+        /// </summary>
+        internal static AgentConfig Ucitaj(System.Collections.Specialized.NameValueCollection a)
         {
-            var a = ConfigurationManager.AppSettings;
             string S(string k, string d) => string.IsNullOrWhiteSpace(a[k]) ? d : a[k].Trim();
             int I(string k, int d) => int.TryParse(a[k], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : d;
             bool B(string k, bool d) => string.IsNullOrWhiteSpace(a[k]) ? d : string.Equals(a[k].Trim(), "true", StringComparison.OrdinalIgnoreCase);
@@ -88,7 +96,7 @@ namespace Saobracaj.Agent.CimProvera
 
             var cfg = new AgentConfig
             {
-                Nalog = S("Nalog", "stefan.obradovic@kprevoz.co.rs"),
+                Nalog = S("CitajSanduce", S("Nalog", "")),
                 ImapHost = S("ImapHost", "mail.kprevoz.co.rs"),
                 ImapPort = I("ImapPort", 993),
                 ImapSsl = B("ImapSsl", true),
@@ -126,6 +134,10 @@ namespace Saobracaj.Agent.CimProvera
                 PragPraznogPolja = D("PragPraznogPolja", 0.05),
                 RezultatiFolder = S("RezultatiFolder", @"testovi\rezultati"),
                 PotvrdaIspravnogDolaznog = B("PotvrdaIspravnogDolaznog", false),
+                PotpisIme = S("PotpisIme", ""),
+                PotpisTelefon = S("PotpisTelefon", ""),
+                PotpisOdeljenje = S("PotpisOdeljenje", "Priprema saobraćaja"),
+                PotpisEmail = S("PotpisEmail", "priprema@kprevoz.co.rs"),
             };
             cfg.PragPoravnanja = new Citanje.PragoviPoravnanja
             {
@@ -136,8 +148,9 @@ namespace Saobracaj.Agent.CimProvera
             };
             cfg.ObrasciFolder = Apsolutna(cfg.ObrasciFolder);
             if (cfg.RezultatiFolder.Length > 0) cfg.RezultatiFolder = Apsolutna(cfg.RezultatiFolder);
-            cfg.PosiljalacIzvestaja = S("PosiljalacIzvestaja", cfg.Nalog);
-            cfg.IzvestajAdresa = S("IzvestajAdresa", cfg.Nalog);
+            cfg.PosiljalacIzvestaja = S("From", S("PosiljalacIzvestaja", cfg.Nalog));
+            cfg.ReplyTo = S("ReplyTo", cfg.PosiljalacIzvestaja);
+            cfg.IzvestajAdresa = S("TestPrimalac", S("IzvestajAdresa", cfg.Nalog));
             cfg.UpozorenjaNa = S("UpozorenjaNa", cfg.IzvestajAdresa);
 
             cfg.PravilaFolder = Apsolutna(cfg.PravilaFolder);
