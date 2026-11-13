@@ -149,6 +149,113 @@ namespace Saobracaj.Agent.CimProvera
 
         private static string Mb(long b) => (b / 1048576.0).ToString("0.0") + " MB";
 
+        // ------------------------------------------------------------------------------------------- reset-potpun (v2.8.2)
+
+        /// <summary>Šta potpun reset briše: (opis, folder, šablon imena fajlova). Folderi ostaju, brišu se fajlovi (i prazni podfolderi).</summary>
+        internal static List<(string opis, string folder, string sablon)> ZaBrisanje(AgentConfig cfg)
+        {
+            var program = AppDomain.CurrentDomain.BaseDirectory;
+            string Aps(string p) => string.IsNullOrEmpty(p) ? null : Path.IsPathRooted(p) ? p : Path.Combine(program, p);
+            return new List<(string, string, string)>
+            {
+                ("stanje obrađenih mailova (UID, Message-ID, oba sandučeta), listovi.json, keš strana/OCR, kopija pravila, arhive", cfg.StanjeFolder, "*"),
+                ("rezultati (izveštaji, .eml, .html, .txt, PDF primeri, slike, _upisi.txt)", Aps(cfg.RezultatiFolder), "*"),
+                ("logovi", Aps(cfg.LogFolder), AgentConfig.AgentNaziv + "-*.log"),
+            };
+        }
+
+        /// <summary>
+        /// reset-potpun [--suvo] [--zadatak X] [--bez-zadatka]: briše stanje (oba sandučeta), keš, rezultate i logove; NE dira
+        /// config, lozinke i ključeve (*.dpapi), pravila i pravila\istorija, program, istorija\, testovi\nezavisni\ i zakazani zadatak.
+        /// U trenutku brisanja zapisuje vreme reseta – nulta tačka; agent u prvom krugu preskače poruke primljene pre tog vremena (INTERNALDATE) i zapisuje njihov najveći UID.
+        /// --suvo: samo spisak (broj fajlova i veličina), ništa se ne briše.
+        /// </summary>
+        public static int Potpun(AgentConfig cfg, Log log, string zadatak, bool bezZadatka, bool suvo)
+        {
+            var spisak = ZaBrisanje(cfg);
+            var izv = new StringBuilder();
+            izv.AppendLine((suvo ? "SPISAK ZA BRISANJE (ništa se ne briše)" : "POTPUN RESET") + " – " + DateTimeOffset.Now.ToString("dd.MM.yyyy HH:mm:ss zzz") + ", " + Environment.MachineName);
+            foreach (var (opis, folder, sablon) in spisak)
+            {
+                var f = folder != null && Directory.Exists(folder) ? Directory.GetFiles(folder, sablon, SearchOption.AllDirectories) : new string[0];
+                izv.AppendLine("- " + folder + (sablon != "*" ? "\\" + sablon : "\\*") + ": " + f.Length + " fajlova, " + Mb(f.Sum(x => new FileInfo(x).Length)) + " – " + opis);
+                var dpapi = f.Where(x => x.EndsWith(".dpapi", StringComparison.OrdinalIgnoreCase)).ToList();
+                if (dpapi.Count > 0) throw new InvalidOperationException("U folderu za brisanje su ključevi (" + string.Join(", ", dpapi) + ") – reset prekinut, ništa nije obrisano.");
+            }
+            izv.AppendLine("Ne briše se: config, Lozinka.dpapi / Syncfusion.dpapi, pravila i pravila\\istorija, program (exe, dll), istorija\\, testovi\\nezavisni\\, zakazani zadatak.");
+            if (suvo) { Console.WriteLine(izv.ToString()); return 0; }
+
+            bool iskljucen = false; int kod = 1;
+            try
+            {
+                if (!bezZadatka)
+                {
+                    if (Zadatak(zadatak, "/Change", "/DISABLE", out var o) != 0) throw new InvalidOperationException("Zadatak „" + zadatak + "“ nije isključen: " + o.Trim());
+                    iskljucen = true;
+                    izv.AppendLine("Zadatak „" + zadatak + "“ isključen.");
+                }
+                using (var mutex = new Mutex(false, ImeMuteksa))
+                {
+                    bool imam;
+                    try { imam = mutex.WaitOne(TimeSpan.FromMinutes(15)); } catch (AbandonedMutexException) { imam = true; }
+                    if (!imam) throw new InvalidOperationException("Agent i posle 15 minuta obrađuje mail – reset nije urađen, ništa nije obrisano.");
+                    try
+                    {
+                        // 1. nulta tačka = VREME reseta (u trenutku brisanja). UID se ovde ne čita: agent u prvom krugu preskače samo
+                        // poruke čiji je datum prijema (INTERNALDATE) pre ovog vremena i zapisuje najveći njihov UID; mail koji stigne
+                        // posle reseta, a pre prvog kruga, obrađuje se.
+                        long maxUid = 0, validity = 0; string folderIme = cfg.DolazniFolder ?? "INBOX";
+                        var sadaReset = DateTimeOffset.Now;
+                        izv.AppendLine("Nulta tačka: vreme reseta " + sadaReset.ToString("dd.MM.yyyy HH:mm:ss zzz") + " – UID nulte tačke (najveći UID poruka primljenih pre tog vremena) zapisuje agent u prvom krugu.");
+                        // 2. brisanje
+                        foreach (var (opis, folder, sablon) in spisak)
+                        {
+                            if (folder == null || !Directory.Exists(folder)) continue;
+                            int n = 0; long b = 0; var ne = new List<string>();
+                            foreach (var fajl in Directory.GetFiles(folder, sablon, SearchOption.AllDirectories))
+                            {
+                                var len = new FileInfo(fajl).Length;
+                                try { File.SetAttributes(fajl, FileAttributes.Normal); File.Delete(fajl); n++; b += len; }
+                                catch (Exception ex) { ne.Add(Path.GetFileName(fajl) + ": " + ex.Message); }
+                            }
+                            if (sablon == "*")
+                                foreach (var d in Directory.GetDirectories(folder, "*", SearchOption.AllDirectories).OrderByDescending(x => x.Length))
+                                    try { if (!Directory.EnumerateFileSystemEntries(d).Any()) Directory.Delete(d); } catch { }
+                            izv.AppendLine("Obrisano: " + folder + " – " + n + " fajlova, " + Mb(b) + (ne.Count > 0 ? "; NIJE obrisano " + ne.Count + ": " + string.Join("; ", ne.Take(5)) : ""));
+                            if (ne.Count > 0) throw new IOException("Neki fajlovi nisu obrisani (" + folder + ").");
+                        }
+
+                        // 3. novo stanje: samo nulta tačka (UID i vreme); sve ostalo prazno
+                        var st = Stanje.Ucitaj(cfg.StanjeFolder);
+                        var sada = sadaReset;
+                        st.NultaTacka = sada; st.NultaTackaUid = maxUid; st.NultaTackaUidValidity = validity; st.NultaTackaNalog = cfg.Nalog;
+                        st.PrviIzvestajiIzgraditi = false;
+                        if (maxUid > 0) st.Folderi[Stanje.KljucSanduceta(cfg.Nalog, folderIme)] = new Stanje.FolderStanje { UidValidity = validity, PoslednjiUid = maxUid, NultaTacka = sada };
+                        st.Sacuvaj();
+                        log.Info("Potpun reset " + sada.ToString("yyyy-MM-dd HH:mm:ss zzz") + ": vreme reseta (nulta tačka) " + sada.ToString("dd.MM.yyyy HH:mm:ss zzz") + "; UID nulte tačke zapisuje agent u prvom krugu (poruke primljene pre ovog vremena se ne obrađuju).");
+                    }
+                    finally { mutex.ReleaseMutex(); }
+                }
+                kod = 0;
+            }
+            catch (Exception ex)
+            {
+                izv.AppendLine("GREŠKA: " + ex.Message);
+                log.Greska("Potpun reset nije uspeo", ex);
+            }
+            finally
+            {
+                if (iskljucen)
+                {
+                    var ok = Zadatak(zadatak, "/Change", "/ENABLE", out var o) == 0;
+                    izv.AppendLine(ok ? "Zadatak „" + zadatak + "“ ponovo uključen." : "PAŽNJA: zadatak „" + zadatak + "“ NIJE ponovo uključen: " + o.Trim());
+                    if (!ok) kod = 1;
+                }
+                Console.WriteLine(izv.ToString());
+            }
+            return kod;
+        }
+
         private static int Zadatak(string ime, string komanda, string opcija, out string izlaz)
         {
             var psi = new ProcessStartInfo("schtasks.exe", komanda + " /TN \"" + ime + "\" " + opcija)

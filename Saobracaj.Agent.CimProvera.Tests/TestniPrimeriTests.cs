@@ -509,6 +509,41 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsNull(Cit7Provera.Proveri(r, ranije, new DateTime(2026, 11, 13), "x").Single().Veza);
         }
 
+        // ------------------------------------------------------------------------------------------- reset-potpun (v2.8.2)
+
+        [TestMethod]
+        public void Reset_potpun_brise_stanje_rezultate_logove_i_zapisuje_vreme_nulte_tacke()
+        {
+            var koren = Path.Combine(Path.GetTempPath(), "CimProveraReset-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                var c = RegresijaTests.Cfg(Path.Combine(koren, "stanje"));
+                c.RezultatiFolder = Path.Combine(koren, "rezultati"); c.LogFolder = Path.Combine(koren, "logs");
+                Directory.CreateDirectory(Path.Combine(c.StanjeFolder, "kes")); Directory.CreateDirectory(c.RezultatiFolder); Directory.CreateDirectory(c.LogFolder);
+                File.WriteAllText(Path.Combine(c.StanjeFolder, "stanje.json"), "{\"Poruke\":{\"stefan.obradovic@kprevoz.co.rs|x\":{\"Status\":\"Greske\"}},\"Folderi\":{\"agenti@kprevoz.co.rs|INBOX\":{\"PoslednjiUid\":500}}}");
+                File.WriteAllText(Path.Combine(c.StanjeFolder, "listovi.json"), "[]");
+                File.WriteAllText(Path.Combine(c.StanjeFolder, "kes", "abc_strane_1.json"), "[]");
+                File.WriteAllText(Path.Combine(c.RezultatiFolder, "PRIMER_x.pdf"), "x");
+                File.WriteAllText(Path.Combine(c.LogFolder, "CimProvera-20261113.log"), "x");
+                File.WriteAllText(Path.Combine(c.LogFolder, "drugo.txt"), "ostaje");
+                var pre = DateTimeOffset.Now;
+                var kod = ResetStanja.Potpun(c, new Log(Path.Combine(koren, "log-reseta")) { Tiho = true }, "nepostojeci", bezZadatka: true, suvo: false);
+                Assert.AreEqual(0, kod);
+                Assert.IsFalse(File.Exists(Path.Combine(c.StanjeFolder, "listovi.json")));
+                Assert.IsFalse(Directory.Exists(Path.Combine(c.StanjeFolder, "kes")) && Directory.GetFiles(Path.Combine(c.StanjeFolder, "kes")).Length > 0);
+                Assert.AreEqual(0, Directory.GetFiles(c.RezultatiFolder).Length);
+                Assert.IsFalse(File.Exists(Path.Combine(c.LogFolder, "CimProvera-20261113.log")));
+                Assert.IsTrue(File.Exists(Path.Combine(c.LogFolder, "drugo.txt")), "brišu se samo CimProvera-*.log");
+                var st = Stanje.Ucitaj(c.StanjeFolder);
+                Assert.AreEqual(0, st.Poruke.Count, "oba sandučeta");
+                Assert.AreEqual(0, st.Folderi.Count, "UID se ne čita pri resetu – zapisuje ga agent po INTERNALDATE");
+                Assert.AreEqual(0, st.NultaTackaUid);
+                Assert.AreEqual(c.Nalog, st.NultaTackaNalog);
+                Assert.IsTrue(st.NultaTacka.HasValue && st.NultaTacka.Value >= pre.AddSeconds(-1) && st.NultaTacka.Value <= DateTimeOffset.Now.AddSeconds(1));
+            }
+            finally { try { Directory.Delete(koren, true); } catch { } }
+        }
+
         [TestMethod]
         public void CIT7_uputna_i_primalac_nisu_dokaz_veze_kola_i_referenca_jesu()
         {

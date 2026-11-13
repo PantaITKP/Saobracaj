@@ -50,6 +50,13 @@ namespace Saobracaj.Agent.CimProvera
         public string ResetArhiva { get; set; }
         /// <summary>Indeks prvih izveštaja (stanje\prvi_izvestaji.json) treba sastaviti u sledećem prolazu.</summary>
         public bool PrviIzvestajiIzgraditi { get; set; }
+        /// <summary>
+        /// v2.8.2 (reset-potpun): najveći UID u sandučetu u trenutku reseta – poruke sa tim i manjim UID-om se nikad ne obrađuju;
+        /// prvi mail koji stigne posle reseta je nulta tačka. 0 = nije zapisano.
+        /// </summary>
+        public long NultaTackaUid { get; set; }
+        public long NultaTackaUidValidity { get; set; }
+        public string NultaTackaNalog { get; set; }
 
         [Newtonsoft.Json.JsonIgnore] public string Putanja { get; private set; }
 

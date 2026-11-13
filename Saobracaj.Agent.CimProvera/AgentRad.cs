@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -50,6 +50,8 @@ namespace Saobracaj.Agent.CimProvera
             try
             {
                 log.Info("Program " + VerzijaPrograma + ", pravila " + pravila.Verzija + ".");
+                if (stanje.NultaTackaNalog != null)
+                    log.Info("Nulta tačka: vreme reseta " + (stanje.NultaTacka.HasValue ? stanje.NultaTacka.Value.ToString("dd.MM.yyyy HH:mm:ss zzz") : "–") + ", UID " + (stanje.NultaTackaUid > 0 ? stanje.NultaTackaUid + " (" + stanje.NultaTackaNalog + ", UIDVALIDITY " + stanje.NultaTackaUidValidity + ")" : "još nije zapisan (zapisuje se u ovom krugu)") + " – obrađuju se samo poruke primljene posle reseta.");
                 log.Info("Sanduče: " + cfg.Nalog + " (From " + cfg.PosiljalacIzvestaja + ", Reply-To " + cfg.ReplyTo + (cfg.Rezim == Rezim.Test ? ", test primalac " + cfg.IzvestajAdresa : "") + ", režim " + cfg.Rezim + ")");
                 using (var s = new Sanduce(cfg))
                 {
@@ -176,6 +178,24 @@ namespace Saobracaj.Agent.CimProvera
                 if (fs.UidValidity != 0) log.Upozorenje("UIDVALIDITY foldera " + f.FullName + " se promenio – čita se od ImportOd, duplikati se prepoznaju po Message-ID.");
                 fs.UidValidity = f.UidValidity;
                 fs.PoslednjiUid = 0;
+            }
+            // v2.8.2 (posle reset-potpun): nulta tačka po UID-u – ako je reset nije mogao da zapiše (lozinka samo za nalog zadatka),
+            // zapisuje se sada: najveći UID poruka koje su stigle PRE vremena reseta; poruke sa tim i manjim UID-om se ne obrađuju
+            if (!odlazni && stanje.NultaTacka.HasValue && stanje.NultaTackaUid == 0 && fs.PoslednjiUid == 0
+                && stanje.NultaTackaNalog != null && string.Equals(stanje.NultaTackaNalog, cfg.Nalog, StringComparison.OrdinalIgnoreCase))
+            {
+                var svi = f.Search(MailKit.Search.SearchQuery.All).OrderBy(u => u.Id).ToList();
+                var poslednji = svi.Skip(Math.Max(0, svi.Count - 300)).ToList();
+                var noviji = new HashSet<uint>();
+                if (poslednji.Count > 0)
+                    foreach (var x in f.Fetch(poslednji, new FetchRequest(MessageSummaryItems.InternalDate)))
+                        if (x.InternalDate.HasValue && x.InternalDate.Value >= stanje.NultaTacka.Value) noviji.Add(x.UniqueId.Id);
+                var maxStari = svi.Where(u => !noviji.Contains(u.Id)).Select(u => (long)u.Id).DefaultIfEmpty(0).Max();
+                fs.UidValidity = f.UidValidity; fs.PoslednjiUid = maxStari;
+                stanje.NultaTackaUid = maxStari; stanje.NultaTackaUidValidity = f.UidValidity; stanje.NultaTackaNalog = cfg.Nalog;
+                if (!dryRun) stanje.Sacuvaj();
+                log.Info("Nulta tačka zapisana: vreme reseta " + stanje.NultaTacka.Value.ToString("dd.MM.yyyy HH:mm:ss zzz") + ", UID " + maxStari + " (" + cfg.Nalog + " / " + f.FullName + ", UIDVALIDITY " + f.UidValidity
+                         + ") = najveći UID poruka primljenih pre reseta (INTERNALDATE); te poruke se ne obrađuju, a svaki mail primljen posle reseta se obrađuje (" + noviji.Count + " već čeka).");
             }
             var nulta = new[] { stanje.NultaTacka, fs.NultaTacka }.Where(x => x.HasValue).Select(x => x.Value).DefaultIfEmpty().Max() is var nt && nt != default(DateTimeOffset) ? nt : (DateTimeOffset?)null;
             var od0 = nulta.HasValue && nulta.Value.LocalDateTime > cfg.ImportOd ? nulta.Value.LocalDateTime : cfg.ImportOd;

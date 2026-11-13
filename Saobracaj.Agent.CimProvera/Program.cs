@@ -204,6 +204,12 @@ namespace Saobracaj.Agent.CimProvera
                     Console.WriteLine("Rezultati: " + izlaz);
                     return 0;
                 }
+                if (a.Count > 0 && a[0] == "reset-potpun")
+                {
+                    // v2.8.2: potpun reset (stanje, keš, rezultati, logovi) + nulta tačka po UID-u; --suvo = samo spisak
+                    var zi = a.IndexOf("--zadatak");
+                    return ResetStanja.Potpun(cfg, log, zi > 0 && zi + 1 < a.Count ? a[zi + 1] : ResetStanja.PodrazumevaniZadatak, a.Contains("--bez-zadatka"), a.Contains("--suvo"));
+                }
                 if (a.Count > 0 && a[0] == "reset-stanje")
                 {
                     var zi = a.IndexOf("--zadatak");

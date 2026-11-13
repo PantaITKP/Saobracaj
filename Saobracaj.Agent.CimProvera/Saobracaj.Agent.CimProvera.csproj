@@ -23,6 +23,7 @@
     <None Include="tessdata\*.traineddata" CopyToOutputDirectory="PreserveNewest" />
     <None Include="tessdata\Preuzmi.ps1" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Instaliraj.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Reset-CimProvera.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
