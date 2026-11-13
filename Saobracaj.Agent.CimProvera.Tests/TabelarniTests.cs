@@ -230,5 +230,39 @@ namespace Saobracaj.Agent.CimProvera.Tests
             foreach (var pr in new[] { "KP7-PLATILAC", "KP7-NIJE-PLATILAC", "KP3", "KP57", "R18-SPISAK", "R25-MASA", "R29", "R30", "CITLJIVOST", "R10" })
                 Assert.IsFalse(svi.Any(n => n.Pravilo == pr), "ne sme " + pr + "\n" + Opis());
         }
+
+        /// <summary>Tovarni list poslat kao Excel: primer je PDF (list nacrtan iz ćelija, ispravke crveno, napomene narandžasto).</summary>
+        [TestMethod, TestCategory("Regresija")]
+        public void HerSad_primer_iz_Excela_je_PDF()
+        {
+            var prilozi = new[] { Fajl(HslXls), Fajl(ExcelCim), Fajl(Trainlist), Fajl(Vtk) };
+            var o = new Obrada(pravila, citac, null, 0.6);
+            var r = o.Proveri(prilozi, "posiljalac@firma.de", false, new DateTime(2026, 11, 13), false).Provera;
+            var pr = PrimerPdf.Napravi(r, pravila, false, prilozi);
+            Assert.IsTrue(pr.Napravljen, pr.Razlog + " " + pr.Greska);
+            Assert.AreEqual("PRIMER_801012873127HER-SAD79.pdf", pr.Ime);
+            Assert.AreEqual(2, pr.Strane.Count, "legenda + list");
+            var (_, isp, nap, leg) = pr.PoListu.Single();
+            Assert.AreEqual(4, isp, "r1, r9, r16, r24 ucrtane na listu");
+            Assert.IsTrue(nap >= 4, "r4, r7, r14, r22 na listu: " + nap);
+            Assert.IsTrue(pr.Pdf.Length > 1000 && pr.Pdf.Length < PrimerPdf.MaxBajtova);
+            StringAssert.StartsWith(System.Text.Encoding.ASCII.GetString(pr.Pdf, 0, 5), "%PDF");
+        }
+
+        [TestMethod]
+        public void Word_obrazac_primer_je_PDF()
+        {
+            var red = new List<string[]> { new[] { "30", "Frachtbrief CIM", "X" } };
+            foreach (var (n, v) in new[] { ("1", "Firma GmbH, Herne"), ("4", "DP World, Novi Sad RS"), ("7", "Lokomotiva"), ("10", "Novi Sad"), ("13", "KP 3212"),
+                                          ("16", "Herne DE 11-10-14"), ("18", "po spisku"), ("20", "Franko"), ("21", "Kontejneri"), ("24", ""), ("25", "20000 kg"), ("29", "Herne, 10.11.2026"), ("57", "KP 3212"), ("62", "80 101287 3127 12345-6") })
+            { red.Add(new[] { n, "" }); red.Add(new[] { "", v }); }
+            var docx = Docx(red.ToArray());
+            var o = new Obrada(pravila, citac, null, 0.6);
+            var r = o.Proveri(new[] { ("CIM.docx", docx) }, "posiljalac@firma.de", false, new DateTime(2026, 11, 13), false).Provera;
+            Assert.IsTrue(r.ImaTovarniList);
+            var pr = PrimerPdf.Napravi(r, pravila, false, new[] { ("CIM.docx", docx) });
+            Assert.IsTrue(pr.Napravljen, pr.Razlog + " " + pr.Greska);
+            Assert.IsTrue(pr.PoListu.Single().ispravki > 0, "ispravke ucrtane na nacrtanom Word obrascu");
+        }
     }
 }

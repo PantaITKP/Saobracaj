@@ -41,26 +41,75 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
 
         // ------------------------------------------------------------------------------------------- ćelije
 
+        /// <summary>Raspored lista za crtanje primera: širine kolona i visine vrsta (u tačkama) i spojene ćelije (inkluzivno).</summary>
+        internal sealed class Raspored
+        {
+            public List<double> Sirine = new List<double>();
+            public List<double> Visine = new List<double>();
+            public List<(int r0, int k0, int r1, int k1)> Spojene = new List<(int, int, int, int)>();
+        }
+
         /// <summary>Ćelije svih listova Excel fajla (xls/xlsx/xlsm), po listu.</summary>
-        public static List<List<Celija>> IzExcela(byte[] sadrzaj)
+        public static List<List<Celija>> IzExcela(byte[] sadrzaj) => IzExcelaSaRasporedom(sadrzaj).Select(x => x.celije).ToList();
+
+        /// <summary>Ćelije i raspored (širine, visine, spojene ćelije) svih listova Excel fajla.</summary>
+        public static List<(List<Celija> celije, Raspored raspored)> IzExcelaSaRasporedom(byte[] sadrzaj)
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-            DataSet ds;
+            var rez = new List<(List<Celija>, Raspored)>();
             using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(sadrzaj)))
-                ds = reader.AsDataSet();
-            var rez = new List<List<Celija>>();
-            foreach (DataTable t in ds.Tables)
             {
-                var lista = new List<Celija>();
-                for (int i = 0; i < t.Rows.Count; i++)
-                    for (int j = 0; j < t.Columns.Count; j++)
+                do
+                {
+                    var lista = new List<Celija>();
+                    var ras = new Raspored();
+                    int i = 0;
+                    while (reader.Read())
                     {
-                        var v = t.Rows[i][j];
-                        if (v == null || v == DBNull.Value) continue;
-                        var s = Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture)?.Trim() ?? "";
-                        if (s.Length > 0) lista.Add(new Celija { Red = i, Kol = j, Tekst = s });
+                        ras.Visine.Add(reader.RowHeight);
+                        for (int j = 0; j < reader.FieldCount; j++)
+                        {
+                            var v = reader.GetValue(j);
+                            if (v == null || v == DBNull.Value) continue;
+                            var s = Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture)?.Trim() ?? "";
+                            if (s.Length > 0) lista.Add(new Celija { Red = i, Kol = j, Tekst = s });
+                        }
+                        i++;
                     }
-                rez.Add(lista);
+                    // širina kolone u znakovima → tačke (≈ 5,6 pt po znaku, kao pri štampi iz Excela)
+                    for (int j = 0; j < reader.FieldCount; j++)
+                    {
+                        double w;
+                        try { w = reader.GetColumnWidth(j); } catch { w = 8.43; }
+                        ras.Sirine.Add(w * 5.6);
+                    }
+                    try { if (reader.MergeCells != null) foreach (var m in reader.MergeCells) ras.Spojene.Add((m.FromRow, m.FromColumn, m.ToRow, m.ToColumn)); } catch { }
+                    rez.Add((lista, ras));
+                } while (reader.NextResult());
+            }
+            return rez;
+        }
+
+        /// <summary>
+        /// Oblast svake rubrike u mreži (vrsta/kolona, kraj isključen): od broja rubrike desno do sledećeg broja rubrike u istoj
+        /// vrsti (±1) i dole do prvog broja rubrike ispod čija se oblast preklapa po kolonama. Za okvire na PDF primeru.
+        /// </summary>
+        public static Dictionary<string, (int r0, int k0, int r1, int k1)> Oblasti(List<Celija> celije)
+        {
+            var sidra = Sidra(celije);
+            int maxRed = celije.Max(c => c.Red) + 1, maxKol = celije.Max(c => c.Kol) + 1;
+            // desno: sledeći broj rubrike u istoj vrsti (±1) ili do 3 vrste iznad (rubrika desno koja je počela malo više);
+            // dole: prvi broj ispod čija se oblast preklapa po kolonama
+            var desno = sidra.ToDictionary(s => s.Key, s => sidra.Values.Where(o => o != s.Value && o.Kol > s.Value.Kol
+                    && o.Red - s.Value.Red <= 1 && s.Value.Red - o.Red <= 3)
+                .Select(o => o.Kol).DefaultIfEmpty(maxKol).Min());
+            var rez = new Dictionary<string, (int, int, int, int)>();
+            foreach (var s in sidra)
+            {
+                int r0 = s.Value.Red, k0 = s.Value.Kol, k1 = desno[s.Key];
+                var r1 = sidra.Where(o => o.Key != s.Key && o.Value.Red > r0 && !(o.Value.Red - r0 <= 1 && o.Value.Kol > k0) && o.Value.Kol < k1 && desno[o.Key] > k0)
+                    .Select(o => o.Value.Red).DefaultIfEmpty(maxRed).Min();
+                rez[s.Key] = (r0, k0, Math.Max(r0 + 1, r1), Math.Max(k0 + 1, k1));
             }
             return rez;
         }

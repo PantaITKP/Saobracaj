@@ -52,8 +52,10 @@ namespace Saobracaj.Agent.CimProvera
         {
             var l = r.Listovi.FirstOrDefault();
             var i = l?.Cim?.R62;
+            // Excel/Word obrazac: broj otpravljanja može biti alfanumerički („HER-SAD79“)
+            var alfa = l?.Cim?.Sablon == "TABELA" && Regex.IsMatch(Regex.Replace(i?.Broj ?? "", @"\s", ""), @"^[A-Za-z0-9][A-Za-z0-9\-]{3,15}$");
             if (i != null && Regex.IsMatch(i.Zemlja ?? "", @"^\d{2}$") && Regex.IsMatch(i.Preduzece ?? "", @"^\d{4}$")
-                && Regex.Replace(i.Stanica ?? "", @"\D", "").Length >= 5 && Regex.Replace(i.Broj ?? "", @"\D", "").Length >= 5)
+                && Regex.Replace(i.Stanica ?? "", @"\D", "").Length >= 5 && (alfa || Regex.Replace(i.Broj ?? "", @"\D", "").Length >= 5))
             {
                 var broj = Regex.Replace(i.Broj, @"\s", "");
                 if (!broj.Contains("-") && broj.Length == 6) broj = broj.Substring(0, 5) + "-" + broj.Substring(5);
@@ -85,8 +87,9 @@ namespace Saobracaj.Agent.CimProvera
             try
             {
                 if (r.BrojGresaka + r.BrojUpozorenja == 0) { rez.Razlog = "bez_nalaza"; return rez; }
-                var listovi = r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac) && l.Cim.Okviri.Count > 0).ToList();
-                if (listovi.Count == 0) { rez.Razlog = r.Listovi.Any(l => l.Cim?.Sablon == "TABELA" && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac)) ? "tabela" : "neprepoznat"; return rez; }
+                // PDF/sken: okviri iz poravnatog šablona; Excel/Word (TABELA): list se crta iz ćelija, okviri iz brojeva rubrika
+                var listovi = r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac) && (l.Cim.Okviri.Count > 0 || l.Cim.Sablon == "TABELA")).ToList();
+                if (listovi.Count == 0) { rez.Razlog = "neprepoznat"; return rez; }
 
                 var ispravke = Izvestaj.RedoviIspravki(r, p, en);
                 var napomene = Izvestaj.RedoviNapomena(r, p, en);
@@ -99,9 +102,11 @@ namespace Saobracaj.Agent.CimProvera
                     foreach (var l in listovi)
                     {
                         var pr = podloga(l.Dokument.Fajl);
-                        var bmp = Podloga(pr, l.Cim.StranaLista > 0 ? l.Cim.StranaLista : l.Dokument.Strane.FirstOrDefault());
+                        var okviri = l.Cim.Okviri;
+                        var bmp = l.Cim.Sablon == "TABELA" ? PodlogaTabele(pr, out okviri)
+                            : Podloga(pr, l.Cim.StranaLista > 0 ? l.Cim.StranaLista : l.Dokument.Strane.FirstOrDefault());
                         if (bmp == null) continue;
-                        var (isp, nap, leg) = Ucrtaj(bmp, l, redovi, en, r);
+                        var (isp, nap, leg) = Ucrtaj(bmp, l, redovi, en, r, okviri);
                         rez.PoListu.Add((l.Oznaka, isp, nap, leg));
                         strane.Add(Oznaci(bmp, en));
                     }
@@ -147,13 +152,108 @@ namespace Saobracaj.Agent.CimProvera
             }
         }
 
-        /// <summary>Okvir rubrike na strani (piksel): spoj svih okvira šablona za rubriku („30“ → „30cim“ + „30cuv“).</summary>
-        private static RectangleF? Okvir(CimList c, string rubrika, int w, int h)
+        /// <summary>
+        /// Podloga za tovarni list iz Excela/Worda: list obrasca nacrtan iz ćelija (širine kolona, visine vrsta, spojene ćelije),
+        /// sa sivim okvirom svake rubrike (od broja rubrike do sledećeg broja). Okviri rubrika se vraćaju normalizovano (0–1).
+        /// </summary>
+        private static Bitmap PodlogaTabele(Prilog p, out Dictionary<string, double[]> okviri)
         {
-            if (string.IsNullOrEmpty(rubrika) || !Regex.IsMatch(rubrika, @"^\d")) return null;
-            var kljucevi = c.Okviri.Keys.Where(k => k == rubrika || Regex.IsMatch(k, "^" + Regex.Escape(rubrika) + @"(?![\dab])")).ToList();
+            okviri = null;
+            if (p?.Sadrzaj == null) return null;
+            List<(List<Celija> celije, TabelarniCim.Raspored raspored)> listovi = null;
+            if (p.Vrsta == VrstaPriloga.Excel) listovi = TabelarniCim.IzExcelaSaRasporedom(p.Sadrzaj);
+            else if (p.Vrsta == VrstaPriloga.Word)
+                listovi = TabelarniCim.IzWorda(p.Sadrzaj).Select(c =>
+                {
+                    var ras = new TabelarniCim.Raspored();
+                    int nK = c.Count == 0 ? 1 : c.Max(x => x.Kol) + 1, nR = c.Count == 0 ? 1 : c.Max(x => x.Red) + 1;
+                    for (int k = 0; k < nK; k++) ras.Sirine.Add(nK <= 6 ? 120 : 40);
+                    for (int i = 0; i < nR; i++) ras.Visine.Add(11 * Math.Max(1, c.Where(x => x.Red == i).Select(x => x.Tekst.Split('\n').Length).DefaultIfEmpty(1).Max()) + 3);
+                    return (c, ras);
+                }).ToList();
+            var izbor = listovi?.FirstOrDefault(x => x.celije.Count > 0 && TabelarniCim.JeTovarniList(x.celije, out _));
+            if (izbor?.celije == null) return null;
+            return NacrtajTabelu(izbor.Value.celije, izbor.Value.raspored, out okviri);
+        }
+
+        private static Bitmap NacrtajTabelu(List<Celija> celije, TabelarniCim.Raspored ras, out Dictionary<string, double[]> okviri)
+        {
+            var oblasti = TabelarniCim.Oblasti(celije);
+            int nR = celije.Max(c => c.Red) + 1, nK = celije.Max(c => c.Kol) + 1;
+            // prazne/skrivene vrednosti: ako nijedna širina/visina nije zadata, mreža je ravnomerna
+            bool imaS = ras.Sirine.Any(x => x > 0), imaV = ras.Visine.Any(x => x > 0);
+            double Sir(int k) => !imaS ? 40 : k < ras.Sirine.Count ? Math.Max(0, ras.Sirine[k]) : 48;
+            double Vis(int i) => !imaV ? 15 : i < ras.Visine.Count ? Math.Max(0, ras.Visine[i]) : 15;
+            var xs = new double[nK + 1]; for (int k = 0; k < nK; k++) xs[k + 1] = xs[k] + Sir(k);
+            var ys = new double[nR + 1]; for (int i = 0; i < nR; i++) ys[i + 1] = ys[i] + Vis(i);
+            double sw = Math.Max(1, xs[nK]), sh = Math.Max(1, ys[nR]);
+            bool polozeno = sw > sh * 1.15;
+            int W = polozeno ? 1754 : 1240, H = polozeno ? 1240 : 1754;
+            const float m = 40f;
+            float s = (float)Math.Min((W - 2 * m) / sw, (H - 2 * m) / sh);
+            RectangleF R(int r0, int k0, int r1, int k1)
+            {
+                r0 = Math.Min(r0, nR); r1 = Math.Min(Math.Max(r1, r0), nR); k0 = Math.Min(k0, nK); k1 = Math.Min(Math.Max(k1, k0), nK);
+                return new RectangleF(m + (float)(xs[k0] * s), m + (float)(ys[r0] * s), (float)((xs[k1] - xs[k0]) * s), (float)((ys[r1] - ys[r0]) * s));
+            }
+
+            var bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb);
+            bmp.SetResolution(Dpi, Dpi);
+            okviri = new Dictionary<string, double[]>();
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                using (var pen = new Pen(Color.FromArgb(110, 110, 110), 1.2f))
+                    foreach (var kv in oblasti)
+                    {
+                        var o = R(kv.Value.r0, kv.Value.k0, kv.Value.r1, kv.Value.k1);
+                        g.DrawRectangle(pen, o.X, o.Y, o.Width, o.Height);
+                        okviri[kv.Key] = new[] { (double)o.Left / W, (double)o.Top / H, (double)o.Right / W, (double)o.Bottom / H };
+                    }
+                // tekst ćelija: spojena ćelija – ceo opseg; inače do sledeće popunjene ćelije u vrsti (kao Excel), višelinijski tekst i naniže
+                var zauzeto = new HashSet<(int, int)>(celije.Select(c => (c.Red, c.Kol)));
+                var sidra = new HashSet<(int, int)>(oblasti.Values.Select(o => (o.r0, o.k0)));
+                float fv = Math.Max(9f, 7.5f * s), fs = Math.Max(10f, 8.5f * s);
+                using (var obican = new Font("Arial", fv, GraphicsUnit.Pixel))
+                using (var debeo = new Font("Arial", fs, FontStyle.Bold, GraphicsUnit.Pixel))
+                using (var crna = new SolidBrush(Color.FromArgb(30, 30, 30)))
+                using (var siva = new SolidBrush(Color.FromArgb(90, 90, 90)))
+                    foreach (var c in celije)
+                    {
+                        var sp = ras.Spojene.Where(x => x.r0 == c.Red && x.k0 == c.Kol).ToList();
+                        int r1, k1;
+                        if (sp.Count > 0) { r1 = sp[0].r1 + 1; k1 = sp[0].k1 + 1; }
+                        else
+                        {
+                            k1 = c.Kol + 1; while (k1 < nK && !zauzeto.Contains((c.Red, k1))) k1++;
+                            r1 = c.Red + 1;
+                            var linija = c.Tekst.Split('\n').Length;
+                            while (r1 < nR && r1 < c.Red + linija && !zauzeto.Contains((r1, c.Kol))) r1++;
+                        }
+                        var o = R(c.Red, c.Kol, r1, k1);
+                        if (o.Width < 2 || o.Height < 1) continue;
+                        var sidro = sidra.Contains((c.Red, c.Kol));
+                        var f = sidro ? debeo : obican;
+                        var jedanRed = o.Height < f.Height * 1.9f;
+                        var pr = new RectangleF(o.X + 1.5f, o.Y + 0.5f, o.Width - 2f, Math.Max(o.Height, f.Height * 1.1f));
+                        using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = jedanRed ? StringFormatFlags.NoWrap : StringFormatFlags.LineLimit })
+                        {
+                            var tekst = jedanRed ? Regex.Replace(c.Tekst, @"\s*\n\s*", " ") : c.Tekst;
+                            g.DrawString(tekst, f, sidro || Regex.IsMatch(c.Tekst, @"^\d$") ? crna : siva, pr, sf);
+                        }
+                    }
+            }
+            return bmp;
+        }
+
+        /// <summary>Okvir rubrike na strani (piksel): spoj svih okvira šablona za rubriku („30“ → „30cim“ + „30cuv“).</summary>
+        private static RectangleF? Okvir(Dictionary<string, double[]> okviri, string rubrika, int w, int h)
+        {
+            if (okviri == null || string.IsNullOrEmpty(rubrika) || !Regex.IsMatch(rubrika, @"^\d")) return null;
+            var kljucevi = okviri.Keys.Where(k => k == rubrika || Regex.IsMatch(k, "^" + Regex.Escape(rubrika) + @"(?![\dab])")).ToList();
             if (kljucevi.Count == 0) return null;
-            var o = kljucevi.Select(k => c.Okviri[k]).ToList();
+            var o = kljucevi.Select(k => okviri[k]).ToList();
             float x0 = (float)(o.Min(v => v[0]) * w), y0 = (float)(o.Min(v => v[1]) * h), x1 = (float)(o.Max(v => v[2]) * w), y1 = (float)(o.Max(v => v[3]) * h);
             return new RectangleF(x0, y0, Math.Max(10, x1 - x0), Math.Max(10, y1 - y0));
         }
@@ -164,7 +264,7 @@ namespace Saobracaj.Agent.CimProvera
         internal static string ZaStranu(string primer) => Regex.Replace(primer ?? "", @"\s*\([^()]*\.(pdf|png|jpe?g|tiff?|xlsx?)[^()]*\)", "", RegexOptions.IgnoreCase).Trim();
 
         /// <summary>Ucrtava nalaze lista. Vraća broj ispravki i napomena na strani i broj nalaza koji su samo u legendi.</summary>
-        private static (int ispravki, int napomena, int legenda) Ucrtaj(Bitmap bmp, RezultatLista l, List<(Izvestaj.Red red, bool greska)> redovi, bool en, RezultatProvere r)
+        private static (int ispravki, int napomena, int legenda) Ucrtaj(Bitmap bmp, RezultatLista l, List<(Izvestaj.Red red, bool greska)> redovi, bool en, RezultatProvere r, Dictionary<string, double[]> okviri)
         {
             int isp = 0, nap = 0, leg = 0;
             using (var g = Graphics.FromImage(bmp))
@@ -175,7 +275,7 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     var (red, greska) = redovi[i];
                     if (r.Listovi.Count > 1 && red.Listovi.Count > 0 && !red.Listovi.Contains(l.Oznaka)) continue;
-                    var okv = Okvir(l.Cim, red.N.Rubrika, bmp.Width, bmp.Height);
+                    var okv = Okvir(okviri, red.N.Rubrika, bmp.Width, bmp.Height);
                     if (okv == null) { leg++; continue; }
                     var o = okv.Value;
                     var boja = greska ? Crvena : Narandzasta;

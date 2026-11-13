@@ -1,4 +1,4 @@
-# CimProvera – izmene programa
+﻿# CimProvera – izmene programa
 
 ## 2026-11-13 – čitač L17: tovarni list kao Excel/Word (mail „HER-SAD 79“)
 
@@ -24,6 +24,11 @@ Pravila ostaju v2.7.1. Težine pravila nisu menjane.
   - Pošiljalac ne dobija ništa.
   - U test režimu poruka ide na adresu izveštaja, u live režimu na KopijaNa i UpozorenjaNa.
 - **R22 (naročita pošiljka)** prikazuje se pod rubrikom 22. X5 (šifra 7.11) ostaje pod rubrikom 7.
-- **PDF primer** se ne pravi kad je tovarni list tabela (razlog „tabela“). Excel primer čeka odobrenje biblioteke za upis.
+- **PDF primer i za Excel/Word tovarni list**
+  - Primer se uvek šalje kao PDF, bez obzira na to u kom je formatu poslat tovarni list.
+  - List obrasca se crta iz ćelija: širine kolona, visine vrsta, spojene ćelije i sivi okvir svake rubrike od njenog broja do sledećeg broja rubrike.
+  - Na nacrtan list se kao kod PDF-a ucrtavaju ispravke (crveno) i napomene (narandžasto), a dodaju se i legenda i žig.
+  - Ime fajla nosi i alfanumerički broj otpravljanja, npr. `PRIMER_801012873127HER-SAD79.pdf`.
+  - Nova biblioteka nije potrebna (GDI+ i PdfPig, kao do sada).
 - **Dijagnostika**: `Saobracaj.Agent.CimProvera.exe tabela <fajl> [--celije]`.
-- **Testovi**: novi `TabelarniTests` (10). Ukupno 360 prolazi, 1 preskočen (Kelebija 2006 – nema fajla).
+- **Testovi**: novi `TabelarniTests` (12). Ukupno 362 prolazi, 1 preskočen (Kelebija 2006 – nema fajla).
