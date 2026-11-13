@@ -31,6 +31,8 @@ namespace Saobracaj.Agent.CimProvera
             public string HesPriloga { get; set; }
             public int Greske { get; set; }
             public int Upozorenja { get; set; }
+            /// <summary>Tekst poslednje greške obrade (vrsta i poruka izuzetka, bez sadržaja dokumenta).</summary>
+            public string PoslednjaGreska { get; set; }
         }
 
         public Dictionary<string, FolderStanje> Folderi { get; set; } = new Dictionary<string, FolderStanje>();
@@ -95,12 +97,18 @@ namespace Saobracaj.Agent.CimProvera
             return f;
         }
 
-        /// <summary>Isto upozorenje ide mailom najviše jednom na <paramref name="sati"/> sati.</summary>
-        public bool SmeUpozorenje(string kljuc, int sati = 6)
+        /// <summary>
+        /// Isto upozorenje ide mailom najviše jednom na <paramref name="sati"/> sati. Samo provera: vreme se upisuje tek
+        /// posle pokušaja slanja (<see cref="ZapisiUpozorenje"/>), da neuspelo slanje ne „potroši“ upozorenje.
+        /// </summary>
+        public bool SmeUpozorenje(string kljuc, int sati = 6, DateTime? sada = null)
+            => !(Upozorenja.TryGetValue(kljuc, out var t) && t > (sada ?? DateTime.Now).AddHours(-sati));
+
+        /// <summary>Posle slanja: sledeće isto upozorenje najranije za <c>sati</c>; posle neuspelog slanja ponovni pokušaj za 10 minuta.</summary>
+        public void ZapisiUpozorenje(string kljuc, bool poslato, int sati, DateTime? sada = null)
         {
-            if (Upozorenja.TryGetValue(kljuc, out var t) && t > DateTime.Now.AddHours(-sati)) return false;
-            Upozorenja[kljuc] = DateTime.Now;
-            return true;
+            var t = sada ?? DateTime.Now;
+            Upozorenja[kljuc] = poslato ? t : t.AddHours(-sati).AddMinutes(10);
         }
     }
 }

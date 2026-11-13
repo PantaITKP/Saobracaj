@@ -1,5 +1,26 @@
 ﻿# CimProvera – izmene programa
 
+## 2026-11-13 – HITNO: obrada sanduča stajala od 08:49
+
+- **Uzrok:** `TekstUtil.BezDijakritika` je normalizovao tekst znak po znak.
+  - Znak van osnovne ravni (emoji, npr. 🙂 u naslovu ili potpisu maila) zapisan je kao par surogata, pa je polovina para izazivala `Invalid Unicode code point`.
+  - Sada se par prepisuje ceo, a usamljeni surogat (zaista neispravan tekst) menja se znakom U+FFFD (`TekstUtil.Ocisti`).
+  - `TekstUtil.Normalizuj` ne baca izuzetak: ako normalizacija ne uspe, vraća tekst bez nje i upisuje upozorenje u log. Isto važi za `CimSablon.Norm` (PDF, OCR, Excel i Word tekst).
+- **Jedna poruka ne zaustavlja ostale** (`RedPoruka`)
+  - Svaka poruka se obrađuje u svom `try/catch`.
+  - Pre obrade se u log upisuju UID, Message-ID, pošiljalac, naslov i imena priloga.
+  - Posle greške obrada nastavlja sa sledećom porukom. Poslednji UID se ne pomera preko poruke koja čeka ponovni pokušaj.
+  - Posle 3 neuspela pokušaja (`MaxPokusaja` = 3) poruka dobija status `GreskaRucnaProvera` i više se ne pokušava. Tada se jednom šalje interno obaveštenje (UID, naslov, pošiljalac, greška); pošiljaocu ništa.
+- **Upozorenja**
+  - Vreme upozorenja se upisuje tek posle pokušaja slanja. Neuspelo slanje (npr. 535) ponavlja se za 10 minuta i više ne „troši“ upozorenje za 6 sati.
+  - Greška celog kruga (prijava, mreža) šalje se najviše jednom na sat.
+  - Svaki ishod upozorenja (poslato, nije poslato, preskočeno) vidi se u logu.
+  - Slanje upozorenja koristi isti nalog i lozinku kao izveštaji.
+- **Log**
+  - Mail bez priloga sada ima red „mail nema priloga – preskočeno (BezPriloga)“. Ranije je bio potpuno nevidljiv.
+  - Broj neispravnih Unicode znakova i znakovi van osnovne ravni (npr. U+1F642) upisuju se za svaki mail, bez ostalog sadržaja.
+- **Testovi**: `RedPorukaTests` (7).
+
 ## 2026-11-13 – čitač L17: tovarni list kao Excel/Word (mail „HER-SAD 79“)
 
 Pravila ostaju v2.7.1. Težine pravila nisu menjane.

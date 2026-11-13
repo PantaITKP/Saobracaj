@@ -125,7 +125,7 @@ namespace Saobracaj.Agent.CimProvera
                 OcrDodatniJezici = S("OcrDodatniJezici", "hun+ita+ron+bul+slv+hrv"),
                 OcrMinPouzdanostReci = double.TryParse(a["OcrMinPouzdanostReci"], NumberStyles.Float, CultureInfo.InvariantCulture, out var mp) ? mp : 0.3,
                 PragPouzdanosti = double.TryParse(a["PragPouzdanosti"], NumberStyles.Float, CultureInfo.InvariantCulture, out var prag) ? prag : 0.6,
-                MaxPokusaja = I("MaxPokusaja", 5),
+                MaxPokusaja = I("MaxPokusaja", 3),
                 MaxPrilogMB = I("MaxPrilogMB", 30),
 
                 ObrasciFolder = S("ObrasciFolder", @"sablon\obrasci"),

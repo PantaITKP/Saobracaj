@@ -9,6 +9,7 @@ using Saobracaj.Agent.CimProvera.Mail;
 using Saobracaj.Agent.CimProvera.Model;
 using Saobracaj.Agent.CimProvera.Pravila;
 using Saobracaj.Agent.CimProvera.Prilozi;
+using Saobracaj.Common.Text;
 
 namespace Saobracaj.Agent.CimProvera
 {
@@ -27,7 +28,11 @@ namespace Saobracaj.Agent.CimProvera
         private List<(string ime, byte[] sadrzaj)> trenutniPrilozi = new List<(string, byte[])>();
         private bool poslatDodatak;
 
-        public AgentRad(AgentConfig cfg, Log log, bool dryRun) { this.cfg = cfg; this.log = log; this.dryRun = dryRun; Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg); }
+        public AgentRad(AgentConfig cfg, Log log, bool dryRun)
+        {
+            this.cfg = cfg; this.log = log; this.dryRun = dryRun; Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
+            Saobracaj.Common.Text.TekstUtil.UpozorenjeNormalizacije = t => log?.Upozorenje("    " + t);
+        }
 
         public int Pokreni()
         {
@@ -56,7 +61,8 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex)
             {
                 log.Greska("Rad sa sandučetom " + cfg.Nalog + " nije uspeo", ex);
-                Upozori(stanje, "imap", "Agent ne može da pročita sanduče " + cfg.Nalog + ": " + ex.Message);
+                // greška celog kruga (prijava, mreža…): najviše jednom na sat, ne na svaka 2 minuta
+                Upozori(stanje, "imap", "Agent ne može da pročita sanduče " + cfg.Nalog + ": " + ex.Message, 1);
                 if (!dryRun) stanje.Sacuvaj();
                 return 1;
             }
@@ -161,37 +167,93 @@ namespace Saobracaj.Agent.CimProvera
                 uids = uids.Where(u => !stare.Contains(u)).ToList();
             }
             log.Info(f.FullName + " (" + (odlazni ? "odlazni" : "dolazni") + "): novih poruka " + uids.Count);
-            int n = 0;
-            foreach (var uid in uids)
-            {
-                var m = f.GetMessage(uid);
-                var kljuc = Stanje.KljucPoruke(cfg.Nalog, !string.IsNullOrEmpty(m.MessageId) ? m.MessageId : f.FullName + "/" + f.UidValidity + "/" + uid.Id);
-                stanje.Poruke.TryGetValue(kljuc, out var ps);
-                if (ps != null && ps.Status != "PrivremenaGreska")
-                {
-                    log.Info("  UID " + uid.Id + ": već obrađeno (" + ps.Status + ", " + ps.Folder + ")");
-                    fs.PoslednjiUid = uid.Id; continue;
-                }
-                ps = ps ?? new Stanje.PorukaStanje();
-                ps.Folder = f.FullName; ps.Uid = uid.Id; ps.Vreme = DateTime.Now;
+            if (uids.Count == 0) return 0;
 
+            // sažeci (zaglavlje, imena priloga) bez preuzimanja celih poruka: za log pre obrade i za već obrađene poruke
+            var sazeci = new Dictionary<UniqueId, IMessageSummary>();
+            try
+            {
+                foreach (var x in f.Fetch(uids, new FetchRequest(MessageSummaryItems.UniqueId | MessageSummaryItems.Envelope | MessageSummaryItems.BodyStructure)))
+                    sazeci[x.UniqueId] = x;
+            }
+            catch (Exception ex) { log.Upozorenje(f.FullName + ": zaglavlja poruka nisu preuzeta (" + ex.Message + ") – Message-ID se čita iz poruke."); }
+            var red = new List<RedPoruka.Stavka>();
+            foreach (var u in uids)
+            {
+                sazeci.TryGetValue(u, out var sz);
+                var mid = TekstUtil.Ocisti(sz?.Envelope?.MessageId ?? "").Trim().Trim('<', '>');
+                if (mid.Length == 0 && sz == null)
+                    try { mid = f.GetMessage(u).MessageId ?? ""; } catch { }
+                List<string> imena;
+                try { imena = sz?.Attachments?.Select(a => TekstUtil.Ocisti(a.FileName ?? a.ContentType?.Name ?? "(bez imena)")).ToList() ?? new List<string>(); }
+                catch { imena = new List<string>(); }
+                red.Add(new RedPoruka.Stavka
+                {
+                    Uid = u.Id, Folder = f.FullName, MessageId = mid,
+                    Kljuc = Stanje.KljucPoruke(cfg.Nalog, mid.Length > 0 ? mid : f.FullName + "/" + f.UidValidity + "/" + u.Id),
+                    Od = sz?.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address ?? "",
+                    Naslov = Regex(TekstUtil.Ocisti(sz?.Envelope?.Subject)),
+                    Prilozi = imena,
+                });
+            }
+            var q = new RedPoruka(stanje, fs, cfg.MaxPokusaja, log, dryRun)
+            {
+                // jednom po poruci, interno (u test režimu agenti@), nikad pošiljaocu
+                PosleZadnjegPokusaja = (s, ps) => Upozori(stanje, "poruka-" + s.Kljuc,
+                    "Mail UID " + s.Uid + " (" + s.Folder + ") od " + s.Od + ", naslov „" + s.Naslov + "“, Message-ID " + s.MessageId + Environment.NewLine
+                    + "nije obrađen posle " + ps.Pokusaja + " pokušaja. Status: greška – ručna provera; agent ga više ne pokušava. Pošiljaocu nije ništa poslato." + Environment.NewLine
+                    + "Prilozi: " + (s.Prilozi.Count == 0 ? "nema" : string.Join(", ", s.Prilozi)) + Environment.NewLine
+                    + "Greška: " + ps.PoslednjaGreska, 24 * 365),
+            };
+            return q.Obradi(red, (s, ps) => ObradiPoruku(f, s, ps, odlazni, obrada, pravila, stanje, sanduce, indeks));
+        }
+
+        /// <summary>Znakovi van osnovne ravni (emoji…) u tekstu, za log: „U+1F642, U+1F44D“ (bez ostalog sadržaja).</summary>
+        internal static string ZnakoviVanBmp(string s, int max = 5)
+        {
+            var l = new List<string>();
+            s = s ?? "";
+            for (int i = 0; i < s.Length && l.Count < max; i++)
+                if (char.IsHighSurrogate(s[i]) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1]))
+                {
+                    var k = "U+" + char.ConvertToUtf32(s[i], s[i + 1]).ToString("X");
+                    if (!l.Contains(k)) l.Add(k);
+                    i++;
+                }
+            return string.Join(", ", l);
+        }
+
+        private Korak ObradiPoruku(IMailFolder f, RedPoruka.Stavka s, Stanje.PorukaStanje ps, bool odlazni, Obrada obrada, PravilaSkup pravila, Stanje stanje, Sanduce sanduce, IndeksPrvih indeks)
+        {
+            var uid = new UniqueId(f.UidValidity, (uint)s.Uid);
+            var kljuc = s.Kljuc;
+            if (!f.IsOpen) f.Open(FolderAccess.ReadOnly);
+            var m = f.GetMessage(uid);
+            {
                 var razlog = Slanje.RazlogPreskakanja(m, cfg, !odlazni);
                 if (razlog != null)
                 {
                     log.Info("  UID " + uid.Id + ": " + (razlog.StartsWith("sopstveni") ? razlog + " – preskočeno" : "preskočeno – " + razlog));
-                    ps.Status = "Preskoceno"; Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                    ps.Status = "Preskoceno"; return Korak.Gotova;
                 }
                 var prilozi = Raspakivanje.PriloziMaila(m).ToList();
                 trenutniPrilozi = prilozi;
                 if (prilozi.Count == 0)
                 {
-                    ps.Status = "BezPriloga"; Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                    log.Info("  UID " + uid.Id + ": mail nema priloga – preskočeno (BezPriloga).");
+                    ps.Status = "BezPriloga"; return Korak.Gotova;
                 }
                 ps.HesPriloga = Prilog.Sha256(prilozi.SelectMany(p => p.sadrzaj).ToArray()).Substring(0, 16);
 
                 var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
                 var jeOdlazni = odlazni || string.Equals(od, cfg.Nalog, StringComparison.OrdinalIgnoreCase);
-                var en = Obrada.JeEngleskiIliNemacki((m.Subject ?? "") + " " + (m.TextBody ?? m.HtmlBody ?? ""));
+                // naslov i telo mogu imati neispravan Unicode (usamljeni surogat) – čiste se pre bilo kakve normalizacije
+                var tekstMaila = (m.Subject ?? "") + " " + (m.TextBody ?? m.HtmlBody ?? "");
+                var neispravnih = TekstUtil.BrojNeispravnih(tekstMaila);
+                if (neispravnih > 0) log.Upozorenje("  UID " + uid.Id + ": naslov/telo maila ima " + neispravnih + " neispravnih Unicode znakova (usamljeni surogat) – zamenjeni znakom U+FFFD.");
+                var vanBmp = ZnakoviVanBmp(tekstMaila);
+                if (vanBmp.Length > 0) log.Info("  UID " + uid.Id + ": naslov/telo sadrži znakove van osnovne ravni (emoji i sl.): " + vanBmp);
+                var en = Obrada.JeEngleskiIliNemacki(TekstUtil.Ocisti(tekstMaila));
                 var datum = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime;
                 log.Info("  UID " + uid.Id + " " + kljuc + ": " + prilozi.Count + " priloga, od " + od + (jeOdlazni ? " (odlazni)" : ""));
 
@@ -209,19 +271,9 @@ namespace Saobracaj.Agent.CimProvera
 
                 if (ishod.PrivremenaGreska)
                 {
-                    ps.Pokusaja++;
-                    if (ps.Pokusaja < cfg.MaxPokusaja)
-                    {
-                        ps.Status = "PrivremenaGreska";
-                        stanje.Poruke[kljuc] = ps; if (!dryRun) stanje.Sacuvaj();
-                        log.Upozorenje("  UID " + uid.Id + ": privremena greška (pokušaj " + ps.Pokusaja + "/" + cfg.MaxPokusaja + "), ponovo u sledećem pokretanju.");
-                        break; // UID se ne pomera: sledeće pokretanje kreće od ove poruke
-                    }
-                    ps.Status = "Greska";
-                    Upozori(stanje, "poruka-" + kljuc, "Mail „" + m.Subject + "“ (" + kljuc + ") nije proveren posle " + ps.Pokusaja + " pokušaja: "
-                        + string.Join("; ", ishod.NisuProcitani) + ". Potrebna je ručna provera.", 1000);
-                    PosaljiPoredjenje(m, Por(null, "obrada nije uspela"), "obrada nije uspela");
-                    Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                    // ponovni pokušaj / ručna provera posle MaxPokusaja: RedPoruka
+                    ps.PoslednjaGreska = string.Join("; ", ishod.NisuProcitani);
+                    return Korak.PrivremenaGreska;
                 }
 
                 var r = ishod.Provera;
@@ -235,7 +287,7 @@ namespace Saobracaj.Agent.CimProvera
                     Upozori(stanje, "neprocitano-" + kljuc, "Mail „" + m.Subject + "“ od " + od + " (" + kljuc + "): prilozi nisu pročitani – "
                         + string.Join("; ", ishod.NisuProcitani) + ". Ne može da se utvrdi da li sadrži tovarni list; potrebna je ručna provera.", 1000);
                     PosaljiPoredjenje(m, Por(r, "prilozi nisu pročitani"), "prilozi nisu pročitani");
-                    Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                    return Korak.Gotova;
                 }
                 if (!r.ImaTovarniList)
                 {
@@ -249,15 +301,15 @@ namespace Saobracaj.Agent.CimProvera
                         catch (Exception ex)
                         {
                             log.Greska("  UID " + uid.Id + ": obaveštenje nije poslato", ex);
-                            ps.Pokusaja++;
-                            if (ps.Pokusaja < cfg.MaxPokusaja) { ps.Status = "PrivremenaGreska"; stanje.Poruke[kljuc] = ps; if (!dryRun) stanje.Sacuvaj(); break; }
+                            ps.PoslednjaGreska = "obaveštenje nije poslato: " + ex.Message;
+                            return Korak.PrivremenaGreska;
                         }
                         PosaljiPoredjenje(m, Por(r, "samo spisak kola, bez tovarnog lista"), "samo spisak kola, bez tovarnog lista");
-                        Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                        return Korak.Gotova;
                     }
                     log.Info("  UID " + uid.Id + ": nema CIM/CUV – mail se preskače. Dokumenti: " + string.Join(", ", r.Dokumenti.Select(d => d.Tip).Distinct()));
                     PosaljiPoredjenje(m, Por(r, "tovarni list nije pronađen"), "tovarni list nije pronađen");
-                    ps.Status = "NemaCim"; Zavrsi(stanje, fs, kljuc, ps, uid); continue;
+                    ps.Status = "NemaCim"; return Korak.Gotova;
                 }
 
                 ps.Greske = r.BrojGresaka; ps.Upozorenja = r.BrojUpozorenja;
@@ -272,23 +324,14 @@ namespace Saobracaj.Agent.CimProvera
                 catch (Exception ex)
                 {
                     log.Greska("  UID " + uid.Id + ": izveštaj nije poslat", ex);
-                    ps.Pokusaja++;
-                    if (ps.Pokusaja < cfg.MaxPokusaja) { ps.Status = "PrivremenaGreska"; stanje.Poruke[kljuc] = ps; if (!dryRun) stanje.Sacuvaj(); break; }
-                    Upozori(stanje, "smtp", "Izveštaj za „" + m.Subject + "“ nije poslat: " + ex.Message);
+                    ps.PoslednjaGreska = "izveštaj nije poslat: " + ex.Message;
+                    dodatak = null;
+                    return Korak.PrivremenaGreska;
                 }
                 if (dodatak != null && !poslatDodatak) PosaljiPoredjenje(m, dodatak, "izveštaj nije poslat (" + Izvestaj.OpisListova(r, false) + ", grešaka " + r.BrojGresaka + ", upozorenja " + r.BrojUpozorenja + ")");
                 dodatak = null;
-                Zavrsi(stanje, fs, kljuc, ps, uid);
-                n++;
+                return Korak.Obradjena;
             }
-            return n;
-        }
-
-        private void Zavrsi(Stanje stanje, Stanje.FolderStanje fs, string kljuc, Stanje.PorukaStanje ps, UniqueId uid)
-        {
-            stanje.Poruke[kljuc] = ps;
-            fs.PoslednjiUid = Math.Max(fs.PoslednjiUid, uid.Id);
-            if (!dryRun) stanje.Sacuvaj();
         }
 
         private void PosaljiIzvestaj(MimeMessage m, RezultatProvere r, PravilaSkup pravila, bool en, bool odlazni, List<string> nisuProcitani)
@@ -466,15 +509,32 @@ namespace Saobracaj.Agent.CimProvera
             log.Info("    obaveštenje poslato na " + string.Join(", ", primaoci.Concat(kopija)) + ": " + naslov);
         }
 
+        /// <summary>
+        /// Interno upozorenje (UpozorenjaNa; prazno = IzvestajAdresa, u test režimu agenti@), istim nalogom i lozinkom kao
+        /// izveštaji (Slanje.Posalji). Isto upozorenje najviše jednom na <paramref name="sati"/> sati; neuspelo slanje se
+        /// ponavlja posle 10 minuta i svaki ishod se vidi u logu.
+        /// </summary>
         private void Upozori(Stanje stanje, string kljuc, string tekst, int sati = 6)
         {
-            if (dryRun || string.IsNullOrEmpty(cfg.UpozorenjaNa) || !stanje.SmeUpozorenje(kljuc, sati)) return;
+            if (dryRun) return;
+            if (string.IsNullOrEmpty(cfg.UpozorenjaNa)) { log.Upozorenje("Upozorenje „" + kljuc + "“ nema primaoca (UpozorenjaNa/IzvestajAdresa)."); return; }
+            if (!stanje.SmeUpozorenje(kljuc, sati))
+            {
+                log.Info("Upozorenje „" + kljuc + "“ se ne šalje ponovo – poslednji pokušaj " + stanje.Upozorenja[kljuc].ToString("dd.MM. HH:mm") + " (najviše jednom na " + sati + " h).");
+                return;
+            }
             try
             {
                 Slanje.Posalji(cfg, Slanje.Nova(cfg, new[] { cfg.UpozorenjaNa }, null, "[CimProvera] Upozorenje: " + kljuc, tekst
                     + Environment.NewLine + Environment.NewLine + "Server: " + Environment.MachineName + ", " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz")));
+                stanje.ZapisiUpozorenje(kljuc, true, sati);
+                log.Info("Upozorenje „" + kljuc + "“ poslato na " + cfg.UpozorenjaNa + ".");
             }
-            catch (Exception ex) { log.Greska("Upozorenje nije poslato mailom: " + ex.Message); }
+            catch (Exception ex)
+            {
+                stanje.ZapisiUpozorenje(kljuc, false, sati);
+                log.Greska("Upozorenje „" + kljuc + "“ nije poslato mailom (ponovni pokušaj za 10 min): " + ex.Message);
+            }
         }
     }
 }

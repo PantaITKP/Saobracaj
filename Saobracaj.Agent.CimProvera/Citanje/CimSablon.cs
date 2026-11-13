@@ -46,7 +46,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Mala slova, bez dijakritika, samo slova i cifre (latinica i ćirilica).</summary>
         internal static string Norm(string s)
         {
-            var d = (s ?? "").ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            var d = Saobracaj.Common.Text.TekstUtil.Normalizuj((s ?? "").ToLowerInvariant(), NormalizationForm.FormD);
             var sb = new StringBuilder();
             foreach (var c in d)
                 if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'а' && c <= 'я') || "ђјљњћџ".IndexOf(c) >= 0) sb.Append(c);
