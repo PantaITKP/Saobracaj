@@ -348,9 +348,11 @@ namespace Saobracaj.Agent.CimProvera
                                 File.WriteAllBytes(Path.Combine(pd, primer.Ime), primer.Pdf);
                                 for (int si = 0; si < primer.Strane.Count; si++)
                                     File.WriteAllBytes(Path.Combine(pd, Path.GetFileNameWithoutExtension(primer.Ime) + "_str" + (si + 1) + ".png"), primer.Strane[si]);
+                                // v2.8.1: šta je upisano u koju rubriku (provera izgleda)
+                                File.WriteAllLines(Path.Combine(pd, Path.GetFileNameWithoutExtension(primer.Ime) + "_upisi.txt"), primer.Upisi.Select(x => x.ToString()), Encoding.UTF8);
                             }
                             Console.WriteLine("PDF primer: " + (primer.Napravljen ? primer.Ime + " (" + primer.Pdf.Length / 1024 + " KB, strana " + primer.Strane.Count + "; "
-                                + string.Join("; ", primer.PoListu.Select(x => x.list + ": ispravki " + x.ispravki + ", napomena " + x.napomena + ", samo u legendi " + x.samoULegendi)) + ")"
+                                + string.Join("; ", primer.PoListu.Select(x => x.list + ": ispravki " + x.ispravki + ", napomena " + x.napomena + ", bez rubrike na strani " + x.bezRubrike)) + ")"
                                 : "nije napravljen – " + primer.Razlog + (primer.Greska != null ? " (" + primer.Greska + ")" : "")));
                         }
                         // isti mail kao što ga agent šalje (multipart/alternative, UTF-8; sa PDF primerom kao prilogom) – otvara se u Outlook-u (.eml)

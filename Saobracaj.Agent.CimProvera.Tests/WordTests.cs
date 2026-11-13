@@ -154,7 +154,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var p = Path.Combine(Folder, "nezavisni", "CUV_exGK33", CuvIme);
             var pr = PrimerPdf.Napravi(Cuv().Provera, pravila, false, new[] { (CuvIme, File.ReadAllBytes(p)) });
             Assert.IsTrue(pr.Napravljen, pr.Razlog + " " + pr.Greska);
-            Assert.AreEqual(2, pr.Strane.Count);
+            Assert.AreEqual(1, pr.Strane.Count, "v2.8.1: samo strana lista, bez legende");
             Assert.IsTrue(pr.PoListu.Single().ispravki >= 4);
         }
 

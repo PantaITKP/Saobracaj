@@ -210,6 +210,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string Zaglavlje { get; set; } = "";
         /// <summary>Prosečna pouzdanost OCR-a strane lista (0 = tekst iz PDF-a). Ispod 0,75: nalazi o sadržaju su interne napomene (v2.8).</summary>
         [Interni] public double PouzdanostStrane { get; set; }
+        /// <summary>v2.8.1: upisane reči po rubrikama (koordinate na strani, 0–1) – PDF primer precrtava pogrešan deo upisa. Ne serijalizuje se.</summary>
+        [Newtonsoft.Json.JsonIgnore] public Dictionary<string, List<Citanje.Rec>> ReciRubrika = new Dictionary<string, List<Citanje.Rec>>();
 
         [Opis("Rubrika 1 - Pošiljalac.")] public Strana R1 { get; set; } = new Strana();
         [Opis("Rubrika 4 - Primalac.")] public Strana R4 { get; set; } = new Strana();

@@ -39,6 +39,15 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// <summary>Samo za internu kopiju izveštaja (KP), ne šalje se spoljnom pošiljaocu (npr. r49 koju popunjava KP kao prevoznik).</summary>
         public bool SamoInterno;
         public List<Nalaz> Takodje = new List<Nalaz>();
+        /// <summary>
+        /// v2.8.1 – PDF primer: šta se crvenom (narandžastom) bojom dopisuje u rubriku – stvarna vrednost iz dokumenata (zemlja, datum,
+        /// NHM iz JCI, 3212 KP…) ili realan primer u istom obliku („Marko Marković“, „11-13-08“), nikad opis formata. Prazno = samo oznaka.
+        /// </summary>
+        public string Dopuna = "";
+        /// <summary>Pogrešan deo upisa koji se u primeru precrtava (npr. „2520“ kada je ispravno „252010“); prazno = ništa se ne precrtava.</summary>
+        public string Pogresno = "";
+        /// <summary>Napomena (narandžasto): dopuna se upisuje samo kada je predlog siguran (NHM iz JCI, ISO šifra zemlje…).</summary>
+        public bool DopunaSigurna;
 
         public override string ToString() => Tezina + " " + Pravilo + " r" + Rubrika + ": " + Tekst;
     }
@@ -106,6 +115,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Poruka;
         /// <summary>Samo za interni izveštaj (npr. „r62 nečitljiva – proveriti ručno“), i kada pravilo inače ide pošiljaocu.</summary>
         public bool SamoInterno;
+        /// <summary>v2.8.1: dopuna za PDF primer koju je pravilo samo odredilo (ima prednost nad <see cref="Dopune"/>).</summary>
+        public string Dopuna;
+        public string Pogresno;
+        public bool DopunaSigurna;
+        public Pogodak Dop(string dopuna, string pogresno = null, bool sigurna = true) { Dopuna = dopuna; Pogresno = pogresno; DopunaSigurna = sigurna; return this; }
 
         public Pogodak(string rubrika, string kljuc = null) { Rubrika = rubrika; Kljuc = kljuc; }
         public Pogodak S(string k, string v) { V[k] = v; return this; }
@@ -171,7 +185,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                         log?.Upozorenje("Pravilo " + def.Id + " nije izvršeno: " + ex.Message);
                         continue;
                     }
-                    foreach (var pg in pogodci) Dodaj(rl.Nalazi, Napravi(def, pg, u.Engleski, cim));
+                    foreach (var pg in pogodci)
+                    {
+                        var n = Napravi(def, pg, u.Engleski, cim);
+                        try { Dopune.Popuni(n, pg, k); }
+                        catch (Exception ex) { log?.Upozorenje("Dopuna za PDF primer (" + def.Id + ") nije određena: " + ex.Message); }
+                        Dodaj(rl.Nalazi, n);
+                    }
                 }
 
                 // Nečitljive rubrike: upozorenje, ne greška pošiljaoca; dokument ide na ručnu proveru.
@@ -191,7 +211,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                         var procitano = !string.IsNullOrEmpty(n.Detalj) ? n.Detalj : n.Tekst;
                         n.Tekst = (u.Engleski ? "Box " + n.Rubrika + " is not reliably readable on the scan (OCR " : "Rubrika " + n.Rubrika + " nije pouzdano čitljiva na skenu (OCR ")
                                   + cim.PouzdanostStrane.ToString("0.00") + (u.Engleski ? ") – check manually. Agent read: " : ") – proveriti ručno. Agent je pročitao: ") + procitano;
-                        n.Uputstvo = n.Tekst; n.Detalj = ""; n.Primer = "";
+                        n.Uputstvo = n.Tekst; n.Detalj = ""; n.Primer = ""; n.Dopuna = ""; n.Pogresno = "";
                         n.Tezina = Tezina.Info; n.SamoInterno = true;
                         n.Kljuc = "rucno|" + n.Kljuc;
                     }
@@ -239,6 +259,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     prvi.Detalj = string.IsNullOrEmpty(prvi.Detalj) ? dodatak : prvi.Detalj.TrimEnd() + (Regex.IsMatch(prvi.Detalj, @"[.!?)]$") ? " " : "; ") + dodatak;
                     prvi.Tekst = prvi.Uputstvo + " " + prvi.Detalj;
                 }
+                // dopuna za PDF primer: spajaju se različite dopune istog pravila u istoj rubrici
+                if (string.IsNullOrEmpty(prvi.Dopuna)) { prvi.Dopuna = n.Dopuna ?? ""; prvi.Pogresno = n.Pogresno ?? ""; prvi.DopunaSigurna = n.DopunaSigurna; }
+                else if (!string.IsNullOrEmpty(n.Dopuna) && prvi.Dopuna.IndexOf(n.Dopuna, StringComparison.OrdinalIgnoreCase) < 0) prvi.Dopuna += ", " + n.Dopuna;
                 // svaki spojeni nalaz zadržava svoj primer ispravnog upisa
                 if (string.IsNullOrEmpty(prvi.Primer)) prvi.Primer = n.Primer ?? "";
                 else if (!string.IsNullOrEmpty(n.Primer) && prvi.Primer.IndexOf(n.Primer, StringComparison.OrdinalIgnoreCase) < 0) prvi.Primer += " / " + n.Primer;

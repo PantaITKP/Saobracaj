@@ -23,11 +23,29 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>Zašto primer nije napravljen: "bez_nalaza", "neprepoznat", "bez_podloge", "greska".</summary>
         public string Razlog;
         public string Greska;
-        /// <summary>Slike strana (PNG, 150 dpi): legenda, listovi, spisak kola – za proveru i testove.</summary>
+        /// <summary>Slike strana (PNG, 150 dpi): listovi i spisak kola – za proveru i testove (v2.8.1: bez strane sa legendom).</summary>
         public List<byte[]> Strane = new List<byte[]>();
-        /// <summary>Po listu: broj ispravki (crveno) i napomena (narandžasto) ucrtanih na strani lista.</summary>
-        public List<(string list, int ispravki, int napomena, int samoULegendi)> PoListu = new List<(string, int, int, int)>();
+        /// <summary>Po listu: broj ispravki (crveno) i napomena (narandžasto) ucrtanih na strani lista; nalazi bez rubrike na strani (samo u tabeli maila).</summary>
+        public List<(string list, int ispravki, int napomena, int bezRubrike)> PoListu = new List<(string, int, int, int)>();
+        /// <summary>v2.8.1: šta je upisano u koju rubriku (za proveru izgleda i testove).</summary>
+        public List<Upis> Upisi = new List<Upis>();
         public bool Napravljen => Pdf != null;
+    }
+
+    /// <summary>Jedan nalaz ucrtan na strani lista (v2.8.1).</summary>
+    internal sealed class Upis
+    {
+        public string List = "", Rubrika = "", Pravilo = "";
+        /// <summary>Broj u krugu – isti kao u tabeli maila (ispravke i napomene se broje posebno).</summary>
+        public int Broj;
+        public bool Greska;
+        public string Dopuna = "", Pogresno = "";
+        /// <summary>„ispod teksta“, „desno od teksta“, „pored precrtanog“, „delom na margini“, „na margini“, „samo oznaka“.</summary>
+        public string Mesto = "";
+        public float Pt;
+        /// <summary>Krug (piksel, na strani pre trake na vrhu) i okvir upisane dopune.</summary>
+        public RectangleF Krug, Tekst, Okvir;
+        public override string ToString() => List + " r" + Rubrika + " (" + (Greska ? "ispravka " : "napomena ") + Broj + "): " + (Dopuna.Length > 0 ? "„" + Dopuna + "“ – " + Mesto : Mesto);
     }
 
     /// <summary>
@@ -91,14 +109,18 @@ namespace Saobracaj.Agent.CimProvera
                 var listovi = r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac) && (l.Cim.Okviri.Count > 0 || l.Cim.Sablon == "TABELA")).ToList();
                 if (listovi.Count == 0) { rez.Razlog = "neprepoznat"; return rez; }
 
+                // v2.8.1: brojevi u krugovima = brojevi u tabelama maila (ispravke 1…n crveno, napomene 1…m narandžasto);
+                // nalazi „samo interno“ se u primeru ne prikazuju
                 var ispravke = Izvestaj.RedoviIspravki(r, p, en);
                 var napomene = Izvestaj.RedoviNapomena(r, p, en);
-                var redovi = ispravke.Select(x => (red: x, greska: true)).Concat(napomene.Select(x => (red: x, greska: false))).ToList();
+                var redovi = ispravke.Select((x, i) => new Stavka { Red = x, Greska = true, Broj = i + 1 })
+                    .Concat(napomene.Select((x, i) => new Stavka { Red = x, Greska = false, Broj = i + 1 }))
+                    .Where(x => !x.Red.N.SamoInterno).ToList();
 
                 var strane = new List<Bitmap>();
                 try
                 {
-                    strane.AddRange(Legenda(r, p, en, redovi, rez.Ime));
+                    // v2.8.1: bez strane sa legendom i tabelom (tabela je u mailu) – samo strane lista sa upisanim ispravkama
                     foreach (var l in listovi)
                     {
                         var pr = podloga(l.Dokument.Fajl);
@@ -106,13 +128,13 @@ namespace Saobracaj.Agent.CimProvera
                         var bmp = l.Cim.Sablon == "TABELA" ? PodlogaTabele(pr, out okviri)
                             : Podloga(pr, l.Cim.StranaLista > 0 ? l.Cim.StranaLista : l.Dokument.Strane.FirstOrDefault());
                         if (bmp == null) continue;
-                        var (isp, nap, leg) = Ucrtaj(bmp, l, redovi, en, r, okviri);
-                        rez.PoListu.Add((l.Oznaka, isp, nap, leg));
+                        var (isp, nap, bez) = Ucrtaj(ref bmp, l, redovi, en, r, okviri, rez.Upisi);
+                        rez.PoListu.Add((l.Oznaka, isp, nap, bez));
                         strane.Add(Oznaci(bmp, en));
                     }
-                    if (strane.Count == 1) { rez.Razlog = "bez_podloge"; return rez; }
+                    if (strane.Count == 0) { rez.Razlog = "bez_podloge"; return rez; }
                     // spisak kola (CIT 23) samo kada na njemu ima nalaza (X19, X21, X29)
-                    var naSpisku = redovi.Where(x => Regex.IsMatch(x.red.N.Pravilo, @"^X(19|21|29)") || x.red.N.Rubrika == "CIT 23").ToList();
+                    var naSpisku = redovi.Where(x => Regex.IsMatch(x.Red.N.Pravilo, @"^X(19|21|29)") || x.Red.N.Rubrika == "CIT 23").ToList();
                     if (naSpisku.Count > 0)
                         foreach (var d in r.Dokumenti.Where(d => d.Tip == TipDokumenta.SpisakKola && d.Izvor != "excel"))
                         {
@@ -121,7 +143,7 @@ namespace Saobracaj.Agent.CimProvera
                             {
                                 var bmp = Podloga(pr, br);
                                 if (bmp == null) continue;
-                                UcrtajSpisak(bmp, naSpisku, redovi, en);
+                                UcrtajSpisak(bmp, naSpisku, en);
                                 strane.Add(Oznaci(bmp, en));
                             }
                         }
@@ -248,7 +270,7 @@ namespace Saobracaj.Agent.CimProvera
                         using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = jedanRed ? StringFormatFlags.NoWrap : StringFormatFlags.LineLimit })
                         {
                             var tekst = jedanRed ? Regex.Replace(c.Tekst, @"\s*\n\s*", " ") : c.Tekst;
-                            g.DrawString(tekst, f, sidro || Regex.IsMatch(c.Tekst, @"^\d$") ? crna : siva, pr, sf);
+                            g.DrawString(tekst, f, crna, pr, sf);   // v2.8.1: upisan (ispravan) tekst ostaje crn; dopune su crvene
                         }
                     }
             }
@@ -268,70 +290,355 @@ namespace Saobracaj.Agent.CimProvera
 
         private static float Px(float pt) => pt * Dpi / 72f;
 
-        /// <summary>Tekst ispravke na strani lista: bez izvora u zagradi sa imenom fajla (izvor ostaje u legendi).</summary>
+        /// <summary>Tekst ispravke na strani lista: bez izvora u zagradi sa imenom fajla.</summary>
         internal static string ZaStranu(string primer) => Regex.Replace(primer ?? "", @"\s*\([^()]*\.(pdf|png|jpe?g|tiff?|xlsx?)[^()]*\)", "", RegexOptions.IgnoreCase).Trim();
 
-        /// <summary>Ucrtava nalaze lista. Vraća broj ispravki i napomena na strani i broj nalaza koji su samo u legendi.</summary>
-        private static (int ispravki, int napomena, int legenda) Ucrtaj(Bitmap bmp, RezultatLista l, List<(Izvestaj.Red red, bool greska)> redovi, bool en, RezultatProvere r, Dictionary<string, double[]> okviri)
+        /// <summary>Red tabele maila sa brojem iz tabele (ispravke i napomene se broje posebno).</summary>
+        internal sealed class Stavka
         {
-            int isp = 0, nap = 0, leg = 0;
+            public Izvestaj.Red Red;
+            public bool Greska;
+            public int Broj;
+        }
+
+        /// <summary>Mapa mastila originalne strane (pre bilo kakvog crtanja): gde je rubrika prazna.</summary>
+        private sealed class Tinta
+        {
+            public readonly int W, H;
+            private readonly bool[] ink;
+
+            private readonly int[] zbir;   // integralna slika mastila (W+1)×(H+1)
+
+            public Tinta(Bitmap b)
+            {
+                W = b.Width; H = b.Height; ink = new bool[W * H];
+                var data = b.LockBits(new Rectangle(0, 0, W, H), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+                try
+                {
+                    var red = new byte[data.Stride];
+                    for (int y = 0; y < H; y++)
+                    {
+                        System.Runtime.InteropServices.Marshal.Copy(data.Scan0 + y * data.Stride, red, 0, data.Stride);
+                        for (int x = 0; x < W; x++) ink[y * W + x] = (red[x * 3] * 114 + red[x * 3 + 1] * 587 + red[x * 3 + 2] * 299) / 1000 < 170;
+                    }
+                }
+                finally { b.UnlockBits(data); }
+                zbir = new int[(W + 1) * (H + 1)];
+                for (int y = 0; y < H; y++)
+                {
+                    int red = 0;
+                    for (int x = 0; x < W; x++) { if (ink[y * W + x]) red++; zbir[(y + 1) * (W + 1) + x + 1] = zbir[y * (W + 1) + x + 1] + red; }
+                }
+            }
+
+            /// <summary>Udeo mastila u pravougaoniku (integralna slika, O(1)).</summary>
+            public double Pokrivenost(int x0, int y0, int x1, int y1)
+            {
+                x0 = Math.Max(0, Math.Min(W, x0)); x1 = Math.Max(0, Math.Min(W, x1)); y0 = Math.Max(0, Math.Min(H, y0)); y1 = Math.Max(0, Math.Min(H, y1));
+                if (x1 <= x0 || y1 <= y0) return 0;
+                var s = zbir[y1 * (W + 1) + x1] - zbir[y0 * (W + 1) + x1] - zbir[y1 * (W + 1) + x0] + zbir[y0 * (W + 1) + x0];
+                return s / (double)((x1 - x0) * (y1 - y0));
+            }
+
+            /// <summary>
+            /// Pomak tekstualnog sloja u odnosu na iscrtanu stranu (npr. CropBox ≠ MediaBox): (dx, dy) u pikselima pri kome okviri
+            /// reči najbolje pokrivaju mastilo. (0, 0) kada pomak nije jasno bolji.
+            /// </summary>
+            public (int dx, int dy) Pomak(IEnumerable<Rec> reci)
+            {
+                var r = reci.Where(w => w.X1 > w.X0 && w.Y1 > w.Y0 && w.T.Length >= 2 && !w.JePodatak)   // polja obrasca: okvir polja, ne teksta
+                    .Select(w => (x0: (int)(w.X0 * W), y0: (int)(w.Y0 * H), x1: (int)(w.X1 * W), y1: (int)(w.Y1 * H))).Take(400).ToList();
+                if (r.Count < 5) return (0, 0);
+                double Ocena(int dx, int dy) => r.Average(x => Pokrivenost(x.x0 + dx, x.y0 + dy, x.x1 + dx, x.y1 + dy));
+                var nula = Ocena(0, 0);
+                (int, int) naj = (0, 0); var najO = nula;
+                for (int dy = -24; dy <= 24; dy += 2)
+                    for (int dx = -72; dx <= 72; dx += 2)
+                    {
+                        var o = Ocena(dx, dy);
+                        if (o > najO) { najO = o; naj = (dx, dy); }
+                    }
+                return najO > nula * 1.2 + 0.005 ? naj : (0, 0);
+            }
+
+            public int Red(int y, int x0, int x1)
+            {
+                if (y < 0 || y >= H) return 0;
+                int n = 0; x0 = Math.Max(0, x0); x1 = Math.Min(W, x1);
+                for (int x = x0; x < x1; x++) if (ink[y * W + x]) n++;
+                return n;
+            }
+
+            public int Kolona(int x, int y0, int y1)
+            {
+                if (x < 0 || x >= W) return 0;
+                int n = 0; y0 = Math.Max(0, y0); y1 = Math.Min(H, y1);
+                for (int y = y0; y < y1; y++) if (ink[y * W + x]) n++;
+                return n;
+            }
+
+            public double Udeo(RectangleF r)
+            {
+                int x0 = Math.Max(0, (int)r.X), x1 = Math.Min(W, (int)r.Right), y0 = Math.Max(0, (int)r.Y), y1 = Math.Min(H, (int)r.Bottom);
+                if (x1 <= x0 || y1 <= y0) return 1;
+                int n = 0;
+                for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) if (ink[y * W + x]) n++;
+                return n / (double)((x1 - x0) * (y1 - y0));
+            }
+        }
+
+        private const float NajveciPt = 9f, NajmanjiPt = 6f;
+
+        /// <summary>
+        /// Ucrtava nalaze lista (v2.8.1): ispravan tekst se ne prekriva – samo tanak okvir oko rubrike; u gornji desni ugao krug sa
+        /// brojem iz tabele maila (više nalaza – brojevi jedan pored drugog); dopuna (stvarna vrednost ili realan primer) u prvi prazan
+        /// red ispod ili desno od postojećeg teksta, istim stilom (Arial 9 → 6 pt), crveno; pogrešan deo se precrtava tankom linijom
+        /// i ispravka se upisuje pored. Napomene: narandžast okvir i broj, tekst samo kada je predlog siguran. Što ne stane ni sa 6 pt
+        /// ide na marginu strane (strana se proširi udesno), pored rubrike, sa istim brojem. Vraća broj ispravki, napomena i nalaza bez rubrike.
+        /// </summary>
+        private static (int ispravki, int napomena, int bezRubrike) Ucrtaj(ref Bitmap bmp, RezultatLista l, List<Stavka> redovi, bool en, RezultatProvere r,
+            Dictionary<string, double[]> okviri, List<Upis> upisi)
+        {
+            int isp = 0, nap = 0, bez = 0;
+            var tinta = new Tinta(bmp);
+            var visinaStrane = bmp.Height; var sirinaStrane = bmp.Width;
+            var zauzeto = new List<RectangleF>();
+            // pomak tekstualnog sloja prema iscrtanoj strani (samo PDF/sken; tabela se crta iz ćelija)
+            var pomak = l.Cim.Sablon == "TABELA" || l.Cim.ReciRubrika == null ? (0, 0) : tinta.Pomak(l.Cim.ReciRubrika.Values.SelectMany(x => x));
+            var margina = new List<(RectangleF okvir, Stavka s, string tekst)>();
+            var tabela = l.Cim.Sablon == "TABELA";
+            // nalazi ovog lista, po rubrici (više nalaza iste rubrike – jedan okvir, brojevi jedan pored drugog)
+            var zaList = redovi.Where(x => r.Listovi.Count <= 1 || x.Red.Listovi.Count == 0 || x.Red.Listovi.Contains(l.Oznaka)).ToList();
             using (var g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                var badgeovi = new Dictionary<string, int>();
-                for (int i = 0; i < redovi.Count; i++)
+                foreach (var grupa in zaList.GroupBy(x => x.Red.N.Rubrika))
                 {
-                    var (red, greska) = redovi[i];
-                    if (r.Listovi.Count > 1 && red.Listovi.Count > 0 && !red.Listovi.Contains(l.Oznaka)) continue;
-                    var okv = Okvir(okviri, red.N.Rubrika, bmp.Width, bmp.Height);
-                    if (okv == null) { leg++; continue; }
+                    var okv = Okvir(okviri, grupa.Key, bmp.Width, bmp.Height);
+                    if (okv == null)
+                    {
+                        bez += grupa.Count();
+                        foreach (var s in grupa) upisi.Add(new Upis { List = l.Oznaka, Rubrika = grupa.Key, Pravilo = s.Red.N.Pravilo, Broj = s.Broj, Greska = s.Greska, Mesto = "bez rubrike na strani (samo u tabeli maila)" });
+                        continue;
+                    }
                     var o = okv.Value;
-                    var boja = greska ? Crvena : Narandzasta;
-                    var rb = i + 1;
-                    if (greska)
+                    var stavke = grupa.OrderBy(x => x.Greska ? 0 : 1).ThenBy(x => x.Broj).ToList();
+                    var imaGresku = stavke.Any(x => x.Greska);
+                    using (var pen = new Pen(imaGresku ? Crvena : Narandzasta, imaGresku ? Px(0.8f) : Px(1f))) g.DrawRectangle(pen, o.X, o.Y, o.Width, o.Height);
+                    // krugovi sa brojevima: gornji desni ugao, ne preko teksta
+                    var krugovi = Krugovi(tinta, o, stavke.Count, zauzeto);
+                    for (int i = 0; i < stavke.Count; i++) { Znacka(g, krugovi[i].X, krugovi[i].Y, stavke[i].Broj, stavke[i].Greska ? Crvena : Narandzasta); zauzeto.Add(krugovi[i]); }
+
+                    for (int i = 0; i < stavke.Count; i++)
                     {
-                        using (var br = new SolidBrush(Color.FromArgb(38, Crvena))) g.FillRectangle(br, o);
-                        using (var pen = new Pen(Crvena, 2.5f)) g.DrawRectangle(pen, o.X, o.Y, o.Width, o.Height);
-                        Upisi(g, o, ZaStranu(red.Primer), Crvena, rb);
-                        isp++;
+                        var s = stavke[i];
+                        if (s.Greska) isp++; else nap++;
+                        var n = NalazLista(l, s.Red.N);
+                        var boja = s.Greska ? Crvena : Narandzasta;
+                        var upis = new Upis { List = l.Oznaka, Rubrika = grupa.Key, Pravilo = n.Pravilo, Broj = s.Broj, Greska = s.Greska, Krug = krugovi[i], Okvir = o };
+                        upisi.Add(upis);
+                        var tekst = (n.Dopuna ?? "").Trim();
+                        if (tekst.Length == 0 || (!s.Greska && !n.DopunaSigurna)) { upis.Mesto = "samo oznaka"; continue; }
+                        upis.Dopuna = tekst;
+                        // pogrešan deo: precrtava se, ispravka odmah pored (ili ispod)
+                        RectangleF? precrtano = null;
+                        if (!string.IsNullOrEmpty(n.Pogresno) && !tabela) precrtano = Precrtaj(g, l.Cim, grupa.Key, n.Pogresno, bmp.Width, bmp.Height, boja, pomak);
+                        if (precrtano != null) upis.Pogresno = n.Pogresno;
+                        // dno upisanog teksta rubrike (reči rubrike, sa pomakom tekstualnog sloja); tabela – od vrha ćelije
+                        var reciRub = tabela || l.Cim.ReciRubrika == null ? new List<Rec>()
+                            : l.Cim.ReciRubrika.Where(kv => kv.Key == grupa.Key || Regex.IsMatch(kv.Key, "^" + Regex.Escape(grupa.Key) + @"(?![\dab])")).SelectMany(kv => kv.Value)
+                                .Where(w => w.Cy * visinaStrane + pomak.Item2 >= o.Top && w.Cy * visinaStrane + pomak.Item2 <= o.Bottom).ToList();
+                        var dnoTeksta = reciRub.Count == 0 ? 0f : (float)(reciRub.Max(w => w.Y1) * visinaStrane + pomak.Item2);
+                        // redovi upisanog teksta (piksel): reči istog reda spojene
+                        var redoviTeksta = reciRub.GroupBy(w => Math.Round(w.Cy * 200)).Select(gr => RectangleF.FromLTRB((float)(gr.Min(w => w.X0) * sirinaStrane + pomak.Item1), (float)(gr.Min(w => w.Y0) * visinaStrane + pomak.Item2),
+                            (float)(gr.Max(w => w.X1) * sirinaStrane + pomak.Item1), (float)(gr.Max(w => w.Y1) * visinaStrane + pomak.Item2))).Where(rr => rr.Right <= o.Right && rr.Left >= o.Left - 2).ToList();
+                        var (mesto, pt, ostatak, gde) = Smesti(g, tinta, o, tekst, zauzeto, precrtano, dnoTeksta, redoviTeksta);
+                        if (mesto != null)
+                        {
+                            var deo = ostatak == null ? tekst : tekst.Substring(0, tekst.Length - ostatak.Length).TrimEnd(' ', ',');
+                            using (var f = new Font("Arial", Px(pt), FontStyle.Regular, GraphicsUnit.Pixel))
+                            using (var b = new SolidBrush(boja))
+                                g.DrawString(deo, f, b, mesto.Value);
+                            zauzeto.Add(mesto.Value);
+                            upis.Tekst = mesto.Value; upis.Pt = pt; upis.Mesto = gde;
+                        }
+                        if (mesto == null || ostatak != null)
+                        {
+                            margina.Add((o, s, mesto == null ? tekst : ostatak));
+                            upis.Mesto = mesto == null ? "na margini" : "delom na margini";
+                        }
                     }
-                    else
-                    {
-                        using (var pen = new Pen(Narandzasta, 3f) { DashStyle = DashStyle.Solid }) g.DrawRectangle(pen, o.X, o.Y, o.Width, o.Height);
-                        // siguran predlog (NHM sa 6 cifara iz T1/JCI/spiska) se upisuje; ostalo samo okvir i broj napomene
-                        if (red.N.Pravilo == "R24-NHM6" && Regex.IsMatch(red.Primer ?? "", @"^\d{6}$")) Upisi(g, o, red.Primer, Narandzasta, rb);
-                        nap++;
-                    }
-                    var n = badgeovi.TryGetValue(red.N.Rubrika, out var x) ? x : 0;
-                    badgeovi[red.N.Rubrika] = n + 1;
-                    Znacka(g, o.Right - Px(9) - n * Px(10), o.Y + Px(1), rb, boja);
                 }
             }
-            return (isp, nap, leg);
+            if (margina.Count > 0) bmp = SaMarginom(bmp, margina);
+            return (isp, nap, bez);
         }
 
-        /// <summary>Ispravna vrednost (ili format) u donjem delu rubrike, na beloj podlozi; font 9 → 6 pt, inače „vidi (n)“.</summary>
-        private static void Upisi(Graphics g, RectangleF o, string tekst, Color boja, int rb)
+        /// <summary>Nalaz baš ovog lista (isti red tabele na više listova ima svoju dopunu po listu – npr. datum iz r29 tog lista).</summary>
+        private static Nalaz NalazLista(RezultatLista l, Nalaz n) =>
+            l.Nalazi.FirstOrDefault(x => x.Pravilo == n.Pravilo && x.Rubrika == n.Rubrika && x.Tekst == n.Tekst)
+            ?? l.Nalazi.FirstOrDefault(x => x.Pravilo == n.Pravilo && x.Rubrika == n.Rubrika) ?? n;
+
+        /// <summary>
+        /// Krugovi sa brojevima u gornjem desnom uglu rubrike (s desna na levo), nikad preko teksta. Redom: u uglu i ulevo duž
+        /// gornje ivice (unutra); na gornjoj ivici (bez teksta iznad i ispod linije); desno van rubrike; donji desni ugao; iznad rubrike.
+        /// </summary>
+        private static List<RectangleF> Krugovi(Tinta t, RectangleF o, int broj, List<RectangleF> zauzeto)
         {
-            tekst = (tekst ?? "").Trim();
-            if (tekst.Length == 0) tekst = "vidi (" + rb + ")";
-            var sirina = o.Width - Px(4);
-            var maxVisina = Math.Max(Px(8), o.Height * 0.62f);
-            for (var pt = 9f; ; pt -= 0.5f)
+            var d = Px(9); var razmak = Px(1.5f); const double prag = 0.006;
+            List<RectangleF> Red(float xDesno, float y) => Enumerable.Range(0, broj).Select(i => new RectangleF(xDesno - d - i * (d + razmak), y, d, d)).ToList();
+            bool Cist(RectangleF k) => k.X >= 0 && k.Y >= 0 && k.Right <= t.W && k.Bottom <= t.H && t.Udeo(RectangleF.Inflate(k, Px(0.8f), Px(0.8f))) <= prag && !zauzeto.Any(z => z.IntersectsWith(k));
+            // na liniji: proverava se samo iznad i ispod linije (sama linija rubrike je dozvoljena)
+            bool CistNaIvici(RectangleF k) => t.Udeo(new RectangleF(k.X - Px(0.8f), k.Y - Px(0.8f), k.Width + Px(1.6f), d / 2 - Px(1.2f))) <= prag
+                                              && t.Udeo(new RectangleF(k.X - Px(0.8f), k.Y + d / 2 + Px(1.2f), k.Width + Px(1.6f), d / 2 - Px(0.4f))) <= prag
+                                              && !zauzeto.Any(z => z.IntersectsWith(k));
+            var kandidati = new List<(List<RectangleF> red, bool ivica)>();
+            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2)
+                if (o.Height > d * 1.8f) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y + Px(1.5f)), false));
+            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y - d / 2), true));
+            kandidati.Add((Enumerable.Range(0, broj).Select(i => new RectangleF(o.Right + Px(1) + i * (d + razmak), o.Y + Px(1), d, d)).ToList(), false));
+            if (o.Height > d * 1.8f)
+                for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Bottom - Px(1.5f) - d), false));
+            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y - d - Px(1)), false));
+            foreach (var (red, ivica) in kandidati)
+                if (red.All(k => k.X > o.X - d && (ivica ? CistNaIvici(k) : Cist(k)))) return red;
+            return Red(o.Right - Px(1.5f), o.Y + Px(1.5f));
+        }
+        /// <summary>Precrtava pogrešan deo upisa (reči rubrike čiji tekst odgovara) tankom linijom; vraća okvir precrtanog ili null.</summary>
+        private static RectangleF? Precrtaj(Graphics g, CimList c, string rubrika, string pogresno, int w, int h, Color boja, (int dx, int dy) pomak)
+        {
+            if (c.ReciRubrika == null) return null;
+            string Kljuc(string s) => Regex.Replace(Saobracaj.Common.Text.TekstUtil.Kljuc(s ?? ""), @"\s+", "");
+            var cilj = Kljuc(pogresno);
+            if (cilj.Length == 0) return null;
+            var reci = c.ReciRubrika.Where(kv => kv.Key == rubrika || Regex.IsMatch(kv.Key, "^" + Regex.Escape(rubrika) + @"(?![\dab])")).SelectMany(kv => kv.Value)
+                // polja PDF obrasca (AcroForm): položaj reči je procena (višeredno polje) – ne precrtava se, dopuna ide u prazan prostor
+                .Where(x => x.X1 > x.X0 && x.Font != "AcroForm").OrderBy(x => Math.Round(x.Cy, 2)).ThenBy(x => x.X0).ToList();
+            // jedna reč ili niz susednih reči čiji spoj daje traženi tekst
+            for (int i = 0; i < reci.Count; i++)
             {
-                using (var f = new Font("Arial", Px(pt), FontStyle.Bold, GraphicsUnit.Pixel))
+                var spoj = "";
+                for (int j = i; j < reci.Count && j < i + 6; j++)
                 {
-                    var vel = g.MeasureString(tekst, f, (int)sirina);
-                    if (vel.Height <= maxVisina || pt <= 6f)
+                    spoj += Kljuc(reci[j].T);
+                    if (spoj == cilj || (j == i && spoj.Length >= 3 && spoj.Contains(cilj)))
                     {
-                        if (vel.Height > maxVisina) { tekst = "vidi (" + rb + ")"; vel = g.MeasureString(tekst, f, (int)sirina); }
-                        var pravougaonik = new RectangleF(o.X + Px(2), o.Bottom - vel.Height - Px(1.5f), sirina, vel.Height + Px(0.5f));
-                        using (var b = new SolidBrush(Color.FromArgb(225, Color.White))) g.FillRectangle(b, pravougaonik);
-                        using (var b = new SolidBrush(boja)) g.DrawString(tekst, f, b, pravougaonik);
-                        return;
+                        var deo = reci.Skip(i).Take(j - i + 1).ToList();
+                        var rc = RectangleF.FromLTRB((float)(deo.Min(x => x.X0) * w) + pomak.dx, (float)(deo.Min(x => x.Y0) * h) + pomak.dy, (float)(deo.Max(x => x.X1) * w) + pomak.dx, (float)(deo.Max(x => x.Y1) * h) + pomak.dy);
+                        using (var pen = new Pen(boja, Px(0.7f))) g.DrawLine(pen, rc.X - Px(0.5f), rc.Y + rc.Height * 0.55f, rc.Right + Px(0.5f), rc.Y + rc.Height * 0.55f);
+                        return rc;
                     }
+                    if (!cilj.StartsWith(spoj, StringComparison.Ordinal)) break;
                 }
             }
+            return null;
+        }
+
+        /// <summary>
+        /// Prazno mesto u rubrici za dopunu (pravougaonik bez mastila, integralna slika): odmah desno od precrtanog ili ispod njega;
+        /// prvi slobodan red ispod postojećeg teksta (sleva); bilo gde u praznom prostoru rubrike (prvo ispod, pa desno od teksta).
+        /// Font 9 → 6 pt. Ako ni sa 6 pt ne staje ceo tekst – koliko staje, ostatak se vraća za marginu.
+        /// </summary>
+        private static (RectangleF? mesto, float pt, string ostatak, string gde) Smesti(Graphics g, Tinta t, RectangleF o, string tekst, List<RectangleF> zauzeto, RectangleF? precrtano, float dnoTeksta, List<RectangleF> redoviTeksta)
+        {
+            float ivica = Px(1.8f);
+            int x0 = (int)(o.X + ivica), x1 = (int)(o.Right - ivica), y0 = (int)(o.Y + ivica), y1 = (int)(o.Bottom - ivica);
+            if (x1 - x0 < Px(12) || y1 - y0 < Px(5)) return (null, 0, tekst, "");
+            int sir = x1 - x0;
+            // dno postojećeg teksta: upisane reči rubrike; inače poslednji red sa mastilom (natpisi obrasca se ne računaju kao tekst)
+            int dno = dnoTeksta > 0 ? (int)Math.Ceiling(dnoTeksta) : y0;
+            bool Slobodno(RectangleF k) => k.Left >= x0 - 1 && k.Right <= x1 + 1 && k.Top >= y0 - 1 && k.Bottom <= y1 + 1
+                                           && t.Pokrivenost((int)(k.Left - Px(1.2f)), (int)(k.Top - Px(0.5f)), (int)Math.Ceiling(k.Right + Px(1.2f)), (int)Math.Ceiling(k.Bottom + Px(0.3f))) <= 0.004   // razmak ~1 pt od teksta
+                                           && !zauzeto.Any(z => z.IntersectsWith(k));
+            RectangleF? Trazi(float w, float h, int od, int @do)
+            {
+                for (int y = Math.Max(y0, od); y + h <= y1 && y <= @do; y += 2)
+                    for (int x = x0; x + w <= x1; x += 3)
+                    {
+                        var k = new RectangleF(x, y, w, h);
+                        if (Slobodno(k)) return k;
+                    }
+                return null;
+            }
+
+            for (var pt = NajveciPt; pt >= NajmanjiPt; pt -= 0.5f)
+                using (var f = new Font("Arial", Px(pt), FontStyle.Regular, GraphicsUnit.Pixel))
+                {
+                    var jedan = g.MeasureString(tekst, f);
+                    // 1. pored precrtanog dela (isti red), pa ispod njega
+                    if (precrtano != null)
+                    {
+                        var k = new RectangleF(precrtano.Value.Right + Px(1.5f), precrtano.Value.Y + precrtano.Value.Height / 2 - jedan.Height / 2, jedan.Width, jedan.Height);
+                        if (Slobodno(k)) return (k, pt, null, "pored precrtanog");
+                        var ispod = new RectangleF(precrtano.Value.X, precrtano.Value.Bottom + Px(0.5f), jedan.Width, jedan.Height);
+                        if (Slobodno(ispod)) return (ispod, pt, null, "ispod precrtanog");
+                    }
+                    // tekst u jednom redu ako staje u širinu rubrike, inače prelomljen na širinu rubrike
+                    var vel = jedan.Width <= sir ? jedan : g.MeasureString(tekst, f, sir);
+                    float w = Math.Min(sir, vel.Width + 2), h = (float)Math.Ceiling(vel.Height);
+                    // 2. prvi slobodan red ispod postojećeg teksta
+                    var mesto = Trazi(w, h, dno + 1, y1);
+                    if (mesto != null) return (mesto, pt, null, dnoTeksta > 0 ? "ispod teksta" : "u praznom redu");
+                    // 3. desno od reda upisanog teksta (od poslednjeg reda naviše), u istoj visini
+                    foreach (var red in (redoviTeksta ?? new List<RectangleF>()).OrderByDescending(r => r.Bottom))
+                    {
+                        var k = new RectangleF(red.Right + Px(2.5f), red.Y + red.Height / 2 - jedan.Height / 2, jedan.Width, jedan.Height);
+                        if (Slobodno(k)) return (k, pt, null, "desno od teksta");
+                    }
+                }
+            // 4. bilo gde u praznom prostoru rubrike (od 9 do 6 pt)
+            for (var pt = NajveciPt; pt >= NajmanjiPt; pt -= 0.5f)
+                using (var f = new Font("Arial", Px(pt), FontStyle.Regular, GraphicsUnit.Pixel))
+                {
+                    var jedan = g.MeasureString(tekst, f);
+                    var vel = jedan.Width <= sir ? jedan : g.MeasureString(tekst, f, sir);
+                    var mesto = Trazi(Math.Min(sir, vel.Width + 2), (float)Math.Ceiling(vel.Height), y0, y1);
+                    if (mesto != null) return (mesto, pt, null, "u praznom prostoru rubrike");
+                }
+            // 5. ni 6 pt: koliko staje (jedan red), ostatak na marginu
+            using (var f = new Font("Arial", Px(NajmanjiPt), FontStyle.Regular, GraphicsUnit.Pixel))
+            {
+                var reci = tekst.Split(' ');
+                for (int n = reci.Length - 1; n >= 1; n--)
+                {
+                    var deo = string.Join(" ", reci.Take(n)).TrimEnd(',', ';');
+                    var v = g.MeasureString(deo, f);
+                    var k = Trazi(v.Width + 2, (float)Math.Ceiling(v.Height), y0, y1);
+                    if (k != null) return (k, NajmanjiPt, string.Join(" ", reci.Skip(n)), "u rubrici");
+                }
+            }
+            return (null, 0, tekst, "");
+        }
+        /// <summary>Strana proširena udesno: dopune koje ne staju u rubriku, u visini rubrike, sa istim brojem u krugu.</summary>
+        private static Bitmap SaMarginom(Bitmap original, List<(RectangleF okvir, Stavka s, string tekst)> stavke)
+        {
+            int sirina = (int)(original.Width * 0.3);
+            var bmp = new Bitmap(original.Width + sirina, original.Height, PixelFormat.Format24bppRgb);
+            bmp.SetResolution(Dpi, Dpi);
+            using (var g = Graphics.FromImage(bmp))
+            using (var f = new Font("Arial", Px(8f), FontStyle.Regular, GraphicsUnit.Pixel))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                g.Clear(Color.White);
+                g.DrawImage(original, 0, 0, original.Width, original.Height);
+                using (var pen = new Pen(Color.FromArgb(200, 200, 200), 1f) { DashStyle = DashStyle.Dash }) g.DrawLine(pen, original.Width + Px(2), 0, original.Width + Px(2), bmp.Height);
+                float y = 0;
+                foreach (var (okvir, s, tekst) in stavke.OrderBy(x => x.okvir.Y))
+                {
+                    var boja = s.Greska ? Crvena : Narandzasta;
+                    y = Math.Max(y, okvir.Y);
+                    float x = original.Width + Px(6);
+                    Znacka(g, x, y, s.Broj, boja);
+                    var sir = sirina - Px(20);
+                    var v = g.MeasureString(tekst, f, (int)sir);
+                    using (var b = new SolidBrush(boja)) g.DrawString(tekst, f, b, new RectangleF(x + Px(11), y, sir, v.Height + 2));
+                    // tanka linija od rubrike do napomene na margini
+                    using (var pen = new Pen(Color.FromArgb(120, boja), 1f) { DashStyle = DashStyle.Dot }) g.DrawLine(pen, okvir.Right, okvir.Y + Px(4), x, y + Px(4));
+                    y += Math.Max(v.Height, Px(10)) + Px(4);
+                }
+            }
+            original.Dispose();
+            return bmp;
         }
 
         private static void Znacka(Graphics g, float x, float y, int rb, Color boja)
@@ -344,19 +651,19 @@ namespace Saobracaj.Agent.CimProvera
                 g.DrawString(rb.ToString(), f, b, new RectangleF(x, y, d, d), sf);
         }
 
-        /// <summary>Spisak kola: okvir oko cele strane i brojevi napomena u levom gornjem uglu.</summary>
-        private static void UcrtajSpisak(Bitmap bmp, List<(Izvestaj.Red red, bool greska)> naSpisku, List<(Izvestaj.Red red, bool greska)> svi, bool en)
+        /// <summary>Spisak kola: okvir oko cele strane i brojevi iz tabele maila u levom gornjem uglu.</summary>
+        private static void UcrtajSpisak(Bitmap bmp, List<Stavka> naSpisku, bool en)
         {
             using (var g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                var greska = naSpisku.Any(x => x.greska);
-                using (var pen = new Pen(greska ? Crvena : Narandzasta, 4f)) g.DrawRectangle(pen, Px(6), Px(6), bmp.Width - Px(12), bmp.Height - Px(12));
+                var greska = naSpisku.Any(x => x.Greska);
+                using (var pen = new Pen(greska ? Crvena : Narandzasta, Px(1f))) g.DrawRectangle(pen, Px(6), Px(6), bmp.Width - Px(12), bmp.Height - Px(12));
                 float x = Px(10);
-                foreach (var (red, gr) in naSpisku) { Znacka(g, x, Px(10), svi.FindIndex(s => s.red == red) + 1, gr ? Crvena : Narandzasta); x += Px(11); }
-                using (var f = new Font("Arial", Px(8), FontStyle.Bold, GraphicsUnit.Pixel))
+                foreach (var s in naSpisku) { Znacka(g, x, Px(10), s.Broj, s.Greska ? Crvena : Narandzasta); x += Px(11); }
+                using (var f = new Font("Arial", Px(8), FontStyle.Regular, GraphicsUnit.Pixel))
                 using (var b = new SolidBrush(greska ? Crvena : Narandzasta))
-                    g.DrawString(en ? "Wagon list – see the notes on page 1" : "Spisak kola – vidi napomene na prvoj strani", f, b, x + Px(2), Px(10));
+                    g.DrawString(en ? "Wagon list – see the same numbers in the table in our e-mail" : "Spisak kola – isti brojevi su u tabeli u našem mailu", f, b, x + Px(2), Px(10));
             }
         }
 
@@ -396,97 +703,6 @@ namespace Saobracaj.Agent.CimProvera
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 g.DrawString(tekst, f, b, 0, 0, sf);
             g.Restore(st);
-        }
-
-        // ------------------------------------------------------------------------------------------- legenda (prva strana)
-
-        private static List<Bitmap> Legenda(RezultatProvere r, PravilaSkup p, bool en, List<(Izvestaj.Red red, bool greska)> redovi, string ime)
-        {
-            int W = (int)(8.27 * Dpi), H = (int)(11.69 * Dpi);
-            var strane = new List<Bitmap>();
-            Bitmap bmp = null; Graphics g = null; float y = 0;
-            var m = Px(36);
-            Font naslov = new Font("Arial", Px(14), FontStyle.Bold, GraphicsUnit.Pixel), obican = new Font("Arial", Px(8.5f), GraphicsUnit.Pixel),
-                 debeo = new Font("Arial", Px(8.5f), FontStyle.Bold, GraphicsUnit.Pixel);
-            var kol = new[] { Px(26), Px(110), Px(200), 0f };
-            kol[3] = W - 2 * m - kol[0] - kol[1] - kol[2];
-            void NovaStrana()
-            {
-                g?.Dispose();
-                bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb); bmp.SetResolution(Dpi, Dpi);
-                g = Graphics.FromImage(bmp); g.Clear(Color.White);
-                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                strane.Add(bmp); y = m;
-            }
-            void Tekst(string t, Font f, Color c, float x, float sirina)
-            {
-                var v = g.MeasureString(t, f, (int)sirina);
-                using (var b = new SolidBrush(c)) g.DrawString(t, f, b, new RectangleF(x, y, sirina, v.Height + 2));
-                y += v.Height + Px(3);
-            }
-            try
-            {
-                NovaStrana();
-                Tekst(en ? "Sample of the correctly completed consignment note" : "Primer ispravno popunjenog tovarnog lista", naslov, Color.Black, m, W - 2 * m);
-                var id = Izvestaj.Identifikacija(r, en);
-                Tekst((id.Length > 0 ? id + " · " : "") + ime, obican, Color.FromArgb(80, 80, 80), m, W - 2 * m);
-                y += Px(4);
-                // legenda boja
-                void Boja(Color c, bool puna, string t)
-                {
-                    var kv = new RectangleF(m, y + Px(1), Px(18), Px(9));
-                    if (puna) using (var b = new SolidBrush(Color.FromArgb(38, c))) g.FillRectangle(b, kv);
-                    if (c != Color.Empty) using (var pen = new Pen(c, 2f)) g.DrawRectangle(pen, kv.X, kv.Y, kv.Width, kv.Height);
-                    else using (var pen = new Pen(Color.Gray, 1f)) g.DrawRectangle(pen, kv.X, kv.Y, kv.Width, kv.Height);
-                    var y0 = y; using (var b = new SolidBrush(Color.Black)) g.DrawString(t, obican, b, m + Px(24), y0); y += Px(13);
-                }
-                Boja(Crvena, true, en ? "red = correction (correct value or required format written in red)" : "crveno = ispravka (ispravna vrednost ili propisani oblik upisan crvenom bojom)");
-                Boja(Narandzasta, false, en ? "orange = please check (note number in the circle)" : "narandžasto = proverite (broj napomene u krugu)");
-                Boja(Color.Empty, false, en ? "unchanged = correct, copied from your document" : "nepromenjeno = ispravno, prepisano iz Vašeg dokumenta");
-                y += Px(6);
-
-                void Zaglavlje(string t, Color c)
-                {
-                    if (y > H - Px(80)) NovaStrana();
-                    Tekst(t, debeo, c, m, W - 2 * m);
-                    var kolone = en ? new[] { "No.", "Box", "Issue", "Correct entry (example)" } : new[] { "Rb.", "Rubrika", "Šta nije u redu", "Kako treba da izgleda (primer)" };
-                    Red(kolone, debeo, Color.FromArgb(217, 217, 217), Color.Black);
-                }
-                void Red(string[] celije, Font f, Color pozadina, Color boja)
-                {
-                    var visina = celije.Select((t, i) => g.MeasureString(t ?? "", f, (int)(kol[i] - Px(6))).Height).Max() + Px(5);
-                    if (y + visina > H - m) NovaStrana();
-                    float x = m;
-                    for (int i = 0; i < 4; i++)
-                    {
-                        var rc = new RectangleF(x, y, kol[i], visina);
-                        if (pozadina != Color.Empty) using (var b = new SolidBrush(pozadina)) g.FillRectangle(b, rc);
-                        using (var pen = new Pen(Color.FromArgb(153, 153, 153), 1f)) g.DrawRectangle(pen, rc.X, rc.Y, rc.Width, rc.Height);
-                        using (var b = new SolidBrush(i == 0 ? boja : Color.Black)) g.DrawString(celije[i] ?? "", f, b, new RectangleF(x + Px(3), y + Px(2.5f), kol[i] - Px(6), visina));
-                        x += kol[i];
-                    }
-                    y += visina;
-                }
-                var isp = redovi.Where(x => x.greska).ToList();
-                var nap = redovi.Where(x => !x.greska).ToList();
-                if (isp.Count > 0)
-                {
-                    Zaglavlje(en ? "CORRECTIONS REQUIRED" : "POTREBNE ISPRAVKE", Crvena);
-                    foreach (var x in isp) Red(new[] { (redovi.IndexOf(x) + 1).ToString(), x.red.Rubrika, x.red.Sta, x.red.Primer }, obican, Color.Empty, Crvena);
-                    y += Px(8);
-                }
-                if (nap.Count > 0)
-                {
-                    Zaglavlje(en ? "REMARKS (please check)" : "NAPOMENE (molimo proverite)", Narandzasta);
-                    foreach (var x in nap) Red(new[] { (redovi.IndexOf(x) + 1).ToString(), x.red.Rubrika, x.red.Sta, x.red.Primer }, obican, Color.Empty, Narandzasta);
-                    y += Px(8);
-                }
-                if (y > H - Px(60)) NovaStrana();
-                Tekst(en ? "The sample is for guidance only – the corrected consignment note must be issued and signed by the consignor. No stamp or signature is added to the sample."
-                         : "Primer služi samo kao pomoć pri ispravci – ispravan tovarni list izdaje i potpisuje pošiljalac. Na primer se ne stavlja pečat ni potpis.", obican, Color.FromArgb(80, 80, 80), m, W - 2 * m);
-            }
-            finally { g?.Dispose(); naslov.Dispose(); obican.Dispose(); debeo.Dispose(); }
-            return strane.Select(s => Oznaci(s, en)).ToList();
         }
 
         // ------------------------------------------------------------------------------------------- PDF

@@ -17,6 +17,16 @@ Detalji su u `cim_validation_rules.json` → `meta.changelog` (v2.8.1). Program 
   - Veza sa tovarnim listom iz istog maila ili iz istorije obrađenih listova (`stanje\listovi.json`, najviše 3000 zapisa i 180 dana; samo r62, strane, relacija, r7 i brojevi kola).
   - Poseban interni izveštaj „[INTERNO] CIT 7 – naknadni zahtev – …“: šta se menja (stara → nova vrednost), razlike između CIT 7 i lista i upozorenja (duplikat lista, r7 „Primalac nema pravo raspolaganja“ / 7.1, deljenje pošiljke, carinsko područje). Pošiljaocu ništa.
 - **Testovi**: `TestniPrimeriTests` +17.
+- **PDF primer – novi izgled** (`PrimerPdf.cs`, `Pravila\Dopune.cs`)
+  - Nema strane sa legendom i tabelom; PDF ima samo strane lista (i spiska kola kada na njemu ima nalaza).
+  - Upisan tekst ostaje vidljiv, a oko rubrike je samo tanak okvir. Crvenom se dopisuje samo ono što nedostaje: prvo ispod poslednjeg upisanog reda, pa desno od teksta, pa u drugi prazan prostor rubrike (pravougaonik bez mastila na slici strane), Arial 9 → 6 pt.
+  - Pogrešan deo se precrtava, a ispravka ide pored. To se radi samo nad stvarnim rečima (tekstualni sloj, OCR, Word); kod polja PDF obrasca položaj reči je procena, pa se samo dopisuje.
+  - Pomak tekstualnog sloja prema iscrtanoj strani (CropBox) određuje se po mastilu.
+  - Krug sa brojem iz tabele maila (ispravke i napomene se broje posebno) stoji u gornjem desnom uglu i ne prekriva tekst.
+  - Što ne stane ni sa 6 pt ide na marginu strane, pored rubrike, sa istim brojem.
+  - Dopuna (`Nalaz.Dopuna`, `Pogresno`, `DopunaSigurna`) je stvarna vrednost iz dokumenata ili realan primer. Opis formata („naziv, ulica i broj“, „<šifra>“, „npr.“) se nikad ne upisuje.
+- **Mail**: pasus o primeru je posle tabela, sa novim tekstom (brojevi u krugovima = brojevi u tabeli).
+- **Testovi za primer**: nema legende; dopuna nije opis; krug sa brojem iz tabele za svaki nalaz koji nije interni; dopuna je u svojoj rubrici; pasus. Ukupno 446 prolazi, 1 preskočen.
 
 ## 2026-11-13 – pravila v2.8: ispravke posle testa („Testni primeri“, 9 dokumenata)
 

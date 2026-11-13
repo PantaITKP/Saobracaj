@@ -436,9 +436,10 @@ namespace Saobracaj.Agent.CimProvera
         internal static string PasusPrimera(PrimerRezultat pr, bool en)
         {
             if (pr == null) return null;
+            // v2.8.1: tekst o prilogu (dopuna u rubrici, brojevi u krugovima = brojevi u tabeli)
             if (pr.Napravljen)
-                return en ? "Please find attached a " + PrimerIstaknuto(true) + " (" + pr.Ime + "). Correct entries are copied from your document; corrections are marked in red and boxes to be checked in orange. The sample is for guidance only – the corrected consignment note must be issued and signed by the consignor."
-                          : "U prilogu Vam šaljemo " + PrimerIstaknuto(false) + " (" + pr.Ime + "). Ispravno upisani podaci prepisani su iz Vašeg dokumenta, a ispravke su označene crvenom bojom, dok su rubrike koje treba proveriti označene narandžastom. Primer služi samo kao pomoć pri ispravci – ispravan tovarni list izdaje i potpisuje pošiljalac.";
+                return en ? "Please find attached a " + PrimerIstaknuto(true) + " (" + pr.Ime + "). Your entries are unchanged; what is missing or incorrect has been added or corrected in red. The numbers in circles match the numbers in the table above. The sample is for guidance only – the corrected consignment note must be issued and signed by the consignor."
+                          : "U prilogu Vam šaljemo " + PrimerIstaknuto(false) + " (" + pr.Ime + "). Podaci koje ste upisali su ostali isti, a crvenom bojom smo dopisali ono što nedostaje ili ispravili ono što nije dobro. Brojevi u krugovima odgovaraju brojevima u tabeli iznad. Primer služi samo kao pomoć – ispravan tovarni list izdaje i potpisuje pošiljalac.";
             if (pr.Razlog == "neprepoznat")
                 return en ? "A sample of the correctly completed consignment note is not attached because the form was not recognised automatically."
                           : "Primer ispravnog tovarnog lista nije priložen jer obrazac nije automatski prepoznat.";
@@ -470,7 +471,6 @@ namespace Saobracaj.Agent.CimProvera
             sb.AppendLine(en ? "Dear Sir or Madam," : "Poštovani,").AppendLine();
             sb.AppendLine(Zahvalnica(r, en)).AppendLine();
             sb.AppendLine(Uvodna(r, en)).AppendLine();
-            if (!string.IsNullOrEmpty(primer)) sb.AppendLine(primer).AppendLine();
 
             void Tabela(string naslov, List<Red> redovi)
             {
@@ -490,6 +490,8 @@ namespace Saobracaj.Agent.CimProvera
             }
             Tabela(NaslovIspravki(en), RedoviIspravki(r, p, en));
             Tabela(NaslovNapomena(en), RedoviNapomena(r, p, en));
+            // v2.8.1: pasus o PDF primeru posle tabela („brojevi u krugovima odgovaraju brojevima u tabeli iznad“)
+            if (!string.IsNullOrEmpty(primer)) sb.AppendLine(primer).AppendLine();
 
             foreach (var t in Informacije(r)) sb.AppendLine(t);
             if (r.OpisPriloga.Count > 0) sb.AppendLine(PriloziTekst(r, en)).AppendLine();
@@ -523,7 +525,6 @@ namespace Saobracaj.Agent.CimProvera
             sb.Append("<p>" + (en ? "Dear Sir or Madam," : "Poštovani,") + "</p>");
             sb.Append("<p>" + H(Zahvalnica(r, en)) + "</p>");
             sb.Append("<p>" + H(Uvodna(r, en)) + "</p>");
-            if (!string.IsNullOrEmpty(primer)) sb.Append("<p>" + H(primer).Replace(H(PrimerIstaknuto(en)), "<b>" + H(PrimerIstaknuto(en)) + "</b>") + "</p>");
 
             void Tabela(string naslov, List<Red> redovi, string boja)
             {
@@ -543,6 +544,7 @@ namespace Saobracaj.Agent.CimProvera
             }
             Tabela(NaslovIspravki(en), RedoviIspravki(r, p, en), "#b00020");
             Tabela(NaslovNapomena(en), RedoviNapomena(r, p, en), "#8a5a00");
+            if (!string.IsNullOrEmpty(primer)) sb.Append("<p>" + H(primer).Replace(H(PrimerIstaknuto(en)), "<b>" + H(PrimerIstaknuto(en)) + "</b>") + "</p>");
 
             var info = Informacije(r);
             if (info.Count > 0) sb.Append("<p style=\"margin-top:14px\">" + string.Join("<br>", info.Select(H)) + "</p>");

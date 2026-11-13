@@ -147,7 +147,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         private static bool R710Pominje(Kontekst k, string tip) => R7Stavke(k, "10").Any(s => Pominje(s.Tekst, tip) || (tip != TipDokumenta.SpisakKola && !Prazno(s.Tekst) && Pominje(s.Tekst, TipDokumenta.DrugaCarinska)));
 
-        private static string NazivTipa(string tip, bool en)
+        internal static string NazivTipa(string tip, bool en)
         {
             switch (tip)
             {
@@ -314,7 +314,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         };
 
         /// <summary>ISO šifra zemlje strane iz lista: r4 → uputna stanica (r10 zemlja, r12 UIC), r1 → otpravna stanica (r16, r17); null ako se ne zna.</summary>
-        private static string ZemljaLista(Kontekst k, string broj)
+        internal static string ZemljaLista(Kontekst k, string broj)
         {
             string IzNaziva(string n) => string.IsNullOrWhiteSpace(n) ? null : IsoPoNazivu.TryGetValue(n.Trim(), out var x) ? x
                 : Regex.IsMatch(n.Trim(), @"^\d{2}$") && UicIso.TryGetValue(n.Trim(), out var u) ? u : Regex.IsMatch(n.Trim(), @"^[A-Za-z]{2}$") ? n.Trim().ToUpperInvariant() : null;
@@ -393,7 +393,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         }
 
         /// <summary>UN/EDIFACT 1001 šifra priloga za predlog upisa u r9.</summary>
-        private static string SifraPriloga(string tip, bool en = false)
+        internal static string SifraPriloga(string tip, bool en = false)
         {
             switch (tip)
             {

@@ -239,6 +239,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         {
             prag = prag ?? new Pragovi();
             var c = new CimList { RedniBroj = 1 };
+            foreach (var id in r.Rubrike.Keys) c.ReciRubrika[id] = r.Rubrika(id).ToList();
             var sve = strana.Tekst;
             var n = sve.ToLowerInvariant();
 

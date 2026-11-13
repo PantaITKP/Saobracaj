@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -481,6 +482,96 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsFalse(c.Veza.IzIstogMaila);
             StringAssert.Contains(c.Veza.Opis, "ranije obrađen 12.11.2026");
             StringAssert.Contains(c.Veza.Fajl, "1.CUV_257_1");
+        }
+
+        // ------------------------------------------------------------------------------------------- 6. novi izgled PDF primera
+
+        /// <summary>PDF primer za spoljnog pošiljaoca, kao u radu nad sandučetom (bez nalaza „samo interno“), iz originalnih priloga.</summary>
+        private static (RezultatProvere r, PrimerRezultat pr, bool en) Primer(string slucaj, string od)
+        {
+            var i = Mail(slucaj, od, original: true);
+            var r = Izvestaj.RazlogInternog(i.Provera, pravila) != null ? i.Provera : i.Provera.BezInternih();
+            var d = Path.Combine(Primeri, slucaj);
+            var prilozi = Directory.GetFiles(d).Where(f => Regex.IsMatch(f, @"\.(pdf|xlsx?)$", RegexOptions.IgnoreCase)).Select(f => (Path.GetFileName(f), File.ReadAllBytes(f))).ToList();
+            var pr = PrimerPdf.Napravi(r, pravila, i.Engleski, prilozi);
+            Assert.IsTrue(pr.Napravljen, slucaj + ": " + pr.Razlog + " " + pr.Greska);
+            return (r, pr, i.Engleski);
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Primer_bez_strane_sa_legendom_samo_strana_lista()
+        {
+            foreach (var (s, od) in new[] { ("GK30", "ste.obr06@gmail.com"), ("55_16261", "filep.veronika@rthkft.hu") })
+            {
+                var (r, pr, _) = Primer(s, od);
+                Assert.AreEqual(r.Listovi.Count, pr.Strane.Count, s + ": samo strane lista (spisak kola nema nalaza)");
+                Assert.AreEqual(r.Listovi.Count, pr.PoListu.Count);
+                // strana lista (obrazac sa trakom), ne A4 strana sa tabelom: ima nalaze ucrtane u rubrike
+                Assert.IsTrue(pr.Upisi.Any(u => u.Krug.Width > 0), s);
+            }
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Primer_dopuna_je_vrednost_ili_primer_a_ne_opis_formata()
+        {
+            foreach (var (s, od) in new[] { ("GK30", "ste.obr06@gmail.com"), ("55_16261", "filep.veronika@rthkft.hu"), ("CIM COAL 16", "tibor.tasnadi@pspcargo.ro"),
+                                           ("GIPS", "bosstradezonasabac@gmail.com"), ("cuv za 1 vagon", "strahinja.tadic@pansped.rs"), ("CUV_257", "stefan.janjic@eurologsystem.rs") })
+            {
+                var i = Mail(s, od);
+                foreach (var n in Nalazi(i).Where(n => (n.Dopuna ?? "").Length > 0))
+                {
+                    Assert.IsFalse(Regex.IsMatch(n.Dopuna, @"naziv, ulica i broj|ulica i broj|<|>|\bnpr\.|\be\.g\.|street and number", RegexOptions.IgnoreCase), s + " " + n.Pravilo + ": „" + n.Dopuna + "“");
+                    Assert.IsFalse(Pravila.Dopune.OpisFormata.IsMatch(n.Dopuna), s + " " + n.Pravilo + ": „" + n.Dopuna + "“");
+                }
+            }
+            // GIPS r1: „RS, Marko Marković“ (zemlja iz „21000 Novi Sad“, kontakt kao primer); r24: „2520“ precrtano, „252010“ pored
+            var g = Mail("GIPS", "bosstradezonasabac@gmail.com", original: true, naslov: "IZVOZ");
+            Assert.AreEqual("RS, Marko Marković", Nalazi(g).Single(n => n.Pravilo == "R1").Dopuna);
+            var nhm = Nalazi(g).Single(n => n.Pravilo == "R24-NHM6");
+            Assert.AreEqual("252010", nhm.Dopuna); Assert.AreEqual("2520", nhm.Pogresno); Assert.IsTrue(nhm.DopunaSigurna);
+            // opis formata se nikad ne upisuje
+            Assert.AreEqual("", Pravila.Dopune.Ocisti("naziv, ulica i broj, poštanski broj i mesto, ISO šifra zemlje (npr. RS)"));
+            Assert.AreEqual("", Pravila.Dopune.Ocisti("<šifra> Spisak kola"));
+            Assert.AreEqual("11-13-08", Pravila.Dopune.Ocisti("11-13-08"));
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Primer_krug_sa_brojem_iz_tabele_za_svaki_nalaz_koji_nije_interni()
+        {
+            foreach (var (s, od) in new[] { ("GK30", "ste.obr06@gmail.com"), ("55_16261", "filep.veronika@rthkft.hu"), ("GIPS", "bosstradezonasabac@gmail.com") })
+            {
+                var (r, pr, en) = Primer(s, od);
+                var tabela = Izvestaj.RedoviIspravki(r, pravila, en).Select((x, k) => (x, greska: true, broj: k + 1))
+                    .Concat(Izvestaj.RedoviNapomena(r, pravila, en).Select((x, k) => (x, greska: false, broj: k + 1))).Where(x => !x.x.N.SamoInterno).ToList();
+                foreach (var t in tabela)
+                {
+                    var u = pr.Upisi.FirstOrDefault(x => x.Greska == t.greska && x.Broj == t.broj && x.Rubrika == t.x.N.Rubrika);
+                    Assert.IsNotNull(u, s + ": " + (t.greska ? "ispravka " : "napomena ") + t.broj + " (r" + t.x.N.Rubrika + ") nema oznaku u primeru\n" + string.Join("\n", pr.Upisi));
+                    if (!u.Mesto.StartsWith("bez rubrike")) Assert.IsTrue(u.Krug.Width > 0, s + ": krug za " + u);
+                }
+                // nalazi „samo interno“ nisu u primeru; krugovi ne prekrivaju upisane dopune
+                var interni = r.Listovi.SelectMany(l => l.Nalazi).Where(n => n.SamoInterno).Select(n => n.Pravilo + "|" + n.Rubrika).ToList();
+                var javni = r.Listovi.SelectMany(l => l.Nalazi).Where(n => !n.SamoInterno).Select(n => n.Pravilo + "|" + n.Rubrika).ToList();
+                Assert.IsFalse(pr.Upisi.Any(u => interni.Contains(u.Pravilo + "|" + u.Rubrika) && !javni.Contains(u.Pravilo + "|" + u.Rubrika)), s + ": interni nalaz u primeru");
+                foreach (var u in pr.Upisi.Where(x => x.Tekst.Width > 0))
+                    Assert.IsFalse(pr.Upisi.Any(x => x.Krug.Width > 0 && x.Krug.IntersectsWith(u.Tekst)), s + ": krug preko dopune " + u);
+                // dopuna je u svojoj rubrici (ili na margini kada ne staje)
+                foreach (var u in pr.Upisi.Where(x => x.Tekst.Width > 0))
+                    Assert.IsTrue(RectangleF.Inflate(u.Okvir, 2, 2).Contains(u.Tekst), s + ": dopuna van rubrike " + u);
+            }
+        }
+
+        [TestMethod]
+        public void Pasus_o_primeru_posle_tabele_sa_brojevima_u_krugovima()
+        {
+            var pr = new PrimerRezultat { Ime = "PRIMER_1.pdf", Pdf = new byte[] { 1 } };
+            StringAssert.Contains(Izvestaj.PasusPrimera(pr, false), "Brojevi u krugovima odgovaraju brojevima u tabeli iznad.");
+            StringAssert.Contains(Izvestaj.PasusPrimera(pr, false), "Podaci koje ste upisali su ostali isti, a crvenom bojom smo dopisali ono što nedostaje ili ispravili ono što nije dobro.");
+            StringAssert.Contains(Izvestaj.PasusPrimera(pr, true), "The numbers in circles match the numbers in the table above.");
+            StringAssert.Contains(Izvestaj.PasusPrimera(pr, true), "Your entries are unchanged; what is missing or incorrect has been added or corrected in red.");
+            var i = Mail("GK30", "ste.obr06@gmail.com");
+            var telo = Izvestaj.Telo(i.Provera.BezInternih(), pravila, true, null, null, Izvestaj.PasusPrimera(pr, true));
+            Assert.IsTrue(telo.IndexOf("The numbers in circles", StringComparison.Ordinal) > telo.IndexOf("CORRECTIONS REQUIRED", StringComparison.Ordinal), "pasus je posle tabele");
         }
 
         [TestMethod]

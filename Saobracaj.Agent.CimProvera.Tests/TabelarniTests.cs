@@ -241,7 +241,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var pr = PrimerPdf.Napravi(r, pravila, false, prilozi);
             Assert.IsTrue(pr.Napravljen, pr.Razlog + " " + pr.Greska);
             Assert.AreEqual("PRIMER_801012873127HER-SAD79.pdf", pr.Ime);
-            Assert.AreEqual(2, pr.Strane.Count, "legenda + list");
+            Assert.AreEqual(1, pr.Strane.Count, "v2.8.1: samo list (bez strane sa legendom – tabela je u mailu)");
+            // 6.3: dopuna u istoj ćeliji (rubrici), ispod postojećeg teksta, crveno – nikad opis formata
+            Assert.IsTrue(pr.Upisi.Where(u => u.Dopuna.Length > 0).All(u => u.Okvir.Contains(u.Tekst) || u.Mesto.Contains("margin")), string.Join("\n", pr.Upisi));
+            Assert.IsFalse(pr.Upisi.Any(u => Pravila.Dopune.OpisFormata.IsMatch(u.Dopuna)), string.Join("\n", pr.Upisi));
             var (_, isp, nap, leg) = pr.PoListu.Single();
             Assert.AreEqual(5, isp, "r1, r9, r16, r24 i r58a (v2.8: R58A važi za svaki list) ucrtane na listu");
             Assert.IsTrue(nap >= 4, "r4, r7, r14, r22 na listu: " + nap);
