@@ -75,6 +75,45 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         /// Na spisku je upisana masa kola: kolona/natpis mase (bruto, neto, tara, masa, Gewicht, weight, poids, tömeg, kg) i bar jedan
         /// red sa brojem mase (3–6 cifara, ili sa decimalama/„t“/„kg“).
         /// </summary>
+        /// <summary>
+        /// v2.8.2: zbir masa sa spiska kola po kolonama „Tara“ / „Neto (Masa inc.)“ / „Bruto“ – samo vrste sa brojem kola.
+        /// Vrednosti ispod 200 su u tonama (preračunavaju se u kg). null kada kolone nema ili u njoj nema nijednog broja.
+        /// </summary>
+        internal static (double? tara, double? neto, double? bruto) MaseKolona(List<string[]> redovi, Func<string, string> brojKola)
+        {
+            // red zaglavlja: bar dve kolone mase, ili kolona mase uz kolonu broja kola (rum. „Tara“ sama u zaglavlju lista znači „zemlja“)
+            int kT = -1, kN = -1, kB = -1;
+            foreach (var r in redovi)
+            {
+                int t0 = -1, n0 = -1, b0 = -1; var kola = false;
+                for (int i = 0; i < r.Length; i++)
+                {
+                    var c = TekstUtil.Kljuc(r[i] ?? "");
+                    if (t0 < 0 && Regex.IsMatch(c, @"^(tara|tare|tara vg|tara kola|eigengewicht)\b")) t0 = i;
+                    else if (n0 < 0 && Regex.IsMatch(c, @"^(neto|netto|net|masa inc|masa incarcaturii|masa robe|weight of goods|ladegewicht)\b")) n0 = i;
+                    else if (b0 < 0 && Regex.IsMatch(c, @"^(bruto|brutto|gross|masa bruta|bruttogewicht)\b")) b0 = i;
+                    if (Regex.IsMatch(c, @"\b(vagon|vagona|wagon|wagen|kola|nr vagon|wagon no|wagen nr)\b")) kola = true;
+                }
+                var broj = (t0 >= 0 ? 1 : 0) + (n0 >= 0 ? 1 : 0) + (b0 >= 0 ? 1 : 0);
+                if (broj >= 2 || (broj == 1 && kola)) { kT = t0; kN = n0; kB = b0; break; }
+            }
+            double? Zbir(int k)
+            {
+                if (k < 0) return null;
+                double s = 0; int n = 0; double max = 0;
+                foreach (var r in redovi.Where(x => x.Any(c => brojKola(c) != null)))
+                {
+                    if (k >= r.Length) continue;
+                    var t = Regex.Replace(r[k] ?? "", @"\s", "").Replace(",", ".");
+                    if (!double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) || v <= 0) continue;
+                    s += v; n++; max = Math.Max(max, v);
+                }
+                if (n == 0) return null;
+                return max < 200 ? Math.Round(s * 1000) : Math.Round(s);
+            }
+            return (Zbir(kT), Zbir(kN), Zbir(kB));
+        }
+
         internal static bool MasaNaSpisku(IEnumerable<string> redovi)
         {
             var lista = redovi.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
@@ -145,6 +184,9 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 };
             spisak.KpNaveden = sviTekstovi.Any(kp.JeKp);
             spisak.MasaUpisana = MasaNaSpisku(sviTekstovi);
+            // v2.8.2: zbir masa po kolonama (za upis prave vrednosti u r25 PDF primera)
+            var (tara, neto, bruto) = MaseKolona(redovi, BrojKola);
+            spisak.TaraKg = tara; spisak.NetoKg = neto; spisak.BrutoKg = bruto;
 
             if (spisak.Kola.Count > 0 && (kljucSpiska || spisak.Kola.Count >= 2))
                 rez.Add(new Dokument { Tip = TipDokumenta.SpisakKola, Strane = { 1 }, Opis = "spisak kola (" + opisIzvora + ", " + spisak.Kola.Count + " kola)", Spisak = { spisak }, Fajl = fajl, Izvor = izvor });

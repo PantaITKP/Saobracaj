@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -435,6 +435,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     cim.Sablon = raspored.Obrazac.Id;
                     cim.StranaLista = s.Broj;
                     foreach (var kv in raspored.Obrazac.Rubrike) if (raspored.NaStrani(kv.Value) is double[] ok) cim.Okviri[kv.Key] = ok.Select(v => Math.Round(v, 4)).ToArray();
+                    // v2.8.2: kućice (62.1–62.4, 16, 12…) – PDF primer upisuje svaki deo u svoje polje
+                    foreach (var kv in raspored.Obrazac.Kucice) if (raspored.NaStrani(kv.Value) is double[] ok) cim.KuciceOkviri[kv.Key] = ok.Select(v => Math.Round(v, 4)).ToArray();
                     cim.Zaglavlje = Zaglavlje(s);
                     // Prednja strana lista: ima pošiljaoca ili primaoca i bar jednu od rubrika 62/16/29 (prazan obrazac nema).
                     var imaPodataka = (cim.R1.Popunjena || cim.R4.Popunjena) && (cim.R62.Popunjena || cim.R16.Popunjena || cim.R29.Popunjena || cim.R21.Popunjena);

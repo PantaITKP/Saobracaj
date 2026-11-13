@@ -135,7 +135,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(1, i.Provera.Listovi.Count, Opis(i));
             Assert.AreEqual("ZS-EUROLOG", List(i).Sablon);
             Ocekuje(i, Tezina.Greska, "16", "R16", "datum");
-            Ocekuje(i, Tezina.Greska, "25", "R25-MASA", "samo oznake"); NeSme(i, "R25");
+            // v2.8.2: oznake bez brojeva („Tara: / Netto: / Bruto:“) – „masa nije upisana kao broj“
+            Ocekuje(i, Tezina.Greska, "25", "R25-MASA", "nije upisana kao broj"); NeSme(i, "R25");
             Ocekuje(i, Tezina.Greska, "29", "R29");
             NeSme(i, "R14"); // „KP 2026“ je broj – v2.7
             Ocekuje(i, Tezina.Greska, "9", "X26", "nije priložen");

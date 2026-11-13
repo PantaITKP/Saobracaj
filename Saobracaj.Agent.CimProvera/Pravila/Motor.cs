@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -48,6 +48,12 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Pogresno = "";
         /// <summary>Napomena (narandžasto): dopuna se upisuje samo kada je predlog siguran (NHM iz JCI, ISO šifra zemlje…).</summary>
         public bool DopunaSigurna;
+        /// <summary>v2.8.2: dopuna po redovima (r25: „703 000 kg“ uz oznaku „Tare:“ / „X kg“); null = jedan tekst.</summary>
+        public List<string> DopunaRedovi;
+        /// <summary>Redovi dopune idu uz postojeće oznake u rubrici (npr. „T= …“, „Netto:“), a ne kao poseban blok teksta.</summary>
+        public bool DopunaUzOznake;
+        /// <summary>v2.8.2: dopuna po poljima obrasca (r62: „62.3“ → „3212“, „62.4“ → „XXXXX-X“); null = jedan tekst.</summary>
+        public Dictionary<string, string> DopunaPoPoljima;
 
         public override string ToString() => Tezina + " " + Pravilo + " r" + Rubrika + ": " + Tekst;
     }
@@ -211,7 +217,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                         var procitano = !string.IsNullOrEmpty(n.Detalj) ? n.Detalj : n.Tekst;
                         n.Tekst = (u.Engleski ? "Box " + n.Rubrika + " is not reliably readable on the scan (OCR " : "Rubrika " + n.Rubrika + " nije pouzdano čitljiva na skenu (OCR ")
                                   + cim.PouzdanostStrane.ToString("0.00") + (u.Engleski ? ") – check manually. Agent read: " : ") – proveriti ručno. Agent je pročitao: ") + procitano;
-                        n.Uputstvo = n.Tekst; n.Detalj = ""; n.Primer = ""; n.Dopuna = ""; n.Pogresno = "";
+                        n.Uputstvo = n.Tekst; n.Detalj = ""; n.Primer = ""; n.Dopuna = ""; n.Pogresno = ""; n.DopunaRedovi = null;
                         n.Tezina = Tezina.Info; n.SamoInterno = true;
                         n.Kljuc = "rucno|" + n.Kljuc;
                     }

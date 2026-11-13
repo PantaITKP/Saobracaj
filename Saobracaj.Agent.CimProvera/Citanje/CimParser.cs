@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -240,6 +240,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             prag = prag ?? new Pragovi();
             var c = new CimList { RedniBroj = 1 };
             foreach (var id in r.Rubrike.Keys) c.ReciRubrika[id] = r.Rubrika(id).ToList();
+            // v2.8.2: štampani natpisi po rubrikama (npr. redovi „T= / N= / G=“ u r25) – PDF primer upisuje vrednosti u redove obrasca
+            foreach (var gr in r.Dodela.Where(d => d.naziv && d.rubrika != null).GroupBy(d => d.rubrika)) c.NatpisiRubrika[gr.Key] = gr.Select(d => d.rec).ToList();
             var sve = strana.Tekst;
             var n = sve.ToLowerInvariant();
 

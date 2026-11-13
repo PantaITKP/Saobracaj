@@ -26,7 +26,7 @@
       "RID tabela A, pogl. 3.2",
       "EWC katalog otpada (Odluka 2014/955/EU)"
     ],
-    "version": "2.8.1",
+    "version": "2.8.2",
     "updated": "2026-11-13",
     "company": {
       "name": "Kombinovani prevoz d.o.o.",
@@ -178,7 +178,7 @@
       },
       {
         "date": "2026-11-13",
-        "version": "2.8.1",
+        "version": "2.8.2",
         "basis": "dopune posle prihvatanja v2.8 (2026-11-13)",
         "changes": [
           "Prilog „<ime>.strane.json“ (već pročitane strane) prihvata se samo u testovima; u obradi maila se ignoriše i beleži u log kao „nedozvoljen tip priloga“.",
@@ -191,6 +191,19 @@
           "Oznaka nalaza: krug sa ISTIM brojem kao u tabeli maila (ispravke crveno, napomene narandžasto), više nalaza u rubrici – brojevi jedan pored drugog, krugovi ne prekrivaju tekst. Napomene: narandžast okvir i broj, dopuna samo kada je predlog siguran. Nalazi „samo interno“ se ne prikazuju. Što ne staje ni sa 6 pt – na marginu strane, pored rubrike, sa istim brojem.",
           "Excel/Word tovarni list: dopuna u istoj ćeliji, ispod postojećeg teksta, crveno; upisan tekst ostaje crn.",
           "Pasus o prilogu u mailu (posle tabela): „…Podaci koje ste upisali su ostali isti, a crvenom bojom smo dopisali ono što nedostaje ili ispravili ono što nije dobro. Brojevi u krugovima odgovaraju brojevima u tabeli iznad…“ (i na engleskom)."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.8.2",
+        "basis": "dopune posle prihvatanja v2.8.1 (2026-11-13)",
+        "changes": [
+          "PDF primer: brojevi propisanog oblika se ne izmišljaju – kada nisu poznati iz dokumenata, upisuje se šablon sa X: broj otpravljanja „XXXXX-X“, šifra stanice „XX XXXXX-X“, broj kola „XX XX XXXX XXX-X“, MRN „26RSXXXXXXXXXXXXX“, šifra preduzeća „XXXX“. Datum iz dokumenta (r29 ili datum maila), nepoznat sat „XX“ („11-13-XX“). Ime, telefon i mail ostaju realan primer („Marko Marković“).",
+          "R25-MASA: u polje za masu upisano nešto što nije broj (natpis, tačkice, tekst – „T= ……“, „Netto: / Tare: / Brutto:“) je greška „Rubrika 25: masa nije upisana kao broj“. Dopuna u PDF primeru: „X kg“ u redove koje obrazac ima (T= / N= / G=, Netto / Tare / Brutto), inače „Tara: X kg, Neto: X kg, Bruto: X kg“; mase koje se mogu izračunati iz priloženog spiska kola (zbir kolona tara / neto / bruto) upisuju se kao prave vrednosti.",
+          "CIT 7: veza sa tovarnim listom samo po identifikaciji (r62) iz CIT 7, brojevima kola ili referenci pošiljaoca (r8); identifikacija bez broja otpravljanja samo kada je jedini takav list. Uputna, mesto isporuke i primalac nisu dokaz veze (CIT 7 ih menja). Bez pouzdane veze CIT 7 je „nepovezan“ i to piše u internom izveštaju.",
+          "R1 / R4 / R1-ISO / R4-ISO: zemlja se traži samo u redovima adrese, ne u nazivu firme („Louis Dreyfus Company Hungary Kft.“ nije zemlja – nedostaje zemlja, greška R1).",
+          "PDF primer: strana ostaje A4 (list se umanji); ono što ne staje u rubriku ide na donju marginu strane, sa brojem u krugu i brojem rubrike. Dopuna nikad ne ide u red štampanih natpisa obrasca na vrhu rubrike. Posebna .xlsx kopija primera se ne pravi.",
+          "PDF primer: r62 se upisuje po poljima obrasca (zemlja, stanica, preduzeće, broj otpravljanja – kućice 62.1–62.4); mase sa hiljadama odvojenim razmakom („703 000 kg“); broj u krugu uvek u gornjem desnom uglu SVOJE rubrike, nikad u susednoj ni u okviru druge rubrike unutar nje (r14 u r13, r2/r3 uz r1); datum samo iz dokumenta (r29, r16, spisak kola), nikad datum maila – nepoznat „XXXX-XX-XX“ / „MM-DD-XX“."
         ]
       }
     ]

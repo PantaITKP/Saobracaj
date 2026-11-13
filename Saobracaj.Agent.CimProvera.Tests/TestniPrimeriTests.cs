@@ -418,6 +418,21 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(Tezina.Greska, n.Tezina);
             StringAssert.Contains(n.Detalj, "wagon list 16.xlsx");
             StringAssert.Contains(n.Detalj, "marked as empty");
+            // v2.8.2: „Netto: / Tare: / Brutto:“ bez brojeva – masa nije upisana kao broj; tara sa spiska (33 kola, 703 t) je prava vrednost
+            StringAssert.Contains(n.Tekst, "the mass is not entered as a number");
+            Assert.AreEqual(703000d, sp.TaraKg);
+            CollectionAssert.AreEqual(new[] { "X kg", "703 000 kg", "X kg" }, n.DopunaRedovi, "redovi obrasca: Netto, Tare, Brutto; hiljade razmakom");
+            Assert.IsTrue(n.DopunaUzOznake);
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void GK30_r25_tackice_nisu_broj_i_dopuna_X_kg_u_redove_obrasca()
+        {
+            var i = Mail("GK30", "ste.obr06@gmail.com");
+            var n = Nalazi(i).Single(x => x.Pravilo == "R25-MASA");
+            Assert.AreEqual(Tezina.Greska, n.Tezina);
+            StringAssert.Contains(n.Tekst, "the mass is not entered as a number");
+            CollectionAssert.AreEqual(new[] { "X kg", "X kg", "X kg" }, n.DopunaRedovi, "redovi T= / N= / G=");
         }
 
         // ------------------------------------------------------------------------------------------- 5. CIT 7
@@ -447,13 +462,15 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var i = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
             var c = i.Provera.Cit7.Single();
-            Assert.IsNotNull(c.Veza);
-            StringAssert.Contains(c.Veza.Fajl, "1.CUV_257_1");
-            Assert.IsTrue(c.Veza.IzIstogMaila);
-            Assert.AreEqual("72 16503-5", c.Izmene.Single(x => x.rubrika == "12").stara);
+            // v2.8.2: CIT 7 (79 422113 2179) i CUV-ovi u mailu (r62 prazna) nemaju istu identifikaciju, kola ni referencu – nepovezan;
+            // ista uputna i primalac nisu dokaz veze (CIT 7 ih menja)
+            Assert.IsNull(c.Veza, "nepovezan");
+            StringAssert.Contains(Cit7Provera.Tekst(i.Provera.Cit7, pravila), "NEPOVEZAN");
+            Assert.IsTrue(c.Napomene.Any(x => x.Contains("nisu dokaz veze")), string.Join("\n", c.Napomene));
+            Assert.AreEqual("72 16503-5", c.Izmene.Single(x => x.rubrika == "12").stara, "stara vrednost iz zaglavlja CIT 7");
             StringAssert.Contains(c.Izmene.Single(x => x.rubrika == "4").stara, "DELTA AGRAR");
             Assert.IsTrue(c.Upozorenja.Any(x => x.Contains("duplikat")), string.Join("\n", c.Upozorenja));
-            Assert.IsTrue(c.Upozorenja.Any(x => x.Contains("Primalac nema pravo raspolaganja")), string.Join("\n", c.Upozorenja));
+            Assert.IsTrue(c.Napomene.Any(x => x.Contains("nepovezan")), "r7 ne može da se proveri\n" + string.Join("\n", c.Napomene));
             Assert.IsFalse(c.Upozorenja.Any(x => x.Contains("deli")), "pošiljka se ne deli\n" + string.Join("\n", c.Upozorenja));
             Assert.IsFalse(c.Upozorenja.Any(x => x.Contains("carinsko područje")), "RS → RS");
             Assert.IsTrue(c.Napomene.Any(x => x.Contains("Carinsko područje se ne menja")));
@@ -471,6 +488,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var cuv = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
             var ranije = cuv.Provera.Listovi.Select(l => IstorijaListova.Iz(l, cuv.Provera.Dokumenti, new DateTime(2026, 11, 12), "RE: Status najave")).ToList();
+            // ranije obrađen CUV iz Ljubljane Zalog sa istom identifikacijom (79 422113 2179) – jedini takav list
+            ranije.Add(new ZapisLista { Datum = new DateTime(2026, 11, 11), Mail = "CUV Ljubljana Zalog", Fajl = "CUV_LJ_Zalog.pdf", Zemlja = "79", Stanica = "422113", Preduzece = "2179", Broj = "00123-4", R4 = "DELTA AGRAR DOO", R12 = "72 16503-5" });
             var cit7 = Path.Combine(Primeri, "CUV_257", "CIT7 for the empty train Ljubljana Zalog-Stara Pazova (Sremska Mitrovica, IK AGRIUM).pdf.strane.json");
             Prilozi.Raspakivanje.DozvoliProcitaneStrane = true;
             Ishod i;
@@ -480,8 +499,28 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var c = i.Provera.Cit7.Single();
             Assert.IsNotNull(c.Veza, "list iz ranijeg maila");
             Assert.IsFalse(c.Veza.IzIstogMaila);
-            StringAssert.Contains(c.Veza.Opis, "ranije obrađen 12.11.2026");
-            StringAssert.Contains(c.Veza.Fajl, "1.CUV_257_1");
+            StringAssert.Contains(c.Veza.Opis, "ranije obrađen 11.11.2026");
+            StringAssert.Contains(c.Veza.Fajl, "CUV_LJ_Zalog");
+            Assert.IsTrue(c.Osnov.Any(x => x.Contains("identifikacija")), string.Join(", ", c.Osnov));
+
+            // dva lista sa istom stanicom i preduzećem, a CIT 7 bez broja otpravljanja: veza nije pouzdana → nepovezan
+            ranije.Add(new ZapisLista { Datum = new DateTime(2026, 11, 10), Fajl = "CUV_LJ_Zalog_2.pdf", Zemlja = "79", Stanica = "422113", Preduzece = "2179", Broj = "00125-0" });
+            var r = new RezultatProvere { Dokumenti = { i.Provera.Dokumenti.Single(d => d.Tip == TipDokumenta.Cit7) } };
+            Assert.IsNull(Cit7Provera.Proveri(r, ranije, new DateTime(2026, 11, 13), "x").Single().Veza);
+        }
+
+        [TestMethod]
+        public void CIT7_uputna_i_primalac_nisu_dokaz_veze_kola_i_referenca_jesu()
+        {
+            var z = new Cit7Zahtev { Primalac = "Primalac B", MestoIzdavanja = "Wien", StanicaIzdavanja = "81 01234-5", Tekst = "Box 10: Linz ref GK30" };
+            var r = new RezultatProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cit7, Fajl = "CIT7.pdf", Cit7 = z } } };
+            var istiPrimalac = new ZapisLista { Fajl = "A.pdf", R4 = "Primalac B", R10 = "Wien", R12 = "81 01234-5" };
+            Assert.IsNull(Cit7Provera.Proveri(r, new List<ZapisLista> { istiPrimalac }, new DateTime(2026, 11, 13), "x").Single().Veza, "uputna/primalac nisu veza");
+            var poReferenci = new ZapisLista { Fajl = "B.pdf", R8 = "GK30" };
+            Assert.AreEqual("B.pdf", Cit7Provera.Proveri(r, new List<ZapisLista> { istiPrimalac, poReferenci }, new DateTime(2026, 11, 13), "x").Single().Veza?.Fajl, "referenca r8");
+            z.BrojeviKola.Add("338407649205");
+            var poKolima = new ZapisLista { Fajl = "C.pdf", Kola = { "338407649205", "338407648942" } };
+            Assert.AreEqual("C.pdf", Cit7Provera.Proveri(r, new List<ZapisLista> { istiPrimalac, poKolima }, new DateTime(2026, 11, 13), "x").Single().Veza?.Fajl, "brojevi kola");
         }
 
         // ------------------------------------------------------------------------------------------- 6. novi izgled PDF primera
@@ -522,8 +561,20 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 {
                     Assert.IsFalse(Regex.IsMatch(n.Dopuna, @"naziv, ulica i broj|ulica i broj|<|>|\bnpr\.|\be\.g\.|street and number", RegexOptions.IgnoreCase), s + " " + n.Pravilo + ": „" + n.Dopuna + "“");
                     Assert.IsFalse(Pravila.Dopune.OpisFormata.IsMatch(n.Dopuna), s + " " + n.Pravilo + ": „" + n.Dopuna + "“");
+                    // v2.8.2: brojevi propisanog oblika se ne izmišljaju („15890-0“ je pravi broj drugog lista)
+                    Assert.IsFalse(n.Dopuna.Contains("15890-0") || n.Dopuna.Contains("16350-1") || Regex.IsMatch(n.Dopuna, @"(-|\s)08$"), s + " " + n.Pravilo + ": „" + n.Dopuna + "“");
                 }
             }
+            var gk = Mail("GK30", "ste.obr06@gmail.com");
+            Assert.AreEqual("3212 XXXXX-X", Nalazi(gk).Single(n => n.Pravilo == "R62").Dopuna, "preduzeće iz r58a (KP 3212), broj kao šablon");
+            Assert.AreEqual("MM-DD-XX", Nalazi(gk).Single(n => n.Pravilo == "R16").Dopuna, "datum nije u dokumentima (ne iz maila), sat XX");
+            Assert.AreEqual("XXXX-XX-XX", Nalazi(gk).Single(n => n.Pravilo == "R29").Dopuna);
+            var r62 = Nalazi(gk).Single(n => n.Pravilo == "R62").DopunaPoPoljima;
+            Assert.AreEqual("3212", r62["62.3"]); Assert.AreEqual("XXXXX-X", r62["62.4"]); Assert.AreEqual(2, r62.Count, "zemlja i stanica su upisane");
+            // 55 16261: datum iz r29 lista („Kiskoros, 13.11.2026“)
+            Assert.AreEqual("11-13-XX", Nalazi(Mail("55_16261", "filep.veronika@rthkft.hu")).Single(n => n.Pravilo == "R16").Dopuna);
+            Assert.AreEqual("XXXXX-X", Pravila.Sablon.BrojOtpravljanja); Assert.AreEqual("XX XXXXX-X", Pravila.Sablon.Stanica);
+            Assert.AreEqual("XX XX XXXX XXX-X", Pravila.Sablon.BrojKola); Assert.AreEqual("26RSXXXXXXXXXXXXX", Pravila.Sablon.Mrn);
             // GIPS r1: „RS, Marko Marković“ (zemlja iz „21000 Novi Sad“, kontakt kao primer); r24: „2520“ precrtano, „252010“ pored
             var g = Mail("GIPS", "bosstradezonasabac@gmail.com", original: true, naslov: "IZVOZ");
             Assert.AreEqual("RS, Marko Marković", Nalazi(g).Single(n => n.Pravilo == "R1").Dopuna);
@@ -558,7 +609,36 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 // dopuna je u svojoj rubrici (ili na margini kada ne staje)
                 foreach (var u in pr.Upisi.Where(x => x.Tekst.Width > 0))
                     Assert.IsTrue(RectangleF.Inflate(u.Okvir, 2, 2).Contains(u.Tekst), s + ": dopuna van rubrike " + u);
+                // v2.8.2: krug je uvek u svojoj rubrici
+                foreach (var u in pr.Upisi.Where(x => x.Krug.Width > 0))
+                    Assert.IsTrue(RectangleF.Inflate(u.Okvir, 1, 1).Contains(u.Krug), s + ": krug van rubrike " + u);
             }
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Primer_strana_ostaje_A4()
+        {
+            foreach (var (s, od) in new[] { ("GK30", "ste.obr06@gmail.com"), ("55_16261", "filep.veronika@rthkft.hu") })
+            {
+                var (_, pr, _) = Primer(s, od);
+                foreach (var png in pr.Strane)
+                    using (var ms = new MemoryStream(png))
+                    using (var b = new Bitmap(ms))
+                        Assert.IsTrue((b.Width == 1240 && b.Height == 1754) || (b.Width == 1754 && b.Height == 1240), s + ": " + b.Width + "×" + b.Height);
+            }
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void R1_ISO_zemlja_u_nazivu_firme_nije_zemlja()
+        {
+            // „Louis Dreyfus Company Hungary Kft. / 1134 Budapest Váci út 23-27“ – zemlje u adresi nema: greška R1/R4, dopuna HU
+            var i = Mail("55_16261", "filep.veronika@rthkft.hu");
+            Assert.IsFalse(Nalazi(i).Any(n => n.Pravilo == "R1-ISO" || n.Pravilo == "R4-ISO"), Opis(i));
+            var r1 = Nalazi(i).Single(n => n.Pravilo == "R1");
+            StringAssert.Contains(r1.Detalj, "country");
+            StringAssert.StartsWith(r1.Dopuna, "HU");
+            Assert.IsTrue(Provere.ZemljaUAdresi(new Model.Strana { Naziv = "Firma d.o.o.", Tekst = "Firma d.o.o.\nBulevar 1, 21000 Novi Sad, Serbia", NazivZemlje = "Serbia" }));
+            Assert.IsFalse(Provere.ZemljaUAdresi(new Model.Strana { Naziv = "Louis Dreyfus Company Hungary Kft.", Tekst = "Louis Dreyfus Company Hungary Kft.\n1134 Budapest Váci út 23-27", NazivZemlje = "Hungary" }));
         }
 
         [TestMethod]
@@ -577,8 +657,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void CIT7_carinsko_podrucje_deljenje_i_r7()
         {
-            var lista = new ZapisLista { Fajl = "CIM.pdf", R1 = "Firma A d.o.o., Beograd", R4 = "Primalac B, Wien", R10 = "Wien", R12 = "81 01234-5", R7 = "Primalac nema pravo raspolaganja", Kola = { "338407649205", "338407648942", "338407649007" }, IzIstogMaila = true };
-            var z = new Cit7Zahtev { Primalac = "Primalac B", MestoIzdavanja = "Wien", StanicaIzdavanja = "81 01234-5", Podnosilac = "Firma A d.o.o.", Napomene = "Box 10: Beograd\nBox 12: 72 12345-6" };
+            var lista = new ZapisLista { Fajl = "CIM.pdf", Zemlja = "72", Stanica = "11000", Preduzece = "3212", Broj = "12345-6", R1 = "Firma A d.o.o., Beograd", R4 = "Primalac B, Wien", R10 = "Wien", R12 = "81 01234-5", R7 = "Primalac nema pravo raspolaganja", Kola = { "338407649205", "338407648942", "338407649007" }, IzIstogMaila = true };
+            var z = new Cit7Zahtev { Zemlja = "72", Stanica = "11000", Preduzece = "3212", Broj = "12345-6", Primalac = "Primalac B", MestoIzdavanja = "Wien", StanicaIzdavanja = "81 01234-5", Podnosilac = "Firma A d.o.o.", Napomene = "Box 10: Beograd\nBox 12: 72 12345-6" };
             z.Izmene = Citanje.Cit7Citac.Izmene(z.Napomene);
             var r = new RezultatProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cit7, Fajl = "CIT7.pdf", Cit7 = z } } };
             var c = Cit7Provera.Proveri(r, new List<ZapisLista> { lista }, new DateTime(2026, 11, 13), "x").Single();

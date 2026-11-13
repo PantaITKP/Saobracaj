@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -202,6 +202,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string Sablon { get; set; } = "";
         /// <summary>Okviri rubrika na strani lista (normalizovano 0–1: x0, y0, x1, y1) po poravnatom šablonu – za PDF primer.</summary>
         [Interni] public Dictionary<string, double[]> Okviri { get; set; } = new Dictionary<string, double[]>();
+        /// <summary>v2.8.2: kućice šablona na strani (62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja…), normalizovano 0–1.</summary>
+        [Interni] public Dictionary<string, double[]> KuciceOkviri { get; set; } = new Dictionary<string, double[]>();
         /// <summary>Strana originalnog priloga na kojoj je list (prva strana lista).</summary>
         [Interni] public int StranaLista { get; set; }
         /// <summary>Ako obrazac nije prepoznat ili poravnanje nije pouzdano: opis (rubrike se tada ne proveravaju – ručna provera).</summary>
@@ -212,6 +214,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public double PouzdanostStrane { get; set; }
         /// <summary>v2.8.1: upisane reči po rubrikama (koordinate na strani, 0–1) – PDF primer precrtava pogrešan deo upisa. Ne serijalizuje se.</summary>
         [Newtonsoft.Json.JsonIgnore] public Dictionary<string, List<Citanje.Rec>> ReciRubrika = new Dictionary<string, List<Citanje.Rec>>();
+        /// <summary>v2.8.2: štampani natpisi obrasca po rubrikama (npr. „T= / N= / G=“ u r25). Ne serijalizuje se.</summary>
+        [Newtonsoft.Json.JsonIgnore] public Dictionary<string, List<Citanje.Rec>> NatpisiRubrika = new Dictionary<string, List<Citanje.Rec>>();
 
         [Opis("Rubrika 1 - Pošiljalac.")] public Strana R1 { get; set; } = new Strana();
         [Opis("Rubrika 4 - Primalac.")] public Strana R4 { get; set; } = new Strana();
@@ -273,6 +277,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Datum na spisku YYYY-MM-DD, ako postoji.")] public string Datum { get; set; } = "";
         /// <summary>Na spisku je upisana masa kola (bruto/neto/tara) – r25 tada može da uputi na spisak (R25-MASA).</summary>
         [Interni] public bool MasaUpisana { get; set; }
+        /// <summary>v2.8.2: zbir masa sa spiska (kg) po koloni tara / neto / bruto; null kada kolone nema ili nije popunjena.</summary>
+        [Interni] public double? TaraKg { get; set; }
+        [Interni] public double? NetoKg { get; set; }
+        [Interni] public double? BrutoKg { get; set; }
         [Opis("Kola na spisku.")] public List<KolaNaSpisku> Kola { get; set; } = new List<KolaNaSpisku>();
     }
 
@@ -333,6 +341,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         /// <summary>Ko je potpisao zahtev (polje „Potpis pošiljaoca / primaoca“), i mesto/datum.</summary>
         public string Podnosilac { get; set; } = "";
         public string Datum { get; set; } = "";
+        /// <summary>Sav upisan tekst obrasca (za referencu pošiljaoca, v2.8.2).</summary>
+        public string Tekst { get; set; } = "";
         public string Identifikacija => Regex.Replace(string.Join(" ", new[] { Zemlja, Stanica, Preduzece, Broj }.Where(x => !string.IsNullOrWhiteSpace(x))), @"\s+", " ").Trim();
     }
 

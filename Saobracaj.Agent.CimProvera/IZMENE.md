@@ -1,4 +1,23 @@
-﻿# CimProvera – izmene programa
+# CimProvera – izmene programa
+
+## 2026-11-13 – v2.8.2: šabloni umesto izmišljenih brojeva, r25, CIT 7 samo pouzdana veza, A4
+
+- **PDF primer – šabloni sa X** (`Pravila\Dopune.cs`, klasa `Sablon`)
+  - Brojevi propisanog oblika se ne izmišljaju: broj otpravljanja „XXXXX-X“, šifra stanice „XX XXXXX-X“, broj kola „XX XX XXXX XXX-X“, MRN „26RSXXXXXXXXXXXXX“, preduzeće „XXXX“ (kada nije poznato iz r58a).
+  - Datum se uzima iz dokumenta, a nepoznat sat je „XX“ („11-13-XX“).
+  - Ime, telefon i mail ostaju realan primer.
+- **r25**
+  - Natpis, tačkice ili tekst umesto broja daju grešku „Rubrika 25: masa nije upisana kao broj“.
+  - U primeru se „X kg“ upisuje u redove koje obrazac ima (T= / N= / G=, Netto / Tare / Brutto).
+  - Mase koje se mogu izračunati iz Excel spiska kola (zbir kolona tara / neto / bruto) upisuju se kao prave vrednosti. COAL 16: tara 703 000 kg.
+- **CIT 7**: veza samo po identifikaciji (r62), brojevima kola ili referenci (r8). Bez pouzdane veze CIT 7 je „NEPOVEZAN“ (CUV_257).
+- **R1/R4/R1-ISO/R4-ISO**: zemlja se traži samo u redovima adrese, ne u nazivu firme. Za 55 16261 to sada daje grešku R1 „nedostaje zemlja“, sa dopunom HU.
+- **PDF primer – izgled**: strana ostaje A4 (list se umanji); ono što ne staje ide na donju marginu, sa brojem u krugu. Dopuna ne ide u red štampanih natpisa na vrhu rubrike.
+- **Završne ispravke primera**
+  - r62 po poljima (kućice 62.1–62.4); mase sa razmakom („703 000 kg“).
+  - Krug je uvek u svojoj rubrici, van okvira drugih rubrika.
+  - Datum se uzima samo iz dokumenta; nepoznat je „XXXX-XX-XX“ / „MM-DD-XX“.
+- **Testovi**: 450 prolazi, 1 preskočen.
 
 ## 2026-11-13 – v2.8.1 (program i pravila): dopune posle prihvatanja v2.8
 

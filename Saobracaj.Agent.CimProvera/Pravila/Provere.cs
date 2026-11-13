@@ -291,7 +291,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (!imaMesto && !imaUlicu) fali.Add(k.U.Engleski ? "address" : "adresa");
             else if (!imaMesto) fali.Add(k.U.Engleski ? "postcode and place" : "poštanski broj i mesto");
             // Greška je samo kada zemlje nema; zemlja upisana rečima („Srbija“, „Italy“) je upozorenje R1-ISO / R4-ISO.
-            if (!Regex.IsMatch((s.SifraZemlje ?? "").Trim(), @"^[A-Za-z]{2,3}$") && Prazno(s.NazivZemlje)) fali.Add(k.U.Engleski ? "country (ISO 3166 code)" : "zemlja (ISO 3166 šifra)");
+            // v2.8.2: zemlja se traži samo u redovima adrese – „Louis Dreyfus Company Hungary Kft.“ nije zemlja
+            if (!Regex.IsMatch((s.SifraZemlje ?? "").Trim(), @"^[A-Za-z]{2,3}$") && !ZemljaUAdresi(s)) fali.Add(k.U.Engleski ? "country (ISO 3166 code)" : "zemlja (ISO 3166 šifra)");
             if (potpis && !s.Potpis && !k.C.R62.Popunjena) fali.Add(k.U.Engleski ? "signature" : "potpis");
             if (fali.Count > 0)
             {
@@ -335,10 +336,33 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             ["deutschland"] = "DE", ["magyarorszag"] = "HU", ["magyarország"] = "HU", ["romania"] = "RO", ["românia"] = "RO", ["slovensko"] = "SK", ["österreich"] = "AT", ["osterreich"] = "AT",
         };
 
+        /// <summary>
+        /// v2.8.2: naziv zemlje je u redovima ADRESE, a ne samo u nazivu firme („Louis Dreyfus Company Hungary Kft.“, „Elektroprivreda
+        /// Srbije“). Iz teksta rubrike se izbacuje naziv (prvi deo upisa), pa se zemlja traži u ostatku.
+        /// </summary>
+        internal static bool ZemljaUAdresi(Strana s)
+        {
+            if (s == null || Prazno(s.NazivZemlje)) return false;
+            var tekst = s.Tekst ?? "";
+            string adresa;
+            // naziv: parsirani naziv, a kada je on ceo upis (cifre, predugačak) – prvi deo do zareza ili novog reda
+            var naziv = (s.Naziv ?? "").Trim();
+            if (Prazno(naziv) || Regex.IsMatch(naziv, @"\d") || naziv.Length > 60) naziv = Regex.Split(tekst.Trim(), @"\s*[,\n]\s*")[0];
+            if (!Prazno(naziv) && tekst.IndexOf(naziv, StringComparison.OrdinalIgnoreCase) is int i && i >= 0)
+                adresa = tekst.Remove(i, naziv.Length);
+            else
+            {
+                var redovi = tekst.Split('\n');
+                adresa = redovi.Length > 1 ? string.Join("\n", redovi.Skip(1)) : tekst;
+            }
+            adresa += "\n" + (s.Adresa ?? "");
+            return Regex.IsMatch(adresa, @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje.Trim()) + @"(?!\p{L})", RegexOptions.IgnoreCase);
+        }
+
         /// <summary>R1-ISO / R4-ISO: zemlja upisana rečima umesto ISO 3166 šifre – upozorenje, sa predlogom iz istog upisa.</summary>
         private static IEnumerable<Pogodak> ZemljaRecima(Kontekst k, Strana s, string broj)
         {
-            if (!s.Popunjena || !k.Citljivo(s, broj) || Regex.IsMatch((s.SifraZemlje ?? "").Trim(), @"^[A-Za-z]{2,3}$") || Prazno(s.NazivZemlje)) yield break;
+            if (!s.Popunjena || !k.Citljivo(s, broj) || Regex.IsMatch((s.SifraZemlje ?? "").Trim(), @"^[A-Za-z]{2,3}$") || !ZemljaUAdresi(s)) yield break;
             var iso = IsoPoNazivu.TryGetValue(s.NazivZemlje.Trim(), out var x) ? x : "";
             var upisano = Regex.Match(s.Tekst ?? "", @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje) + @"(?!\p{L})", RegexOptions.IgnoreCase).Value;
             if (upisano.Length == 0) upisano = s.NazivZemlje;
@@ -695,6 +719,19 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                       ? (k.U.Engleski ? " – all wagons on it are marked as empty (only the tare is entered), although box 21 describes goods." : " – sva kola su na njemu označena kao prazna (upisana je samo tara), a u rubrici 21 je roba.")
                       : ".")
                 : "";
+            // v2.8.2: u polje za masu je upisano nešto što nije broj (natpis, tačkice, tekst) – greška „masa nije upisana kao broj“
+            // (i kada parser rubriku vodi kao praznu, a u njoj su samo oznake i tačkice: „T= ……… / N= ……… / G= ………“)
+            var reci25 = k.C.ReciRubrika != null && k.C.ReciRubrika.TryGetValue("25", out var rr) ? string.Join("\n", Citanje.Raspored.Linije(rr).Select(l => l.Tekst)) : "";
+            var tekst25 = !Prazno(r.Tekst) ? r.Tekst : reci25;
+            if ((r.Popunjena || r.Status == StatusRubrike.Oznake || Regex.IsMatch(tekst25, @"[\p{L}.…]")) && !Prazno(tekst25) && !upucuje && !Regex.IsMatch(tekst25, @"\d{2,}"))
+            {
+                var upisano = Regex.Replace(Regex.Replace(tekst25, @"\s*\n\s*", " / "), @"\s+", " ").Trim();
+                yield return new Pogodak("25", "r25-masa")
+                {
+                    Poruka = k.U.Engleski ? "Box 25: the mass is not entered as a number." : "Rubrika 25: masa nije upisana kao broj.",
+                }.D((k.U.Engleski ? "The mass is not entered as a number. Entered: „" : "Masa nije upisana kao broj. Upisano: „") + upisano + "“." + spisakBezMase);
+                yield break;
+            }
             yield return P("25", "r25-masa").D((r.Status == StatusRubrike.Oznake ? (k.U.Engleski ? "Only the form labels are entered, without values." : "Upisane su samo oznake, bez vrednosti.")
                 : upucuje && k.Spiskovi.Count == 0 ? (k.U.Engleski ? "Box 25 refers to the wagon list, but no wagon list with masses is attached." : "Rubrika 25/21 upućuje na spisak kola, a spisak sa masom nije priložen.")
                 : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")) + spisakBezMase);

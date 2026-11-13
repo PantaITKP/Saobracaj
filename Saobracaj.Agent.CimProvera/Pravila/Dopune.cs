@@ -19,11 +19,28 @@ namespace Saobracaj.Agent.CimProvera.Pravila
     /// <item>Napomene (narandžasto) – dopuna samo kada je predlog siguran (<see cref="Nalaz.DopunaSigurna"/>).</item>
     /// </list>
     /// </summary>
+    /// <summary>
+    /// v2.8.2: šabloni brojeva propisanog oblika – kada vrednost nije poznata iz dokumenata, upisuje se oblik polja sa X,
+    /// nikad izmišljen broj (izmišljen broj može biti pravi broj drugog lista).
+    /// </summary>
+    internal static class Sablon
+    {
+        public const string BrojOtpravljanja = "XXXXX-X";
+        public const string Stanica = "XX XXXXX-X";
+        public const string StanicaBezZemlje = "XXXXX-X";
+        public const string Zemlja = "XX";
+        public const string Preduzece = "XXXX";
+        public const string BrojKola = "XX XX XXXX XXX-X";
+        public const string Mrn = "26RSXXXXXXXXXXXXX";
+        public const string Cas = "XX";
+        public const string Masa = "X";
+    }
+
     internal static class Dopune
     {
         public static void Popuni(Nalaz n, Pogodak pg, Kontekst k)
         {
-            n.Dopuna = ""; n.Pogresno = ""; n.DopunaSigurna = false;
+            n.Dopuna = ""; n.Pogresno = ""; n.DopunaSigurna = false; n.DopunaRedovi = null; n.DopunaUzOznake = false; n.DopunaPoPoljima = null;
             if (n.SamoInterno || n.Tezina == Tezina.Info) return;
             string d, p; bool s;
             if (pg.Dopuna != null) { d = pg.Dopuna; p = pg.Pogresno; s = pg.DopunaSigurna; }
@@ -32,6 +49,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             n.Dopuna = d;
             n.Pogresno = d.Length > 0 ? (p ?? "").Trim() : "";
             n.DopunaSigurna = d.Length > 0 && s;
+            if (d.Length == 0) n.DopunaRedovi = null;
         }
 
         /// <summary>Reči i znaci opisa formata – takva dopuna se ne upisuje (sigurnosna mreža; v2.8.1 test „bez opisa“).</summary>
@@ -89,11 +107,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     var delovi = new List<string>();
                     if (prazna || Fali("mesto/stanica", "place/station"))
                         delovi.Add(Mesto(k.C.R29.Mesto) ?? Mesto(k.C.R1.Adresa) ?? (en ? "Novi Sad" : "Novi Sad"));
-                    var datum = Datum(k.C.R29.Datum, k.U.ReferentniDatum) ?? k.U.ReferentniDatum;
                     var bezDatuma = prazna || Fali("datum", "date");
                     var bezCasa = prazna || Fali("vreme (čas)", "time (hour)");
-                    if (bezDatuma) delovi.Add(datum.ToString("MM-dd", CultureInfo.InvariantCulture) + (bezCasa ? "-08" : ""));
-                    else if (bezCasa) delovi.Add("08");
+                    // v2.8.2: datum SAMO iz dokumenta (r29, priloženi spisak kola), nikad datum maila; nepoznato – „MM-DD“, sat „XX“
+                    var (_, mesec, dan) = DatumIzDokumenta(k.C.R29.Datum, k);
+                    var md = mesec != null ? mesec + "-" + dan : "MM-DD";
+                    if (bezDatuma) delovi.Add(md + (bezCasa ? "-" + Sablon.Cas : ""));
+                    else if (bezCasa) delovi.Add(Sablon.Cas);
                     return (string.Join(", ", delovi), null, false);
                 }
                 case "R29":
@@ -102,7 +122,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     var delovi = new List<string>();
                     if (prazna || Fali("mesto", "place")) delovi.Add(Mesto(k.C.R16.Mesto) ?? Mesto(k.C.R1.Adresa) ?? "Novi Sad");
                     if (prazna || Fali("datum ispostavljanja", "date of issue"))
-                        delovi.Add((Datum(k.C.R16.Datum, k.U.ReferentniDatum) ?? k.U.ReferentniDatum).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+                    {
+                        // v2.8.2: datum SAMO iz dokumenta (r16, priloženi spisak kola); nepoznat deo – X („XXXX-XX-XX“, „XXXX-11-13“)
+                        var (god, mes, dan) = DatumIzDokumenta(k.C.R16.Datum, k);
+                        delovi.Add((god ?? "XXXX") + "-" + (mes ?? "XX") + "-" + (dan ?? "XX"));
+                    }
                     return (string.Join(", ", delovi), null, false);
                 }
                 case "R62":
@@ -111,11 +135,18 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     var delovi = new List<string>();
                     var bez = prazna;
                     var zemlja = !Prazno(r.Zemlja) ? null : UicZemlje(k);
-                    if (bez || Fali("zemlja", "country")) delovi.Add(zemlja ?? "72");
-                    if (bez || Fali("stanica", "station")) delovi.Add(Stanica(k.C.R16.SifraStanice) ?? "16350-1");
-                    if (bez || Fali("šifra preduzeća", "company code")) delovi.Add(Cif(k.C.R58a.Sifra).Length == 4 ? Cif(k.C.R58a.Sifra) : k.P.Kp.Uic);
+                    // v2.8.2: brojevi propisanog oblika se ne izmišljaju – prava vrednost iz lista (r16, r58a) ili šablon sa X
+                    if (bez || Fali("zemlja", "country")) delovi.Add(zemlja ?? Sablon.Zemlja);
+                    if (bez || Fali("stanica", "station")) delovi.Add(Stanica(k.C.R16.SifraStanice) ?? Sablon.StanicaBezZemlje);
+                    if (bez || Fali("šifra preduzeća", "company code")) delovi.Add(Cif(k.C.R58a.Sifra).Length == 4 ? Cif(k.C.R58a.Sifra) : k.P.Kp.JeKp(k.C.R58a.Tekst) ? k.P.Kp.Uic : Sablon.Preduzece);
                     var losBroj = Fali("u obliku 12345-6", "in the format 12345-6");
-                    if (bez || Fali("broj otpravljanja", "consignment number")) delovi.Add("15890-0");
+                    if (bez || Fali("broj otpravljanja", "consignment number")) delovi.Add(Sablon.BrojOtpravljanja);
+                    // v2.8.2: svaki deo u svoje polje obrasca (62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja)
+                    n.DopunaPoPoljima = new Dictionary<string, string>();
+                    if (bez || Fali("zemlja", "country")) n.DopunaPoPoljima["62.1"] = zemlja ?? Sablon.Zemlja;
+                    if (bez || Fali("stanica", "station")) n.DopunaPoPoljima["62.2"] = Stanica(k.C.R16.SifraStanice) ?? Sablon.StanicaBezZemlje;
+                    if (bez || Fali("šifra preduzeća", "company code")) n.DopunaPoPoljima["62.3"] = Cif(k.C.R58a.Sifra).Length == 4 ? Cif(k.C.R58a.Sifra) : k.P.Kp.JeKp(k.C.R58a.Tekst) ? k.P.Kp.Uic : Sablon.Preduzece;
+                    if (bez || Fali("broj otpravljanja", "consignment number")) n.DopunaPoPoljima["62.4"] = Sablon.BrojOtpravljanja;
                     return (string.Join(" ", delovi), losBroj ? r.Broj : null, false);
                 }
                 case "R58A":
@@ -181,13 +212,47 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     return mrn.Length > 0 ? ((n.Primer ?? "").StartsWith("T", StringComparison.Ordinal) ? "T MRN " + mrn : "E MRN " + mrn, null, true) : ("", null, false);
                 }
                 case "R25-MASA":
-                    // masa robe se ne može odrediti iz dokumenata – realan primer (prazna kola: preporuka bez upisa)
-                    return greska ? (en ? "Net 1,980,000 kg" : "Neto 1 980 000 kg", null, false) : ("", null, false);
+                {
+                    // v2.8.2: mase sa priloženog spiska kola kada se mogu izračunati, inače šablon „X kg“; u redove koje obrazac ima
+                    // („T= / N= / G=“, „Netto: / Tare: / Brutto:“), inače „Tara: X kg, Neto: X kg, Bruto: X kg“
+                    double? Suma(Func<SpisakKola, double?> f) { var v = k.Spiskovi.Select(x => f(x.s)).Where(x => x.HasValue).ToList(); return v.Count == 0 ? (double?)null : v.Sum(x => x.Value); }
+                    double? tara = Suma(s => s.TaraKg), neto = Suma(s => s.NetoKg), bruto = Suma(s => s.BrutoKg);
+                    if (!bruto.HasValue && tara.HasValue && neto.HasValue) bruto = tara + neto;
+                    if (!neto.HasValue && tara.HasValue && bruto.HasValue && bruto > tara) neto = bruto - tara;
+                    var poznato = tara.HasValue || neto.HasValue || bruto.HasValue;
+                    if (!greska && !poznato) return ("", null, false);   // preporuka bez poznate mase: samo oznaka
+                    string Kg(double? v) => (v.HasValue ? v.Value.ToString("#,0", CultureInfo.InvariantCulture).Replace(",", " ") : Sablon.Masa) + " kg";   // hiljade razmakom („703 000 kg“)
+                    var vrednost = new Dictionary<string, string> { ["tara"] = Kg(tara), ["neto"] = Kg(neto), ["bruto"] = Kg(bruto) };
+                    var naziv = new Dictionary<string, string> { ["tara"] = en ? "Tare" : "Tara", ["neto"] = en ? "Net" : "Neto", ["bruto"] = en ? "Gross" : "Bruto" };
+                    var redovi = OznakeMase(k.C.R25.Tekst);
+                    if (redovi.Count == 0 && k.C.ReciRubrika != null && k.C.ReciRubrika.TryGetValue("25", out var upisane))
+                        redovi = OznakeMase(string.Join("\n", Citanje.Raspored.Linije(upisane).Select(l => l.Tekst)));
+                    // prazna rubrika: redovi koje obrazac ima (štampano „T= / N= / G=“)
+                    if (redovi.Count == 0 && k.C.NatpisiRubrika != null && k.C.NatpisiRubrika.TryGetValue("25", out var natpisi))
+                        redovi = OznakeMase(string.Join("\n", Citanje.Raspored.Linije(natpisi).Select(l => l.Tekst)));
+                    if (redovi.Count > 0) { n.DopunaRedovi = redovi.Select(x => vrednost[x]).ToList(); n.DopunaUzOznake = true; }
+                    else { redovi = new List<string> { "tara", "neto", "bruto" }; n.DopunaRedovi = redovi.Select(x => naziv[x] + ": " + vrednost[x]).ToList(); n.DopunaUzOznake = false; }
+                    return (string.Join(", ", redovi.Select(x => naziv[x] + ": " + vrednost[x])), null, !greska && poznato);
+                }
                 default:
                     // predlog pravila iz pratećih dokumenata ili istog lista – samo kada je to vrednost, a ne opis
                     if (greska && !Prazno(pg.Predlog)) return (pg.Predlog, null, false);
                     return ("", null, false);
             }
+        }
+
+        /// <summary>Redovi oznaka mase koje obrazac/pošiljalac ima u r25, redom: „T= …“ → tara, „N= …“ → neto, „G= …“ / „Brutto:“ → bruto.</summary>
+        internal static List<string> OznakeMase(string tekst)
+        {
+            var rez = new List<string>();
+            foreach (var red in (tekst ?? "").Split('\n').Select(x => x.Trim()).Where(x => x.Length > 0))
+            {
+                var m = Regex.Match(red, @"^(tara|tare|taragewicht|t)\b|^(neto|netto|net|n)\b|^(bruto|brutto|gross|g|b)\b", RegexOptions.IgnoreCase);
+                if (!m.Success) continue;
+                var vrsta = m.Groups[1].Success ? "tara" : m.Groups[2].Success ? "neto" : "bruto";
+                if (!rez.Contains(vrsta)) rez.Add(vrsta);
+            }
+            return rez;
         }
 
         // ------------------------------------------------------------------------------------------- vrednosti iz lista
@@ -273,6 +338,21 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             t = Regex.Replace(t, @"\s+", " ").Trim(' ', '.', '-', '–', ':');
             if (!Regex.IsMatch(t, @"\p{L}{3}")) return null;
             return t.Length > 1 && t == t.ToUpperInvariant() ? CultureInfo.GetCultureInfo("sr-Latn-RS").TextInfo.ToTitleCase(t.ToLowerInvariant()) : t;
+        }
+
+        /// <summary>
+        /// v2.8.2: datum iz dokumenta – zadata rubrika lista (r29 ili r16), pa datum na priloženom spisku kola; nikad datum maila.
+        /// Delovi su null kada nisu poznati (godina „0000“ u r16 = godina nije upisana).
+        /// </summary>
+        private static (string god, string mes, string dan) DatumIzDokumenta(string iz, Kontekst k)
+        {
+            foreach (var d in new[] { iz }.Concat(k.Spiskovi.Select(s => s.s.Datum)))
+            {
+                var m = Regex.Match(d ?? "", @"^(\d{4})-(\d{2})-(\d{2})$");
+                if (!m.Success || m.Groups[2].Value == "00") continue;
+                return (m.Groups[1].Value == "0000" ? null : m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value);
+            }
+            return (null, null, null);
         }
 
         private static DateTime? Datum(string iso, DateTime referentni)

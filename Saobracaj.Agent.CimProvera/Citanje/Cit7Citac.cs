@@ -117,6 +117,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 z.Podnosilac = Regex.Replace(potpis, @"\s+", " ").Trim(' ', ',', '–', '-');
             }
 
+            z.Tekst = string.Join(" ", (imaPolja ? reci.Where(w => w.JePodatak) : reci).Select(w => w.T));
             z.Izmene = Izmene(z.Napomene + "\n" + kodTekst);
             if (z.Izmene.Count == 0 && kodTekst.Length > 0)
             {

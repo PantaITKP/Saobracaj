@@ -128,9 +128,9 @@ namespace Saobracaj.Agent.CimProvera
                         var bmp = l.Cim.Sablon == "TABELA" ? PodlogaTabele(pr, out okviri)
                             : Podloga(pr, l.Cim.StranaLista > 0 ? l.Cim.StranaLista : l.Dokument.Strane.FirstOrDefault());
                         if (bmp == null) continue;
-                        var (isp, nap, bez) = Ucrtaj(ref bmp, l, redovi, en, r, okviri, rez.Upisi);
+                        var (isp, nap, bez) = Ucrtaj(bmp, l, redovi, en, r, okviri, rez.Upisi, out var naMargini);
                         rez.PoListu.Add((l.Oznaka, isp, nap, bez));
-                        strane.Add(Oznaci(bmp, en));
+                        strane.Add(Oznaci(bmp, en, naMargini));
                     }
                     if (strane.Count == 0) { rez.Razlog = "bez_podloge"; return rez; }
                     // spisak kola (CIT 23) samo kada na njemu ima nalaza (X19, X21, X29)
@@ -144,7 +144,7 @@ namespace Saobracaj.Agent.CimProvera
                                 var bmp = Podloga(pr, br);
                                 if (bmp == null) continue;
                                 UcrtajSpisak(bmp, naSpisku, en);
-                                strane.Add(Oznaci(bmp, en));
+                                strane.Add(Oznaci(bmp, en, null));
                             }
                         }
                     foreach (var s in strane) rez.Strane.Add(Png(s));
@@ -396,8 +396,8 @@ namespace Saobracaj.Agent.CimProvera
         /// i ispravka se upisuje pored. Napomene: narandžast okvir i broj, tekst samo kada je predlog siguran. Što ne stane ni sa 6 pt
         /// ide na marginu strane (strana se proširi udesno), pored rubrike, sa istim brojem. Vraća broj ispravki, napomena i nalaza bez rubrike.
         /// </summary>
-        private static (int ispravki, int napomena, int bezRubrike) Ucrtaj(ref Bitmap bmp, RezultatLista l, List<Stavka> redovi, bool en, RezultatProvere r,
-            Dictionary<string, double[]> okviri, List<Upis> upisi)
+        private static (int ispravki, int napomena, int bezRubrike) Ucrtaj(Bitmap bmp, RezultatLista l, List<Stavka> redovi, bool en, RezultatProvere r,
+            Dictionary<string, double[]> okviri, List<Upis> upisi, out List<(Stavka s, string rubrika, string tekst)> naMargini)
         {
             int isp = 0, nap = 0, bez = 0;
             var tinta = new Tinta(bmp);
@@ -405,7 +405,7 @@ namespace Saobracaj.Agent.CimProvera
             var zauzeto = new List<RectangleF>();
             // pomak tekstualnog sloja prema iscrtanoj strani (samo PDF/sken; tabela se crta iz ćelija)
             var pomak = l.Cim.Sablon == "TABELA" || l.Cim.ReciRubrika == null ? (0, 0) : tinta.Pomak(l.Cim.ReciRubrika.Values.SelectMany(x => x));
-            var margina = new List<(RectangleF okvir, Stavka s, string tekst)>();
+            var margina = new List<(Stavka s, string rubrika, string tekst)>();
             var tabela = l.Cim.Sablon == "TABELA";
             // nalazi ovog lista, po rubrici (više nalaza iste rubrike – jedan okvir, brojevi jedan pored drugog)
             var zaList = redovi.Where(x => r.Listovi.Count <= 1 || x.Red.Listovi.Count == 0 || x.Red.Listovi.Contains(l.Oznaka)).ToList();
@@ -422,11 +422,17 @@ namespace Saobracaj.Agent.CimProvera
                         continue;
                     }
                     var o = okv.Value;
+                    // v2.8.2: štampani natpisi obrasca na vrhu rubrike – dopuna nikad ne ide u taj red
+                    var dnoNatpisa = DnoNatpisa(tinta, o);
                     var stavke = grupa.OrderBy(x => x.Greska ? 0 : 1).ThenBy(x => x.Broj).ToList();
                     var imaGresku = stavke.Any(x => x.Greska);
                     using (var pen = new Pen(imaGresku ? Crvena : Narandzasta, imaGresku ? Px(0.8f) : Px(1f))) g.DrawRectangle(pen, o.X, o.Y, o.Width, o.Height);
                     // krugovi sa brojevima: gornji desni ugao, ne preko teksta
-                    var krugovi = Krugovi(tinta, o, stavke.Count, zauzeto);
+                    // okviri drugih rubrika unutar ove (npr. r14 u gornjem desnom uglu r13, r2/r3 uz r1) – krug ne sme u njih
+                    var drugi = okviri.Where(kv => kv.Key != grupa.Key && !Regex.IsMatch(kv.Key, "^" + Regex.Escape(grupa.Key) + @"(?![\dab])"))
+                        .Select(kv => new RectangleF((float)(kv.Value[0] * bmp.Width), (float)(kv.Value[1] * bmp.Height), (float)((kv.Value[2] - kv.Value[0]) * bmp.Width), (float)((kv.Value[3] - kv.Value[1]) * bmp.Height)))
+                        .Where(rr => rr.IntersectsWith(o) && !(rr.Contains(o))).Select(rr => RectangleF.Inflate(rr, -Px(1), -Px(1))).ToList();
+                    var krugovi = Krugovi(tinta, o, stavke.Count, zauzeto, drugi);
                     for (int i = 0; i < stavke.Count; i++) { Znacka(g, krugovi[i].X, krugovi[i].Y, stavke[i].Broj, stavke[i].Greska ? Crvena : Narandzasta); zauzeto.Add(krugovi[i]); }
 
                     for (int i = 0; i < stavke.Count; i++)
@@ -452,7 +458,42 @@ namespace Saobracaj.Agent.CimProvera
                         // redovi upisanog teksta (piksel): reči istog reda spojene
                         var redoviTeksta = reciRub.GroupBy(w => Math.Round(w.Cy * 200)).Select(gr => RectangleF.FromLTRB((float)(gr.Min(w => w.X0) * sirinaStrane + pomak.Item1), (float)(gr.Min(w => w.Y0) * visinaStrane + pomak.Item2),
                             (float)(gr.Max(w => w.X1) * sirinaStrane + pomak.Item1), (float)(gr.Max(w => w.Y1) * visinaStrane + pomak.Item2))).Where(rr => rr.Right <= o.Right && rr.Left >= o.Left - 2).ToList();
-                        var (mesto, pt, ostatak, gde) = Smesti(g, tinta, o, tekst, zauzeto, precrtano, dnoTeksta, redoviTeksta);
+                        // r25 (v2.8.2): mase uz oznake koje obrazac ima („T= …“, „Netto:“) – svaka u svoj red
+                        if (n.DopunaRedovi != null && n.DopunaUzOznake)
+                        {
+                            var ne = UpisiUzOznake(g, tinta, o, dnoNatpisa, n.DopunaRedovi, boja, zauzeto, upis);
+                            upis.Mesto = ne.Count == 0 ? "uz oznake mase" : "delom na donjoj margini";
+                            if (ne.Count > 0) margina.Add((s, grupa.Key, string.Join(", ", ne)));
+                            continue;
+                        }
+                        // r62 (v2.8.2): svaki deo u svoje polje obrasca (kućice 62.1–62.4); ostatak – u prazan prostor rubrike
+                        if (n.DopunaPoPoljima != null && n.DopunaPoPoljima.Count > 0 && !tabela && l.Cim.KuciceOkviri != null)
+                        {
+                            var ostalo = new List<string>();
+                            foreach (var kv in n.DopunaPoPoljima.OrderBy(x => x.Key, StringComparer.Ordinal))
+                            {
+                                if (!l.Cim.KuciceOkviri.TryGetValue(kv.Key, out var kc)) { ostalo.Add(kv.Value); continue; }
+                                var polje = RectangleF.FromLTRB((float)(kc[0] * bmp.Width), (float)(kc[1] * bmp.Height), (float)(kc[2] * bmp.Width), (float)(kc[3] * bmp.Height));
+                                var ok = false;
+                                for (var ptp = NajveciPt; ptp >= NajmanjiPt && !ok; ptp -= 0.5f)
+                                    using (var f = new Font("Arial", Px(ptp), FontStyle.Regular, GraphicsUnit.Pixel))
+                                    {
+                                        var v = g.MeasureString(kv.Value, f);
+                                        if (v.Width > polje.Width - Px(1) && ptp > NajmanjiPt) continue;
+                                        var kk = new RectangleF(polje.X + Px(1), polje.Y + polje.Height / 2 - v.Height / 2, v.Width, v.Height);
+                                        using (var b = new SolidBrush(boja)) g.DrawString(kv.Value, f, b, kk.Location);
+                                        zauzeto.Add(kk);
+                                        upis.Tekst = upis.Tekst.Width > 0 ? RectangleF.Union(upis.Tekst, kk) : kk;
+                                        upis.Pt = ptp; ok = true;
+                                    }
+                                if (!ok) ostalo.Add(kv.Value);
+                            }
+                            upis.Mesto = "u poljima rubrike";
+                            if (ostalo.Count == 0) continue;
+                            tekst = string.Join(" ", ostalo);
+                        }
+                        if (n.DopunaRedovi != null) tekst = string.Join("\n", n.DopunaRedovi);
+                        var (mesto, pt, ostatak, gde) = Smesti(g, tinta, o, tekst, zauzeto, precrtano, dnoTeksta, redoviTeksta, dnoNatpisa);
                         if (mesto != null)
                         {
                             var deo = ostatak == null ? tekst : tekst.Substring(0, tekst.Length - ostatak.Length).TrimEnd(' ', ',');
@@ -464,13 +505,13 @@ namespace Saobracaj.Agent.CimProvera
                         }
                         if (mesto == null || ostatak != null)
                         {
-                            margina.Add((o, s, mesto == null ? tekst : ostatak));
-                            upis.Mesto = mesto == null ? "na margini" : "delom na margini";
+                            margina.Add((s, grupa.Key, (mesto == null ? tekst : ostatak).Replace("\n", ", ")));
+                            upis.Mesto = mesto == null ? "na donjoj margini" : "delom na donjoj margini";
                         }
                     }
                 }
             }
-            if (margina.Count > 0) bmp = SaMarginom(bmp, margina);
+            naMargini = margina;
             return (isp, nap, bez);
         }
 
@@ -480,29 +521,25 @@ namespace Saobracaj.Agent.CimProvera
             ?? l.Nalazi.FirstOrDefault(x => x.Pravilo == n.Pravilo && x.Rubrika == n.Rubrika) ?? n;
 
         /// <summary>
-        /// Krugovi sa brojevima u gornjem desnom uglu rubrike (s desna na levo), nikad preko teksta. Redom: u uglu i ulevo duž
-        /// gornje ivice (unutra); na gornjoj ivici (bez teksta iznad i ispod linije); desno van rubrike; donji desni ugao; iznad rubrike.
+        /// Krugovi sa brojevima u gornjem desnom uglu rubrike (s desna na levo), unutar rubrike, van okvira drugih rubrika;
+        /// po mogućstvu bez teksta ispod kruga.
         /// </summary>
-        private static List<RectangleF> Krugovi(Tinta t, RectangleF o, int broj, List<RectangleF> zauzeto)
+        private static List<RectangleF> Krugovi(Tinta t, RectangleF o, int broj, List<RectangleF> zauzeto, List<RectangleF> drugi)
         {
-            var d = Px(9); var razmak = Px(1.5f); const double prag = 0.006;
+            // v2.8.2: krug je UVEK unutar svoje rubrike (gornji desni ugao), nikad u susednoj rubrici ni u okviru druge rubrike unutar nje
+            var d = Px(9); var razmak = Px(1.5f);
             List<RectangleF> Red(float xDesno, float y) => Enumerable.Range(0, broj).Select(i => new RectangleF(xDesno - d - i * (d + razmak), y, d, d)).ToList();
-            bool Cist(RectangleF k) => k.X >= 0 && k.Y >= 0 && k.Right <= t.W && k.Bottom <= t.H && t.Udeo(RectangleF.Inflate(k, Px(0.8f), Px(0.8f))) <= prag && !zauzeto.Any(z => z.IntersectsWith(k));
-            // na liniji: proverava se samo iznad i ispod linije (sama linija rubrike je dozvoljena)
-            bool CistNaIvici(RectangleF k) => t.Udeo(new RectangleF(k.X - Px(0.8f), k.Y - Px(0.8f), k.Width + Px(1.6f), d / 2 - Px(1.2f))) <= prag
-                                              && t.Udeo(new RectangleF(k.X - Px(0.8f), k.Y + d / 2 + Px(1.2f), k.Width + Px(1.6f), d / 2 - Px(0.4f))) <= prag
-                                              && !zauzeto.Any(z => z.IntersectsWith(k));
-            var kandidati = new List<(List<RectangleF> red, bool ivica)>();
-            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2)
-                if (o.Height > d * 1.8f) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y + Px(1.5f)), false));
-            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y - d / 2), true));
-            kandidati.Add((Enumerable.Range(0, broj).Select(i => new RectangleF(o.Right + Px(1) + i * (d + razmak), o.Y + Px(1), d, d)).ToList(), false));
-            if (o.Height > d * 1.8f)
-                for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Bottom - Px(1.5f) - d), false));
-            for (float pomak = 0; pomak <= o.Width * 0.6f; pomak += d / 2) kandidati.Add((Red(o.Right - Px(1.5f) - pomak, o.Y - d - Px(1)), false));
-            foreach (var (red, ivica) in kandidati)
-                if (red.All(k => k.X > o.X - d && (ivica ? CistNaIvici(k) : Cist(k)))) return red;
-            return Red(o.Right - Px(1.5f), o.Y + Px(1.5f));
+            bool UnutraOk(RectangleF k) => k.X >= o.X + Px(1) && k.Right <= o.Right - Px(0.5f) && k.Y >= o.Y && k.Bottom <= o.Bottom
+                                           && !drugi.Any(r => r.IntersectsWith(k)) && !zauzeto.Any(z => z.IntersectsWith(k));
+            var y0 = o.Y + Px(1.5f);
+            // 1. gornji red, s desna ulevo, bez mastila; 2. isto, dozvoljene tanke linije (do 5 % mastila); 3. bez obzira na mastilo
+            foreach (var prag in new[] { 0.006, 0.05, 1.0 })
+                for (float pomak = 0; pomak <= o.Width; pomak += d / 3)
+                {
+                    var red = Red(o.Right - Px(1.5f) - pomak, y0);
+                    if (red.All(k => UnutraOk(k) && t.Udeo(RectangleF.Inflate(k, Px(0.5f), Px(0.5f))) <= prag)) return red;
+                }
+            return Red(o.Right - Px(1.5f), y0);
         }
         /// <summary>Precrtava pogrešan deo upisa (reči rubrike čiji tekst odgovara) tankom linijom; vraća okvir precrtanog ili null.</summary>
         private static RectangleF? Precrtaj(Graphics g, CimList c, string rubrika, string pogresno, int w, int h, Color boja, (int dx, int dy) pomak)
@@ -539,10 +576,10 @@ namespace Saobracaj.Agent.CimProvera
         /// prvi slobodan red ispod postojećeg teksta (sleva); bilo gde u praznom prostoru rubrike (prvo ispod, pa desno od teksta).
         /// Font 9 → 6 pt. Ako ni sa 6 pt ne staje ceo tekst – koliko staje, ostatak se vraća za marginu.
         /// </summary>
-        private static (RectangleF? mesto, float pt, string ostatak, string gde) Smesti(Graphics g, Tinta t, RectangleF o, string tekst, List<RectangleF> zauzeto, RectangleF? precrtano, float dnoTeksta, List<RectangleF> redoviTeksta)
+        private static (RectangleF? mesto, float pt, string ostatak, string gde) Smesti(Graphics g, Tinta t, RectangleF o, string tekst, List<RectangleF> zauzeto, RectangleF? precrtano, float dnoTeksta, List<RectangleF> redoviTeksta, float dnoNatpisa)
         {
             float ivica = Px(1.8f);
-            int x0 = (int)(o.X + ivica), x1 = (int)(o.Right - ivica), y0 = (int)(o.Y + ivica), y1 = (int)(o.Bottom - ivica);
+            int x0 = (int)(o.X + ivica), x1 = (int)(o.Right - ivica), y0 = (int)Math.Max(o.Y + ivica, dnoNatpisa + Px(1)), y1 = (int)(o.Bottom - ivica);
             if (x1 - x0 < Px(12) || y1 - y0 < Px(5)) return (null, 0, tekst, "");
             int sir = x1 - x0;
             // dno postojećeg teksta: upisane reči rubrike; inače poslednji red sa mastilom (natpisi obrasca se ne računaju kao tekst)
@@ -609,38 +646,82 @@ namespace Saobracaj.Agent.CimProvera
             }
             return (null, 0, tekst, "");
         }
-        /// <summary>Strana proširena udesno: dopune koje ne staju u rubriku, u visini rubrike, sa istim brojem u krugu.</summary>
-        private static Bitmap SaMarginom(Bitmap original, List<(RectangleF okvir, Stavka s, string tekst)> stavke)
+        /// <summary>
+        /// v2.8.2: dno štampanih natpisa na vrhu rubrike („4 Consignee (name, address, country) / Destinataire …“): prvi pojas
+        /// mastila koji počinje odmah ispod gornje ivice i sledeći pojasevi sa malim razmakom. Dopuna se ne upisuje iznad tog dna.
+        /// </summary>
+        private static float DnoNatpisa(Tinta t, RectangleF o)
         {
-            int sirina = (int)(original.Width * 0.3);
-            var bmp = new Bitmap(original.Width + sirina, original.Height, PixelFormat.Format24bppRgb);
-            bmp.SetResolution(Dpi, Dpi);
-            using (var g = Graphics.FromImage(bmp))
-            using (var f = new Font("Arial", Px(8f), FontStyle.Regular, GraphicsUnit.Pixel))
+            int x0 = (int)(o.X + Px(1.8f)), x1 = (int)(o.Right - Px(1.8f)), y0 = (int)(o.Y + Px(1.5f)), y1 = (int)(o.Bottom - Px(1.5f));
+            if (x1 - x0 < 10 || y1 - y0 < 10) return o.Y;
+            int prag = Math.Max(1, (int)((x1 - x0) * 0.01));
+            bool Ima(int y) => t.Red(y, x0, x1) > prag;
+            int y = y0;
+            while (y < y1 && !Ima(y)) y++;
+            if (y >= y1 || y - y0 > Px(14)) return o.Y;          // nema natpisa na vrhu
+            int dno = y;
+            while (true)
             {
-                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                g.Clear(Color.White);
-                g.DrawImage(original, 0, 0, original.Width, original.Height);
-                using (var pen = new Pen(Color.FromArgb(200, 200, 200), 1f) { DashStyle = DashStyle.Dash }) g.DrawLine(pen, original.Width + Px(2), 0, original.Width + Px(2), bmp.Height);
-                float y = 0;
-                foreach (var (okvir, s, tekst) in stavke.OrderBy(x => x.okvir.Y))
-                {
-                    var boja = s.Greska ? Crvena : Narandzasta;
-                    y = Math.Max(y, okvir.Y);
-                    float x = original.Width + Px(6);
-                    Znacka(g, x, y, s.Broj, boja);
-                    var sir = sirina - Px(20);
-                    var v = g.MeasureString(tekst, f, (int)sir);
-                    using (var b = new SolidBrush(boja)) g.DrawString(tekst, f, b, new RectangleF(x + Px(11), y, sir, v.Height + 2));
-                    // tanka linija od rubrike do napomene na margini
-                    using (var pen = new Pen(Color.FromArgb(120, boja), 1f) { DashStyle = DashStyle.Dot }) g.DrawLine(pen, okvir.Right, okvir.Y + Px(4), x, y + Px(4));
-                    y += Math.Max(v.Height, Px(10)) + Px(4);
-                }
+                while (dno < y1 && Ima(dno)) dno++;               // kraj pojasa
+                if (dno - y > Px(10)) return o.Y;                 // previsok pojas – nije natpis (upisan tekst ili crtež)
+                int sledeci = dno;
+                while (sledeci < y1 && !Ima(sledeci)) sledeci++;
+                if (sledeci >= y1 || sledeci - dno > Px(3) || sledeci - y0 > Px(22)) return dno;
+                y = sledeci; dno = sledeci;
             }
-            original.Dispose();
-            return bmp;
         }
 
+        /// <summary>
+        /// r25: svaka vrednost mase desno od svog reda oznake („T= ……“, „Netto:“) – redovi su pojasevi mastila ispod natpisa rubrike.
+        /// Vraća vrednosti koje nisu stale (idu na donju marginu).
+        /// </summary>
+        private static List<string> UpisiUzOznake(Graphics g, Tinta t, RectangleF o, float dnoNatpisa, List<string> vrednosti, Color boja, List<RectangleF> zauzeto, Upis upis)
+        {
+            int x0 = (int)(o.X + Px(1.8f)), x1 = (int)(o.Right - Px(1.8f)), y0 = (int)Math.Max(o.Y + Px(1.8f), dnoNatpisa + Px(1)), y1 = (int)(o.Bottom - Px(1.8f));
+            int prag = Math.Max(1, (int)((x1 - x0) * 0.01));
+            var pojasevi = new List<(int od, int @do)>();
+            for (int y = y0; y < y1; y++)
+            {
+                if (t.Red(y, x0, x1) <= prag) continue;
+                int p = y; while (y < y1 && t.Red(y, x0, x1) > prag) y++;
+                if (y - p >= Px(3)) pojasevi.Add((p, y));
+            }
+            var ne = new List<string>();
+            // red koji je svetliji od praga (npr. „G= ………“ bledo odštampan): po istom razmaku kao prethodni redovi
+            while (pojasevi.Count >= 2 && pojasevi.Count < vrednosti.Count)
+            {
+                var korak = pojasevi[pojasevi.Count - 1].od - pojasevi[pojasevi.Count - 2].od;
+                var sledeci = (pojasevi[pojasevi.Count - 1].od + korak, pojasevi[pojasevi.Count - 1].@do + korak);
+                if (korak <= 0 || sledeci.Item2 > y1) break;
+                pojasevi.Add(sledeci);
+            }
+            for (int i = 0; i < vrednosti.Count; i++)
+            {
+                if (i >= pojasevi.Count) { ne.Add(vrednosti[i]); continue; }
+                var (od, @do) = pojasevi[i];
+                int desno = x0;
+                // kraj teksta u redu; uspravne linije (pregrade kućica, ivica) koje idu iznad i ispod reda se preskaču
+                for (int x = x1 - 1; x >= x0; x--)
+                    if (t.Kolona(x, od, @do) > 0 && t.Kolona(x, od - (int)Px(4), @do + (int)Px(4)) < (@do - od) + Px(6)) { desno = x + 1; break; }
+                RectangleF? mesto = null; float pt = NajveciPt;
+                for (; pt >= NajmanjiPt && mesto == null; pt -= 0.5f)
+                    using (var f = new Font("Arial", Px(pt), FontStyle.Regular, GraphicsUnit.Pixel))
+                    {
+                        var v = g.MeasureString(vrednosti[i], f);
+                        var k = new RectangleF(desno + Px(2), (od + @do) / 2f - v.Height / 2, v.Width, v.Height);
+                        if (k.Right <= x1 && !zauzeto.Any(z => z.IntersectsWith(k)) && t.Pokrivenost((int)k.X, (int)k.Y, (int)k.Right, (int)k.Bottom) <= 0.01)
+                        {
+                            g.DrawString(vrednosti[i], f, new SolidBrush(boja), k.Location);
+                            mesto = k;
+                        }
+                    }
+                if (mesto == null) { ne.Add(vrednosti[i]); continue; }
+                zauzeto.Add(mesto.Value);
+                upis.Tekst = upis.Tekst.Width > 0 ? RectangleF.Union(upis.Tekst, mesto.Value) : mesto.Value;
+                upis.Pt = pt + 0.5f;
+            }
+            return ne;
+        }
         private static void Znacka(Graphics g, float x, float y, int rb, Color boja)
         {
             var d = Px(9);
@@ -667,29 +748,57 @@ namespace Saobracaj.Agent.CimProvera
             }
         }
 
-        /// <summary>Traka u vrhu (dodata iznad originala, ništa ne prekriva) i dijagonalni vodeni žig preko cele strane.</summary>
-        private static Bitmap Oznaci(Bitmap original, bool en)
+        /// <summary>
+        /// v2.8.2: strana ostaje A4 (150 dpi): traka u vrhu, list umanjen tako da stane, ispod njega donja margina sa dopunama
+        /// koje nisu stale u rubriku (broj u krugu + rubrika + tekst) i dijagonalni vodeni žig preko cele strane.
+        /// </summary>
+        private static Bitmap Oznaci(Bitmap original, bool en, List<(Stavka s, string rubrika, string tekst)> naMargini)
         {
+            var polozeno = original.Width > original.Height * 1.1;
+            int W = polozeno ? 1754 : 1240, H = polozeno ? 1240 : 1754;
             var traka = (int)Px(22);
-            var bmp = new Bitmap(original.Width, original.Height + traka, PixelFormat.Format24bppRgb);
+            var bmp = new Bitmap(W, H, PixelFormat.Format24bppRgb);
             bmp.SetResolution(Dpi, Dpi);
             using (var g = Graphics.FromImage(bmp))
+            using (var fm = new Font("Arial", Px(8f), FontStyle.Regular, GraphicsUnit.Pixel))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.Clear(Color.White);
-                g.DrawImage(original, 0, traka, original.Width, original.Height);
-                using (var b = new SolidBrush(Color.FromArgb(255, 240, 240, 240))) g.FillRectangle(b, 0, 0, bmp.Width, traka);
-                using (var pen = new Pen(Color.FromArgb(160, 160, 160), 1f)) g.DrawLine(pen, 0, traka - 1, bmp.Width, traka - 1);
+                // visina donje margine: sve napomene, svaka u svom redu
+                var sirTeksta = W - Px(36);
+                var redovi = (naMargini ?? new List<(Stavka, string, string)>())
+                    .Select(x => (x.s, tekst: (Regex.IsMatch(x.rubrika ?? "", @"^\d") ? (en ? "Box " : "Rubrika ") + x.rubrika + ": " : "") + x.tekst)).ToList();
+                float margina = redovi.Count == 0 ? 0 : redovi.Sum(x => Math.Max(g.MeasureString(x.tekst, fm, (int)sirTeksta).Height, Px(10)) + Px(3)) + Px(10);
+                // list: umanjen da stane između trake i donje margine, centriran
+                float prostorH = H - traka - margina, k = Math.Min(1f, Math.Min(W / (float)original.Width, prostorH / original.Height));
+                float w = original.Width * k, h = original.Height * k, x0 = (W - w) / 2;
+                g.DrawImage(original, x0, traka, w, h);
+                using (var b = new SolidBrush(Color.FromArgb(255, 240, 240, 240))) g.FillRectangle(b, 0, 0, W, traka);
+                using (var pen = new Pen(Color.FromArgb(160, 160, 160), 1f)) g.DrawLine(pen, 0, traka - 1, W, traka - 1);
                 using (var f = new Font("Arial", Px(8.5f), FontStyle.Bold, GraphicsUnit.Pixel))
                 using (var b = new SolidBrush(Color.FromArgb(70, 70, 70)))
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                    g.DrawString(en ? TrakaEn : Traka, f, b, new RectangleF(Px(6), 0, bmp.Width - Px(12), traka), sf);
-                Zig(g, bmp.Width, bmp.Height, traka, en);
+                    g.DrawString(en ? TrakaEn : Traka, f, b, new RectangleF(Px(6), 0, W - Px(12), traka), sf);
+                if (redovi.Count > 0)
+                {
+                    float y = traka + h + Px(5);
+                    using (var pen = new Pen(Color.FromArgb(190, 190, 190), 1f) { DashStyle = DashStyle.Dash }) g.DrawLine(pen, Px(10), y, W - Px(10), y);
+                    y += Px(4);
+                    foreach (var (s, tekst) in redovi)
+                    {
+                        var boja = s.Greska ? Crvena : Narandzasta;
+                        Znacka(g, Px(12), y, s.Broj, boja);
+                        var v = g.MeasureString(tekst, fm, (int)sirTeksta);
+                        using (var b = new SolidBrush(boja)) g.DrawString(tekst, fm, b, new RectangleF(Px(24), y, sirTeksta, v.Height + 2));
+                        y += Math.Max(v.Height, Px(10)) + Px(3);
+                    }
+                }
+                Zig(g, W, H, traka, en);
             }
             original.Dispose();
             return bmp;
         }
-
         private static void Zig(Graphics g, int w, int h, int odVrha, bool en)
         {
             var tekst = en ? "SAMPLE – NOT A VALID CONSIGNMENT NOTE" : TekstZiga;

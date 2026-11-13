@@ -25,6 +25,7 @@ namespace Saobracaj.Agent.CimProvera
         public string R1 { get; set; } = "";
         public string R4 { get; set; } = "";
         public string R7 { get; set; } = "";
+        public string R8 { get; set; } = "";
         public string R10 { get; set; } = "";
         public string R12 { get; set; } = "";
         public string R16 { get; set; } = "";
@@ -84,7 +85,7 @@ namespace Saobracaj.Agent.CimProvera
             {
                 Datum = datum, Mail = mail ?? "", Fajl = l.Dokument?.Fajl ?? "", Tip = l.Dokument?.Tip ?? "",
                 Zemlja = c.R62.Zemlja ?? "", Stanica = c.R62.Stanica ?? "", Preduzece = c.R62.Preduzece ?? "", Broj = c.R62.Broj ?? "",
-                R1 = Jedan(c.R1.Tekst), R4 = Jedan(c.R4.Tekst), R10 = Jedan(c.R10.Tekst), R12 = Jedan(c.R12.Tekst), R16 = Jedan(c.R16.Tekst),
+                R1 = Jedan(c.R1.Tekst), R4 = Jedan(c.R4.Tekst), R8 = Jedan(c.R8.Tekst), R10 = Jedan(c.R10.Tekst), R12 = Jedan(c.R12.Tekst), R16 = Jedan(c.R16.Tekst),
                 // šifra 7.1 (codelists.r7) = „Primalac nema pravo raspolaganja“
                 R7 = Jedan(c.R7.Tekst) + (c.R7.Stavke.Any(s => Regex.Replace(s.Sifra ?? "", @"\D", "") == "1") ? " [7.1 Primalac nema pravo raspolaganja]" : ""),
                 Kola = kola.Distinct().ToList(),
@@ -117,7 +118,6 @@ namespace Saobracaj.Agent.CimProvera
     /// </summary>
     internal static class Cit7Provera
     {
-        private const int PragVeze = 35;
 
         public static List<Cit7Rezultat> Proveri(RezultatProvere r, List<ZapisLista> ranije, DateTime datum, string mail)
         {
@@ -135,6 +135,9 @@ namespace Saobracaj.Agent.CimProvera
                 if (veza == null) (veza, osnov, _) = Najbolji(z, raniji);
                 c.Veza = veza; c.Osnov = osnov ?? new List<string>();
                 if (veza != null) c.Razlike = Razlike(z, veza);
+                else if (uMailu.Count > 0)
+                    c.Napomene.Add("U mailu su tovarni listovi " + string.Join(", ", uMailu.Select(x => Path.GetFileName(x.Fajl) + (x.Identifikacija.Length > 0 ? " (r62 " + x.Identifikacija + ")" : " (r62 prazna)")))
+                        + ", ali nijedan nema istu identifikaciju, ista kola ni referencu kao CIT 7 – uputna, mesto isporuke i primalac nisu dokaz veze (CIT 7 ih menja).");
 
                 foreach (var iz in z.Izmene)
                     c.Izmene.Add((iz.Rubrika, StaraVrednost(iz.Rubrika, z, veza), iz.Vrednost));
@@ -155,7 +158,7 @@ namespace Saobracaj.Agent.CimProvera
                     : z.Podnosilac.Length > 0 ? "nije utvrđeno – potpisao „" + z.Podnosilac + "“" + (Slicno(z.Podnosilac, veza?.R7) ? ", naveden u r7 lista (platilac/zastupnik)" : "") + "; nije ni pošiljalac ni primalac iz lista" : "nije utvrđeno (potpis nije pročitan)";
                 if (!jePrimalac)
                 {
-                    if (veza == null) c.Napomene.Add("Tovarni list nije pronađen – ne može da se proveri da li u r7 piše „Primalac nema pravo raspolaganja“.");
+                    if (veza == null) c.Napomene.Add("CIT 7 je nepovezan – ne može da se proveri da li u r7 tovarnog lista piše „Primalac nema pravo raspolaganja“.");
                     else if (!PrimalacNemaPravo(veza.R7))
                         c.Upozorenja.Add((jePosiljalac ? "Zahtev podnosi pošiljalac" : "Zahtev ne podnosi primalac (" + c.Podnosilac + ")")
                             + ", a u r7 tovarnog lista ne piše „Primalac nema pravo raspolaganja“ (Le destinataire n'a pas le droit de disposer / Empfänger nicht verfügungsberechtigt) – i primalac ima pravo raspolaganja; proveriti ovlašćenje podnosioca.");
@@ -188,36 +191,47 @@ namespace Saobracaj.Agent.CimProvera
 
         // ------------------------------------------------------------------------------------------- veza sa listom
 
+        /// <summary>
+        /// v2.8.2: veza CIT 7 – tovarni list samo po POUZDANIM podacima: identifikacija (r62) iz CIT 7, brojevi kola ili referenca
+        /// pošiljaoca (r8). Uputna stanica, mesto isporuke i primalac NISU dokaz veze – CIT 7 ih upravo menja. Identifikacija bez
+        /// broja otpravljanja važi samo kada je jedini kandidat sa tom zemljom, stanicom i preduzećem. Nema pouzdane veze → null (nepovezan).
+        /// </summary>
         private static (ZapisLista veza, List<string> osnov, int bod) Najbolji(Cit7Zahtev z, List<ZapisLista> kandidati)
         {
-            ZapisLista naj = null; List<string> najOsnov = null; var najBod = 0;
+            var pogodci = new List<(ZapisLista k, List<string> osnov, int bod)>();
             foreach (var k in kandidati)
             {
                 var osnov = new List<string>();
-                var b = Bodovi(z, k, osnov);
-                if (b > najBod || (b == najBod && naj != null && k.Datum > naj.Datum)) { naj = k; najOsnov = osnov; najBod = b; }
+                var b = Bodovi(z, k, osnov, kandidati);
+                if (b > 0) pogodci.Add((k, osnov, b));
             }
-            return najBod >= PragVeze ? (naj, najOsnov, najBod) : (null, null, 0);
+            if (pogodci.Count == 0) return (null, null, 0);
+            var naj = pogodci.OrderByDescending(x => x.bod).ThenByDescending(x => x.k.Datum).First();
+            return (naj.k, naj.osnov, naj.bod);
         }
 
         private static string Cif(string s) => Regex.Replace(s ?? "", @"\D", "");
 
-        private static int Bodovi(Cit7Zahtev z, ZapisLista k, List<string> osnov)
+        private static bool IstaIdBezBroja(Cit7Zahtev z, ZapisLista k) =>
+            Cif(z.Stanica).Length >= 5 && Cif(z.Stanica) == Cif(k.Stanica) && Cif(z.Zemlja).Length == 2 && Cif(z.Zemlja) == Cif(k.Zemlja)
+            && Cif(z.Preduzece).Length == 4 && Cif(z.Preduzece) == Cif(k.Preduzece);
+
+        private static int Bodovi(Cit7Zahtev z, ZapisLista k, List<string> osnov, List<ZapisLista> svi)
         {
             var b = 0;
-            if (Cif(z.Broj).Length >= 5 && Cif(z.Broj) == Cif(k.Broj) && Cif(z.Stanica).Length >= 5 && Cif(z.Stanica) == Cif(k.Stanica)) { b += 100; osnov.Add("identifikacija r62 " + z.Identifikacija); }
-            else if (Cif(z.Stanica).Length >= 5 && Cif(z.Stanica) == Cif(k.Stanica) && Cif(z.Zemlja) == Cif(k.Zemlja)) { b += 30; osnov.Add("otpravna stanica r62 " + z.Zemlja + " " + z.Stanica); }
+            if (Cif(z.Broj).Length >= 5 && Cif(z.Broj) == Cif(k.Broj) && Cif(z.Stanica).Length >= 5 && Cif(z.Stanica) == Cif(k.Stanica))
+            { b += 100; osnov.Add("identifikacija r62 " + z.Identifikacija); }
+            else if (Cif(z.Broj).Length == 0 && IstaIdBezBroja(z, k) && svi.Count(x => IstaIdBezBroja(z, x)) == 1)
+            { b += 60; osnov.Add("identifikacija bez broja otpravljanja " + z.Identifikacija + " (jedini list te stanice i preduzeća)"); }
             var zajednicka = z.BrojeviKola.Intersect(k.Kola).Count();
             if (zajednicka > 0) { b += 60; osnov.Add("brojevi kola (" + zajednicka + ")"); }
-            var st = Cif(z.StanicaIzdavanja);
-            if (st.Length >= 7 && Cif(k.R12).Length >= 7 && Cif(k.R12).Substring(0, 7) == st.Substring(0, 7)) { b += 25; osnov.Add("uputna stanica r12 " + z.StanicaIzdavanja); }
-            if (Slicno(z.MestoIzdavanja, k.R10)) { b += 20; osnov.Add("mesto isporuke r10"); }
-            if (Slicno(NazivStrane(z.Primalac), NazivStrane(k.R4))) { b += 15; osnov.Add("primalac r4"); }
-            if (Slicno(NazivStrane(z.Posiljalac), NazivStrane(k.R1))) { b += 10; osnov.Add("pošiljalac r1"); }
-            if (Slicno(z.Preuzimanje, k.R16)) { b += 10; osnov.Add("mesto preuzimanja r16"); }
+            // referenca pošiljaoca (r8) u tekstu CIT 7 – bez opštih reči („Train no:“, „Ref.“), sa bar jednom cifrom i slovom ili 6+ znakova
+            var r8 = Regex.Replace(Kljuc(k.R8), @"^(train no|train|zug nr|ref|reference|referenca|referenz|order|nalog)\s*", "").Trim();
+            if (r8.Length >= 4 && (Regex.IsMatch(r8, @"\d") && Regex.IsMatch(r8, "[a-z]") || r8.Length >= 6)
+                && (" " + Kljuc(z.Tekst) + " ").Contains(" " + r8 + " "))
+            { b += 50; osnov.Add("referenca r8 „" + k.R8 + "“"); }
             return b;
         }
-
         private static List<string> Razlike(Cit7Zahtev z, ZapisLista k)
         {
             var r = new List<string>();
@@ -345,7 +359,7 @@ namespace Saobracaj.Agent.CimProvera
                               + (z.Broj.Length == 0 && z.Identifikacija.Length > 0 ? " (broj otpravljanja nije upisan)" : "")
                               + (z.Sifre.Count > 0 ? "; šifra zahteva " + string.Join(", ", z.Sifre) : ""));
                 sb.AppendLine("Podnosilac: " + c.Podnosilac + (z.Datum.Length > 0 ? ", " + z.Datum : ""));
-                sb.AppendLine("Tovarni list: " + (c.Veza != null ? c.Veza.Opis + " – veza po: " + string.Join(", ", c.Osnov) : "NIJE PRONAĐEN (ni u ovom mailu ni među ranije obrađenim listovima) – proveriti ručno"));
+                sb.AppendLine("Tovarni list: " + (c.Veza != null ? c.Veza.Opis + " – veza po: " + string.Join(", ", c.Osnov) : "NEPOVEZAN – nema pouzdane veze (identifikacija r62 iz CIT 7, brojevi kola, referenca) ni u ovom mailu ni među ranije obrađenim listovima; proveriti ručno"));
                 foreach (var x in c.Razlike) sb.AppendLine("  razlika – " + x);
                 if (c.Razlike.Count > 0) sb.AppendLine("  → proveriti da li se CIT 7 odnosi na ovaj list.");
                 if (c.Izmene.Count > 0)
@@ -375,7 +389,7 @@ namespace Saobracaj.Agent.CimProvera
                 var z = c.Z;
                 sb.Append("<p><b>" + E(Path.GetFileName(c.Fajl)) + "</b><br>Zahtev za " + E((z.Cuv ? "kolski list CUV" : "tovarni list CIM") + (z.Identifikacija.Length > 0 ? " " + z.Identifikacija : "")
                     + (z.Broj.Length == 0 && z.Identifikacija.Length > 0 ? " (broj otpravljanja nije upisan)" : "")) + "<br>Podnosilac: " + E(c.Podnosilac + (z.Datum.Length > 0 ? ", " + z.Datum : ""))
-                    + "<br>Tovarni list: " + (c.Veza != null ? E(c.Veza.Opis) + " – veza po: " + E(string.Join(", ", c.Osnov)) : "<b style=\"color:#b00020\">nije pronađen – proveriti ručno</b>") + "</p>");
+                    + "<br>Tovarni list: " + (c.Veza != null ? E(c.Veza.Opis) + " – veza po: " + E(string.Join(", ", c.Osnov)) : "<b style=\"color:#b00020\">NEPOVEZAN – nema pouzdane veze (identifikacija r62, brojevi kola, referenca); proveriti ručno</b>") + "</p>");
                 if (c.Razlike.Count > 0)
                     sb.Append("<p style=\"color:#8a5a00\">Razlike između CIT 7 i lista:<br>" + string.Join("<br>", c.Razlike.Select(x => "– " + E(x))) + "<br>→ proveriti da li se CIT 7 odnosi na ovaj list.</p>");
                 if (c.Izmene.Count > 0)
