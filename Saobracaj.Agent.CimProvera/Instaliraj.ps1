@@ -194,7 +194,17 @@ Ok 'sifrovana lozinka i StanjeFolder upisani u Saobracaj.Agent.CimProvera.exe.co
 # Servisni nalog je gore dobio novu lozinku, pa stari Syncfusion.dpapi vise ne moze da se desifruje: kljuc se unosi svaki put.
 Korak '3b. Syncfusion licencni kljuc (Word prilozi -> PDF)'
 $SfFajl = Join-Path $Folder 'Syncfusion.dpapi'
-$sf = Obican (Read-Host '    Syncfusion kljuc (Enter = bez kljuca; Word prilozi tada idu na rucnu proveru)' -AsSecureString)
+# Kljuc je dugacak: moze i iz fajla (samo administratori i servisni nalog ga vide); fajl se brise odmah posle citanja.
+$SfUlaz = Join-Path (Split-Path $Stanje) 'syncfusion_kljuc.txt'
+if (Test-Path $SfUlaz) {
+    $sf = ((Get-Content $SfUlaz -Raw) -replace '\s', '')
+    Remove-Item $SfUlaz -Force
+    if (Test-Path $SfUlaz) { Stop-Greska "Fajl $SfUlaz ne moze da se obrise - obrisite ga rucno." }
+    Ok "kljuc procitan iz $SfUlaz (fajl je obrisan)"
+} else {
+    Write-Host "    (kljuc moze i iz fajla $SfUlaz - skripta ga cita i brise)"
+    $sf = Obican (Read-Host '    Syncfusion kljuc (desni klik = nalepi; Enter = bez kljuca, Word prilozi tada idu na rucnu proveru)' -AsSecureString)
+}
 if ([string]::IsNullOrWhiteSpace($sf)) {
     Remove-Item $SfFajl -Force -ErrorAction SilentlyContinue
     Write-Host '    PAZNJA  kljuc nije unet: Word prilozi se ne pretvaraju u PDF (rucna provera).' -ForegroundColor Yellow
