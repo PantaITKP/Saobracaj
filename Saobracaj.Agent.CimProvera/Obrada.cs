@@ -58,6 +58,13 @@ namespace Saobracaj.Agent.CimProvera
             foreach (var f in fajlovi.GroupBy(x => x.Hes).Select(g => g.First()))
             {
                 var pre = dokumenti.Count;
+                // Logo, slika iz potpisa, ikona: ne čita se (nema OCR-a) i nije razlog za ručnu proveru
+                if (Raspakivanje.Ukras(f) is string ukras)
+                {
+                    log?.Info("  prilog " + f.Naziv + " – slika iz potpisa/logo, ne proverava se: " + ukras);
+                    ishod.OpisPriloga.Add(System.IO.Path.GetFileName(f.Naziv.Split('/').Last()) + " – slika iz potpisa/logo (ne proverava se)");
+                    continue;
+                }
                 try
                 {
                     if (f.Vrsta == VrstaPriloga.Excel || f.Vrsta == VrstaPriloga.Word)

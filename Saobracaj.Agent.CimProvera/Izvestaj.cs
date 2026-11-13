@@ -373,6 +373,7 @@ namespace Saobracaj.Agent.CimProvera
             ("dodatni list", "additional sheet"), ("izvozna deklaracija", "export declaration"), ("tranzitna deklaracija", "transit declaration"),
             ("carinski dokument", "customs document"), ("uverenje o poreklu", "certificate of origin"), ("sertifikat", "certificate"), ("faktura", "invoice"),
             ("dozvola za otpad", "waste permit"), ("poleđina lista", "back of the note"), ("ostalo (ne proverava se)", "other (not checked)"), ("nije prepoznat", "not recognised"),
+            ("slika iz potpisa/logo (ne proverava se)", "signature image/logo (not checked)"),
         };
 
         /// <summary>„Prilozi: CIM … .xlsx – tovarni list CIM (Excel); … .xls – spisak kola; VTK….pdf – izveštaj o sastavu voza (ne proverava se).“</summary>

@@ -1,5 +1,17 @@
 ﻿# CimProvera – izmene programa
 
+## 2026-11-13 – slike iz potpisa i logo se ne proveravaju
+
+- Slika-prilog se ne čita (nema OCR-a) i **ne vodi na ručnu proveru** kada je logo, slika iz potpisa ili ikona:
+  - manja od 15 KB;
+  - manja od 250 000 piksela (npr. 500×500);
+  - traka ili baner (odnos stranica ≥ 3, kraća strana < 500 px);
+  - ime logo/signature/potpis/ikona društvene mreže, uz manje od 1,5 Mpx.
+- Sken ili fotografija tovarnog lista (velika slika) čita se kao i do sada.
+- U logu piše „slika iz potpisa/logo, ne proverava se: <razlog>“, a u redu „Prilozi:“ „slika iz potpisa/logo (ne proverava se)“.
+- Mail koji ima samo takve slike ne daje internu „ručnu proveru“.
+- Testovi: `UkrasTests` (5).
+
 ## 2026-11-13 – tovarni list CIM/CUV kao Word dokument (CUV_exGK33)
 
 Pravila ostaju v2.7.1. Težine pravila nisu menjane. Na server se ne postavlja dok se ne potvrdi da Syncfusion licenca dozvoljava upotrebu na serveru.

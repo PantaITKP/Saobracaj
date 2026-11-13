@@ -137,6 +137,35 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             }
         }
 
+        private static readonly System.Text.RegularExpressions.Regex ImeUkrasa = new System.Text.RegularExpressions.Regex(
+            @"logo|signature|signatur|potpis|podpis|unterschrift|banner|baner|facebook|linkedin|twitter|instagram|youtube|whatsapp|viber|xing|icon|ikon|social|outlook",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Slika iz potpisa maila, logo firme ili ikona (ne tovarni list): razlog za log/izveštaj, ili null kada slika može da bude
+        /// dokument. Sken ili fotografija tovarnog lista je velika (≥ ~1000 px, desetine KB), pa ova pravila ne mogu da je preskoče:
+        /// manja od 15 KB; manje od 250 000 piksela (npr. 500×500); traka/baner (odnos stranica ≥ 3, kraća strana &lt; 500 px);
+        /// ime logo/potpis/ikona društvene mreže i manje od 1,5 Mpx.
+        /// </summary>
+        public static string Ukras(Prilog p)
+        {
+            if (p?.Vrsta != VrstaPriloga.Slika || p.Sadrzaj == null) return null;
+            if (p.Sadrzaj.Length < 15 * 1024) return "mala slika (" + p.Sadrzaj.Length / 1024 + " KB)";
+            int w, h;
+            try
+            {
+                using (var ms = new MemoryStream(p.Sadrzaj))
+                using (var img = System.Drawing.Image.FromStream(ms, false, false)) { w = img.Width; h = img.Height; }
+            }
+            catch { return null; }   // ne može da se otvori – čita se (i ide na ručnu proveru ako ne uspe)
+            var dim = w + "×" + h + " px";
+            if ((long)w * h < 250_000) return "mala slika (" + dim + ")";
+            if (Math.Max(w, h) >= 3.0 * Math.Min(w, h) && Math.Min(w, h) < 500) return "traka/baner (" + dim + ")";
+            var ime = Path.GetFileNameWithoutExtension((p.Naziv ?? "").Split('/', '\\').Last());
+            if (ImeUkrasa.IsMatch(ime) && (long)w * h < 1_500_000) return "logo/ikona po imenu (" + dim + ")";
+            return null;
+        }
+
         private static VrstaPriloga Prepoznaj(string ext, byte[] b, out string media)
         {
             media = null;
