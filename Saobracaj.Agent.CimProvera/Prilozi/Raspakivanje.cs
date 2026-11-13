@@ -19,6 +19,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         public string MediaType;      // za Claude: application/pdf, image/jpeg, …
         /// <summary>PDF nastao pretvaranjem Word priloga: natpisi obrasca su slika (OCR samo za sidra), vrednosti iz tekstualnog sloja.</summary>
         public bool IzWorda;
+        /// <summary>Već pročitane strane (test podaci „&lt;ime&gt;.strane.json“ iz keša agenta): čitač ih koristi umesto ponovnog čitanja.</summary>
+        public List<Citanje.Strana> Strane;
         public string Hes => hes ?? (hes = Sha256(Sadrzaj));
         private string hes;
 
@@ -44,6 +46,14 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             var rez = new List<Prilog>();
             if (sadrzaj == null || sadrzaj.Length == 0) return rez;
             var ext = (Path.GetExtension(naziv) ?? "").ToLowerInvariant();
+            // test podaci: pročitane strane iz keša agenta („CIM.pdf.strane.json“ = prilog „CIM.pdf“ čiji original nije dostupan)
+            if (naziv.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase))
+            {
+                string json; using (var sr = new StreamReader(new MemoryStream(sadrzaj), System.Text.Encoding.UTF8, true)) json = sr.ReadToEnd();
+                var strane = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Citanje.Strana>>(json);
+                rez.Add(new Prilog { Naziv = naziv.Substring(0, naziv.Length - ".strane.json".Length), Sadrzaj = sadrzaj, Vrsta = VrstaPriloga.Pdf, MediaType = "application/pdf", Strane = strane });
+                return rez;
+            }
             var vrsta = Prepoznaj(ext, sadrzaj, out var media);
 
             if (vrsta != VrstaPriloga.Ostalo)

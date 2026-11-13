@@ -125,7 +125,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         [DataTestMethod]
-        [DataRow("R49")] [DataRow("R50")] [DataRow("R58A")] [DataRow("R62")] [DataRow("KP2")]
+        // v2.8: R58A i R62 važe za svaki list (test 2026-11-13), KP2 kada je r62 = 3212 – od spoljnog se ne traže samo R49 i R50
+        [DataRow("R49")] [DataRow("R50")] [DataRow("KP2")]
         public void Prolaz_rubrike_prevoznika_se_ne_traze_od_spoljnog_posiljaoca(string id)
         {
             var s = new Scenario { Rezim = "spoljni" };
@@ -139,9 +140,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var s = new Scenario { Rezim = "auto" };
             s.C.R58a = new UgovorniPrevoznik();
-            Assert.IsTrue(Ima(Proveri(s), "R58A"), "r62 = 3212 → režim KP → r58a se proverava");
+            // v2.8: r62 = 3212 → r58a proverava KP2 (3212 ili KP); inače R58A – i za spoljnog pošiljaoca
+            Assert.IsTrue(Ima(Proveri(s), "KP2") && !Ima(Proveri(s), "R58A"), "r62 = 3212 → KP2");
             s.C.R62.Preduzece = "2154";
-            Assert.IsFalse(Ima(Proveri(s), "R58A"), "spoljni pošiljalac, r62 ≠ 3212 → r58a se ne proverava");
+            Assert.IsTrue(Ima(Proveri(s), "R58A") && !Ima(Proveri(s), "KP2"), "r62 ≠ 3212 → R58A (v2.8 važi i za spoljnog pošiljaoca)");
         }
 
         [TestMethod] public void Prolaz_R14_bilo_koji_broj() { foreach (var t in new[] { "1 264410", "KP 2026", "ŽRS 264410.02" }) { var s = new Scenario(); s.C.R14.Tekst = t; Assert.IsFalse(Ima(Proveri(s), "R14"), t); } }
@@ -221,7 +223,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R30"] = s => s.C.R30.Cim = false,
             ["R49"] = s => s.C.R49 = new TekstRubrika(),
             ["R50"] = s => s.C.R50 = new TekstRubrika(),
-            ["R58A"] = s => s.C.R58a = F(new UgovorniPrevoznik(), "- / -"),
+            ["R58A"] = s => { s.C.R58a = F(new UgovorniPrevoznik(), "- / -"); s.C.R62.Preduzece = "2154"; },   // r62 = 3212 → KP2
             ["R62"] = s => { s.C.R62.Zemlja = ""; s.C.R62.Stanica = ""; s.C.R62.Preduzece = ""; },
             ["R21-DESC"] = s => { s.C.R21.ZaostaliTekstSablona = true; s.C.R21.ZaostaliTekst = "XXXX naziv robe"; },
             ["R21-UTI"] = s => s.C.R21.Uti.Add(new Uti { Tip = "22G1" }),
@@ -266,11 +268,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["KP7-NEJASNO"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "IŽS: KP 3212" } } }, "16. IŽS: KP 3212"),
             ["KP7-INFO"] = s => { },
             ["KP5"] = s => s.C.R57.Prevoznici[0].Naziv = "VTG Railtrain",
-            ["KP6"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].KpNaveden = false; s.Ostali.Add(d); },
             ["REC1"] = s => s.C.R8 = new TekstRubrika(),
-            ["REC3"] = s => s.C.R13.Stavke[0].Tekst = "KP, Niš - Dimitrovgrad",
             ["REC4"] = s => s.C.R57.Prevoznici[0].Deonica = "Niš - Dimitrovgrad",
-            ["REC6"] = s => { var d = Spisak(Kola("317866560015")); d.Izvor = "ocr"; s.Ostali.Add(d); },
             ["REC7"] = s => s.C.KvalitetSkena = "los",
             ["REC8"] = s => s.C.R1.Telefon = "",
         };
@@ -362,6 +361,17 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataRow("16. Frachtzahler: Budamar", "Budamar")]
         [DataRow("16. Frachtzahler HU: Kombinovani prevoz d.o.o.; Frachtzahler SRB: Lokomotiva d.o.o.", "Lokomotiva d.o.o")]
         [DataRow("16. Payer for MK/GR is KP 3212, payer for SRB is MBOX", "MBOX")]
+        // test 2026-11-13 (v2.8): GK30, 55 16261, 1.CUV_257_1, 11132026Scan122207 (i OCR), CIM COAL 16, GIPS
+        [DataRow("Budamar (KP+H-KARP +Lokorail) ADVANCED TRANSPORT SOLUTIONS (ATS)\nPayer fo KP: Budamar South, s.r.o.", "Budamar South, s.r.o")]
+        [DataRow("7.16 Payer for HU: Budamar Logistics, a.s.; SRB: Budamar South, s.r.o.", "Budamar South, s.r.o")]
+        [DataRow("7.16 Payer for HU: Budamar Logistics, a.s., SRB: Budamar South, s.r.o.", "Budamar South, s.r.o")]
+        [DataRow("7.16 Frachtzahler auf CFI ist Borsari E&C srl. Frachtzahler auf SŽ-TP, HŽC und KP\nist EurologSystem doo Beograd. CIM 6: CFI/26, SŽ-TP/26, HŽ/26, KP/26.", "EurologSystem doo Beograd")]
+        [DataRow("7.16 Frachtzahler auf KP, HŽ Cargo und SŽ-TP ist EurologSystem d.o.o. Beograd", "EurologSystem d.o.o. Beograd")]
+        [DataRow("7 16 Frachjzahjler auf KP. HZ Cargo SZ-TP ist EurologSystem jo. Beograd", "EurologSystem jo")]
+        [DataRow("- Payer for Serbian path: Kopax Rail Services doo\n- Import customs clearance: Vršac", "Kopax Rail Services doo")]
+        [DataRow("Payer on IŽS: Panšped doo\n16. ES-5026; Frachtzahler auf MÁV Strecke: Rail Cargo Logistics - Hungaria Kft.", "Panšped doo")]
+        [DataRow("Payer on IZS: Pansped i\nES-5026; MAV Cargo Logistics - Hungaria (ZF0060012).", "Pansped i")]
+        [DataRow("16. Payer for the Serbian section: Lokomotiva d.o.o.", "Lokomotiva d.o.o")]
         public void KP7_platilac_za_srbiju_pronadjen_bez_greske(string r7, string platilac)
         {
             var r = SaR7(r7);
@@ -383,6 +393,19 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r = SaR7(r7);
             Assert.AreEqual(ocekivano, Kp7(r), r7 + " | " + string.Join(" | ", Svi(r)));
             Assert.IsFalse(Ima(r, "KP7-INFO"), "bez informacije kada platilac za Srbiju nije ispravno naveden");
+        }
+
+        [TestMethod]
+        public void G5_oblik_r7_nikad_nije_greska_samo_upozorenje()
+        {
+            // test 2026-11-13: GK30 i GIPS – platilac je naveden, nema šifre „16.“ → samo upozorenje (v2.8)
+            var s = new Scenario();
+            s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "", Tekst = "Payer on IŽS: Panšped doo" } } }, "Payer on IŽS: Panšped doo");
+            var r = Proveri(s);
+            Assert.IsFalse(Svi(r).Any(n => n.Rubrika == "7" && n.Tezina == Tezina.Greska), string.Join(" | ", Svi(r)));
+            Assert.AreEqual(Tezina.Upozorenje, Prvi(r, "G5").Tezina);
+            StringAssert.Contains(Prvi(r, "G5").Tekst, "16. Platilac za deonicu SRB");
+            Assert.AreEqual("Platilac za deonicu kroz Srbiju: Panšped doo.", Prvi(r, "KP7-INFO").Tekst);
         }
 
         [TestMethod]
@@ -607,8 +630,28 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(2, r.Listovi.Count);
             var telo = Izvestaj.Telo(r, pravila, false);
             Assert.AreEqual(1, telo.Split('\n').Count(l => l.Contains("Rubrika 29 –")), telo);
-            StringAssert.Contains(telo, "[TCDD.pdf (svi listovi, 2)]");
-            StringAssert.Contains(Izvestaj.Html(r, pravila, false), "TCDD.pdf (svi listovi, 2)");
+            // v2.8: nalazi grupisani po listu – isti nalaz za sve listove ide pod podnaslov „Svi tovarni listovi“
+            StringAssert.Contains(telo, "— Svi tovarni listovi —");
+            StringAssert.Contains(Izvestaj.Html(r, pravila, false), "Svi tovarni listovi");
+        }
+
+        [TestMethod]
+        public void Vise_listova_iz_istog_fajla_grupisano_po_listu_sa_r62_i_stranama()
+        {
+            // test 2026-11-13 (Scan130104): dva lista u istom PDF-u, kao dva dokumenta – svaki dobija svoj podnaslov
+            var a = IspravanCim(); a.R29.Datum = ""; a.RedniBroj = 1;
+            var b = IspravanCim(); b.R16.Datum = ""; b.RedniBroj = 2; b.R62.Broj = "15890-0";
+            var u = new UlazProvere
+            {
+                Dokumenti = { new Dokument { Tip = TipDokumenta.Cim, Fajl = "Scan.pdf", Strane = { 1, 2, 3 }, Cim = { a } }, new Dokument { Tip = TipDokumenta.Cim, Fajl = "Scan.pdf", Strane = { 4, 5 }, Cim = { b } } },
+                RezimKp = "kp", ReferentniDatum = Danas,
+            };
+            var r = new Motor(pravila).Proveri(u);
+            CollectionAssert.AreEqual(new[] { "Scan.pdf – list 1", "Scan.pdf – list 2" }, r.Listovi.Select(l => l.Oznaka).ToArray());
+            var telo = Izvestaj.Telo(r, pravila, false);
+            StringAssert.Contains(telo, "— Tovarni list 1: 72 72345-6 3212 12345-6 (Scan.pdf, str. 1–3) —");
+            StringAssert.Contains(telo, "— Tovarni list 2: 72 72345-6 3212 15890-0 (Scan.pdf, str. 4–5) —");
+            Assert.IsTrue(telo.IndexOf("Tovarni list 1:") < telo.IndexOf("Rubrika 29 –") && telo.IndexOf("Rubrika 29 –") < telo.IndexOf("Tovarni list 2:"), telo);
         }
 
         [TestMethod]
@@ -616,13 +659,15 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika();
             var r = Proveri(s);
-            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – potrebne ispravke", Izvestaj.Naslov(r, pravila, false), string.Join(" | ", Svi(r)));
+            // v2.8: list koji je izdao KP (r62, preduzeće 3212) – interni izveštaj
+            Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – potrebne ispravke", Izvestaj.Naslov(r, pravila, false), string.Join(" | ", Svi(r)));
+            Assert.AreEqual(Izvestaj.RazlogKp, Izvestaj.RazlogInternog(r, pravila));
             var samoUpoz = new Scenario(); samoUpoz.C.R20 = new TekstRubrika();
-            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – napomene", Izvestaj.Naslov(Proveri(samoUpoz), pravila, false));
-            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – ispravan", Izvestaj.Naslov(Proveri(new Scenario()), pravila, false));
+            Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – napomene", Izvestaj.Naslov(Proveri(samoUpoz), pravila, false));
+            Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – ispravan", Izvestaj.Naslov(Proveri(new Scenario()), pravila, false));
             var bezRef = new Scenario(); bezRef.C.R8 = new TekstRubrika(); bezRef.C.R16.Datum = "";
-            Assert.AreEqual("Tovarni list CIM 72 72345-6 3212 12345-6 – potrebne ispravke", Izvestaj.Naslov(Proveri(bezRef), pravila, false), "bez reference nema zagrade");
-            Assert.AreEqual("Consignment note CIM 72 72345-6 3212 12345-6 (004NISBAR26) – corrections required", Izvestaj.Naslov(r, pravila, true));
+            Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 – potrebne ispravke", Izvestaj.Naslov(Proveri(bezRef), pravila, false), "bez reference nema zagrade");
+            Assert.AreEqual("[INTERNO] KP tovarni list – Consignment note CIM 72 72345-6 3212 12345-6 (004NISBAR26) – corrections required", Izvestaj.Naslov(r, pravila, true));
         }
 
         [TestMethod]

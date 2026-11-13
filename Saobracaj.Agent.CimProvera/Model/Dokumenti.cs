@@ -202,6 +202,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string NeprepoznatObrazac { get; set; } = "";
         /// <summary>Tekst zaglavlja strane (gornjih ~9 %): natpisi kao „Nem fuvarlevél / Kein Frachtbrief“ (G12).</summary>
         [Interni] public string Zaglavlje { get; set; } = "";
+        /// <summary>Prosečna pouzdanost OCR-a strane lista (0 = tekst iz PDF-a). Ispod 0,75: nalazi o sadržaju su interne napomene (v2.8).</summary>
+        [Interni] public double PouzdanostStrane { get; set; }
 
         [Opis("Rubrika 1 - Pošiljalac.")] public Strana R1 { get; set; } = new Strana();
         [Opis("Rubrika 4 - Primalac.")] public Strana R4 { get; set; } = new Strana();
@@ -317,6 +319,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         public const string IzvestajRadioloski = "izvestaj_radioloski";
         /// <summary>Izveštaj o sastavu voza / tehnički spisak voza (MÁV VTK, Zugvorbereitung, Meldezettel) – nije prateći dokument pošiljke, ne proverava se.</summary>
         public const string SastavVoza = "sastav_voza";
+        /// <summary>Kopija ili poleđina tovarnog lista (natpisi rubrika bez naslova obrasca): pripaja se listu, nije prilog za r9.</summary>
+        public const string KopijaLista = "kopija_lista";
+        /// <summary>CIT 7 – naknadni nalog / izmena ugovora o prevozu: poseban dokument, ne proverava se po rubrikama CIM-a.</summary>
+        public const string Cit7 = "cit7";
         public const string Ostalo = "ostalo";
 
         public static readonly string[] Sve =
@@ -366,5 +372,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public int NeprocitaneStrane { get; set; }
         /// <summary>Za log: vrsta svake strane, natpisi po kojima je prepoznata i pouzdanost, npr. "str.6 spisak_kola (spisak kola, CIT-23; 0,90)".</summary>
         [Interni] public List<string> StraneOpis { get; set; } = new List<string>();
+        /// <summary>Strane skena sa niskom pouzdanošću OCR-a (ispod 0,75) koje nisu tovarni list: ako u mailu nema tovarnog lista,
+        /// to nije dokaz da ga nema – ručna provera (v2.8).</summary>
+        [Interni] public List<int> NisaPouzdanost { get; set; } = new List<int>();
     }
 }

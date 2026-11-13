@@ -691,16 +691,22 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     foreach (Match m in Regex.Matches(spojeno, @"\d+(?:-\d)?")) grupe.Add(m.Value);
                 }
             grupe = grupe.Where(g => g.Length >= 2).ToList();
-            if (grupe.Count >= 4)
+            // v2.8: delovi po OBLIKU, ne po redosledu: zemlja = 2 cifre, stanica = 5–7 cifara (i „16350-1“), preduzeće = 4 cifre,
+            // broj otpravljanja = 5–7 cifara posle preduzeća („12345-6“). Grupe od 3 cifre su OCR šum („(62)“ → „162“).
+            // „72 240036“ → zemlja + stanica (preduzeće i broj prazni); „3212“ sam → preduzeće; „72 163501 3212“ → bez broja.
+            string zemlja = "", stanica = "", preduzece = "", broj = "";
+            foreach (var g in grupe)
             {
-                r.Zemlja = grupe[0]; r.Stanica = grupe[1]; r.Preduzece = grupe[2]; r.Broj = grupe[3];
+                var cif = Regex.Replace(g, @"\D", "");
+                if (zemlja == "" && stanica == "" && preduzece == "" && cif.Length == 8 && !g.Contains("-")) { zemlja = cif.Substring(0, 2); stanica = cif.Substring(2); continue; }
+                if (zemlja == "" && stanica == "" && preduzece == "" && cif.Length == 2) { zemlja = cif; continue; }
+                // UIC šifra preduzeća ima 4 cifre; OCR levu ivicu kućice čita kao "1" ("13212" → "3212")
+                if (ocr && preduzece == "" && stanica != "" && cif.Length == 5 && cif[0] == '1' && broj == "" && grupe.Count >= 4) { preduzece = cif.Substring(1); continue; }
+                if (stanica == "" && preduzece == "" && cif.Length >= 5 && cif.Length <= 7) { stanica = g; continue; }
+                if (preduzece == "" && broj == "" && cif.Length == 4 && !g.Contains("-")) { preduzece = cif; continue; }
+                if (broj == "" && stanica != "" && cif.Length >= 5 && cif.Length <= 7) { broj = g; continue; }
             }
-            else if (grupe.Count == 3 && grupe[0].Length == 2) { r.Zemlja = grupe[0]; r.Stanica = grupe[1]; r.Broj = grupe[2]; }
-            else if (grupe.Count >= 1) r.Broj = grupe.Last();
-            // Ako je zemlja zalepljena za stanicu ("72163501"), razdvoj.
-            if (r.Zemlja.Length > 2 && r.Stanica.Length == 0) { r.Stanica = r.Zemlja.Substring(2); r.Zemlja = r.Zemlja.Substring(0, 2); }
-            // UIC šifra preduzeća ima 4 cifre; OCR levu ivicu kućice čita kao "1" ("13212" → "3212"). Kod PDF teksta ostaje kako piše (R62 prijavljuje).
-            if (ocr && r.Preduzece.Length == 5 && r.Preduzece[0] == '1') r.Preduzece = r.Preduzece.Substring(1);
+            r.Zemlja = zemlja; r.Stanica = stanica; r.Preduzece = preduzece; r.Broj = broj;
         }
     }
 }

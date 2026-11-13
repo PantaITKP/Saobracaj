@@ -261,7 +261,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var poRubrici = new Dictionary<string, List<(Rec r, Rec t, VrstaReci v)>>();
             foreach (var r in lista)
             {
-                var vrsta = naMestuSidra.Contains(r) || UKrugu(r) || SitanNatpis(r) || pribliznoNatpisi.Contains(r) ? VrstaReci.Naziv : Vrsta(r, potpisi);
+                // r9 (OCR): sitno odštampani nazivi priloženih dokumenata („Invoice“, „Certificate of goods“ – GIPS) su podatak, ne natpis
+                var (sx, sy) = naj.USablon(r.Cx, r.Cy);
+                var sitan = SitanNatpis(r) && !(obrazac.RubrikaZa(sx, sy) == "9" && !R9Natpisi.Contains(Norm(r.T)) && Norm(r.T).Length >= 3);
+                var vrsta = naMestuSidra.Contains(r) || UKrugu(r) || sitan || pribliznoNatpisi.Contains(r) ? VrstaReci.Naziv : Vrsta(r, potpisi);
                 if (r.JePodatak) vrsta = VrstaReci.Podatak;
                 else if (rez.IzWorda) vrsta = VrstaReci.Naziv;
                 var (tx, ty) = naj.USablon(r.Cx, r.Cy);
@@ -275,7 +278,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var naziviPoRedu = rez.Dodela.Where(d => d.naziv && pribliznoNatpisi.Contains(d.rec)).Select(d => d.rec).ToList();
             foreach (var kv in poRubrici)
             {
-                var izbaciti = kv.Value.Where(x => !Regex.IsMatch(x.r.T, @"\d") && naziviPoRedu.Count(n => Math.Abs(n.Cy - x.r.Cy) < Math.Max(0.004, x.r.Visina * 0.6) && Math.Abs(n.Cx - x.r.Cx) < 0.12) >= 2).ToList();
+                var izbaciti = kv.Value.Where(x => x.v != VrstaReci.Podatak && !Regex.IsMatch(x.r.T, @"\d") && naziviPoRedu.Count(n => Math.Abs(n.Cy - x.r.Cy) < Math.Max(0.004, x.r.Visina * 0.6) && Math.Abs(n.Cx - x.r.Cx) < 0.12) >= 2).ToList();
                 foreach (var x in izbaciti) { kv.Value.Remove(x); rez.Dodela.Add((x.r, kv.Key, true)); }
             }
 
@@ -299,7 +302,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         var izbaci = new HashSet<Rec>(seg.Where(w => KratakNatpis.Contains(Norm(w.T)) && mapa[w].v == VrstaReci.Kandidat));
                         var duge = seg.Where(w => Norm(w.T).Length >= 3 && !Regex.IsMatch(Norm(w.T), @"^\d+$")).ToList();
                         var sveIzRecnika = duge.Count > 0 && duge.All(w => recnik.Contains(Norm(w.T))) && seg.All(w => duge.Contains(w) || !Regex.IsMatch(w.T, @"\d"));
-                        if (sveIzRecnika) foreach (var w in seg) izbaci.Add(w);
+                        // v2.8: vrednost polja obrasca / Word okvira nikad nije natpis („Kelebia“ u r10/r20 – cuv za 1 vagon); u r9 su
+                        // nazivi dokumenata („Invoice“, „Certificate of goods“, „Wagon list“) podatak – natpis je samo „Prilozi/Beilagen/Annexes“
+                        bool MozeNatpis(Rec w) => mapa[w].v != VrstaReci.Podatak && (id != "9" || w.Velicina > 0 || R9Natpisi.Contains(Norm(w.T)) || KratakNatpis.Contains(Norm(w.T)));   // tekst PDF-a: font natpisa je pouzdan
+                        if (sveIzRecnika) foreach (var w in seg.Where(MozeNatpis)) izbaci.Add(w);
                         else if (seg.Any(w => mapa[w].v == VrstaReci.Kandidat))
                         {
                             var kDuge = duge.Where(w => mapa[w].v == VrstaReci.Kandidat).ToList();
@@ -307,7 +313,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                             // Cifre (kućice r12, r17, r62…) nisu naziv rubrike i kada su istim fontom kao brojevi rubrika.
                             var samoCifre = seg.Any(w => Regex.IsMatch(w.T, @"\d")) && seg.All(w => Regex.IsMatch(w.T, @"^[\d\s,.\-/]+$"));
                             var naVrhu = !samoCifre && seg[0].Cy - b[1] < 0.022 && seg.All(w => mapa[w].v == VrstaReci.Kandidat);
-                            if (udeo >= 0.5 || naVrhu) foreach (var w in seg.Where(w => mapa[w].v == VrstaReci.Kandidat)) izbaci.Add(w);
+                            if (udeo >= 0.5 || naVrhu) foreach (var w in seg.Where(w => mapa[w].v == VrstaReci.Kandidat && MozeNatpis(w))) izbaci.Add(w);
                         }
                         foreach (var w in seg)
                         {
@@ -370,6 +376,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         }
 
         /// <summary>Kratki odštampani natpisi u rubrikama (skraćenice obrasca), ne podaci.</summary>
+        /// <summary>Natpisi rubrike 9 (u r9 su ostale reči iz rečnika nazivi priloženih dokumenata, tj. podatak).</summary>
+        private static readonly HashSet<string> R9Natpisi = new HashSet<string> { "annexes", "annexe", "annex", "beilagen", "beilage", "prilozi", "prilog", "prilozeni", "attachments", "attached", "enclosures", "pieces", "jointes", "mellekletek", "melleklet", "allegati", "anexe", "anexa", "prilohy", "priloha", "zalaczniki", "priloge", "прилози", "прилог" };
+
         private static readonly HashSet<string> KratakNatpis = new HashSet<string> { "бр", "br", "nr", "tel", "fax", "faks", "ja", "да", "da", "od", "do", "bis", "von" };
 
         private enum VrstaReci { Podatak, Naziv, Kandidat }

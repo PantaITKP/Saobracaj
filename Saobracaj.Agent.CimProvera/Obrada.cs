@@ -19,6 +19,8 @@ namespace Saobracaj.Agent.CimProvera
         public List<string> Neprepoznati = new List<string>();
         /// <summary>Svaki prilog i njegova klasifikacija („ime – tovarni list CIM“).</summary>
         public List<string> OpisPriloga = new List<string>();
+        /// <summary>Prilozi sa stranama skena niske pouzdanosti (ispod 0,75) koje nisu prepoznate kao tovarni list (v2.8).</summary>
+        public List<string> NisaPouzdanost = new List<string>();
         public bool PrivremenaGreska;
         public bool Engleski;
     }
@@ -90,6 +92,8 @@ namespace Saobracaj.Agent.CimProvera
                         if (r.StraneOpis.Count > 0) log?.Info("    strane: " + string.Join(" | ", r.StraneOpis));
                         if (r.NeprocitaneStrane > 0 && !r.Dokumenti.Any(d => TipDokumenta.JeTovarniList(d.Tip)))
                             ishod.NisuProcitani.Add(f.Naziv + ": " + r.NeprocitaneStrane + " str. nije pročitano (" + r.Napomena + ")");
+                        if (r.NisaPouzdanost.Count > 0)
+                            ishod.NisaPouzdanost.Add(f.Naziv + ": str. " + string.Join(", ", r.NisaPouzdanost) + " skena niske pouzdanosti (ispod 0,75)");
                     }
                 }
                 catch (PrivremenaGreskaCitanja ex)
@@ -117,6 +121,12 @@ namespace Saobracaj.Agent.CimProvera
                 ReferentniDatum = referentniDatum, Engleski = engleski, RezimKp = rezimKp, Prag = prag,
             };
             ishod.Provera = new Motor(pravila, log).Proveri(u);
+            // v2.8: interni izveštaj (KP tovarni list / ručna provera) je uvek na srpskom – nalazi se ponovo sastavljaju na srpskom
+            if (engleski && Izvestaj.RazlogInternog(ishod.Provera, pravila) != null)
+            {
+                u.Engleski = false; ishod.Engleski = false;
+                ishod.Provera = new Motor(pravila, log).Proveri(u);
+            }
             ishod.Provera.OpisPriloga = ishod.OpisPriloga;
             return ishod;
         }
@@ -199,6 +209,7 @@ namespace Saobracaj.Agent.CimProvera
                         return Regex.IsMatch(ime, @"train ?list|load ?list|ladeliste") || d.Spisak.Any(s => s.Kola.Count > 0 && s.Kola.All(k => k.Uti.Count > 0) && Regex.IsMatch(ime, "train|load"))
                             ? "spisak tovarnih jedinica" : "spisak kola";
                     case TipDokumenta.SastavVoza: return "izveštaj o sastavu voza (ne proverava se)";
+                    case TipDokumenta.Cit7: return "CIT 7 – naknadni nalog (ne proverava se)";
                     case TipDokumenta.DodatniList: return "dodatni list";
                     case TipDokumenta.IzvoznaDeklaracija: return "izvozna deklaracija";
                     case TipDokumenta.TranzitnaDeklaracija: return "tranzitna deklaracija";
@@ -232,6 +243,21 @@ namespace Saobracaj.Agent.CimProvera
             if (d.Count == 0) return "bez prepoznatih dokumenata";
             return string.Join(", ", d.Select(x => (x.Strane.Count == 0 ? "" : "str." + (x.Strane.Count == 1 ? x.Strane[0].ToString() : x.Strane.Min() + "-" + x.Strane.Max()) + " ")
                 + x.Tip + (x.Tip == TipDokumenta.Cim || x.Tip == TipDokumenta.Cuv ? "(" + (x.Cim.FirstOrDefault()?.Sablon is string s && s.Length > 0 ? s : "?") + ")" : "")));
+        }
+
+        private static readonly string[] SrpskiDomeni = { "rs", "ba", "me", "hr", "si" };
+
+        /// <summary>
+        /// v2.8: jezik izveštaja po POŠILJAOCU, ne po (citiranom) tekstu maila: interni domen (@kprevoz.co.rs) uvek srpski;
+        /// spoljni po vršnom domenu – .rs, .ba, .me, .hr, .si srpski, ostali engleski. Vraća true za engleski.
+        /// </summary>
+        public static bool EngleskiZaPosiljaoca(string adresa, Func<string, bool> jeInterni)
+        {
+            if (string.IsNullOrWhiteSpace(adresa)) return false;
+            if (jeInterni != null && jeInterni(adresa)) return false;
+            var domen = adresa.Substring(adresa.LastIndexOf('@') + 1).Trim().TrimEnd('>', '.').ToLowerInvariant();
+            var tld = domen.Substring(domen.LastIndexOf('.') + 1);
+            return !SrpskiDomeni.Contains(tld);
         }
 
         /// <summary>Engleski odgovor ako je mail pošiljaoca na nemačkom ili engleskom (prosta procena po rečima).</summary>

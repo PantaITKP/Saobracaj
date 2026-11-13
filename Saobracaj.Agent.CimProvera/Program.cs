@@ -251,6 +251,7 @@ namespace Saobracaj.Agent.CimProvera
             var izlaz = Opcija("--izlaz");
             var posiljalac = Opcija("--posiljalac");
             var en = Zastavica("--en");
+            var sr = Zastavica("--sr");
             var podfolderi = Zastavica("--podfolderi");
             if (a.Count == 0) { Console.Error.WriteLine("Upotreba: validate <fajl|folder>… (vidi --help)"); return 1; }
 
@@ -268,6 +269,8 @@ namespace Saobracaj.Agent.CimProvera
                 else { Console.Error.WriteLine("Ne postoji: " + p); return 1; }
             }
 
+            // jezik: --en / --sr, inače po pošiljaocu (--posiljalac) kao u radu nad sandučetom (v2.8)
+            if (!en && !sr && posiljalac != null) en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni);
             var pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log);
             using var citac = new LokalniCitac(cfg, log, pravila.Kp);
             var obrada = new Obrada(pravila, citac, log, cfg.PragPouzdanosti);
@@ -283,7 +286,12 @@ namespace Saobracaj.Agent.CimProvera
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
                 var ishod = obrada.Proveri(prilozi, posiljalac, posiljalac != null && cfg.JeInterni(posiljalac), datum, en, rezim);
-                var r = ishod.Provera;
+                var rPuni = ishod.Provera;
+                // v2.8: isto kao u radu nad sandučetom – interni izveštaj (KP tovarni list / ručna provera) ili izveštaj za pošiljaoca bez nalaza „samo interno“
+                var razlogInt = Izvestaj.RazlogInternog(rPuni, pravila);
+                var r = razlogInt == null && rPuni.ImaInternih && !(posiljalac != null && cfg.JeInterni(posiljalac)) ? rPuni.BezInternih() : rPuni;
+                var uvodV = razlogInt != null ? Izvestaj.UvodInternog(razlogInt, posiljalac) : null;
+                var en0 = en; en = razlogInt != null ? false : en;
 
                 var sb = new StringBuilder();
                 sb.AppendLine("################ " + ime);
@@ -292,15 +300,15 @@ namespace Saobracaj.Agent.CimProvera
                 foreach (var x in ishod.Preskoceno) sb.AppendLine("  (preskočeno) " + x);
                 foreach (var x in ishod.NisuProcitani) sb.AppendLine("  (NIJE PROČITANO) " + x);
                 sb.AppendLine();
-                if (!r.ImaTovarniList && ishod.NisuProcitani.Count > 0)
-                    sb.AppendLine("Tovarni list nije pronađen među pročitanim prilozima, ali " + ishod.NisuProcitani.Count + " priloga nije pročitano – rezultat nije konačan (ručna provera).");
+                if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0)
+                    sb.AppendLine("Tovarni list nije pronađen među pročitanim prilozima, ali prilozi nisu pouzdano pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + ") – rezultat nije konačan (interna ručna provera, ništa pošiljaocu).");
                 else if (!r.ImaTovarniList) sb.AppendLine(Izvestaj.NemaTovarnogLista(pravila, en));
                 else
                 {
                     sb.AppendLine("Režim KP: " + string.Join(", ", r.Listovi.Select(l => l.KpRezim ? "da" : "ne").Distinct()));
                     sb.AppendLine("Predmet: " + Izvestaj.Naslov(r, pravila, en));
                     sb.AppendLine();
-                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, null, ishod.NisuProcitani));
+                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani));
                 }
                 if (r.GreskePravila.Count > 0) sb.AppendLine("Pravila sa greškom u izvršavanju: " + string.Join("; ", r.GreskePravila));
                 Console.WriteLine(sb.ToString());
@@ -313,7 +321,7 @@ namespace Saobracaj.Agent.CimProvera
                     if (r.ImaTovarniList)
                     {
                         File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
-                            + "</title>" + Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani), Encoding.UTF8);
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani), Encoding.UTF8);
                         // PDF primer (B2) + slike strana (PNG, 150 dpi) u izlaz\primeri
                         var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? PrimerPdf.Napravi(r, pravila, en, prilozi) : null;
                         if (primer != null)
@@ -332,19 +340,20 @@ namespace Saobracaj.Agent.CimProvera
                         // isti mail kao što ga agent šalje (multipart/alternative, UTF-8; sa PDF primerom kao prilogom) – otvara se u Outlook-u (.eml)
                         var pasus = Izvestaj.PasusPrimera(primer, en);
                         var mail = Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Izvestaj.Naslov(r, pravila, en),
-                            Izvestaj.Telo(r, pravila, en, null, ishod.NisuProcitani, pasus), html: Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani, pasus));
+                            Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, pasus), html: Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus));
                         if (primer?.Napravljen == true) Slanje.DodajPrilog(mail, primer.Ime, primer.Pdf);
                         mail.WriteTo(Path.Combine(izlaz, ime + ".eml"));
                         File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
-                            + "</title>" + Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani, pasus), Encoding.UTF8);
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus), Encoding.UTF8);
                     }
                     File.WriteAllText(Path.Combine(izlaz, ime + ".json"), Json.U(new
                     {
                         slucaj = ime, datum, rezim, dokumenti = r.Dokumenti,
-                        nalazi = r.Listovi.Select(l => new { list = l.Oznaka, kp = l.KpRezim, rucno = l.ZaRucnuProveru, nalazi = l.Nalazi }),
+                        interno = razlogInt, nalazi = rPuni.Listovi.Select(l => new { list = l.Oznaka, kp = l.KpRezim, rucno = l.ZaRucnuProveru, nalazi = l.Nalazi }),
                         preskoceno = ishod.Preskoceno, nisu_procitani = ishod.NisuProcitani,
                     }), Encoding.UTF8);
                 }
+                en = en0;
             }
             var ni = Motor.NijeImplementirano(pravila);
             Console.WriteLine("Pravila iz JSON-a koja nisu implementirana (ne izvršavaju se): " + (ni.Count == 0 ? "nema" : string.Join(", ", ni)));

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -243,7 +243,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual("PRIMER_801012873127HER-SAD79.pdf", pr.Ime);
             Assert.AreEqual(2, pr.Strane.Count, "legenda + list");
             var (_, isp, nap, leg) = pr.PoListu.Single();
-            Assert.AreEqual(4, isp, "r1, r9, r16, r24 ucrtane na listu");
+            Assert.AreEqual(5, isp, "r1, r9, r16, r24 i r58a (v2.8: R58A važi za svaki list) ucrtane na listu");
             Assert.IsTrue(nap >= 4, "r4, r7, r14, r22 na listu: " + nap);
             Assert.IsTrue(pr.Pdf.Length > 1000 && pr.Pdf.Length < PrimerPdf.MaxBajtova);
             StringAssert.StartsWith(System.Text.Encoding.ASCII.GetString(pr.Pdf, 0, 5), "%PDF");

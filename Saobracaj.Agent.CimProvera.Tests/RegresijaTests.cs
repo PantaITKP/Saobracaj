@@ -111,7 +111,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // str. 5: T1 sa nečitljivim naslovom – prepoznata po poljima LRN/UCR/TIR i odredišnoj ispostavi
             Assert.IsTrue(i.Provera.Dokumenti.Any(d => d.Tip == TipDokumenta.TranzitnaDeklaracija && d.Strane.Contains(5)), "str. 5 je tranzitna deklaracija");
             // r58a: pečat koji OCR ne čita – upozorenje, ne greška
-            Ocekuje(i, Tezina.Upozorenje, "58a", "R58A", "pečat");
+            Ocekuje(i, Tezina.Upozorenje, "58a", "KP2", "pečat");   // v2.8: r62 = 3212 → r58a proverava KP2
             Assert.IsFalse(i.Provera.Listovi[0].Nalazi.Any(n => n.Rubrika == "58a" && n.Tezina == Tezina.Greska), "r58a nije greška");
             Ocekuje(i, Tezina.Upozorenje, "1", "R1-ISO", "Srbija");
             // ne sme
@@ -193,7 +193,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Upozorenje, "1", "R1-ISO");
             NeSme(i, "R22"); NeSme(i, "X5"); NeSme(i, "R23"); NeSme(i, "X1");
             NeSme(i, "X26"); NeSme(i, "G3"); NeSme(i, "X9"); NeSme(i, "X20");
-            NeSme(i, "R12"); NeSme(i, "X19"); NeSme(i, "R62"); NeSme(i, "G2"); NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP57");
+            NeSme(i, "R12"); NeSme(i, "X19"); NeSme(i, "G2");
+            // v2.8: R62 važi za svaki list (test 2026-11-13) – r62 ovog CUV-a je prazna
+            Ocekuje(i, Tezina.Greska, "62", "R62", "prazna"); NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP57");
             Assert.IsFalse(Svi(i).Any(n => n.Pravilo == "CITLJIVOST" && Regex.IsMatch(n.Rubrika, "^(1|4|7|10|13|14|18|20|21|2[3-9]|30)$")),
                 "upozorenja „nečitljivo“ sa poleđine: " + Opis(i));
         }

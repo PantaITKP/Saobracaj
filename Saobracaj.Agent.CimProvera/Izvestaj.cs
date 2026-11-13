@@ -145,13 +145,35 @@ namespace Saobracaj.Agent.CimProvera
             if (id == null) id = System.IO.Path.GetFileName((prvi?.Dokument?.Fajl ?? "").Split('/').Last());
             if (r.Listovi.Count > 1) id += " (+" + (r.Listovi.Count - 1) + ")";
             var refp = prvi?.Cim != null ? ReferencaPosiljaoca(prvi.Cim) : null;
-            var status = r.BrojGresaka > 0 ? p.SablonStatus("errors", en, en ? "corrections required" : "potrebne ispravke")
+            var status = r.BrojGresaka == 0 && r.BrojUpozorenja == 0 && r.ZaRucnuProveru ? (en ? "manual check required" : "potrebna ručna provera")
+                       : r.BrojGresaka > 0 ? p.SablonStatus("errors", en, en ? "corrections required" : "potrebne ispravke")
                        : r.BrojUpozorenja > 0 ? p.SablonStatus("warnings", en, en ? "remarks" : "napomene")
                        : p.SablonStatus("ok", en, en ? "correct" : "ispravan");
             var sablon = p.Sablon("subject", en, en ? "Consignment note {form} {shipment_ref}{sender_ref} – {status}" : "Tovarni list {form} {shipment_ref}{sender_ref} – {status}");
             var n = sablon.Replace("{form}", Obrazac(r)).Replace("{shipment_ref}", id).Replace("{sender_ref}", refp != null ? " (" + refp + ")" : "").Replace("{status}", status);
-            return Regex.Replace(n, @"\s{2,}", " ").Trim();
+            n = Regex.Replace(n, @"\s{2,}", " ").Trim();
+            var interno = RazlogInternog(r, p);
+            return interno == RazlogKp ? "[INTERNO] KP tovarni list – " + n : interno == RazlogRucna ? "[INTERNO] Ručna provera – " + n : n;
         }
+
+        public const string RazlogKp = "kp", RazlogRucna = "rucna";
+
+        /// <summary>
+        /// v2.8: izveštaj je samo interni (nikad pošiljaocu maila) kada je list izdao KP (r62, preduzeće 3212 – te greške su naše)
+        /// ili je neki list na ručnoj proveri (nečitljiv sken, neprepoznat obrazac) – dok čovek ne pogleda. null = običan izveštaj.
+        /// </summary>
+        public static string RazlogInternog(RezultatProvere r, PravilaSkup p)
+        {
+            if (r.Listovi.Any(l => l.Cim != null && p.Kp.JeKpSifra(l.Cim.R62.Preduzece))) return RazlogKp;
+            if (r.Listovi.Any(l => l.ZaRucnuProveru || !string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac))) return RazlogRucna;
+            return null;
+        }
+
+        /// <summary>Uvodna rečenica internog izveštaja (šta je razlog i da ništa nije poslato pošiljaocu).</summary>
+        public static string UvodInternog(string razlog, string posiljalac) =>
+            (razlog == RazlogKp ? "Interni izveštaj: tovarni list je izdao KP (r62, preduzeće 3212) – greške su naše i ne šalju se pošiljaocu"
+                                : "Interni izveštaj: tovarni list je na ručnoj proveri (nečitljive rubrike ili neprepoznat obrazac) – pošiljaocu se ništa ne šalje dok se list ne pregleda")
+            + (string.IsNullOrEmpty(posiljalac) ? "." : " (" + posiljalac + ").");
 
         /// <summary>Zahvalnica: relacija (r16 – r10), broj kola, roba i referenca – samo ono što je pouzdano pročitano.</summary>
         internal static string Zahvalnica(RezultatProvere r, bool en)
@@ -208,6 +230,25 @@ namespace Saobracaj.Agent.CimProvera
             /// <summary>Oznake listova na koje se red odnosi (za PDF primer).</summary>
             public List<string> Listovi = new List<string>();
             public Nalaz N;
+            /// <summary>Podnaslov grupe kada mail ima više listova: „Tovarni list 1: 72 16350-1 3212 15890-0 (str. 1–3)“ (v2.8).</summary>
+            public string Grupa;
+        }
+
+        /// <summary>Podnaslov grupe nalaza po tovarnom listu (više listova u mailu): broj lista, identifikacija iz r62, fajl i strane.</summary>
+        private static string NaslovGrupe(RezultatProvere r, List<string> oznake, bool en)
+        {
+            if (r.Listovi.Count <= 1) return null;
+            var idx = oznake.Select(o => r.Listovi.FindIndex(l => l.Oznaka == o)).Where(i => i >= 0).Distinct().OrderBy(i => i).ToList();
+            if (idx.Count == 0) return null;
+            if (idx.Count == r.Listovi.Count) return en ? "All consignment notes" : "Svi tovarni listovi";
+            if (idx.Count > 1) return (en ? "Consignment notes " : "Tovarni listovi ") + string.Join(", ", idx.Select(i => i + 1));
+            var l = r.Listovi[idx[0]];
+            var id = l.Cim != null ? R62Id(l.Cim) : null;
+            var strane = l.Dokument?.Strane ?? new List<int>();
+            var str = strane.Count == 0 ? "" : (en ? "p. " : "str. ") + (strane.Count == 1 ? strane[0].ToString() : strane.Min() + "–" + strane.Max());
+            var fajl = Fajl(l.Oznaka);
+            var dodatak = string.Join(", ", new[] { fajl, str }.Where(x => x.Length > 0));
+            return (en ? "Consignment note " : "Tovarni list ") + (idx[0] + 1) + (id != null ? ": " + id : "") + (dodatak.Length > 0 ? " (" + dodatak + ")" : "");
         }
 
         private sealed class Stavka
@@ -227,7 +268,9 @@ namespace Saobracaj.Agent.CimProvera
                     if (s == null) stavke.Add(s = new Stavka { N = n });
                     if (!s.Listovi.Contains(l.Oznaka)) s.Listovi.Add(l.Oznaka);
                 }
-            return stavke.OrderBy(s => s.Listovi.FirstOrDefault() == null ? 0 : r.Listovi.FindIndex(l => l.Oznaka == s.Listovi[0]))
+            // grupe po listu (v2.8): prvo nalazi zajednički svim listovima, pa po listu redom
+            return stavke.OrderBy(s => s.Listovi.Count == r.Listovi.Count && r.Listovi.Count > 1 ? -1 : s.Listovi.FirstOrDefault() == null ? 0 : r.Listovi.FindIndex(l => l.Oznaka == s.Listovi[0]))
+                .ThenBy(s => s.Listovi.Count > 1 && s.Listovi.Count < r.Listovi.Count ? 1 : 0)
                 .ThenBy(s => RubrikaRed(s.N.Rubrika)).ThenBy(s => s.N.Pravilo, StringComparer.Ordinal).ToList();
         }
 
@@ -287,7 +330,7 @@ namespace Saobracaj.Agent.CimProvera
             if (det.Length == 0 && n.Tezina != Tezina.Preporuka && n.Vrednost.Length > 0 && n.Vrednost.Length <= 60 && n.Vrednost != "nečitljivo")
                 t += (en ? " Entered: " : " Upisano: ") + n.Vrednost + ".";
             if (n.SamoInterno) t += en ? " (internal – not sent to the consignor)" : " (interno – ne šalje se pošiljaocu)";
-            if (r.Listovi.Count > 1) t = "[" + NazivDokumenta(r, s, en) + "] " + t;
+            // više listova: nalazi su grupisani po listu (podnaslov), pa oznaka dokumenta ide u red samo bez podnaslova
             return Regex.Replace(t, @"\s{2,}", " ").Trim();
         }
 
@@ -298,7 +341,7 @@ namespace Saobracaj.Agent.CimProvera
 
         /// <summary>Redovi tabele POTREBNE ISPRAVKE (greške).</summary>
         internal static List<Red> RedoviIspravki(RezultatProvere r, PravilaSkup p, bool en) =>
-            Grupisi(r, Tezina.Greska).Select(s => new Red { N = s.N, Listovi = s.Listovi, Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
+            Grupisi(r, Tezina.Greska).Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
 
         /// <summary>Redovi tabele NAPOMENE: upozorenja, preporuke pravila (npr. NHM 6 cifara) i opšte preporuke (najviše 5).</summary>
         internal static List<Red> RedoviNapomena(RezultatProvere r, PravilaSkup p, bool en)
@@ -306,7 +349,8 @@ namespace Saobracaj.Agent.CimProvera
             var prep = Grupisi(r, Tezina.Preporuka);
             var opste = prep.Where(s => s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal)).Take(MaxPreporuka);
             return Grupisi(r, Tezina.Upozorenje).Concat(prep.Where(s => !s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal))).Concat(opste)
-                .Select(s => new Red { N = s.N, Listovi = s.Listovi, Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
+                .Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) })
+                .OrderBy(x => x.Listovi.Count == r.Listovi.Count && r.Listovi.Count > 1 ? -1 : r.Listovi.FindIndex(l => x.Listovi.Count > 0 && l.Oznaka == x.Listovi[0])).ToList();
         }
 
         /// <summary>Informacije ispod tabela (npr. „Platilac za deonicu kroz Srbiju: …“).</summary>
@@ -373,7 +417,7 @@ namespace Saobracaj.Agent.CimProvera
             ("dodatni list", "additional sheet"), ("izvozna deklaracija", "export declaration"), ("tranzitna deklaracija", "transit declaration"),
             ("carinski dokument", "customs document"), ("uverenje o poreklu", "certificate of origin"), ("sertifikat", "certificate"), ("faktura", "invoice"),
             ("dozvola za otpad", "waste permit"), ("poleđina lista", "back of the note"), ("ostalo (ne proverava se)", "other (not checked)"), ("nije prepoznat", "not recognised"),
-            ("slika iz potpisa/logo (ne proverava se)", "signature image/logo (not checked)"),
+            ("slika iz potpisa/logo (ne proverava se)", "signature image/logo (not checked)"), ("CIT 7 – naknadni nalog (ne proverava se)", "CIT 7 – subsequent order (not checked)"),
         };
 
         /// <summary>„Prilozi: CIM … .xlsx – tovarni list CIM (Excel); … .xls – spisak kola; VTK….pdf – izveštaj o sastavu voza (ne proverava se).“</summary>
@@ -433,10 +477,11 @@ namespace Saobracaj.Agent.CimProvera
                 if (redovi.Count == 0) return;
                 var k = Kolone(en);
                 sb.AppendLine(naslov);
-                int i = 0;
+                int i = 0; string grupa = null;
                 foreach (var x in redovi)
                 {
                     i++;
+                    if (x.Grupa != null && x.Grupa != grupa) { grupa = x.Grupa; sb.AppendLine("— " + grupa + " —"); }
                     sb.AppendLine(i + ". " + (Regex.IsMatch(x.Rubrika ?? "", @"^\d") ? (en ? "Box " : "Rubrika ") : "") + x.Rubrika);
                     sb.AppendLine("   " + k[2] + ": " + x.Sta);
                     sb.AppendLine("   " + k[3] + ": " + x.Primer);
@@ -487,10 +532,11 @@ namespace Saobracaj.Agent.CimProvera
                 sb.Append("<table cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;border:1px solid #999999\"><tr>");
                 foreach (var k in Kolone(en)) sb.Append("<th " + Th + ">" + H(k) + "</th>");
                 sb.Append("</tr>");
-                int i = 0;
+                int i = 0; string grupa = null;
                 foreach (var x in redovi)
                 {
                     i++;
+                    if (x.Grupa != null && x.Grupa != grupa) { grupa = x.Grupa; sb.Append("<tr><td colspan=\"4\" " + Td.Replace("style=\"", "style=\"background-color:#f2f2f2;font-weight:bold;") + ">" + H(grupa) + "</td></tr>"); }
                     sb.Append("<tr><td " + Td + ">" + i + "</td><td " + Td + "><b>" + H(x.Rubrika) + "</b></td><td " + Td + ">" + H(x.Sta) + "</td><td " + Td + ">" + H(x.Primer) + "</td></tr>");
                 }
                 sb.Append("</table>");

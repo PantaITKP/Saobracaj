@@ -1,5 +1,41 @@
 ﻿# CimProvera – izmene programa
 
+## 2026-11-13 – pravila v2.8: ispravke posle testa („Testni primeri“, 9 dokumenata)
+
+Detaljan spisak izmena pravila je u `cim_validation_rules.json` → `meta.changelog` (v2.8). Ukratko:
+
+- **r7 – platilac**
+  - Prepoznaje se i sa greškama u kucanju i OCR-a („Payer fo/on“, „Frachjzahjler“).
+  - „Serbian path/section“ i „IŽS“ znače Srbiju.
+  - „Payer for HU: A; SRB: B“ znači da je B platilac za SRB.
+  - Naziv platioca se završava na kraju rečenice ili reda, pa „KP/26“ iz „CIM 6: …“ nije platilac.
+  - G5 (oblik „šifra + tekst“) je samo upozorenje.
+- **Tip strane**
+  - Sadržaj ima prednost nad imenom fajla.
+  - Natpis obrasca CIM/CUV čini stranu tovarnim listom; kopije i poleđine lista se pripajaju listu i nisu faktura.
+  - CIT 7 (naknadni nalog) je poseban dokument.
+  - Bez tovarnog lista, a sa skenom niske pouzdanosti: interna ručna provera, nikad „nema tovarnog lista“.
+- **Interni izveštaj**
+  - List koji je izdao KP (r62 = 3212) i list na ručnoj proveri dobijaju samo interni izveštaj, uvek na srpskom.
+  - Nalazi „samo interno“ (R49, R50, REC1, REC8) filtriraju se iz izveštaja za pošiljaoca i iz PDF primera, i u režimu Test.
+- **Nečitljiv sken** (OCR ispod 0,75): nema grešaka ni upozorenja o sadržaju, samo interne napomene „proveriti ručno“.
+- **Jezik**: određuje se po pošiljaocu – interni i .rs/.ba/.me/.hr/.si dobijaju srpski, ostali engleski. Svako pravilo ima `primer_en`.
+- **Čitanje**
+  - r62 se deli po obliku.
+  - Vrednosti polja PDF obrasca (AcroForm) nikad nisu natpis i nisu „nečitljive“.
+  - U r9 su nazivi dokumenata podatak.
+  - Adresa se proverava po sadržaju cele rubrike.
+- **R62 i R58A** važe za svaki list. Kada je r62 = 3212, za r58a važi KP2.
+- **Izveštaj**
+  - Uklonjen je šum: REC3, KP6, REC6.
+  - Nalazi su grupisani po tovarnom listu (podnaslov sa r62 i stranama), a dva lista iz istog fajla imaju posebne oznake.
+  - Primer zemlje se uzima iz lista.
+  - Spisak kola u primerima je bez šifre 271.
+- **Test podaci**
+  - `testovi\nezavisni\2026-11-13\` (*.strane.json = pročitane strane iz keša agenta); `validate` prihvata i `<ime>.strane.json`.
+  - `validate` određuje jezik po `--posiljalac` (ili `--en` / `--sr`).
+- **Testovi**: `TestniPrimeriTests` (26), dopune `MotorTests`, ažuriran snimak nalaza (REC3/REC6 uklonjeni, R58A → KP2 za r62 = 3212, R62 za prazne r62). Ukupno 417 prolazi, 1 preskočen.
+
 ## 2026-11-13 – slike iz potpisa i logo se ne proveravaju
 
 - Slika-prilog se ne čita (nema OCR-a) i **ne vodi na ručnu proveru** kada je logo, slika iz potpisa ili ikona:

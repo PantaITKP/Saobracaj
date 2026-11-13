@@ -120,6 +120,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         public Motor(PravilaSkup pravila, Log log = null) { p = pravila; this.log = log; }
 
+        /// <summary>Prosečna pouzdanost OCR-a strane ispod koje je sken „nečitljiv“ (v2.8).</summary>
+        public const double PragSkena = 0.75;
+
         public RezultatProvere Proveri(UlazProvere u)
         {
             var rez = new RezultatProvere { Dokumenti = u.Dokumenti };
@@ -135,7 +138,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 var rl = new RezultatLista
                 {
                     Dokument = dok, Cim = cim, KpRezim = k.Kp,
-                    Oznaka = listovi.Count == 1 ? dok.Fajl : dok.Fajl + (dok.Cim.Count > 1 || listovi.Count(x => x.d == dok) > 1 ? " – list " + cim.RedniBroj : "") ,
+                    Oznaka = listovi.Count == 1 ? dok.Fajl : dok.Fajl + (dok.Cim.Count > 1 || listovi.Count(x => x.d.Fajl == dok.Fajl) > 1 ? " – list " + cim.RedniBroj : "") ,
                 };
 
                 // Obrazac nije prepoznat (ili poravnanje nije pouzdano): rubrike se ne proveravaju nasumično – ručna provera.
@@ -154,6 +157,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 foreach (var def in p.Sva)
                 {
                     if (!Provere.Sve.TryGetValue(def.Id, out var fn)) continue;
+                    if (def.Json["ne_proverava_se"] != null) continue;   // obrisano pravilo (npr. REC3, REC6, KP6 u v2.8) se ne izvršava
                     if (!k.Kp && (Provere.SamoKp.Contains(def.Id) || (def.PopunjavaPrevoznik && !Provere.UvekVazi.Contains(def.Id)))) continue;
                     List<Pogodak> pogodci;
                     try { pogodci = fn(k).ToList(); }
@@ -171,6 +175,22 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     var tekst = p.Sistemska("necitljivo", u.Engleski, "Rubrika {field} nije čitljiva na skenu – pošaljite čitljiviji dokument.").Replace("{field}", r);
                     Dodaj(rl.Nalazi, new Nalaz { Pravilo = "CITLJIVOST", Rubrika = r, Tezina = Tezina.Upozorenje, TezinaPravila = Tezina.Upozorenje, Tekst = tekst, Uputstvo = tekst, Vrednost = TekstRubrike(cim, r), Kljuc = "citljivost|" + r });
+                    rl.ZaRucnuProveru = true;
+                }
+                // v2.8: sken niske pouzdanosti (OCR strane ispod 0,75): ono što je OCR pročitao nije osnova za grešku ni upozorenje
+                // o sadržaju – samo interna napomena „r<N> nečitljiva – proveriti ručno“ (sa onim što je agent pročitao); list ide na
+                // ručnu proveru i izveštaj je interni (pošiljaocu ništa dok čovek ne pogleda).
+                if (k.Ocr && cim.PouzdanostStrane > 0 && cim.PouzdanostStrane < PragSkena)
+                {
+                    foreach (var n in rl.Nalazi.Where(n => n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje).ToList())
+                    {
+                        var procitano = !string.IsNullOrEmpty(n.Detalj) ? n.Detalj : n.Tekst;
+                        n.Tekst = (u.Engleski ? "Box " + n.Rubrika + " is not reliably readable on the scan (OCR " : "Rubrika " + n.Rubrika + " nije pouzdano čitljiva na skenu (OCR ")
+                                  + cim.PouzdanostStrane.ToString("0.00") + (u.Engleski ? ") – check manually. Agent read: " : ") – proveriti ručno. Agent je pročitao: ") + procitano;
+                        n.Uputstvo = n.Tekst; n.Detalj = ""; n.Primer = "";
+                        n.Tezina = Tezina.Info; n.SamoInterno = true;
+                        n.Kljuc = "rucno|" + n.Kljuc;
+                    }
                     rl.ZaRucnuProveru = true;
                 }
                 rl.Nalazi = SpojiPoRubrici(rl.Nalazi);

@@ -10,5 +10,4 @@ recommendation	R25-MASA	r25
 warning	X30	r21
 error	KP7-PLATILAC	r7
 recommendation	REC1	r8
-recommendation	REC3	r–
 recommendation	REC8	r1

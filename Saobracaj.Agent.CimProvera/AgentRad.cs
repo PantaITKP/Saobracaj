@@ -255,7 +255,8 @@ namespace Saobracaj.Agent.CimProvera
                 if (neispravnih > 0) log.Upozorenje("  UID " + uid.Id + ": naslov/telo maila ima " + neispravnih + " neispravnih Unicode znakova (usamljeni surogat) – zamenjeni znakom U+FFFD.");
                 var vanBmp = ZnakoviVanBmp(tekstMaila);
                 if (vanBmp.Length > 0) log.Info("  UID " + uid.Id + ": naslov/telo sadrži znakove van osnovne ravni (emoji i sl.): " + vanBmp);
-                var en = Obrada.JeEngleskiIliNemacki(TekstUtil.Ocisti(tekstMaila));
+                // v2.8: jezik po pošiljaocu (interni i .rs/.ba/.me/.hr/.si → srpski), ne po citiranom tekstu maila
+                var en = Obrada.EngleskiZaPosiljaoca(od, cfg.JeInterni);
                 var datum = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime;
                 log.Info("  UID " + uid.Id + " " + kljuc + ": " + prilozi.Count + " priloga, od " + od + (jeOdlazni ? " (odlazni)" : ""));
 
@@ -286,7 +287,7 @@ namespace Saobracaj.Agent.CimProvera
                 }
 
                 var r = ishod.Provera;
-                if (!r.ImaTovarniList && (ishod.NisuProcitani.Count > 0 || ishod.Neprepoznati.Count > 0))
+                if (!r.ImaTovarniList && (ishod.NisuProcitani.Count > 0 || ishod.Neprepoznati.Count > 0 || ishod.NisaPouzdanost.Count > 0))
                 {
                     // Ne sme se zaključiti "nema CIM-a" ako neki prilog nije ni pročitan ni prepoznat: samo interna poruka, ne pošiljaocu.
                     log.Upozorenje("  UID " + uid.Id + ": prilozi nisu pročitani/prepoznati, ne može da se utvrdi da li mail sadrži CIM – ručna provera.");
@@ -348,13 +349,36 @@ namespace Saobracaj.Agent.CimProvera
             // Nalazi "samo interno" (npr. r49 koju popunjava KP kao prevoznik) ne idu spoljnom pošiljaocu: on dobija izveštaj
             // bez njih, a puni izveštaj ide kao interna kopija (KopijaNa). U režimu Test sve ide na IzvestajAdresa.
             var od0 = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
-            if (!odlazni && cfg.Rezim == Rezim.Live && !cfg.JeInterni(od0) && r.ImaInternih)
+            // v2.8: list koji je izdao KP (r62 = 3212) ili list na ručnoj proveri → samo interni izveštaj, nikad pošiljaocu
+            var razlog = Izvestaj.RazlogInternog(r, pravila);
+            if (razlog != null) { PosaljiInterniIzvestaj(m, r, pravila, nisuProcitani, razlog); return; }
+            // v2.8: nalazi „samo interno“ (npr. R49) se filtriraju iz izveštaja za pošiljaoca i iz PDF primera i u režimu Test
+            if (!odlazni && !cfg.JeInterni(od0) && r.ImaInternih)
             {
                 PosaljiIzvestaj(m, r.BezInternih(), pravila, en, false, nisuProcitani, bezKopije: true);
-                if (cfg.KopijaNa.Count > 0) PosaljiInterno(m, r, pravila, en, nisuProcitani);
+                if (cfg.Rezim == Rezim.Live && cfg.KopijaNa.Count > 0) PosaljiInterno(m, r, pravila, en, nisuProcitani);
                 return;
             }
             PosaljiIzvestaj(m, r, pravila, en, odlazni, nisuProcitani, false);
+        }
+
+        /// <summary>Interni izveštaj (KP tovarni list ili ručna provera): Test – IzvestajAdresa; Live – KopijaNa i UpozorenjaNa. Uvek na srpskom.</summary>
+        private void PosaljiInterniIzvestaj(MimeMessage m, RezultatProvere r, PravilaSkup pravila, List<string> nisuProcitani, string razlog)
+        {
+            var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
+            var primaoci = cfg.Rezim == Rezim.Test ? new List<string> { cfg.IzvestajAdresa }
+                : cfg.KopijaNa.Concat(new[] { cfg.UpozorenjaNa }).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (primaoci.Count == 0) { log.Upozorenje("    interni izveštaj nema primaoca (KopijaNa/UpozorenjaNa)."); return; }
+            var naslov = Izvestaj.Naslov(r, pravila, false);
+            var uvod = (cfg.Rezim == Rezim.Test ? "[TEST] " : "") + Izvestaj.UvodInternog(razlog, od) + " Mail „" + m.Subject + "“, " + m.Date.LocalDateTime.ToString("dd.MM.yyyy HH:mm") + ".";
+            var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? NapraviPrimer(r, pravila, false) : null;
+            var telo = Izvestaj.Telo(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false));
+            var html = Izvestaj.Html(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false));
+            var poruka = Slanje.Nova(cfg, primaoci, null, naslov, telo, odgovorNa: m, html: html);
+            if (primer?.Napravljen == true) Slanje.DodajPrilog(poruka, primer.Ime, primer.Pdf);
+            if (dryRun) { log.Info("    [dry-run] interni izveštaj za " + string.Join(", ", primaoci) + ": " + naslov); Console.WriteLine(telo); return; }
+            Slanje.Posalji(cfg, poruka);
+            log.Info("    interni izveštaj (" + (razlog == Izvestaj.RazlogKp ? "KP tovarni list, r62 = 3212" : "ručna provera") + ") poslat na " + string.Join(", ", primaoci) + ": " + naslov);
         }
 
         /// <summary>Puni izveštaj (sa nalazima "samo interno") za KopijaNa, bez odgovora pošiljaocu.</summary>
@@ -465,7 +489,7 @@ namespace Saobracaj.Agent.CimProvera
         internal static (string naslov, string telo, List<string> primaoci) InternaRucnaProvera(AgentConfig cfg, MimeMessage m, Ishod ishod)
         {
             var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
-            var neprepoznati = ishod.Neprepoznati.Concat(ishod.NisuProcitani.Select(x => x.Split(':')[0])).Select(x => System.IO.Path.GetFileName(x.Split('/').Last())).Distinct().ToList();
+            var neprepoznati = ishod.Neprepoznati.Concat(ishod.NisuProcitani.Concat(ishod.NisaPouzdanost).Select(x => x.Split(':')[0])).Select(x => System.IO.Path.GetFileName(x.Split('/').Last())).Distinct().ToList();
             var primaoci = cfg.Rezim == Rezim.Test ? new List<string> { cfg.IzvestajAdresa }
                 : cfg.KopijaNa.Concat(new[] { cfg.UpozorenjaNa }).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var naslov = "[INTERNO] Ručna provera – " + System.Text.RegularExpressions.Regex.Replace(m.Subject ?? "", @"\s+", " ").Trim();
@@ -473,7 +497,7 @@ namespace Saobracaj.Agent.CimProvera
             if (cfg.Rezim == Rezim.Test) sb.AppendLine("[TEST] Interna poruka – ne ide pošiljaocu (" + od + ").").AppendLine();
             sb.AppendLine("Mail „" + m.Subject + "“ od " + od + ", " + m.Date.LocalDateTime.ToString("dd.MM.yyyy HH:mm") + ".").AppendLine();
             sb.AppendLine("Tovarni list nije automatski prepoznat. " + (neprepoznati.Count == 1 ? "Prilog " + neprepoznati[0] + " nije mogao da se pročita" : "Prilozi " + string.Join(", ", neprepoznati) + " nisu mogli da se pročitaju") + " – proverite ručno.");
-            if (ishod.NisuProcitani.Count > 0) sb.AppendLine("Razlog: " + string.Join("; ", ishod.NisuProcitani) + ".");
+            if (ishod.NisuProcitani.Count + ishod.NisaPouzdanost.Count > 0) sb.AppendLine("Razlog: " + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + ".");
             if (ishod.OpisPriloga.Count > 0) sb.AppendLine().AppendLine(Izvestaj.PriloziTekst(new RezultatProvere { OpisPriloga = ishod.OpisPriloga }, false));
             return (naslov, sb.ToString(), primaoci);
         }

@@ -11,7 +11,5 @@ error	R21-EWC	r21
 warning	X27	r9
 warning	X28	r20
 info	KP7-INFO	r7
-recommendation	REC3	r–
 recommendation	REC4	r57
-recommendation	REC6	r–
 recommendation	REC8	r1

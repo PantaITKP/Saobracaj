@@ -99,6 +99,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// </summary>
         internal List<Strana> Strane(Prilog p, bool uvekOcr = false)
         {
+            if (p.Strane != null) return p.Strane;
             List<Strana> strane = null;
             var kesStrana = Path.Combine(kesFolder, p.Hes + "_strane_" + Prilog.Sha256(Encoding.UTF8.GetBytes(VerzijaTeksta + cfg.OcrJezici + "|" + cfg.OcrDodatniJezici + cfg.OcrMinPouzdanostReci)).Substring(0, 8) + ".json");
             if (!uvekOcr && File.Exists(kesStrana))
@@ -212,7 +213,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return null;
         }
 
-        private static readonly string[] SpisakNaslov = { "kocsijegyzek", "wagenliste", "spisak kola", "списак кола", "wagon list", "liste des wagons", "vykaz vozu" };
+        private static readonly string[] SpisakNaslov = { "kocsijegyzek", "wagenliste", "wagen liste", "spisak kola", "списак кола", "wagon list", "liste des wagons", "lista de vagoane", "vykaz vozu" };
 
         private static readonly string[] DodatniNaslov = { "potlap", "zusatzblatt", "erganzungsblatt", "ergaenzungsblatt", "dodatni list", "додатни лист", "additional sheet", "feuille complementaire" };
 
@@ -227,7 +228,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var spisakTekst = ExcelCitac.SpisakKljucevi.Any(k => t.Contains(TekstUtil.Kljuc(k)));
             var formaCim = CimKljucevi.Any(k => t.Contains(TekstUtil.Kljuc(k)));
             var sidara = sablon.BrojSidara(s.Reci);
-            var naslovSpiska = Ima("spisak kola", "списак кола", "nachweisung", "wagenliste", "wagon list", "liste des wagons", "vykaz vozu");
+            var naslovSpiska = Ima("spisak kola", "списак кола", "nachweisung", "wagenliste", "wagen liste", "wagon list", "liste des wagons", "lista de vagoane", "vykaz vozu");
 
             // Dodatni list (Pótlap / Zusatzblatt / Dodatni list) po NASLOVU na vrhu strane i odeljcima „Rovat 7 / Feld 7“ – nije drugi tovarni list.
             // (Prednja strana pominje „Siehe Zusatzblatt“ u r7/r20, ali ne u naslovu.)
@@ -241,6 +242,11 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // Spisak kola po NASLOVU na vrhu strane („Kocsijegyzék / Wagenliste“) – i kada ima mnogo natpisa polja kao obrazac
             if (SpisakNaslov.Any(k => naslov.Contains(TekstUtil.Kljuc(k))) && !CimKljucevi.Any(k => naslov.Contains(TekstUtil.Kljuc(k))))
             { nadjeno.Add("naslov spiska kola"); return Vrati(TipDokumenta.SpisakKola); }
+
+            // CIT 7 – naknadni nalog / izmena ugovora o prevozu (Nachträgliche Verfügung): poseban dokument, nije CIM/CUV
+            if (Ima("nachtragliche verfugung", "nachtraegliche verfuegung", "naknadni zahtev", "naknadni nalog", "накнадни захтев", "накнадни налог", "subsequent order", "ordre ulterieur", "modification of the contract of carriage")
+                || (Rec("cit7") || Ima("cit 7 ")) && !formaCim)
+            { nadjeno.Add("CIT 7 naknadni nalog"); return Vrati(TipDokumenta.Cit7); }
 
             // Sadržaj strane ima prednost nad imenom fajla ("JCI and CIM….pdf", "WAGON 11.pdf"): obrazac CIM/CUV se prepoznaje
             // po naslovu obrasca ili po velikom broju odštampanih naziva rubrika.
@@ -278,21 +284,34 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             if (Rec("lrn") && Rec("ucr") && Rec("tir") && Ima("odredisn", "одредишн", "office of destination", "bestimmungsstelle"))
                 return Vrati(TipDokumenta.TranzitnaDeklaracija);
 
-            var poImenu = ExcelCitac.TipPoImenu(fajl);
-            if (poImenu != null) { nadjeno.Add("ime fajla"); return Vrati(poImenu); }
-
-            // Carinski i prateći dokumenti po imenu fajla i naslovu – pre spiska kola (izvozna deklaracija takođe nabraja kola).
-            if (ImeIma("vdd", "ead", "izvoz", "export", "ex-a", "exa", "ecs") || Ima("export accompanying document", "izvozni prateci", "prateci izvozni", "ausfuhrbegleitdokument", "izvozna deklaracija", "export declaration"))
-                return Vrati(TipDokumenta.IzvoznaDeklaracija);
-            if (ImeIma("t1", "t-1", "tad", "t2", "ncts") || (Ima("transit accompanying document", "tranzitni prateci", "prateci tranzitni", "versandbegleitdokument", "transit declaration") && mrn))
-                return Vrati(TipDokumenta.TranzitnaDeklaracija);
-            if (ImeIma("ens", "jci") || Ima("entry summary declaration", "jedinstvena carinska isprava")) return Vrati(TipDokumenta.DrugaCarinska);
-            // Faktura pre EUR.1: "Invoice / Purchase Contract / Total" je faktura i kada sadrži "EUR" i broj
+            // ---- v2.8: SADRŽAJ pre imena fajla. Ime fajla nikad ne određuje tip strane kada sadržaj daje jasan rezultat
+            // („SET EXPORT TREN SARE.pdf“: str. 4 je CUV, str. 3 faktura, str. 6 EUR.1 – ne sve „izvozna deklaracija“).
+            // Natpis obrasca CIM/CUV („Lettre de voiture CIM“, „Wagenbrief CUV“, „Tovarni list“…) i bar 2 natpisa rubrika (sken)
+            if (formaCim && sidara >= 2 && !naslovSpiska) { nadjeno.Add("naslov obrasca, " + sidara + " naziva rubrika"); return Vrati(TipDokumenta.Cim); }
+            // Natpisi rubrika bez naslova obrasca: kopija lista („Duplikat“, list 2/3, „Feuille …“) ili poleđina – ne faktura
+            // („Frankaturrechnung“ je natpis rubrike 52, ne faktura)
+            if (sidara >= 8 && !naslovSpiska) { nadjeno.Add(sidara + " naziva rubrika bez naslova – kopija ili poleđina lista"); return Vrati(TipDokumenta.KopijaLista); }
+            // Faktura pre EUR.1: "Invoice / Purchase Contract / Total" je faktura i kada sadrži "EUR" i broj; reči samo kao cele reči
             var fakturaZnaci = new[] { "purchase contract", "shipment method", "payment terms", "total", "amount", "price" }.Count(x => t.Contains(" " + x));
-            if (ImeIma("fv", "faktura", "invoice", "rechnung") || Ima("invoice", "inovice", "faktura", "rechnung", "racun br", "facture", "proforma") || fakturaZnaci >= 2)
+            if (Rec("invoice", "inovice", "faktura", "rechnung", "facture", "factura", "proforma") || Ima("racun br", "commercial invoice") || fakturaZnaci >= 2)
             { if (fakturaZnaci >= 2) nadjeno.Add(fakturaZnaci + " oznaka fakture"); return Vrati(TipDokumenta.Faktura); }
             // EUR.1 samo po natpisu uverenja o kretanju robe (ne po "EUR" + "1" iz zaglavlja tabele)
-            if (ImeIma("eur1", "eur.1", "eur 1") || Ima("movement certificate", "uverenje o kretanju robe", "warenverkehrsbescheinigung", "certificat de circulation")) return Vrati(TipDokumenta.Eur1);
+            if (Ima("movement certificate", "uverenje o kretanju robe", "warenverkehrsbescheinigung", "certificat de circulation")) return Vrati(TipDokumenta.Eur1);
+            if (Ima("export accompanying document", "izvozni prateci", "prateci izvozni", "ausfuhrbegleitdokument", "izvozna deklaracija", "export declaration"))
+                return Vrati(TipDokumenta.IzvoznaDeklaracija);
+            if (Ima("transit accompanying document", "tranzitni prateci", "prateci tranzitni", "versandbegleitdokument", "transit declaration") && mrn)
+                return Vrati(TipDokumenta.TranzitnaDeklaracija);
+            if (Ima("entry summary declaration", "jedinstvena carinska isprava")) return Vrati(TipDokumenta.DrugaCarinska);
+            if (spisakTekst && Ima("wagenliste", "spisak kola", "wagon list", "списак кола", "liste des wagons", "cit 23", "cit23") && sidara < 20) return Vrati(TipDokumenta.SpisakKola);
+
+            // ---- ime fajla: samo kada sadržaj strane nije dao rezultat
+            var poImenu = ExcelCitac.TipPoImenu(fajl);
+            if (poImenu != null) { nadjeno.Add("ime fajla"); return Vrati(poImenu); }
+            if (ImeIma("vdd", "ead", "izvoz", "export", "ex-a", "exa", "ecs")) return Vrati(TipDokumenta.IzvoznaDeklaracija);
+            if (ImeIma("t1", "t-1", "tad", "t2", "ncts")) return Vrati(TipDokumenta.TranzitnaDeklaracija);
+            if (ImeIma("ens", "jci")) return Vrati(TipDokumenta.DrugaCarinska);
+            if (ImeIma("fv", "faktura", "invoice", "rechnung")) return Vrati(TipDokumenta.Faktura);
+            if (ImeIma("eur1", "eur.1", "eur 1")) return Vrati(TipDokumenta.Eur1);
 
             if (ImeIma(SpisakImena) && !formaCim) return Vrati(TipDokumenta.SpisakKola);
             if (formaCim && sidara >= 8 && !(spisakTekst && sidara < 15 && !Ima("frachtbrief cim", "consignment note", "tovarni list", "товарни лист"))) return Vrati(TipDokumenta.Cim);
@@ -344,11 +363,26 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 }
                 var tip = TipStrane(s, p.Naziv, out var razlogTipa);
                 rez.StraneOpis.Add("str." + s.Broj + " " + tip + " (" + (razlogTipa.Length > 0 ? razlogTipa + "; " : "") + s.SrednjaPouzdanost.ToString("0.00") + ")");
+                if (s.Izvor == IzvorTeksta.Ocr && s.SrednjaPouzdanost < 0.75 && !TipDokumenta.JeTovarniList(tip) && tip != TipDokumenta.KopijaLista) rez.NisaPouzdanost.Add(s.Broj);
                 if (tip == TipDokumenta.Ostalo && s.Izvor == IzvorTeksta.Ocr && sablon.BrojSidara(s.Reci) >= 3)
                 {
                     // Liči na CIM/CUV obrazac, ali OCR nije pročitao dovoljno naziva rubrika – ne sme da se zaključi "nema CIM-a".
                     rez.NeprocitaneStrane++;
                     napomene.Add("str. " + s.Broj + ": liči na CIM/CUV obrazac, ali nije pouzdano pročitana (OCR pouzdanost " + s.SrednjaPouzdanost.ToString("0.00") + ")");
+                }
+
+                // Kopija ili poleđina lista (natpisi rubrika bez naslova obrasca): pripaja se poslednjem tovarnom listu u fajlu;
+                // nije faktura i nije prilog u r9. Bez lista ispred – čita se kao tovarni list.
+                if (tip == TipDokumenta.KopijaLista)
+                {
+                    var list = rez.Dokumenti.LastOrDefault(d => TipDokumenta.JeTovarniList(d.Tip));
+                    if (list != null)
+                    {
+                        list.Strane.Add(s.Broj); list.Opis += "; str. " + s.Broj + " kopija/poleđina lista";
+                        prethodni = null; prethodniTip = null;
+                        continue;
+                    }
+                    tip = TipDokumenta.Cim;
                 }
 
                 // Poleđina lista (računski odseci, preslikan tekst prednje strane) nije novi list i ne proverava se.
@@ -394,7 +428,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     // Nečitljive rubrike skena: ponovni OCR samo njihovog pravougaonika (veća rezolucija, srp/hrv/deu).
                     if (PonoviNecitljive(p, s, raspored, cim) is CimSablon.Rezultat bolji) { raspored = bolji; cim = CimParser.Napravi(raspored, s, Pragovi); }
                     // Word → PDF: vrednosti su tekstualni sloj (bez OCR-a) – nema nečitljivih rubrika
-                    if (raspored.IzWorda) CimParser.BezNecitljivih(cim);
+                    // PDF sa poljima obrasca (AcroForm, npr. GK30): vrednosti su u poljima – štampane tačkice u r25 nisu nečitljiv upis
+                    if (raspored.IzWorda || s.Reci.Any(w => w.Font == "AcroForm")) CimParser.BezNecitljivih(cim);
+                    // pouzdanost OCR-a strane: sken ispod 0,75 – nalazi o sadržaju rubrika postaju interne napomene (Motor, v2.8)
+                    if (s.Izvor == IzvorTeksta.Ocr) cim.PouzdanostStrane = Math.Round(s.SrednjaPouzdanost, 2);
                     cim.Sablon = raspored.Obrazac.Id;
                     cim.StranaLista = s.Broj;
                     foreach (var kv in raspored.Obrazac.Rubrike) if (raspored.NaStrani(kv.Value) is double[] ok) cim.Okviri[kv.Key] = ok.Select(v => Math.Round(v, 4)).ToArray();
