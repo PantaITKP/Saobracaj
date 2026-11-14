@@ -80,6 +80,12 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>Potpis u mailu sa izveštajem: ime (prazno = potpis počinje odeljenjem), telefon, odeljenje, e-mail.</summary>
         public string PotpisIme, PotpisTelefon, PotpisOdeljenje, PotpisEmail;
 
+        // v2.9.0: upis u privremene tabele planiranje.tmp* (posle provere; greška ne menja proveru ni izveštaj)
+        /// <summary>Upis poslova i teretnica u bazu (podrazumevano isključeno; na serveru true).</summary>
+        public bool UpisUBazu;
+        /// <summary>Konekcija za upis: samo Konekcija.dpapi (DPAPI pod servisnim nalogom) ili CIMPROVERA_KONEKCIJA (ručni test).</summary>
+        public string Konekcija;
+
         public string Bazni => AppDomain.CurrentDomain.BaseDirectory;
 
         public static AgentConfig Ucitaj() => Ucitaj(ConfigurationManager.AppSettings);
@@ -163,8 +169,23 @@ namespace Saobracaj.Agent.CimProvera
             cfg.LogFolder = Apsolutna(cfg.LogFolder);
 
             cfg.Lozinka = Tajna("Lozinka", "CIMPROVERA_LOZINKA");
+            cfg.UpisUBazu = B("UpisUBazu", false);
+            cfg.Konekcija = KonekcijaIz(Tajna("Konekcija", "CIMPROVERA_KONEKCIJA"), S("Konekcija", ""));
             return cfg;
         }
+
+        /// <summary>
+        /// Konekcija za upis samo iz Konekcija.dpapi (DPAPI pod servisnim nalogom, Instaliraj.ps1) ili promenljive CIMPROVERA_KONEKCIJA
+        /// (ručni test). Connection string u otvorenom tekstu (ključ „Konekcija“) se ne koristi – null, upozorenje bez sadržaja konekcije.
+        /// </summary>
+        internal static string KonekcijaIz(string tajna, string otvoreno)
+        {
+            if (!string.IsNullOrWhiteSpace(otvoreno)) OtvorenaKonekcija = true;
+            return string.IsNullOrWhiteSpace(tajna) ? null : tajna.Trim();
+        }
+
+        /// <summary>U config-u je connection string u otvorenom tekstu (ključ „Konekcija“) – ne koristi se.</summary>
+        public static bool OtvorenaKonekcija;
 
         /// <summary>Relativna putanja se računa od foldera exe-a.</summary>
         public static string Apsolutna(string p) =>

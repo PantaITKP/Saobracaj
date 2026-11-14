@@ -316,6 +316,8 @@ namespace Saobracaj.Agent.CimProvera
                         obrada.ZapamtiUDosije(rr);
                     }
                     catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": " + Ponavljanja.Ime + " nije upisan: " + ex.Message); }
+                    // v2.9.0: upis u privremene tabele – posle provere i izveštaja; greška ne menja ni jedno ni drugo
+                    UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, rr, prilozi, obrada.PoslednjaPosiljka);
                 }
                 var istiPrilog = ponavljanja.IstiPrilozi(prilozi);
                 if (istiPrilog != null)
@@ -433,6 +435,41 @@ namespace Saobracaj.Agent.CimProvera
                 dodatak = null;
                 Zapamti((Izvestaj.RazlogInternog(r, pravila) != null ? "interni izveštaj" : "izveštaj") + " poslat", r, true);
                 return Korak.Obradjena;
+            }
+        }
+
+        /// <summary>v2.9.0: jedan upis po prolazu (šifarnici se učitavaju jednom).</summary>
+        private Baza.UpisUBazu upis;
+
+        /// <summary>
+        /// v2.9.0: upis obrađenog maila u planiranje.tmp* (UpisUBazu = true). Jedan mail = jedna transakcija; greška → rollback, log i
+        /// jedno interno obaveštenje (najviše jednom na 6 h). Provera i izveštaj su već završeni i ne menjaju se.
+        /// </summary>
+        private void UpisiUBazu(Stanje stanje, PravilaSkup pravila, MimeMessage m, long uid, string folder, RezultatProvere r, List<(string ime, byte[] sadrzaj)> prilozi, Dosije.Posiljka dosije)
+        {
+            if (!cfg.UpisUBazu || r == null || dryRun) return;
+            if (string.IsNullOrEmpty(cfg.Konekcija))
+            {
+                log.Upozorenje("  UID " + uid + ": upis u bazu je uključen, ali konekcija nije podešena" + (AgentConfig.OtvorenaKonekcija ? " (ključ Konekcija u otvorenom tekstu se ne koristi – samo Konekcija.dpapi)" : "") + " – preskočeno.");
+                Upozori(stanje, "upis-baza", "Upis u bazu (UpisUBazu = true) nije podešen: nema konekcije (Konekcija / Konekcija.dpapi / CIMPROVERA_KONEKCIJA). Provera i izveštaji rade normalno.", 24);
+                return;
+            }
+            try
+            {
+                upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp);
+                var ishod = upis.Upisi(new Baza.MailZaUpis
+                {
+                    MessageId = m.MessageId ?? "", Uid = uid, Sanduce = cfg.Nalog + "|" + folder, Posiljalac = m.From.Mailboxes.FirstOrDefault()?.Address ?? "",
+                    Naslov = m.Subject ?? "", Primljeno = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime, Telo = TeloMaila(m),
+                    Prilozi = prilozi, Provera = r, Dosije = dosije,
+                });
+                log.Info("  UID " + uid + ": upis u bazu – " + ishod);
+            }
+            catch (Exception ex)
+            {
+                log.Greska("  UID " + uid + ": upis u bazu nije uspeo (rollback) – provera i izveštaj nisu promenjeni", ex);
+                Upozori(stanje, "upis-baza", "Upis u privremene tabele (planiranje.tmp*) nije uspeo za mail UID " + uid + " „" + m.Subject + "“: " + ex.Message
+                    + Environment.NewLine + "Transakcija je vraćena (rollback). Provera i izveštaj su poslati normalno. Detalji su u logu.", 6);
             }
         }
 

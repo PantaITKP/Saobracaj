@@ -268,6 +268,21 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je za ta kola označen RID.")] public bool Rid { get; set; }
         [Opis("MRN brojevi upisani uz ta kola/UTI.")] public List<string> Mrn { get; set; } = new List<string>();
         [Opis("Da li su kola prazna.")] public bool Prazna { get; set; }
+        // v2.9.0: vrednosti po kolima za upis teretnice (tmpTeretnicaStavke); null = kolona nije na spisku ili je prazna
+        /// <summary>Redni broj sa spiska (0 = nije upisan).</summary>
+        [Interni] public int Rb { get; set; }
+        [Interni] public double? TaraKg { get; set; }
+        [Interni] public double? NetoKg { get; set; }
+        [Interni] public double? BrutoKg { get; set; }
+        [Interni] public int? Osovine { get; set; }
+        /// <summary>Dužina preko odbojnika u metrima.</summary>
+        [Interni] public double? DuzinaM { get; set; }
+        /// <summary>Serija / slovna oznaka sa spiska (Sgns, Eanos…), prazno ako nije upisana.</summary>
+        [Interni] public string Serija { get; set; } = "";
+        /// <summary>Napomena sa spiska za ta kola (kolona napomena/primedba).</summary>
+        [Interni] public string Napomena { get; set; } = "";
+        /// <summary>Kemler/UN za ta kola („80/1824“), prazno ako nije upisano.</summary>
+        [Interni] public string KemlerUn { get; set; } = "";
     }
 
     /// <summary>Spisak kola (CIT 23 / Prilog 5).</summary>
@@ -285,6 +300,13 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public double? TaraKg { get; set; }
         [Interni] public double? NetoKg { get; set; }
         [Interni] public double? BrutoKg { get; set; }
+        // v2.9.0: podaci iz zaglavlja spiska (CIT 23 u Excel-u: „Train nr. 256“, „Otpravna stanica | PANČEVO GLAVNA … 72 21001-3“)
+        /// <summary>Broj voza sa spiska („256“), prazno ako nije naveden.</summary>
+        [Interni] public string BrojVoza { get; set; } = "";
+        [Interni] public string OtpravnaTekst { get; set; } = "";
+        [Interni] public string UputnaTekst { get; set; } = "";
+        /// <summary>NHM iz zaglavlja spiska („1001.00“ → „100100“), prazno ako nije naveden.</summary>
+        [Interni] public string NhmZaglavlje { get; set; } = "";
         [Opis("Kola na spisku.")] public List<KolaNaSpisku> Kola { get; set; } = new List<KolaNaSpisku>();
     }
 

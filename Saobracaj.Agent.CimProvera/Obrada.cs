@@ -153,7 +153,29 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8.1: CIT 7 – veza sa listom iz istog maila ili iz ranije obrađenih (stanje\listovi.json), izmene i provere (interno)
             try { ishod.Provera.Cit7 = Cit7Provera.Proveri(ishod.Provera, RanijiListovi?.Invoke(), referentniDatum, NaslovMaila); }
             catch (Exception ex) { log?.Upozorenje("  CIT 7 nije proveren: " + ex.Message); }
+            // v2.9.0 (7a.3): broj kola u tovarnom listu i na spisku kola (i iz dosijea) – interna napomena u izveštaju
+            try { NapomenaBrojaKola(ishod.Provera); }
+            catch (Exception ex) { log?.Upozorenje("  napomena o broju kola nije dodata: " + ex.Message); }
             return ishod;
+        }
+
+        /// <summary>
+        /// v2.9.0 (7a.3): kada se broj kola u r21 (ili r18) razlikuje od broja kola na spisku kola istog maila / dosijea, u izveštaj ide
+        /// interna napomena „Broj kola u r21 (26) ne odgovara spisku kola (28).“ (samo kada su svi spiskovi istog broja kola).
+        /// </summary>
+        internal static void NapomenaBrojaKola(RezultatProvere r)
+        {
+            var spiskovi = r.Dokumenti.Where(d => d.Tip == TipDokumenta.SpisakKola).SelectMany(d => d.Spisak).Where(s => s.Kola.Count > 0)
+                .Select(s => s.Kola.Select(k => k.Broj).Distinct().Count()).Distinct().ToList();
+            if (spiskovi.Count != 1) return;
+            var naSpisku = spiskovi[0];
+            foreach (var l in r.Listovi.Where(x => x.Cim != null && string.IsNullOrEmpty(x.Cim.NeprepoznatObrazac)))
+            {
+                var (rub, n) = Provere.BrojKolaUTekstu(l.Cim.R21?.Tekst) is int a && a > 0 ? ("21", a) : ("18", Provere.BrojKolaUTekstu(l.Cim.R18?.Tekst));
+                if (n <= 0 || n == naSpisku || l.Nalazi.Any(x => x.Pravilo == "INFO-KOLA")) continue;
+                var t = "Broj kola u r" + rub + " (" + n + ") ne odgovara spisku kola (" + naSpisku + ").";
+                l.Nalazi.Add(new Nalaz { Pravilo = "INFO-KOLA", Rubrika = rub, Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = t, Detalj = t, Kljuc = "INFO-KOLA|" + l.Oznaka, SamoInterno = true, Primer = "proverite broj kola u tovarnom listu i na spisku kola" });
+            }
         }
 
         /// <summary>v2.8.4 (8): dosije pošiljaka (stanje\posiljke.json) i podaci o mailu; null = bez dosijea.</summary>

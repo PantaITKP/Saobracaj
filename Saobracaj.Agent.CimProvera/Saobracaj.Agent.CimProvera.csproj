@@ -10,8 +10,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <!-- verzija programa prati verziju pravila (meta.version u cim_validation_rules.json) -->
-    <Version>2.8.4</Version>
+    <!-- verzija programa; v2.9.0: upis u planiranje.tmp* (pravila ostaju 2.8.4, meta.version u cim_validation_rules.json) -->
+    <Version>2.9.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

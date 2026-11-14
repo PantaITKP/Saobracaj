@@ -131,6 +131,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             bool kljucSpiska = false;
             var sviTekstovi = new List<string>();
             int ridKolona = -1;
+            // v2.9.0: red (ćelije) u kome su kola prvi put navedena – vrednosti po kolima za teretnicu
+            var redKola = new Dictionary<string, string[]>();
 
             foreach (var celije in redovi)
             {
@@ -168,9 +170,12 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                     // v2.8.1: kola označena kao prazna u svojoj vrsti („Empty“, „Leer“, „prazna“, rum. „gol“)
                     if (celije.Any(c => Regex.IsMatch(c.Trim(), @"^(empty|leer|leere?|prazn[ao]?|gol|goale|vide|[üu]res)$", RegexOptions.IgnoreCase))) stavka.Prazna = true;
                     spisak.Kola.Add(stavka);
+                    redKola[k] = celije;
                 }
             }
             if (spisak.Kola.Any(k => k.Rid)) spisak.RidOznaka = true;
+            try { PodaciPoKolima(redovi, spisak, redKola); ZaglavljeSpiska(redovi, spisak, opisIzvora); }
+            catch { /* v2.9.0: podaci za teretnicu su dodatak – greška ne sme da promeni proveru */ }
 
             var sve = string.Join("\n", sviTekstovi);
             spisak.UnBrojevi = Regex.Matches(sve.ToUpperInvariant(), @"\bUN\s?-?(\d{4})\b").Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToList();
@@ -199,6 +204,113 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             if (rez.Count == 0)
                 rez.Add(new Dokument { Tip = TipDokumenta.Ostalo, Strane = { 1 }, Opis = opisIzvora + " bez spiska kola i MRN", Fajl = fajl, Izvor = izvor });
             return rez;
+        }
+
+        // ------------------------------------------------------------------------------------------- v2.9.0: podaci po kolima
+
+        private static readonly (string polje, Regex rx)[] KoloneKola =
+        {
+            ("rb", new Regex(@"^(rbr|rb|r br|redni broj|red br|no|nr|pos|lfd nr|br)\.?$", RegexOptions.Compiled)),
+            ("tara", new Regex(@"^(tara|tare|tara vg|tara kola|eigengewicht)\b", RegexOptions.Compiled)),
+            ("neto", new Regex(@"^(neto|netto|net|masa inc|masa incarcaturii|masa robe|masa tereta|weight of goods|ladegewicht)\b", RegexOptions.Compiled)),
+            ("bruto", new Regex(@"^(bruto|brutto|gross|masa bruta|bruttogewicht|ukupna masa)\b", RegexOptions.Compiled)),
+            ("osovine", new Regex(@"^(bros|br os|br\. os|broj osovina|osovin\w*|axles?|achsen?|achsz\w*|nb essieux|os)\b", RegexOptions.Compiled)),
+            ("duzina", new Regex(@"^(duzina|duz|length|lup|lange|laenge|luep|lange uber puffer|lungime)\b", RegexOptions.Compiled)),
+            ("serija", new Regex(@"^(serija|series|gattung|type|tip|vrsta kola|kategorija|wagon type|typ)\b", RegexOptions.Compiled)),
+            ("napomena", new Regex(@"^(napomena|primedba|remarks?|bemerkung\w*|note|notes)\b", RegexOptions.Compiled)),
+            ("kemler", new Regex(@"^(kemler|un broj|un nr|un no|un)\b", RegexOptions.Compiled)),
+        };
+
+        /// <summary>
+        /// v2.9.0: vrednosti po kolima iz kolona spiska (red zaglavlja: bar dve prepoznate kolone): tara/neto/bruto (kg; kolona sa
+        /// vrednostima ispod 200 je u tonama), broj osovina, dužina (m; vrednosti preko 1000 su u mm, 100–1000 u cm), serija, napomena,
+        /// Kemler/UN i redni broj. Kolona koje nema ostaje null.
+        /// </summary>
+        internal static void PodaciPoKolima(List<string[]> redovi, SpisakKola spisak, Dictionary<string, string[]> redKola)
+        {
+            if (spisak.Kola.Count == 0) return;
+            Dictionary<string, int> kol = null;
+            foreach (var r in redovi)
+            {
+                var k = new Dictionary<string, int>();
+                for (int i = 0; i < r.Length; i++)
+                {
+                    var c = TekstUtil.Kljuc(r[i] ?? "").Trim();
+                    if (c.Length == 0 || c.Length > 40) continue;
+                    foreach (var (polje, rx) in KoloneKola)
+                        if (!k.ContainsKey(polje) && rx.IsMatch(c)) { k[polje] = i; break; }
+                }
+                if (k.Count >= 2 && !r.Any(c => BrojKola(c) != null)) { kol = k; break; }
+            }
+            if (kol == null) return;
+            double? Broj(string s)
+            {
+                var t = Regex.Replace(s ?? "", @"\s", "");
+                // „79 747“, „79.747“ (hiljade) i „79,747“ / „79.75“ (decimale): tačka/zarez sa tačno tri cifre posle je razdvajanje hiljada
+                if (Regex.IsMatch(t, @"^\d{1,3}([.,]\d{3})+$") && !Regex.IsMatch(t, @"^\d{1,2}[.,]\d{3}$")) t = Regex.Replace(t, @"[.,]", "");
+                t = t.Replace(",", ".");
+                return double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v > 0 ? v : (double?)null;
+            }
+            string Celija(string broj, string polje) => kol.TryGetValue(polje, out var i) && redKola.TryGetValue(broj, out var r) && i < r.Length ? (r[i] ?? "").Trim() : null;
+            double? MaxKolone(string polje) => spisak.Kola.Select(x => Broj(Celija(x.Broj, polje))).Where(v => v.HasValue).Select(v => v.Value).DefaultIfEmpty(0).Max();
+            double Faktor(string polje) => MaxKolone(polje) is double m && m > 0 && m < 200 ? 1000 : 1;
+            var fT = Faktor("tara"); var fN = Faktor("neto"); var fB = Faktor("bruto");
+            var maxD = MaxKolone("duzina") ?? 0;
+            var fD = maxD >= 1000 ? 0.001 : maxD >= 100 ? 0.01 : 1;
+            foreach (var x in spisak.Kola)
+            {
+                if (Broj(Celija(x.Broj, "tara")) is double t) x.TaraKg = Math.Round(t * fT);
+                if (Broj(Celija(x.Broj, "neto")) is double n) x.NetoKg = Math.Round(n * fN);
+                if (Broj(Celija(x.Broj, "bruto")) is double b) x.BrutoKg = Math.Round(b * fB);
+                if (Broj(Celija(x.Broj, "osovine")) is double o && o >= 2 && o <= 16 && Math.Abs(o - Math.Round(o)) < 0.01) x.Osovine = (int)Math.Round(o);
+                if (Broj(Celija(x.Broj, "duzina")) is double d && d * fD >= 5 && d * fD <= 50) x.DuzinaM = Math.Round(d * fD, 2);
+                var s = Celija(x.Broj, "serija");
+                if (!string.IsNullOrEmpty(s) && Regex.IsMatch(s, @"^\p{Lu}\p{Ll}{0,12}$")) x.Serija = s;
+                var nap = Celija(x.Broj, "napomena");
+                if (!string.IsNullOrEmpty(nap)) x.Napomena = nap.Length > 100 ? nap.Substring(0, 100) : nap;
+                var ke = Celija(x.Broj, "kemler");
+                if (!string.IsNullOrEmpty(ke) && Regex.IsMatch(ke, @"^\d{2,3}X?\s*/\s*\d{4}$|^\d{4}$")) x.KemlerUn = Regex.Replace(ke, @"\s", "");
+                if (Broj(Celija(x.Broj, "rb")) is double rb && rb >= 1 && rb < 1000 && Math.Abs(rb - Math.Round(rb)) < 0.01) x.Rb = (int)rb;
+            }
+            // provera smisla (OCR skena pomera kolone): tara kola 8–40 t, neto 0 ili 1–100 t, bruto ≥ tara; kolona koja za većinu
+            // kola nema smisla se odbacuje (bolje bez mase nego pogrešna masa)
+            bool Vecina(Func<KolaNaSpisku, double?> v, Func<double, bool> ok) { var l = spisak.Kola.Select(v).Where(x => x.HasValue).Select(x => x.Value).ToList(); return l.Count == 0 || l.Count(ok) >= 0.8 * l.Count; }
+            if (!Vecina(k => k.TaraKg, t => t >= 8000 && t <= 40000)) foreach (var k in spisak.Kola) k.TaraKg = null;
+            if (!Vecina(k => k.NetoKg, n => n == 0 || n >= 1000 && n <= 100000)) foreach (var k in spisak.Kola) k.NetoKg = null;
+            if (!Vecina(k => k.BrutoKg, b => b >= 8000 && b <= 140000)) foreach (var k in spisak.Kola) k.BrutoKg = null;
+            if (spisak.Kola.Any(k => k.TaraKg.HasValue && k.BrutoKg.HasValue) && !Vecina(k => k.TaraKg.HasValue && k.BrutoKg.HasValue ? k.BrutoKg - k.TaraKg : (double?)null, r => r >= -1))
+                foreach (var k in spisak.Kola) { k.TaraKg = null; k.NetoKg = null; k.BrutoKg = null; }
+        }
+
+        private static readonly Regex BrojVozaRx = new Regex(@"(?<![\p{L}])(?:train|voz|vlak|zug|tren|vonat)\s*(?:nr|no|br|broj|number|nummer|n°)?\s*[.:]?\s*(\d{3,6})\s*[A-Z]?(?!\d)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>v2.9.0: broj voza iz teksta („Train nr. 256“, „CIT23 za voz 256 …“, „Train no: 256F“); prazno ako ga nema.</summary>
+        internal static string BrojVoza(string tekst)
+        {
+            var m = BrojVozaRx.Match(tekst ?? "");
+            return m.Success ? m.Groups[1].Value : "";
+        }
+
+        /// <summary>v2.9.0: zaglavlje spiska – broj voza, otpravna i uputna stanica, NHM (redovi „Otpravna stanica | …“).</summary>
+        internal static void ZaglavljeSpiska(List<string[]> redovi, SpisakKola spisak, string opisIzvora)
+        {
+            foreach (var r in redovi)
+            {
+                var c = r.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
+                if (c.Count == 0 || c.Any(x => BrojKola(x) != null)) continue;
+                var red = string.Join(" ", c);
+                if (spisak.BrojVoza.Length == 0) spisak.BrojVoza = BrojVoza(red);
+                var oznaka = TekstUtil.Kljuc(c[0]);
+                var vrednost = c.Count > 1 ? string.Join(" ", c.Skip(1)) : Regex.Replace(c[0], @"^[^:]*:\s*", "");
+                if (vrednost.Length == 0 || vrednost == c[0] && !c[0].Contains(":")) continue;
+                if (spisak.OtpravnaTekst.Length == 0 && Regex.IsMatch(oznaka, @"^(otpravna stanica|otpravna|station of departure|departure station|dispatching station|versandbahnhof|gare expeditrice)")) spisak.OtpravnaTekst = vrednost;
+                else if (spisak.UputnaTekst.Length == 0 && Regex.IsMatch(oznaka, @"^(uputna stanica|uputna|destination station|station of destination|bestimmungsbahnhof|gare destinataire)")) spisak.UputnaTekst = vrednost;
+                else if (spisak.NhmZaglavlje.Length == 0 && Regex.IsMatch(oznaka, @"^(nhm|nhm code|nhm kod|nhm sifra)$"))
+                {
+                    var d = Regex.Replace(vrednost, @"\D", "");
+                    if (d.Length >= 4 && d.Length <= 8) spisak.NhmZaglavlje = d.Length > 6 ? d.Substring(0, 6) : d;
+                }
+            }
         }
 
         /// <summary>12-cifreni broj kola iz ćelije ("31 78 6656 001-5", "317866560015"); null ako ćelija nije broj kola.</summary>

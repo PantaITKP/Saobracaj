@@ -2345,6 +2345,7 @@
     <Compile Include="Planiranje\Forme\EkranOP.cs" />
     <Compile Include="Planiranje\Podaci\TurnusiRepo.cs" />
     <Compile Include="Planiranje\Podaci\TablicaMasaRepo.cs" />
+    <Compile Include="Planiranje\Podaci\TmpCimRepo.cs" />
     <Compile Include="Planiranje\Pravila\Turnusi.cs" />
     <Compile Include="Planiranje\Pravila\XlsxCitac.cs" />
     <Compile Include="Planiranje\Pravila\RazlikeTrasa.cs" />
@@ -2509,6 +2510,26 @@
     </Compile>
     <Compile Include="Planiranje\Forme\frmOPTablicaMasa.NoviIzgled.cs">
       <DependentUpon>frmOPTablicaMasa.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpJobs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpJobs.Designer.cs">
+      <DependentUpon>frmTmpJobs.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpJobs.NoviIzgled.cs">
+      <DependentUpon>frmTmpJobs.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpTeretnica.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpTeretnica.Designer.cs">
+      <DependentUpon>frmTmpTeretnica.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Planiranje\Forme\frmTmpTeretnica.NoviIzgled.cs">
+      <DependentUpon>frmTmpTeretnica.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Planiranje\Forme\frmOPParametri.cs">

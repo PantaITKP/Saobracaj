@@ -270,6 +270,13 @@ namespace Saobracaj.Agent.CimProvera
             var en = Zastavica("--en");
             var sr = Zastavica("--sr");
             var podfolderi = Zastavica("--podfolderi");
+            // v2.9.0: --upis – upis u planiranje.tmp* (konekcija iz config-a / CIMPROVERA_KONEKCIJA); --meta <json> – podaci o mailu po slučaju
+            var upisArg = Zastavica("--upis");
+            var metaF = Opcija("--meta");
+            var meta = metaF == null ? new Dictionary<string, Newtonsoft.Json.Linq.JObject>(StringComparer.OrdinalIgnoreCase)
+                : Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(metaF, Encoding.UTF8)).Properties().ToDictionary(x => x.Name, x => (Newtonsoft.Json.Linq.JObject)x.Value, StringComparer.OrdinalIgnoreCase);
+            Baza.UpisUBazu upis = null;
+            if (upisArg && string.IsNullOrEmpty(cfg.Konekcija)) { Console.Error.WriteLine("--upis: konekcija nije podešena (Konekcija / Konekcija.dpapi / CIMPROVERA_KONEKCIJA)."); return 1; }
             // v2.8.1: test podaci „<ime>.strane.json“ samo uz izričitu zastavicu (u radu nad sandučetom nikad)
             Prilozi.Raspakivanje.DozvoliProcitaneStrane = Zastavica("--test-strane");
             if (a.Count == 0) { Console.Error.WriteLine("Upotreba: validate <fajl|folder>… (vidi --help)"); return 1; }
@@ -305,11 +312,32 @@ namespace Saobracaj.Agent.CimProvera
                 MimeKit.MimeMessage ulazniMail = fajlovi.Count == 1 && fajlovi[0].EndsWith(".eml", StringComparison.OrdinalIgnoreCase) ? MimeKit.MimeMessage.Load(fajlovi[0]) : null;
                 var prilozi = ulazniMail != null ? Prilozi.Raspakivanje.PriloziMaila(ulazniMail).ToList()
                     : fajlovi.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).Select(f => (ime: RelativnaPutanja(koren, f), sadrzaj: File.ReadAllBytes(f))).ToList();
-                posiljalac = posiljalac0 ?? ulazniMail?.From.Mailboxes.FirstOrDefault()?.Address;
-                naslovMaila = naslov0 ?? ulazniMail?.Subject;
+                meta.TryGetValue(ime, out var mt);
+                posiljalac = posiljalac0 ?? ulazniMail?.From.Mailboxes.FirstOrDefault()?.Address ?? (string)mt?["od"];
+                naslovMaila = naslov0 ?? ulazniMail?.Subject ?? (string)mt?["naslov"];
                 en = enZadat || (!sr && ulazniMail != null && posiljalac != null && Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslovMaila, ulazniMail.TextBody));
                 var datum = datumArg != null ? DateTime.ParseExact(datumArg, new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm" }, CultureInfo.InvariantCulture, DateTimeStyles.None)
-                    : ulazniMail != null ? ulazniMail.Date.LocalDateTime : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
+                    : ulazniMail != null ? ulazniMail.Date.LocalDateTime
+                    : mt?["vreme"] != null ? DateTime.ParseExact((string)mt["vreme"], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
+                    : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
+                // v2.9.0: upis posle obrade slučaja (kao u radu nad sandučetom: posle provere i izveštaja)
+                void Upisi(RezultatProvere rr)
+                {
+                    if (!upisArg || rr == null) return;
+                    try
+                    {
+                        upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp);
+                        var iu = upis.Upisi(new Baza.MailZaUpis
+                        {
+                            MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Sanduce = "validate", Posiljalac = posiljalac ?? "",
+                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
+                            Prilozi = prilozi, Provera = rr, Dosije = obrada.PoslednjaPosiljka,
+                        });
+                        log.Info("  " + ime + ": upis u bazu – " + iu);
+                        Console.WriteLine("Upis u bazu: " + iu);
+                    }
+                    catch (Exception ex) { log.Greska("  " + ime + ": upis u bazu nije uspeo (rollback)", ex); Console.WriteLine("Upis u bazu NIJE USPEO: " + ex.Message); }
+                }
                 var primaociLive = ulazniMail != null ? PrimaociLive.Iz(ulazniMail, cfg) : PrimaociLive.Iz(posiljalac, null, null, cfg.Nalog, cfg.ProsledjivanjeNaAgenti);
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
@@ -345,6 +373,7 @@ namespace Saobracaj.Agent.CimProvera
                     if (izlaz != null) { Directory.CreateDirectory(izlaz); File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), t, Encoding.UTF8); }
                     ponavljanja.ZapamtiPriloge(prilozi, oznakaPon, "isti tovarni list kao " + istiL.Oznaka, datum); ponavljanja.Sacuvaj();
                     obrada.ZapamtiUDosije(rPuni);
+                    Upisi(rPuni);
                     continue;
                 }
                 if (ponavljanja != null)
@@ -391,6 +420,7 @@ namespace Saobracaj.Agent.CimProvera
                     sb.AppendLine().AppendLine("================ " + Cit7Provera.Naslov(rPuni.Cit7, naslovMaila ?? ime)).AppendLine(cit7Tekst);
                 }
                 Console.WriteLine(sb.ToString());
+                Upisi(rPuni);
                 ukupnoGresaka += r.BrojGresaka;
 
                 if (izlaz != null)
@@ -525,6 +555,25 @@ namespace Saobracaj.Agent.CimProvera
                     smtp.Disconnect(true);
                 }
             });
+            // v2.9.0: upis u bazu – nije greška testa (provera i izveštaji rade i bez njega); konekcija se ne ispisuje
+            if (cfg.UpisUBazu)
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(cfg.Konekcija)) throw new InvalidOperationException("konekcija nije podešena" + (AgentConfig.OtvorenaKonekcija ? " (ključ Konekcija u otvorenom tekstu se ne koristi – samo Konekcija.dpapi)" : ""));
+                    using (var c = Baza.UpisUBazu.Otvori(cfg.Konekcija))
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(@"SELECT SUSER_SNAME(), DB_NAME(),
+  HAS_PERMS_BY_NAME('planiranje.tmpJobs','OBJECT','INSERT') + HAS_PERMS_BY_NAME('planiranje.tmpTeretnicaStavke','OBJECT','DELETE') + HAS_PERMS_BY_NAME('dbo.stanice','OBJECT','SELECT') + HAS_PERMS_BY_NAME('dbo.Partnerji','OBJECT','SELECT') + HAS_PERMS_BY_NAME('dbo.NHM','OBJECT','SELECT')", c))
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        r.Read();
+                        var prava = r.IsDBNull(2) ? 0 : r.GetInt32(2);
+                        Console.WriteLine((prava == 5 ? "OK    " : "PAŽNJA ") + "upis u bazu: nalog " + r.GetString(0) + ", baza " + r.GetString(1) + (prava == 5 ? ", prava na tmp tabele i šifarnike postoje" : ", nedostaju prava (pokrenuti OP_913_tmp_Prava.sql)"));
+                    }
+                }
+                catch (Exception ex) { Console.WriteLine("PAŽNJA upis u bazu: " + ex.Message); }
+            }
+            else Console.WriteLine("      upis u bazu: isključen (UpisUBazu = false)");
             return greske == 0 ? 0 : 1;
         }
     }
