@@ -104,6 +104,8 @@ WHERE ID IS NOT NULL GROUP BY ID";
     {
         public const double PragPartnera = 0.85;
         public const double PragStanice = 0.88;
+        /// <summary>Partner: kada je drugi kandidat bliži od ovoga prvom, ne upisuje se nijedan (NULL i kandidati).</summary>
+        public const double RazlikaKandidata = 0.05;
         private const double Blizu = 0.03;
         private readonly Sifarnici s;
 
@@ -238,6 +240,14 @@ WHERE ID IS NOT NULL GROUP BY ID";
             var dup = bliski.Where(x => x.st.Norm == izbor.st.Norm && x.st.Id != izbor.st.Id).ToList();
             if (dup.Count > 0) p.Napomena = "duplikat u šifarniku: izabran " + izbor.st.Id + " (upotreba " + Upotreba(izbor.st) + "), ostali: " + string.Join(", ", dup.Select(x => x.st.Id + " (upotreba " + Upotreba(x.st) + ")"));
             var st0 = izbor.st;
+            // sinonim važi i za izabranu stanicu: naziv izabrane stanice je u tmpSinonimi („Pančevo“ 1464 → 246) – i kada OCR šum
+            // („PANČEVO jr“) sprečava tačno poklapanje teksta
+            var preusmeren = s.Sinonimi.FirstOrDefault(x => x.Tip == "STANICA" && x.Tekst == st0.Norm && x.CiljniId != st0.Id);
+            if (preusmeren != null && s.Stanice.FirstOrDefault(x => x.Id == preusmeren.CiljniId) is StanicaZapis cilj)
+            {
+                p.Napomena = (p.Napomena.Length > 0 ? p.Napomena + "; " : "") + "sinonim „" + preusmeren.Tekst + "“: " + st0.Id + " → " + cilj.Id;
+                st0 = cilj;
+            }
             p.Id = st0.Id; p.Pouzdanost = (int)Math.Round(Math.Min(1, izbor.o) * 100);
             if (granicna && !Regex.IsMatch(st0.Norm, @" GR$"))
             {
@@ -278,6 +288,14 @@ WHERE ID IS NOT NULL GROUP BY ID";
                 {
                     var ocene = poUic.Select(z => (z, o: n.Length > 0 ? Ocena(z) : 0)).OrderByDescending(x => x.o).ThenByDescending(x => dr.Contains(x.z.Drzava)).ThenBy(x => x.z.PaSifra).ToList();
                     var z0 = ocene[0];
+                    // ista UIC šifra kod više partnera, a nazivi ne razlikuju jednog (razlika < 0,05): NULL i kandidati (odluka 14.11.)
+                    if (ocene.Count > 1 && ocene[0].o - ocene[1].o < RazlikaKandidata)
+                    {
+                        p.Kandidati = string.Join("; ", ocene.Take(3).Select(x => Opis(x.z, x.o)));
+                        p.Napomena = "UIC " + u + ": " + poUic.Count + " partnera sa istom šifrom, nazivi bliski (razlika < " + RazlikaKandidata.ToString("0.00", CultureInfo.InvariantCulture) + ") – nije upisano";
+                        p.Pouzdanost = (int)Math.Round(80 * z0.o);
+                        return p;
+                    }
                     p.Id = z0.z.PaSifra; p.Pouzdanost = poUic.Count == 1 ? 95 : (int)Math.Round(80 + 15 * z0.o);
                     p.Kandidati = string.Join("; ", ocene.Take(3).Select(x => Opis(x.z, x.o)));
                     p.Napomena = "UIC " + u + (poUic.Count > 1 ? " (" + poUic.Count + " partnera sa istom šifrom, izbor po nazivu)" : "") + (n.Length > 0 && z0.o < 0.5 ? "; naziv iz dokumenta se ne poklapa (" + z0.o.ToString("0.00", CultureInfo.InvariantCulture) + ")" : "");
@@ -288,16 +306,18 @@ WHERE ID IS NOT NULL GROUP BY ID";
             if (n.Length < 2) { p.Napomena += "naziv nije pročitan"; return p; }
             var lista = s.Partneri.Select(z => (z, o: Ocena(z))).Where(x => x.o > 0.5).OrderByDescending(x => x.o).ToList();
             if (lista.Count == 0) { p.Napomena += "partner nije pronađen"; return p; }
-            var naj = lista[0].o;
-            bool Oznaka(PartnerZapis z) => uloga == "prevoznik" ? z.Prevoznik : uloga == "posiljalac" ? z.Posiljalac : uloga == "primalac" ? z.Primalac : false;
-            var izbor = lista.Where(x => x.o >= naj - Blizu)
-                .OrderByDescending(x => dr.Count > 0 && dr.Contains(x.z.Drzava))
-                .ThenByDescending(x => u.Length == 4 && x.z.Uic == u)
-                .ThenByDescending(x => Oznaka(x.z))
-                .ThenByDescending(x => x.o)
-                .ThenBy(x => x.z.PaSifra).First();
+            var izbor = lista[0];
             p.Kandidati = string.Join("; ", lista.Take(3).Select(x => Opis(x.z, x.o)));
             if (izbor.o < PragPartnera) { p.Napomena += "najbliži naziv ispod praga " + PragPartnera.ToString("0.00", CultureInfo.InvariantCulture); p.Pouzdanost = (int)Math.Round(izbor.o * 100); return p; }
+            // dva bliska kandidata (razlika < 0,05): NULL i kandidati – pogrešan partner je gori od praznog (odluka 14.11.;
+            // izuzetak su nazivi iz tmpSinonimi, obrađeni gore)
+            if (lista.Count > 1 && lista[0].o - lista[1].o < RazlikaKandidata)
+            {
+                p.Napomena += "dva bliska kandidata (" + lista[0].z.PaSifra + " " + lista[0].o.ToString("0.00", CultureInfo.InvariantCulture) + ", " + lista[1].z.PaSifra + " "
+                              + lista[1].o.ToString("0.00", CultureInfo.InvariantCulture) + "; razlika < " + RazlikaKandidata.ToString("0.00", CultureInfo.InvariantCulture) + ") – nije upisano";
+                p.Pouzdanost = (int)Math.Round(izbor.o * 50);
+                return p;
+            }
             p.Id = izbor.z.PaSifra; p.Pouzdanost = (int)Math.Round(izbor.o * 100);
             return p;
         }

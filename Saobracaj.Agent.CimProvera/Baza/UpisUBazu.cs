@@ -136,7 +136,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
             // 3. spiskovi kola → teretnice (spiskovi istih kola u istom mailu – Excel i PDF – su jedan spisak)
             var spiskovi = dokumenti.Where(d => d.Tip == TipDokumenta.SpisakKola && d.Spisak.Count > 0 && d.Spisak[0].Kola.Count > 0).ToList();
             var grupe = new List<List<Dokument>>();
-            foreach (var d in spiskovi.OrderByDescending(Bogatstvo))
+            // u istom mailu (ista verzija) Excel/Word ima prednost nad PDF-om i skenom, pa spisak sa više podataka
+            foreach (var d in spiskovi.OrderByDescending(x => x.Izvor == "excel" || x.Izvor == "word").ThenByDescending(Bogatstvo))
             {
                 var g = grupe.FirstOrDefault(x => Preklapanje(x[0].Spisak[0], d.Spisak[0]) >= 0.6);
                 if (g != null) g.Add(d); else grupe.Add(new List<Dokument> { d });
@@ -148,7 +149,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 var jobId = PoveziSpisak(spisak, glavni, posloviMaila, m);
                 var tid = UpisiTeretnicu(spisak, glavni, jobId, g.Select(x => DokId(x.Fajl)).FirstOrDefault(x => x.HasValue), m, ishod);
                 foreach (var d in g) if (DokId(d.Fajl) is int di) Izvrsi("UPDATE planiranje.tmpDokument SET TeretnicaID = @t, JobID = ISNULL(JobID, @j) WHERE ID = @d", "@t", tid, "@j", (object)jobId ?? DBNull.Value, "@d", di);
-                if (jobId.HasValue) PosaoIzTeretnice(jobId.Value, tid, DokId(glavni.Fajl), "SPISAK_KOLA", ishod);
+                if (jobId.HasValue) { Stanica2IzSpiska(jobId.Value, g.Select(x => x.Spisak[0].OtpravnaTekst).Concat(g.Select(x => System.IO.Path.GetFileNameWithoutExtension(x.Fajl ?? ""))).Concat(new[] { m.Naslov }).ToList(), DokId(glavni.Fajl)); PosaoIzTeretnice(jobId.Value, tid, DokId(glavni.Fajl), "SPISAK_KOLA", ishod); }
             }
 
             // 3a. spisak koji je stigao pre tovarnog lista: nepovezane teretnice za nove/izmenjene poslove
@@ -291,7 +292,7 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
             var rucno = Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND RucnoIzmenjeno = 1", "@id", jid);
             // spisak kola ima prednost: kada posao ima teretnicu, zbirni podaci tovarnog lista ne menjaju kolone spiska
             // samo kolone čija je vrednost zaista sa spiska (poreklo „spisak“) – npr. bruto ostaje iz lista kada spisak nema taru
-            var izSpiska = new HashSet<string>(Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND Rubrika = 'spisak'", "@id", jid), StringComparer.OrdinalIgnoreCase);
+            var izSpiska = new HashSet<string>(Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND Rubrika IN ('spisak', 'istorija')", "@id", jid), StringComparer.OrdinalIgnoreCase);
             var promene = Uporedi(stari, p.V, PosaoIzDokumenata.Kolone.Where(k => !izSpiska.Contains(k) && !(poVozu && k == "KljucPosiljke")));
             // vrednost koja u novoj verziji nije pročitana (NULL / 0, pouzdanost 0) ne briše vrednost koja je već pronađena
             foreach (var k in promene.ToList())
@@ -470,7 +471,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
 
         private sealed class StavkaVrednosti
         {
-            public int Rb; public string BrojKola = ""; public string Serija; public decimal Osovine; public decimal Duzina; public decimal Tara; public decimal Neto;
+            public int Rb; public string BrojKola = ""; public string Serija; public decimal Osovine; public decimal? Duzina; public decimal Tara; public decimal Neto;
             public string Vrnp; public string Rid; public string Primedba;
             public Dictionary<string, object> Kolone() => new Dictionary<string, object>
             {
@@ -493,7 +494,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
                 l.Add(new StavkaVrednosti
                 {
                     Rb = k.Rb > 0 ? k.Rb : rb, BrojKola = BrojKolaUic.ZaTeretnicu(k.Broj), Serija = serija.Length == 0 ? null : serija,
-                    Osovine = k.Osovine ?? BrojKolaUic.Osovine(k.Broj), Duzina = Math.Round((decimal)(k.DuzinaM ?? 0), 3),
+                    Osovine = k.Osovine ?? BrojKolaUic.Osovine(k.Broj), Duzina = k.DuzinaM.HasValue ? Math.Round((decimal)k.DuzinaM.Value, 3) : (decimal?)null,
                     Tara = Math.Round((decimal)(tara ?? 0) / 1000m, 3), Neto = Math.Round((decimal)(neto ?? 0) / 1000m, 3), Vrnp = nhm.Length == 0 ? null : nhm,
                     Rid = k.KemlerUn.Length > 0 ? k.KemlerUn : null, Primedba = k.Napomena.Length > 0 ? k.Napomena : null,
                 });
@@ -518,6 +519,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
         {
             var kljuc = KljucSpiska(s, d, m);
             var nhmPosla = jobId.HasValue ? NhmPosla(jobId.Value) : "";
+            DopuniDuzine(s);
             var nove = Stavke(s, nhmPosla);
             var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
             int? tid = postoji == null ? (int?)null : Convert.ToInt32(postoji);
@@ -542,11 +544,10 @@ OUTPUT INSERTED.ID VALUES (@j, @b, 1, 0, 0, 0, @kor, @nap, 0, @d, 1, @ks, @kp, @
                 using (var r = cmd.ExecuteReader())
                     while (r.Read()) { var red = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase); for (int i = 0; i < r.FieldCount; i++) red[r.GetName(i)] = r.GetValue(i); stare[(string)red["BrojKola"]] = red; }
                 int izmena = 0;
-                // spisak iz tabele (Excel/Word) je pouzdaniji od PDF-a/OCR-a: nova verzija iz PDF-a ne menja vrednosti spiska iz tabele
-                // (dodata/uklonjena kola se i dalje upisuju), a OCR ne menja vrednost koja već postoji
+                // prioritet izvora (odluka 14.11.): novija verzija spiska ima prednost nad starijom (dodata/uklonjena/izmenjena kola);
+                // u istom mailu Excel ima prednost nad skenom (Spoji); OCR skena ne gazi popunjenu vrednost iz Excel-a
                 bool Tabela(string f) => System.Text.RegularExpressions.Regex.IsMatch(f ?? "", @"(?i)\.(xlsx?|xlsm|xlsb|csv|docx?)$");
                 var staraTabela = Tabela(Skalar("SELECT d.ImeFajla FROM planiranje.tmpTeretnica t JOIN planiranje.tmpDokument d ON d.ID = t.DokumentID WHERE t.ID = @t", "@t", tid.Value) as string);
-                var novaTabela = Tabela(d?.Fajl) || d?.Izvor == "excel" || d?.Izvor == "word";
                 var ocr = d?.Izvor == "ocr";
                 var zadrzano = 0;
                 foreach (var st in nove)
@@ -554,8 +555,9 @@ OUTPUT INSERTED.ID VALUES (@j, @b, 1, 0, 0, 0, @kor, @nap, 0, @d, 1, @ks, @kp, @
                     if (!stare.TryGetValue(st.BrojKola, out var red)) { DodajStavku(tid.Value, st, dokId); Istorija(jobId, tid, "BrojKola", null, st.BrojKola, dokId, "SPISAK_KOLA", "dodata kola"); izmena++; continue; }
                     var kol = st.Kolone();
                     var raz = Uporedi(red, kol, kol.Keys);
-                    if (staraTabela && !novaTabela) { zadrzano += raz.Count; continue; }
-                    if (ocr) { var pre = raz.Count; raz = raz.Where(k => red[k] == null || red[k] is DBNull || (red[k] is decimal dv && dv == 0)).ToList(); zadrzano += pre - raz.Count; }
+                    // novija verzija ima prednost nad starijom; OCR skena ne gazi popunjenu vrednost iz Excel-a (izvor stavke = njen dokument)
+                    if (ocr && Tabela(ImeDokumenta(red["DokumentID"]) ?? (staraTabela ? ".xlsx" : "")))
+                    { var pre = raz.Count; raz = raz.Where(k => red[k] == null || red[k] is DBNull || (red[k] is decimal dv && dv == 0)).ToList(); zadrzano += pre - raz.Count; }
                     if (raz.Count == 0) continue;
                     var arg = new List<object>();
                     foreach (var k in raz) { arg.Add("@" + k); arg.Add(Db(kol[k])); }
@@ -574,7 +576,7 @@ OUTPUT INSERTED.ID VALUES (@j, @b, 1, 0, 0, 0, @kor, @nap, 0, @d, 1, @ks, @kp, @
                     Istorija(jobId, tid, null, null, null, dokId, "SPISAK_KOLA", PodaciPosla.Skrati("novi spisak (" + System.IO.Path.GetFileName(d?.Fajl ?? "") + (ocr ? ", OCR" : ", PDF")
                         + ") – " + zadrzano + " vrednosti nije menjano (ostaju vrednosti iz pouzdanijeg spiska)", 400));
                 // izvorni dokument teretnice ostaje tabela kada nova verzija nije iz tabele
-                var noviDok = staraTabela && !novaTabela ? (object)DBNull.Value : (object)dokId ?? DBNull.Value;
+                var noviDok = ocr && staraTabela ? (object)DBNull.Value : (object)dokId ?? DBNull.Value;
                 if (izmena > 0)
                     Izvrsi(@"UPDATE planiranje.tmpTeretnica SET Verzija = Verzija + 1, Izmenjeno = SYSDATETIME(), DokumentID = ISNULL(@d, DokumentID), Napomena = CASE WHEN @d IS NULL THEN Napomena ELSE @nap END,
     JobID = ISNULL(JobID, @j), BrojTeretnice = ISNULL(@b, BrojTeretnice) WHERE ID = @t",
@@ -583,14 +585,48 @@ OUTPUT INSERTED.ID VALUES (@j, @b, 1, 0, 0, 0, @kor, @nap, 0, @d, 1, @ks, @kp, @
                 ishod.Teretnica++; ishod.Stavki += izmena;
             }
             if (jobId.HasValue) StaniceTeretnice(jobId.Value, tid.Value);
+            var izIst = s.Kola.Count(k => k.DuzinaIzvor == "istorija"); var bez = s.Kola.Count(k => !k.DuzinaM.HasValue);
+            UpisiPoreklo(null, tid, new PoljePorekla { Kolona = "Duzina", Vrednost = bez == 0 ? (object)Math.Round((decimal)s.Kola.Sum(k => k.DuzinaM ?? 0), 2) : null, Rubrika = izIst > 0 ? "istorija" : "spisak",
+                Tekst = (s.Kola.Count - izIst - bez) + " kola sa spiska, " + izIst + " iz istorije (poslednja dužina istih kola u dbo.TeretnicaStavke), " + bez + " bez dužine (NULL)", Pouzdanost = bez > 0 ? 0 : izIst > 0 ? 80 : 95 }, dokId);
             return tid.Value;
+        }
+
+        /// <summary>Ime fajla dokumenta (tmpDokument.ID), null ako nema.</summary>
+        private string ImeDokumenta(object id) => id == null || id is DBNull ? null : Skalar("SELECT ImeFajla FROM planiranje.tmpDokument WHERE ID = @d", "@d", Convert.ToInt32(id)) as string;
+
+        /// <summary>
+        /// Poslednja dužina (m) istih kola iz dbo.TeretnicaStavke, po broju kola („33839338201-9“). Jedan upit po spisku (tabela nema indekse).
+        /// Može se zameniti u testovima.
+        /// </summary>
+        public Func<IList<string>, Dictionary<string, double>> DuzineIzIstorije;
+
+        private Dictionary<string, double> DuzineIzBaze(IList<string> brojevi)
+        {
+            var rez = new Dictionary<string, double>(StringComparer.Ordinal);
+            if (brojevi.Count == 0) return rez;
+            var imena = new List<string>(); var arg = new List<object>();
+            for (int i = 0; i < brojevi.Count && i < 200; i++) { imena.Add("@k" + i); arg.Add("@k" + i); arg.Add(brojevi[i]); }
+            using (var cmd = Komanda("SELECT BrojKola, Duzina FROM dbo.TeretnicaStavke WHERE BrojKola IN (" + string.Join(", ", imena) + ") AND Duzina > 0 ORDER BY ID DESC", arg.ToArray()))
+            using (var r = cmd.ExecuteReader())
+                while (r.Read()) { var b = r.GetString(0).Trim(); if (!rez.ContainsKey(b)) rez[b] = Convert.ToDouble(r.GetValue(1)); }
+            return rez;
+        }
+
+        /// <summary>Kola bez dužine na spisku dobijaju poslednju dužinu istih kola iz dbo.TeretnicaStavke (poreklo „istorija“); inače ostaje NULL.</summary>
+        private void DopuniDuzine(SpisakKola s)
+        {
+            var bez = s.Kola.Where(k => !k.DuzinaM.HasValue).ToList();
+            if (bez.Count == 0) return;
+            var duz = (DuzineIzIstorije ?? DuzineIzBaze)(bez.Select(k => BrojKolaUic.ZaTeretnicu(k.Broj)).Distinct().ToList());
+            foreach (var k in bez)
+                if (duz.TryGetValue(BrojKolaUic.ZaTeretnicu(k.Broj), out var m) && m >= 5 && m <= 50) { k.DuzinaM = Math.Round(m, 3); k.DuzinaIzvor = "istorija"; }
         }
 
         private void DodajStavku(int tid, StavkaVrednosti st, int? dokId)
         {
             Izvrsi(@"INSERT planiranje.tmpTeretnicaStavke (RB, BrojTeretnice, BrojKola, Serija, BrojOsovina, Duzina, Tara, Neto, G, P, R, RR, RucKoc, VRNP, RID, Primedba, NamernaGreska, Popisana, DokumentID)
 VALUES (@rb, @t, @bk, @s, @o, @du, @ta, @ne, 0, 0, 0, 0, 0, @v, @rid, @pr, 0, 0, @d)",
-                "@rb", st.Rb, "@t", tid, "@bk", st.BrojKola, "@s", (object)st.Serija ?? DBNull.Value, "@o", st.Osovine, "@du", st.Duzina, "@ta", st.Tara, "@ne", st.Neto,
+                "@rb", st.Rb, "@t", tid, "@bk", st.BrojKola, "@s", (object)st.Serija ?? DBNull.Value, "@o", st.Osovine, "@du", (object)st.Duzina ?? DBNull.Value, "@ta", st.Tara, "@ne", st.Neto,
                 "@v", (object)st.Vrnp ?? DBNull.Value, "@rid", (object)st.Rid ?? DBNull.Value, "@pr", (object)st.Primedba ?? DBNull.Value, "@d", (object)dokId ?? DBNull.Value);
         }
 
@@ -619,7 +655,8 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
         private void PosaoIzTeretnice(int jobId, int tid, int? dokId, string razlog, IshodUpisa ishod)
         {
             var s = new SpisakKola();
-            using (var cmd = Komanda("SELECT BrojKola, ISNULL(Serija, ''), ISNULL(BrojOsovina, 0), ISNULL(Duzina, 0), ISNULL(Tara, 0), ISNULL(Neto, 0), ISNULL(VRNP, ''), ISNULL(RID, '') FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t ORDER BY RB", "@t", tid))
+            var izvorDuzine = Skalar("SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE TeretnicaID = @t AND Kolona = 'Duzina'", "@t", tid) as string == "istorija" ? "istorija" : "spisak";
+            using (var cmd = Komanda("SELECT BrojKola, ISNULL(Serija, ''), ISNULL(BrojOsovina, 0), Duzina, ISNULL(Tara, 0), ISNULL(Neto, 0), ISNULL(VRNP, ''), ISNULL(RID, '') FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t ORDER BY RB", "@t", tid))
             using (var r = cmd.ExecuteReader())
                 while (r.Read())
                 {
@@ -627,7 +664,7 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
                     s.Kola.Add(new KolaNaSpisku
                     {
                         Broj = BrojKolaUic.Cifre(r.GetString(0)), Serija = r.GetString(1).Length > 1 ? r.GetString(1) : "", Nhm = r.GetString(6), KemlerUn = r.GetString(7),
-                        TaraKg = tara > 0 ? tara : (double?)null, NetoKg = neto > 0 ? neto : (double?)null, DuzinaM = Convert.ToDouble(r.GetValue(3)) > 0 ? Convert.ToDouble(r.GetValue(3)) : (double?)null,
+                        TaraKg = tara > 0 ? tara : (double?)null, NetoKg = neto > 0 ? neto : (double?)null, DuzinaM = r.IsDBNull(3) ? (double?)null : Convert.ToDouble(r.GetValue(3)), DuzinaIzvor = r.IsDBNull(3) ? "" : izvorDuzine,
                     });
                 }
             if (s.Kola.Count == 0) return;
@@ -655,10 +692,21 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
                 if (!promene.Contains("BrojKola1")) Istorija(jobId, tid, "BrojKola1", kolaCim.ToString(), kolaSpisak.ToString(), dokId, razlog, nap);
             }
             if (promene.Count == 0) return;
-            foreach (var po in p.Poreklo) po.Rubrika = "spisak";
+            foreach (var po in p.Poreklo) if (po.Rubrika != "istorija") po.Rubrika = "spisak";
             PrimeniPromene(jobId, stari, p, promene, rucno, dokId, razlog, null);
             if (nap != null && promene.Contains("BrojKola1"))
                 Izvrsi("UPDATE planiranje.tmpJobsIstorija SET Napomena = @n WHERE ID = (SELECT MAX(ID) FROM planiranje.tmpJobsIstorija WHERE JobID = @j AND Kolona = 'BrojKola1')", "@n", nap, "@j", jobId);
+        }
+
+        /// <summary>Stanica2 (utovarno mesto, „u.m. Pančevo Varoš“) iz zaglavlja spiska, imena fajla i naslova maila – kada posao još nema Stanica2.</summary>
+        private void Stanica2IzSpiska(int jobId, List<string> tekstovi, int? dokId)
+        {
+            var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId);
+            if (stari["Stanica2ID"] != null) return;
+            var st = PosaoIzDokumenata.Stanica2(pk, stari["OtpravnaID"] as int?, tekstovi.Select(x => ("spisak / mail", x)).ToArray());
+            if (st == null) return;
+            var p = new PodaciPosla(); p.Postavi("Stanica2ID", st, "utovarno mesto", "");
+            PrimeniPromene(jobId, stari, p, new List<string> { "Stanica2ID" }, new List<string>(), dokId, "SPISAK_KOLA", null);
         }
 
         /// <summary>Nepovezane teretnice (spisak pre tovarnog lista) za posao: isti voz, ista kola, r62 ili isti dosije. Vraća broj povezanih.</summary>

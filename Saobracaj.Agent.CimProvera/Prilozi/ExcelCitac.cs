@@ -263,7 +263,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 if (Broj(Celija(x.Broj, "neto")) is double n) x.NetoKg = Math.Round(n * fN);
                 if (Broj(Celija(x.Broj, "bruto")) is double b) x.BrutoKg = Math.Round(b * fB);
                 if (Broj(Celija(x.Broj, "osovine")) is double o && o >= 2 && o <= 16 && Math.Abs(o - Math.Round(o)) < 0.01) x.Osovine = (int)Math.Round(o);
-                if (Broj(Celija(x.Broj, "duzina")) is double d && d * fD >= 5 && d * fD <= 50) x.DuzinaM = Math.Round(d * fD, 2);
+                if (Broj(Celija(x.Broj, "duzina")) is double d && d * fD >= 5 && d * fD <= 50) { x.DuzinaM = Math.Round(d * fD, 2); x.DuzinaIzvor = "spisak"; }
                 var s = Celija(x.Broj, "serija");
                 if (!string.IsNullOrEmpty(s) && Regex.IsMatch(s, @"^\p{Lu}\p{Ll}{0,12}$")) x.Serija = s;
                 var nap = Celija(x.Broj, "napomena");

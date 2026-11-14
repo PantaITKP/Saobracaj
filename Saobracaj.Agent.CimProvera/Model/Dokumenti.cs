@@ -277,6 +277,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public int? Osovine { get; set; }
         /// <summary>Dužina preko odbojnika u metrima.</summary>
         [Interni] public double? DuzinaM { get; set; }
+        /// <summary>Odakle je dužina: „spisak“ ili „istorija“ (poslednja dužina istih kola u dbo.TeretnicaStavke); prazno = nema dužine.</summary>
+        [Interni] public string DuzinaIzvor { get; set; } = "";
         /// <summary>Serija / slovna oznaka sa spiska (Sgns, Eanos…), prazno ako nije upisana.</summary>
         [Interni] public string Serija { get; set; } = "";
         /// <summary>Napomena sa spiska za ta kola (kolona napomena/primedba).</summary>

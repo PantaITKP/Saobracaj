@@ -1,6 +1,7 @@
 ﻿/* =====================================================================
    OP_911_tmp_Brisanje.sql
-   Briše privremene tabele agenta CimProvera (OP_910_tmp_Kreiranje.sql) i forme iz OP_912_tmp_Forme.sql.
+   Briše privremene tabele agenta CimProvera (OP_910_tmp_Kreiranje.sql, sa sinonimima iz OP_914_tmp_Sinonimi.sql) i forme iz
+   OP_912_tmp_Forme.sql.
 
    - Briše samo tabele sa spiska ispod (planiranje.tmp*), ne sve tmp% tabele u šemi.
    - Iz dbo.GrupeForme i dbo.Forme briše samo redove formi frmTmpJobs i frmTmpTeretnica.

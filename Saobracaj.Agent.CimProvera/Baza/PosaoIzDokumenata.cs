@@ -137,40 +137,37 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var posle = iKp >= 0 && iKp + 1 < put.Count ? put[iKp + 1] : null;
             var opisPuta = string.Join(", ", put.Select(x => x.Uic + (x.Naziv.Length > 0 ? " " + x.Naziv : "")));
 
-            // PreuzimaOd / Stanica1
-            if (polazi)
-            {
-                p.Postavi("PreuzimaOdID", pk.Partner(c.R1?.Naziv, null, DrzaveStrane(c.R1), "posiljalac"), "r1 (voz polazi iz Srbije)", fajl);
-                p.Postavi("Stanica1ID", otp, "r16 (voz polazi iz Srbije)", fajl);
-            }
+            // PreuzimaOd / PredajeOperateru (odluka 14.11., zamenjuje „pošiljalac / primalac“): samo iz lanca prevoznika na tovarnom
+            // listu (r57 i r13 13.3) – prevoznik pre KP-a, odnosno posle KP-a; KP prvi u lancu → PreuzimaOd NULL, poslednji → PredajeOperateru NULL
+            if (pre != null) p.Postavi("PreuzimaOdID", pk.Partner(pre.Naziv, pre.Uic, null, "prevoznik"), "r57/r13: " + pre, fajl);
+            else p.Postavi("PreuzimaOdID", null, iKp < 0 ? "KP (3212) nije pronađen u lancu prevoznika r57/r13: " + opisPuta : "KP je prvi u lancu prevoznika (" + opisPuta + ")", "r57/r13", iKp < 0 ? 0 : 100, "", fajl);
+            if (posle != null) p.Postavi("PredajeOperateruID", pk.Partner(posle.Naziv, posle.Uic, null, "prevoznik"), "r57/r13: " + posle, fajl);
+            else p.Postavi("PredajeOperateruID", null, iKp < 0 ? "KP (3212) nije pronađen u lancu prevoznika r57/r13: " + opisPuta : "KP je poslednji u lancu prevoznika (" + opisPuta + ")", "r57/r13", iKp < 0 ? 0 : 100, "", fajl);
+
+            // Stanica1
+            if (polazi) p.Postavi("Stanica1ID", otp, "r16 (voz polazi iz Srbije)", fajl);
             else
             {
-                if (pre != null) p.Postavi("PreuzimaOdID", pk.Partner(pre.Naziv, pre.Uic, null, "prevoznik"), "r13/r57: " + pre, fajl);
-                else p.Postavi("PreuzimaOdID", null, iKp < 0 ? "KP (3212) nije pronađen u r13/r57: " + opisPuta : "prethodni prevoznik nije naveden", "r13/r57", 0, "", fajl);
                 var ulaz = TackaPredaje(pk, new[] { pre?.Do, iKp >= 0 ? put[iKp].Od : null }.Concat(Prelazi(c)).Concat(new[] { T(c.R20) }), srb);
                 p.Postavi("Stanica1ID", ulaz, "r57/r13 (preuzimanje od prethodnog prevoznika)", fajl);
             }
-            // PredajeOperateru / Stanica3
-            if (zavrsava)
-            {
-                p.Postavi("PredajeOperateruID", pk.Partner(c.R4?.Naziv, null, DrzaveStrane(c.R4), "primalac"), "r4 (voz se završava u Srbiji)", fajl);
-                p.Postavi("Stanica3ID", up, "r10/r12 (voz se završava u Srbiji)", fajl);
-            }
+            // Stanica2: utovarno mesto („u.m. Kukujevci“) kada nije otpravna stanica – iz r16, pa iz naslova maila
+            var st2 = Stanica2(pk, otp.Id, ("r16", T(c.R16)), ("r16", c.R16?.Mesto), ("naslov maila", naslovMaila), ("ime fajla", System.IO.Path.GetFileNameWithoutExtension(fajl)));
+            if (st2 != null) p.Postavi("Stanica2ID", st2, "utovarno mesto", fajl);
+            // Stanica3
+            if (zavrsava) p.Postavi("Stanica3ID", up, "r10/r12 (voz se završava u Srbiji)", fajl);
             else
             {
-                if (posle != null) p.Postavi("PredajeOperateruID", pk.Partner(posle.Naziv, posle.Uic, null, "prevoznik"), "r13/r57: " + posle, fajl);
-                else p.Postavi("PredajeOperateruID", null, iKp < 0 ? "KP (3212) nije pronađen u r13/r57: " + opisPuta : "sledeći prevoznik nije naveden", "r13/r57", 0, "", fajl);
                 var prelazi = Prelazi(c).ToList();
                 var izlaz = TackaPredaje(pk, new[] { iKp >= 0 ? put[iKp].Do : null, posle?.Od }.Concat(polazi ? prelazi : prelazi.Skip(1)).Concat(new[] { T(c.R20) }), srb);
                 p.Postavi("Stanica3ID", izlaz, "r57/r13 (predaja sledećem prevozniku)", fajl);
             }
 
-            // platilac za deonicu KP (Srbija) iz r7 (ili r15, kao u proveri)
+            // platilac za deonicu KP: uvek firma iz dokumenta – iz r7, iz zapisa za srpsku deonicu (SRB, RS, IŽS, ŽS, KP, Kombinovani prevoz,
+            // 3212…) ili za ceo put; nikad iz najave ili ugovora (odluka 14.11.). Firma koja nije u Partnerji → NULL i kandidati.
             var r7 = !string.IsNullOrWhiteSpace(c.R7?.Tekst) ? c.R7.Tekst : string.Join("\n", (c.R7?.Stavke ?? new List<SifraTekst>()).Select(x => (x.Sifra + " " + x.Tekst).Trim()));
             var a = kp == null ? null : Provere.AnalizirajR7(r7, kp);
             var pl = a?.ZaSrbiju.FirstOrDefault();
-            if (pl == null && kp != null && T(c.R15).Length > 0)
-                pl = Provere.AnalizirajR7(Regex.Replace(T(c.R15), @"(?i)streight\s*payer", "freight payer"), kp).ZaSrbiju.FirstOrDefault();
             if (pl != null) { var pp = pk.Partner(pl.Naziv); pp.Tekst = PodaciPosla.Skrati(pl.Zapis, 400) + " → „" + pl.Naziv + "“"; p.Postavi("PlatilacID", pp, "r7", fajl); }
             else p.Postavi("PlatilacID", null, PodaciPosla.Skrati(r7, 400), "r7", 0, "platilac za deonicu KP nije pronađen u r7", fajl);
 
@@ -183,11 +180,11 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var (tara, neto, bruto, opisMasa) = Mase(c);
             p.Postavi("Bruto1", Tone(bruto ?? tara ?? 0), opisMasa, "r25/r21", bruto.HasValue || tara.HasValue ? 90 : 0, "", fajl);
             p.Postavi("Neto1", Tone(neto ?? (bruto.HasValue && tara.HasValue ? bruto.Value - tara.Value : 0)), opisMasa, "r25/r21", neto.HasValue ? 90 : 0, "", fajl);
-            foreach (var k in new[] { "Bruto2", "Neto2", "BrojKola2", "Duzina2" }) p.V[k] = p.V["NHM2"] == null ? null : (object)(k.StartsWith("Broj") ? 0 : 0m);
+            foreach (var k in new[] { "Bruto2", "Neto2", "BrojKola2", "Duzina2" }) p.V[k] = p.V["NHM2"] == null ? null : (k.StartsWith("Broj") ? (object)0 : k.StartsWith("Duzina") ? null : (object)0m);
             p.Kola = KolaIzLista(c);
             var brojKola = p.Kola.Count > 0 ? p.Kola.Count : Provere.BrojKolaUTekstu(T(c.R21)) is int n21 && n21 > 0 ? n21 : Provere.BrojKolaUTekstu(T(c.R18));
             p.Postavi("BrojKola1", brojKola, PodaciPosla.Skrati(T(c.R18) + " / " + T(c.R21), 300), "r18/r21", brojKola > 0 ? 80 : 0, "", fajl);
-            p.Postavi("Duzina1", 0m, "dužina nije u tovarnom listu", "–", 0, "", fajl);
+            p.Postavi("Duzina1", null, "dužina nije u tovarnom listu", "–", 0, "", fajl);
             var serija = BrojKolaUic.NajcescaOznaka(p.Kola.Select(k => (k, "")));
             p.Postavi("SerijaKola1", serija.Length == 0 ? null : serija, p.Kola.Count == 0 ? "brojevi kola nisu u tovarnom listu" : "iz brojeva kola (UIC 438)", "r18", serija.Length > 0 ? 80 : 0, "", fajl);
             p.V["SerijaKola2"] = null;
@@ -197,6 +194,30 @@ namespace Saobracaj.Agent.CimProvera.Baza
             p.Postavi("OMBroj1", om.Length == 0 ? null : om, om, "r21", om.Length > 0 ? 80 : 0, "", fajl);
             foreach (var k in new[] { "RIDBroj2", "OMBroj2" }) p.V[k] = null;
             return p;
+        }
+
+        private static readonly Regex UmRx = new Regex(@"(?i)(?<![\p{L}])u\.?\s?m\.?\s+([\p{L}][\p{L}\s\.\-]{2,40}?)\s*(?:\)|$|-|–|,|\d)", RegexOptions.Compiled);
+
+        /// <summary>Utovarna mesta („ŠID (u.m. KUKUJEVCI)“ → „KUKUJEVCI“) iz zadatih tekstova, redom (OCR može da odseče naziv – pozivalac bira prvo koje daje stanicu).</summary>
+        internal static IEnumerable<(string tekst, string izvorniTekst, string rubrika)> UtovarnaMesta(params (string rubrika, string tekst)[] izvori)
+        {
+            foreach (var (rub, t) in izvori)
+                foreach (Match m in UmRx.Matches(t ?? ""))
+                    if (m.Groups[1].Value.Trim().Length >= 3) yield return (m.Groups[1].Value.Trim(), PodaciPosla.Skrati((t ?? "").Trim(), 300), rub + " (utovarno mesto)");
+        }
+
+        /// <summary>Stanica2 = utovarno mesto koje nije otpravna stanica (prvo koje daje stanicu u Srbiji); null ako ga nema.</summary>
+        internal static Pogodak Stanica2(Poklapanje pk, int? otpravna, params (string rubrika, string tekst)[] izvori)
+        {
+            foreach (var um in UtovarnaMesta(izvori))
+            {
+                var st = pk.Stanica(um.tekst, null, null, false, new[] { "SRB" }, samoDrzave: new[] { "SRB" });
+                if (!st.Id.HasValue || st.Id == otpravna) continue;
+                st.Tekst = um.izvorniTekst;
+                st.Napomena = (st.Napomena.Length > 0 ? st.Napomena + "; " : "") + um.rubrika;
+                return st;
+            }
+            return null;
         }
 
         private static string[] DrzaveStrane(Model.Strana s) => s == null ? null : Poklapanje.Drzave(s.SifraZemlje).Concat(Poklapanje.Drzave(s.NazivZemlje)).Distinct().ToArray();
@@ -403,8 +424,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
                     p.Postavi("Bruto" + n, Tone(bruto), "spisak kola: " + g.Kola.Count + " kola, bruto " + bruto.ToString("N0", CultureInfo.GetCultureInfo("sr-Latn-RS")) + " kg", "spisak", imaMase ? 95 : 0, "", fajl);
                 if (neto > 0 || (imaMase && brutoPotpun)) p.Postavi("Neto" + n, Tone(neto), "spisak kola: neto " + neto.ToString("N0", CultureInfo.GetCultureInfo("sr-Latn-RS")) + " kg", "spisak", imaMase ? 95 : 0, "", fajl);
                 p.Postavi("BrojKola" + n, g.Kola.Count, "spisak kola: " + g.Kola.Count + " kola", "spisak", 100, "", fajl);
+                // dužina: sa spiska, ili poslednja dužina istih kola iz dbo.TeretnicaStavke („istorija“); bez dužine bar jednih kola → NULL
+                var bezDuz = g.Kola.Count(k => !k.DuzinaM.HasValue);
+                var izIst = g.Kola.Count(k => k.DuzinaM.HasValue && k.DuzinaIzvor == "istorija");
                 var duz = g.Kola.Sum(k => k.DuzinaM ?? 0);
-                p.Postavi("Duzina" + n, Math.Round((decimal)duz, 2), duz > 0 ? "spisak kola: zbir dužina " + duz.ToString("0.00", CultureInfo.InvariantCulture) + " m" : "dužina nije na spisku kola (0)", "spisak", duz > 0 ? 95 : 0, "", fajl);
+                var opisDuz = (g.Kola.Count - bezDuz - izIst) + " kola sa spiska, " + izIst + " iz istorije (dbo.TeretnicaStavke), " + bezDuz + " bez dužine";
+                if (bezDuz == 0) p.Postavi("Duzina" + n, Math.Round((decimal)duz, 2), "zbir dužina " + duz.ToString("0.00", CultureInfo.InvariantCulture) + " m: " + opisDuz, izIst > 0 ? "istorija" : "spisak", izIst > 0 ? 80 : 95, "", fajl);
+                else p.Postavi("Duzina" + n, null, "dužina nije poznata za sva kola: " + opisDuz, "spisak", 0, "", fajl);
                 var ser = BrojKolaUic.NajcescaOznaka(g.Kola.Select(k => (k.Broj, k.Serija)));
                 p.Postavi("SerijaKola" + n, ser.Length == 0 ? null : ser, g.Kola.Any(k => k.Serija.Length > 0) ? "serija sa spiska" : "iz brojeva kola (UIC 438)", "spisak", ser.Length > 0 ? 85 : 0, "", fajl);
                 var om = string.Join(", ", g.Kola.Select(k => k.KemlerUn).Where(x => x.Length > 0).Distinct());

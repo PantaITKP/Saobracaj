@@ -37,6 +37,7 @@ namespace Saobracaj.Planiranje.Podaci
                 Naziv("so.Opis", "fso") + " AS [Otpravna], j.OtpravnaID AS [OtpravnaID], " +
                 Naziv("su.Opis", "fsu") + " AS [Uputna], j.UputnaID AS [UputnaID], " +
                 Naziv("s1.Opis", "fs1") + " AS [Stanica 1], j.Stanica1ID AS [Stanica1ID], " +
+                "RTRIM(s2.Opis) AS [Stanica 2 (u.m.)], j.Stanica2ID AS [Stanica2ID], " +
                 Naziv("s3.Opis", "fs3") + " AS [Stanica 3], j.Stanica3ID AS [Stanica3ID], " +
                 "ISNULL(RTRIM(n1.Broj) + N' ' + RTRIM(n1.Naziv), fn1.TekstIzDokumenta) AS [NHM 1], j.NHM1 AS [NHM1], " +
                 "j.Bruto1 AS [Bruto 1 (t)], j.Neto1 AS [Neto 1 (t)], j.BrojKola1 AS [Broj kola 1], j.Duzina1 AS [Dužina 1 (m)], j.SerijaKola1 AS [Serija 1], " +
@@ -53,6 +54,7 @@ namespace Saobracaj.Planiranje.Podaci
                 "LEFT JOIN dbo.stanice so ON so.ID = j.OtpravnaID " +
                 "LEFT JOIN dbo.stanice su ON su.ID = j.UputnaID " +
                 "LEFT JOIN dbo.stanice s1 ON s1.ID = j.Stanica1ID " +
+                "LEFT JOIN dbo.stanice s2 ON s2.ID = j.Stanica2ID " +
                 "LEFT JOIN dbo.stanice s3 ON s3.ID = j.Stanica3ID " +
                 "LEFT JOIN dbo.NHM n1 ON n1.ID = j.NHM1 " +
                 "LEFT JOIN dbo.NHM n2 ON n2.ID = j.NHM2 " +

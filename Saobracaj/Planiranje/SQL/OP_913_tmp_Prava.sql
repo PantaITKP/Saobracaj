@@ -5,7 +5,8 @@
 
    - Pisanje (SELECT/INSERT/UPDATE/DELETE) samo u planiranje.tmp* tabelama iz OP_910_tmp_Kreiranje.sql.
    - Čitanje šifarnika: dbo.stanice, dbo.Partnerji, dbo.NHM.
-   - Samo čitanje za poređenje (tačka 8): planiranje.OP_Jobs, dbo.Teretnica, dbo.TeretnicaStavke, dbo.Najava.
+   - Samo čitanje: planiranje.OP_Jobs, dbo.Teretnica, dbo.Najava (poređenje, tačka 8) i dbo.TeretnicaStavke (poređenje i
+     poslednja dužina istih kola kada je nema na spisku – odluka 14.11.; agent je ne menja).
    - Nema db_datareader / db_datawriter: nalog ne vidi ni ne menja ništa drugo.
    - Može da se pokrene više puta. Pokreće se ručno, posle OP_910, pod sysadmin nalogom, na bazi Perftech_Beograd:
        sqlcmd -S 192.168.1.6\SQLEXPRESS2008K -d Perftech_Beograd -f 65001 -i OP_913_tmp_Prava.sql

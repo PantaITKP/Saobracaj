@@ -33,7 +33,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             St(380, "Šid", "SRB", kod: "165167"); St(381, "Šid gr.", "SRB", true, "165175");
             St(327, "Subotica", "SRB", kod: "234500"); St(328, "Subotica gr.", "SRB", true, "234997"); St(329, "Subotica fabrika", "SRB");
             St(317, "Sremska Mitrovica", "SRB", kod: "165092"); St(246, "Pančevo Glavna", "SRB", kod: "220012"); St(1464, "Pančevo", "");
-            St(404, "Pančevo Varoš", "SRB"); St(405, "Pančevo Vojlovica", "SRB"); St(1088, "Pančevo Vojlovica", "SRB");
+            St(404, "Pančevo Varoš", "SRB"); St(383, "Kukujevci", "SRB"); St(405, "Pančevo Vojlovica", "SRB"); St(1088, "Pančevo Vojlovica", "SRB");
             St(407, "Tovarnik", "HR", true); St(445, "Kelebia", "HU", true); St(441, "Zagreb", "HR"); St(9001, "Budapest Ferencváros", "HU");
             St(92, "Vršac", "SRB", kod: "210096"); St(93, "Vršac gr.", "SRB", false, "210997"); St(117, "Dimitrovgrad", "SRB"); St(118, "Dimitrovgrad gr.", "SRB");
             St(968, "Portogruaro Caorle", "IT", kod: "03200-3"); St(1009, "Portogruaro Caorle", "IT", kod: "8303200"); St(621, "Sidenor", "GR");
@@ -53,6 +53,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             void Nh(int id, string broj, string naziv) => s.Nhm.Add(new NhmZapis { Id = id, Broj = broj, Naziv = naziv });
             Nh(8, "1001", "PŠENICA"); Nh(92, "2520", "GIPS"); Nh(268, "2521", "KAMEN KREČNJAČKI"); Nh(6, "9922 00", "PRAZNI VAGONI-PREVOZ NA UTOVAR");
             Nh(243, "9922 10", "PRAZNI VAGONI"); Nh(188, "9922 40", "PRAZNI VAGONI"); Nh(162, "9920", "PRAZAN"); Nh(267, "9943/9944", "POLUPRIKOLICE");
+            // sinonimi kao u bazi (OP_914_tmp_Sinonimi.sql)
+            s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "PANSPED", CiljniId = 1969 });
+            s.Sinonimi.Add(new SinonimZapis { Tip = "STANICA", Tekst = "PANCEVO", CiljniId = 246 });
+            s.Sinonimi.Add(new SinonimZapis { Tip = "STANICA", Tekst = "PANCEVO GLAVNA", CiljniId = 246 });
             return s.Pripremi();
         }
 
@@ -66,8 +70,6 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataRow("Pansped i.", 1969)]
         [DataRow("EurologSys em doo Beograd", 1857)]
         [DataRow("EurologSystem doo Beograd", 1857)]
-        [DataRow("Budamar South, s.r.o.", 3355)]
-        [DataRow("Budamar South d.o.o. Beograd", 3143)]
         [DataRow("Victoriaoil d.o.o.", 2246)]
         public void Partner_po_nazivu_PaSifra(string tekst, int ocekivano)
         {
@@ -95,6 +97,78 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(2527, pk.Partner("SZ", "2179", null, "prevoznik").Id);
             Assert.AreEqual(1597, pk.Partner("RCH", "2155", null, "prevoznik").Id);
             Assert.IsNull(pk.Partner("XYZ", "9999", null, "prevoznik").Id);
+        }
+
+        [TestMethod]
+        public void Dva_bliska_kandidata_NULL_i_kandidati()
+        {
+            // 3355 „BUDAMAR SOUTH, s.r.o.“ i 3143 „BUDAMAR SOUTH D.O.O. BEOGRAD“ imaju isti naziv posle normalizacije (razlika < 0,05)
+            var p = Pk().Partner("Budamar South, s.r.o.");
+            Assert.IsNull(p.Id, p.ToString());
+            StringAssert.Contains(p.Kandidati, "3355"); StringAssert.Contains(p.Kandidati, "3143");
+            StringAssert.Contains(p.Napomena, "dva bliska kandidata");
+            // izuzetak: naziv iz tmpSinonimi
+            var s = Sif(); s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR SOUTH", CiljniId = 3355 });
+            Assert.AreEqual(3355, new Poklapanje(s).Partner("Budamar South, s.r.o.").Id);
+            // Panšped: sinonim → 1969 (odluka 14.11.)
+            Assert.AreEqual(1969, Pk().Partner("Panšped").Id);
+            StringAssert.Contains(Pk().Partner("Panšped").Napomena, "sinonim");
+        }
+
+        [TestMethod]
+        public void Platilac_samo_iz_r7_firma_iz_dokumenta()
+        {
+            var c = List("Herne", "80 12345-6", "Novi Sad", "72 11111-1", "13.3 2143 GYSEV, 3212 KP", new[] { "2143 GYSEV HEGYESHALOM-KELEBIA", "3212 KP SUBOTICA-NOVI SAD" });
+            c.R7 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "Frachtzahler strecke DE+CZ+SK+HU+SRB ist Budamar Logistics a.s" };
+            Assert.AreEqual(1580, PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp).V["PlatilacID"], "firma iz r7 (ne iz najave)");
+            // firma koje nema u Partnerji: NULL i kandidati
+            c.R7 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "Frachtzahler für SRB ist Nepoznata Spedicija Novak GmbH" };
+            var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
+            Assert.IsNull(p.V["PlatilacID"], "nepoznata firma: " + p.V["PlatilacID"] + " | " + p.Poreklo.First(x => x.Kolona == "PlatilacID").Kandidati);
+            StringAssert.Contains(p.Poreklo.First(x => x.Kolona == "PlatilacID").Tekst, "Nepoznata Spedicija Novak");
+            // r15 se ne koristi (samo r7)
+            c.R7 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "7.12 Isporuka bez zadrške" };   // r7 bez platioca
+            c.R15 = new TekstRubrika { Status = StatusRubrike.Popunjeno, Tekst = "FREIGHT PAYER FOR KP 3212 – EurologSystem doo Beograd" };
+            var p3 = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
+            Assert.IsNull(p3.V["PlatilacID"], "r15: " + p3.V["PlatilacID"] + " | " + p3.Poreklo.First(x => x.Kolona == "PlatilacID").Tekst);
+        }
+
+        [TestMethod]
+        public void Stanica2_utovarno_mesto()
+        {
+            var c = List("ŠID (U M KUKUJEVCI) j", "", "San Giovanni", "", "13.3 3212 KP, 7053 GPR", new[] { "3212 KP ŠID-ŠID", "7853 GPR ŠID-DOBOVA" });
+            var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
+            Assert.AreEqual(380, p.V["OtpravnaID"]); Assert.AreEqual(380, p.V["Stanica1ID"]);
+            Assert.AreEqual(383, p.V["Stanica2ID"], "u.m. Kukujevci");
+            StringAssert.Contains(p.Poreklo.First(x => x.Kolona == "Stanica2ID").Tekst, "KUKUJEVCI");
+            // iz naslova maila
+            var c2 = List("Šid", "", "San Giovanni", "", "13.3 3212 KP", new[] { "3212 KP ŠID-ŠID" });
+            Assert.AreEqual(383, PosaoIzDokumenata.Napravi(c2, null, null, Pk(), pravila.Kp, "CIT23 za voz 258 Šid (u.m. Kukujevci) - San Giovanni In Persiceto").V["Stanica2ID"]);
+            // bez utovarnog mesta: NULL
+            Assert.IsNull(PosaoIzDokumenata.Napravi(c2, null, null, Pk(), pravila.Kp, "CIM").V["Stanica2ID"]);
+            // Pančevo → 246 (sinonim, i kao utovarno mesto jednako otpravnoj nije Stanica2)
+            Assert.AreEqual(246, Pk().Stanica("PANČEVO").Id);
+            Assert.AreEqual(404, PosaoIzDokumenata.Stanica2(Pk(), 246, ("spisak", "PANČEVO GLAVNA (U.M. PANČEVO VAROŠ) 72 21001-3")).Id);
+            // OCR šum posle naziva („(U M PANČEVO jr“): Pančevo (1464) se preusmerava sinonimom na 246 = otpravna → nije Stanica2
+            Assert.IsNull(PosaoIzDokumenata.Stanica2(Pk(), 246, ("r16", "P Пре зимањен PANČEVO GLAVNA (U M PANČEVO jr")));
+            Assert.AreEqual(246, Pk().Stanica("PANČEVO jr").Id);
+        }
+
+        [TestMethod]
+        public void Duzina_spisak_istorija_ili_NULL()
+        {
+            var s = new SpisakKola();
+            s.Kola.Add(new KolaNaSpisku { Broj = "338393382019", DuzinaM = 14.8, DuzinaIzvor = "spisak", TaraKg = 19990, NetoKg = 59757 });
+            s.Kola.Add(new KolaNaSpisku { Broj = "338793320940", DuzinaM = 15.6, DuzinaIzvor = "istorija", TaraKg = 19080, NetoKg = 60645 });
+            var p = PosaoIzDokumenata.IzSpiska(s, Pk(), "100100", "");
+            Assert.AreEqual(30.4m, p.V["Duzina1"]);
+            Assert.AreEqual("istorija", p.Poreklo.First(x => x.Kolona == "Duzina1").Rubrika);
+            s.Kola.Add(new KolaNaSpisku { Broj = "338706746991", TaraKg = 20400, NetoKg = 59553 });   // bez dužine i u istoriji
+            p = PosaoIzDokumenata.IzSpiska(s, Pk(), "100100", "");
+            Assert.IsNull(p.V["Duzina1"], "dužina nije poznata za sva kola → NULL");
+            StringAssert.Contains(p.Poreklo.First(x => x.Kolona == "Duzina1").Tekst, "1 bez dužine");
+            // tovarni list nema dužinu → NULL (ne 0)
+            Assert.IsNull(PosaoIzDokumenata.Napravi(List("Šid", "", "Zagreb", "", "", new string[0]), null, null, Pk(), pravila.Kp).V["Duzina1"]);
         }
 
         [TestMethod]
@@ -212,7 +286,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var c = List("Sremska Mitrovica", "72 16509-2", "Zagreb", "78 72480-0", "13.3 3212 KP, 2178 HZC",
                 new[] { "3212 KP SREMSKA MITROVICA-ŠID", "2178 HZC TOVARNIK-ZAGREB" }, r1: "Victoriaoil d.o.o.");
             var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
-            Assert.AreEqual(2246, p.V["PreuzimaOdID"], "polazak iz Srbije → pošiljalac");
+            Assert.IsNull(p.V["PreuzimaOdID"], "KP je prvi u lancu prevoznika → NULL (odluka 14.11.)");
+            StringAssert.Contains(p.Poreklo.First(x => x.Kolona == "PreuzimaOdID").Tekst, "KP je prvi u lancu");
             Assert.AreEqual(317, p.V["Stanica1ID"], "otpravna");
             Assert.AreEqual(317, p.V["OtpravnaID"]);
             Assert.AreEqual(381, p.V["Stanica3ID"], "Šid gr.");
@@ -228,7 +303,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(1597, p.V["PreuzimaOdID"]);
             Assert.AreEqual(328, p.V["Stanica1ID"], "Subotica gr.");
             Assert.AreEqual(404, p.V["Stanica3ID"], "uputna");
-            Assert.AreEqual(2669, p.V["PredajeOperateruID"], "kraj u Srbiji → primalac");
+            Assert.IsNull(p.V["PredajeOperateruID"], "KP je poslednji u lancu prevoznika → NULL (odluka 14.11.)");
         }
 
         [TestMethod]
@@ -256,7 +331,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(1857, p.V["PlatilacID"], "EurologSystem doo Beograd");
             Assert.AreEqual(246, p.V["OtpravnaID"], "Pančevo Glavna");
             Assert.AreEqual(1009, p.V["UputnaID"], "Portogruaro Caorle (najčešće korišćen duplikat)");
-            Assert.AreEqual(3000, p.V["PreuzimaOdID"], "polazak iz Srbije → pošiljalac (odluka 14.11.)");
+            Assert.IsNull(p.V["PreuzimaOdID"], "voz 256: KP je prvi u lancu (3212 KP, 7853 GPRAIL…) → NULL");
+            Assert.IsNull(p.V["Stanica2ID"], "r16 „(U M. PANČEVO“ je odsečeno – Pančevo = otpravna (sinonim), nije utovarno mesto");
             Assert.AreEqual(3440, p.V["PredajeOperateruID"], "7853 GP Rail");
             Assert.AreEqual(246, p.V["Stanica1ID"]);
             Assert.AreEqual(381, p.V["Stanica3ID"], "Šid gr.");
@@ -273,7 +349,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var c = List("Šid", "", "Zagreb", "", "", new string[0]);
             var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
-            Assert.AreEqual(0m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]); Assert.AreEqual(0m, p.V["Duzina1"]); Assert.AreEqual(0, p.V["BrojKola1"]);
+            Assert.AreEqual(0m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]); Assert.IsNull(p.V["Duzina1"]); Assert.AreEqual(0, p.V["BrojKola1"]);
             // samo tara (prazna kola): bruto = tara, neto = 0
             c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Tara: 650.000 kg" };
             p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
@@ -309,7 +385,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(3, p.V["BrojKola1"]);
             Assert.AreEqual(239.425m, p.V["Bruto1"]);
             Assert.AreEqual(179.955m, p.V["Neto1"]);
-            Assert.AreEqual(0m, p.V["Duzina1"]);
+            Assert.IsNull(p.V["Duzina1"]);
             Assert.AreEqual("Ua", p.V["SerijaKola1"], "93xx → U (2 od 3 kola)");
             Assert.AreEqual(8, p.V["NHM1"]);
         }

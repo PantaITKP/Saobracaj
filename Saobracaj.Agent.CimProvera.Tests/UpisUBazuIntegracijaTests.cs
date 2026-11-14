@@ -145,6 +145,87 @@ namespace Saobracaj.Agent.CimProvera.Tests
             });
         }
 
+        private static CimList Lista(string voz, string r1)
+        {
+            return new CimList
+            {
+                R1 = new Model.Strana { Status = StatusRubrike.Popunjeno, Naziv = r1 },
+                R8 = new TekstRubrika { Status = StatusRubrike.Popunjeno, Tekst = "Train no: " + voz + "F" },
+                R16 = new Preuzimanje { Status = StatusRubrike.Popunjeno, Mesto = "Pančevo Glavna", Tekst = "Pančevo Glavna" },
+                R10 = new MestoIsporuke { Status = StatusRubrike.Popunjeno, Stanica = "Portogruaro Caorle", SifraStanice = "83 03200-3" },
+                R13 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "13.3 3212 KP, 7853 GPRAIL" },
+                R57 = new PrevozniciRubrika { Status = StatusRubrike.Popunjeno, Tekst = "3212 KP PANČEVO GLAVNA-ŠID\n7853 ŠID-DOBOVA" },
+                R7 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "7.16 Frachtzahler auf KP ist EurologSystem doo Beograd" },
+                R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Tara: 562.670 Netto: 1.671.863 Bruto: 2.234.533" },
+            };
+        }
+
+        private static RezultatProvere Rezultat(CimList c, string fajl)
+        {
+            var r = new RezultatProvere();
+            var d = new Dokument { Tip = TipDokumenta.Cim, Fajl = fajl, Cim = { c }, Strane = { 1 }, Izvor = "ocr" };
+            r.Dokumenti.Add(d); r.Listovi.Add(new RezultatLista { Cim = c, Dokument = d, Oznaka = "CIM list 1" });
+            return r;
+        }
+
+        /// <summary>Ispravka 1 iz tačke 8: isti list sa drugačije pročitanim ključem (OCR pošiljaoca) je isti posao; nepročitano ne briše pronađeno.</summary>
+        [TestMethod]
+        public void Ispravka1_isti_voz_drugi_kljuc_isti_posao()
+        {
+            var voz = new Random().Next(70000, 99999).ToString();
+            URollbacku((tx, u) =>
+            {
+                var c1 = Lista(voz, "CHS SERBIA DOO");
+                u.Upisi(new MailZaUpis { MessageId = "i1-1@" + voz, Naslov = "CIM", Posiljalac = "a@b.rs", Prilozi = { Fajl("cim1.pdf") }, Provera = Rezultat(c1, "cim1.pdf"), Sanduce = "test" }, tx);
+                // drugi sken istog lista: OCR pošiljaoca drugačiji (drugi ključ), r7 nečitljiva
+                var c2 = Lista(voz, "joummanaj urn ajjjeca");
+                c2.R7 = new ListaRubrika { Status = StatusRubrike.Popunjeno, Tekst = "716 Fractdzutler Ke, GPR is jj za Panéped doo u" };
+                var i2 = u.Upisi(new MailZaUpis { MessageId = "i1-2@" + voz, Naslov = "CIT23 za voz " + voz, Posiljalac = "c@d.rs", Prilozi = { Fajl("cim2.pdf") }, Provera = Rezultat(c2, "cim2.pdf"), Sanduce = "test" }, tx);
+                Assert.AreEqual(0, i2.NovihPoslova, i2.ToString());
+                Assert.AreEqual(1, Skalar(tx, "SELECT COUNT(*) FROM planiranje.tmpJobs WHERE Referenca = @r", "@r", "Train no: " + voz + "F"), "jedan posao za voz");
+                var jid = Skalar(tx, "SELECT ID FROM planiranje.tmpJobs WHERE Referenca = @r", "@r", "Train no: " + voz + "F");
+                Assert.AreEqual(1857, Skalar(tx, "SELECT PlatilacID FROM planiranje.tmpJobs WHERE ID = @j", "@j", jid), "nepročitan platilac u drugom skenu ne briše pronađenog");
+                Assert.IsNotNull(Skalar(tx, "SELECT TOP 1 ID FROM planiranje.tmpJobsIstorija WHERE JobID = @j AND Kolona = 'PlatilacID' AND Napomena LIKE N'u novom dokumentu nije pročitano%'", "@j", jid));
+            });
+        }
+
+        private static (string, byte[]) Spisak(SpisakKola s, string ime, string izvor, RezultatProvere r)
+        {
+            var f = Fajl(ime);
+            r.Dokumenti.Add(new Dokument { Tip = TipDokumenta.SpisakKola, Fajl = f.Item1, Spisak = { s }, Strane = { 1 }, Izvor = izvor });
+            return f;
+        }
+
+        /// <summary>Ispravka 2 iz tačke 8 i prioritet izvora: u istom mailu Excel ima prednost; OCR skena ne gazi Excel; novija verzija ima prednost nad starijom.</summary>
+        [TestMethod]
+        public void Ispravka2_prioritet_izvora_spiska()
+        {
+            var voz = new Random().Next(70000, 99999).ToString();
+            var k1 = "3387939" + new Random().Next(10000, 99999);
+            SpisakKola Sp(double tara, double neto) { var s = new SpisakKola { BrojVoza = voz }; s.Kola.Add(new KolaNaSpisku { Broj = k1, TaraKg = tara, NetoKg = neto }); return s; }
+            URollbacku((tx, u) =>
+            {
+                u.DuzineIzIstorije = l => new Dictionary<string, double>();
+                // 1. Excel spisak i u ISTOM mailu sken sa pomerenim kolonama – Excel ima prednost
+                var r1 = new RezultatProvere();
+                var f1b = Spisak(Sp(59757, 59), "CIT-23 " + voz + " sken.pdf", "ocr", r1);
+                var f1 = Spisak(Sp(19990, 59757), "CIT-23 " + voz + ".xlsx", "excel", r1);
+                u.Upisi(new MailZaUpis { MessageId = "p-1@" + voz, Naslov = "CIT23 za voz " + voz, Prilozi = { f1b, f1 }, Provera = r1, Sanduce = "test" }, tx);
+                object Tara() => Skalar(tx, "SELECT s.Tara FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.BrojTeretnice WHERE t.KljucSpiska LIKE @k", "@k", "voz:" + voz + "#%");
+                Assert.AreEqual(19.990m, Tara(), "u istom mailu Excel ima prednost nad skenom");
+                // 2. kasniji mail: OCR sken istog spiska sa pogrešnim brojevima – ne gazi Excel
+                var r2 = new RezultatProvere();
+                var f2 = Spisak(Sp(59757, 0), "Customs documents " + voz + ".pdf", "ocr", r2);
+                u.Upisi(new MailZaUpis { MessageId = "p-2@" + voz, Naslov = "CHS", Prilozi = { f2 }, Provera = r2, Sanduce = "test" }, tx);
+                Assert.AreEqual(19.990m, Tara(), "OCR ne gazi popunjenu vrednost iz Excel-a");
+                // 3. novija verzija Excel spiska („Ažuriran CIT23“) ima prednost nad starijom
+                var r3 = new RezultatProvere();
+                var f3 = Spisak(Sp(20100, 59600), "CIT-23 " + voz + " azuriran.xlsx", "excel", r3);
+                u.Upisi(new MailZaUpis { MessageId = "p-3@" + voz, Naslov = "Ažuriran CIT23 za voz " + voz, Prilozi = { f3 }, Provera = r3, Sanduce = "test" }, tx);
+                Assert.AreEqual(20.100m, Tara(), "novija verzija spiska ima prednost");
+            });
+        }
+
         // ------------------------------------------------------------------------------------------- voz 256 (tačka 7a)
 
         private const string Pravi = @"\\192.168.1.6\Cloude\Agenti\CimProvera\testovi\nezavisni\2026-11-14-pravi\prilozi";
@@ -173,6 +254,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             }
             URollbacku((tx, u) =>
             {
+                // test ne zavisi od podataka koji su već u tmp tabelama (sve se vraća rollback-om)
+                Skalar(tx, "DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke; UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM planiranje.tmpTeretnica; DELETE FROM planiranje.tmpJobs; DELETE FROM planiranje.tmpDokument;");
                 u.Upisi(new MailZaUpis { MessageId = "test-256-cim", Naslov = "CIM", Posiljalac = "branislav.kolarov@pansped.rs", Primljeno = new DateTime(2026, 11, 14, 8, 20, 0), Prilozi = cim, Provera = i1.Provera, Sanduce = "test" }, tx);
                 var ish = u.Upisi(new MailZaUpis { MessageId = "test-256-cit", Naslov = "CIT23 za voz 256 Pančevo Glavna (Pančevo Varoš)-Portogruaro Caorle", Posiljalac = "sara.markovic@eurologsystem.rs", Primljeno = new DateTime(2026, 11, 14, 9, 13, 0), Prilozi = cit, Provera = i2.Provera, Sanduce = "test" }, tx);
                 var jid = Convert.ToInt32(Skalar(tx, "SELECT TOP 1 ID FROM planiranje.tmpJobs WHERE Referenca LIKE '%256F%' ORDER BY ID DESC"));
@@ -188,13 +271,17 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 Assert.AreEqual(28, J("BrojKola1"), "najnoviji spisak kola");
                 Assert.AreEqual(8, J("NHM1"), "NHM 1001");
                 Assert.AreEqual("Ua", J("SerijaKola1"));
-                Assert.AreEqual(0m, J("Duzina1"));
-                Assert.IsNotNull(J("PreuzimaOdID"), "polazak iz Srbije → pošiljalac (CHS Serbia), " + Skalar(tx, "SELECT Kandidati FROM planiranje.tmpJobsPolje WHERE JobID = @j AND Kolona = 'PreuzimaOdID'", "@j", jid));
+                Assert.IsNull(J("PreuzimaOdID"), "KP je prvi u lancu prevoznika → NULL (odluka 14.11.)");
+                Assert.AreEqual(404, J("Stanica2ID"), "u.m. Pančevo Varoš: " + Skalar(tx, "SELECT ISNULL(Rubrika,'') + ' | ' + ISNULL(TekstIzDokumenta,'') + ' | ' + ISNULL(Kandidati,'') FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Stanica2ID'", "@j", jid));
                 var tid = Convert.ToInt32(Skalar(tx, "SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE JobID = @j ORDER BY ID DESC", "@j", jid));
                 Assert.AreEqual(28, Skalar(tx, "SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t", "@t", tid), ish.ToString());
                 Assert.AreEqual(28, Skalar(tx, "SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t AND BrojOsovina = 4 AND VRNP = '1001' AND Tara > 0 AND Neto > 0", "@t", tid));
                 Assert.AreEqual(1671.863m, Skalar(tx, "SELECT SUM(Neto) FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t", "@t", tid));
                 Assert.AreEqual(19.990m, Skalar(tx, "SELECT Tara FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t AND BrojKola = '33839338201-9'", "@t", tid));
+                // dužine nema na CIT 23 – poslednja dužina istih kola iz dbo.TeretnicaStavke (14,800 m), poreklo „istorija“
+                Assert.AreEqual(14.800m, Skalar(tx, "SELECT Duzina FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t AND BrojKola = '33839338201-9'", "@t", tid));
+                Assert.AreEqual("istorija", Skalar(tx, "SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE TeretnicaID = @t AND Kolona = 'Duzina'", "@t", tid));
+                Assert.AreEqual("istorija", Skalar(tx, "SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Duzina1'", "@j", jid), "poreklo dužine posla");
             });
         }
     }
