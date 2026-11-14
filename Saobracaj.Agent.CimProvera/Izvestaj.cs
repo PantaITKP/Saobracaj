@@ -166,7 +166,8 @@ namespace Saobracaj.Agent.CimProvera
         /// </summary>
         public static string RazlogInternog(RezultatProvere r, PravilaSkup p)
         {
-            if (r.Listovi.Any(l => l.Cim != null && p.Kp.JeKpSifra(l.Cim.R62.Preduzece))) return RazlogKp;
+            // v2.8.4: nepouzdano pročitana r62 (rukom upisana na skenu) ne određuje KP tovarni list
+            if (r.Listovi.Any(l => l.Cim != null && !l.Cim.R62.NepouzdanaZaOdluke && p.Kp.JeKpSifra(l.Cim.R62.Preduzece))) return RazlogKp;
             if (r.Listovi.Any(l => l.ZaRucnuProveru || !string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac))) return RazlogRucna;
             return null;
         }
@@ -440,6 +441,8 @@ namespace Saobracaj.Agent.CimProvera
             var redovi = (n.Vrednost ?? "").Split(new[] { " / " }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x.Length > 0 && x != "nečitljivo").ToList();
             // poslednji red sa bar 3 slova ili cifre („o“, „-“ su ostaci OCR-a/okvira, ne mesto za dopunu)
             var posle = n.Vrednost.Length <= 140 ? redovi.LastOrDefault(x => Regex.Matches(x, @"[\p{L}\d]").Count >= 3) : null;
+            // v2.8.4 (7): sidro „posle …“ samo od pouzdano pročitanog reda – ne od šuma OCR-a („jj 20“, „044j202j6;ı 03/26“)
+            if (posle != null && Pravila.Dopune.SumOcr(posle)) posle = null;
             return "+ " + n.Dopuna + (posle != null ? " (" + (en ? "after" : "posle") + " „" + posle + "“)" : "");
         }
 
@@ -548,9 +551,11 @@ namespace Saobracaj.Agent.CimProvera
         /// Pasus o PDF primeru (B3) između uvoda i tabela: primer priložen; obrazac nije prepoznat (primer nije priložen);
         /// null kada nema nalaza ili primer nije napravljen zbog greške (mail ide bez priloga).
         /// </summary>
-        internal static string PasusPrimera(PrimerRezultat pr, bool en)
+        internal static string PasusPrimera(PrimerRezultat pr, bool en, bool interni = false)
         {
             if (pr == null) return null;
+            // v2.8.4 (11.1): interni izveštaj (KP tovarni list, ručna provera) nema rečenicu za pošiljaoca
+            if (interni && pr.Napravljen) return en ? "The correction sample is attached." : "Primer ispravke je u prilogu.";
             // v2.8.1: tekst o prilogu (dopuna u rubrici, brojevi u krugovima = brojevi u tabeli)
             if (pr.Napravljen)
                 return en ? "Please find attached a " + PrimerIstaknuto(true) + " (" + pr.Ime + "). Your entries are unchanged; what is missing or incorrect has been added or corrected in red. The numbers in circles match the numbers in the table above. The sample is for guidance only – the corrected consignment note must be issued and signed by the consignor."
@@ -590,6 +595,8 @@ namespace Saobracaj.Agent.CimProvera
                 sb.AppendLine(Zahvalnica(r, en)).AppendLine();
                 sb.AppendLine(Uvodna(r, en)).AppendLine();
             }
+            // v2.8.4 (8): nova verzija / overena verzija iz dosijea pošiljke
+            if (!string.IsNullOrEmpty(r.UvodDosijea)) sb.AppendLine(r.UvodDosijea).AppendLine();
 
             void Tabela(string naslov, List<Red> redovi)
             {
@@ -657,6 +664,7 @@ namespace Saobracaj.Agent.CimProvera
                 sb.Append("<p>" + H(Zahvalnica(r, en)) + "</p>");
                 sb.Append("<p>" + H(Uvodna(r, en)) + "</p>");
             }
+            if (!string.IsNullOrEmpty(r.UvodDosijea)) sb.Append("<p><b>" + H(r.UvodDosijea).Replace(Environment.NewLine, "<br>") + "</b></p>");
 
             void Tabela(string naslov, List<Red> redovi, string boja)
             {
@@ -734,6 +742,18 @@ namespace Saobracaj.Agent.CimProvera
             p.Sistemska("nema_tovarnog_lista", en, "U mailu nije pronađen tovarni list CIM/CUV.");
 
         /// <summary>Pregled prepoznatih dokumenata (za CLI i log).</summary>
+        /// <summary>
+        /// v2.8.4 (1): red u logu za mail bez tovarnog lista – „nema CIM/CUV – bez odgovora; dokumenti: spisak_kola (a.pdf str. 1–2), …“.
+        /// Mail ne dobija nikakav odgovor (ni interni).
+        /// </summary>
+        public static string LogBezTovarnogLista(IEnumerable<Dokument> docs)
+        {
+            var l = (docs ?? Enumerable.Empty<Dokument>()).Where(d => !d.IzDosijea).GroupBy(d => d.Tip)
+                .Select(g => g.Key + " (" + string.Join("; ", g.GroupBy(d => d.Fajl ?? "").Select(f => (f.Key.Length > 0 ? System.IO.Path.GetFileName(f.Key) + " " : "")
+                    + "str. " + Rasponi(f.SelectMany(d => d.Strane).Distinct().OrderBy(x => x).ToList()))) + ")").ToList();
+            return "nema CIM/CUV – bez odgovora; dokumenti: " + (l.Count == 0 ? "nema prepoznatih" : string.Join(", ", l));
+        }
+
         public static string Dokumenti(IEnumerable<Dokument> docs) =>
             string.Join(Environment.NewLine, docs.Select(d => "  - " + d.Fajl + " [" + string.Join(",", d.Strane) + "]: " + d.Tip + (string.IsNullOrEmpty(d.Opis) ? "" : " – " + d.Opis)));
     }

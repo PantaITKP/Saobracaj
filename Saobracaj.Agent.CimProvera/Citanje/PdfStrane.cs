@@ -80,19 +80,54 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(vrednost)) continue;
-                var redovi = vrednost.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
-                var visinaReda = Math.Min((gore - dole) / Math.Max(1, redovi.Length), 11.0);
-                var vel = Math.Max(7, visinaReda * 0.8);
-                for (int i = 0; i < redovi.Length; i++)
+                ReciUPravougaoniku(vrednost, x0, x1, gore, dole, w, h, rez);
+            }
+            return rez;
+        }
+
+        /// <summary>Tekst polja/anotacije kao reči u pravougaoniku (redovi od vrha), font „AcroForm“ (podatak, nikad natpis rubrike).</summary>
+        private static void ReciUPravougaoniku(string vrednost, double x0, double x1, double gore, double dole, double w, double h, List<Rec> rez)
+        {
+            var redovi = vrednost.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+            var visinaReda = Math.Min((gore - dole) / Math.Max(1, redovi.Length), 11.0);
+            var vel = Math.Max(7, visinaReda * 0.8);
+            for (int i = 0; i < redovi.Length; i++)
+            {
+                double y1 = gore - i * visinaReda, y0 = y1 - visinaReda;
+                var sirinaZnaka = Math.Min(vel * 0.55, (x1 - x0 - 2) / Math.Max(1, redovi[i].Length));
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(redovi[i], @"\S+"))
                 {
-                    double y1 = gore - i * visinaReda, y0 = y1 - visinaReda, x = x0 + 2;
-                    var sirinaZnaka = Math.Min(vel * 0.55, (x1 - x0 - 2) / Math.Max(1, redovi[i].Length));
-                    foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(redovi[i], @"\S+"))
-                    {
-                        double a = x0 + 2 + m.Index * sirinaZnaka, z = a + m.Length * sirinaZnaka;
-                        rez.Add(new Rec { T = m.Value, X0 = a / w, X1 = Math.Min(z, x1) / w, Y0 = 1 - y1 / h, Y1 = 1 - y0 / h, Pouzdanost = 0.99, Velicina = vel, Font = "AcroForm" });
-                    }
+                    double a = x0 + 2 + m.Index * sirinaZnaka, z = a + m.Length * sirinaZnaka;
+                    rez.Add(new Rec { T = m.Value, X0 = a / w, X1 = Math.Min(z, x1) / w, Y0 = 1 - y1 / h, Y1 = 1 - y0 / h, Pouzdanost = 0.99, Velicina = vel, Font = "AcroForm" });
                 }
+            }
+        }
+
+        /// <summary>
+        /// v2.8.4 (4.1): tekst upisan Acrobat-ovom „pisaćom mašinom“ (anotacija FreeText, npr. r58a „Kombinovani Prevoz / UIC: 3212“ u
+        /// „CIM SAD-HER.PDF“) nije u tekstu strane – čita se iz /Contents anotacije, na položaju anotacije, kao podatak.
+        /// </summary>
+        internal static List<Rec> FreeTextAnotacije(Page stranaPdf, double w, double h)
+        {
+            var rez = new List<Rec>();
+            List<UglyToad.PdfPig.Annotations.Annotation> anotacije;
+            try { anotacije = stranaPdf.ExperimentalAccess.GetAnnotations().Where(a => a.Type == UglyToad.PdfPig.Annotations.AnnotationType.FreeText).ToList(); } catch { return rez; }
+            foreach (var an in anotacije)
+            {
+                var sadrzaj = an.Content;
+                if (string.IsNullOrWhiteSpace(sadrzaj)) continue;
+                // samo vidljive anotacije koje se štampaju: Print (4) postavljen, bez Invisible (1), Hidden (2) i NoView (32)
+                var f = (int)an.Flags;
+                if ((f & 4) == 0 || (f & (1 | 2 | 32)) != 0) continue;
+                // anotacija bez površine (pravougaonik nulte širine ili visine) se ne vidi
+                if (Math.Abs(an.Rectangle.Width) < 2 || Math.Abs(an.Rectangle.Height) < 2) continue;
+                // nevidljiv tekst (bela boja: „/Helv 12 Tf 1 g“ – okviri obrasca iz šablona) nije upis
+                var da = an.AnnotationDictionary != null && an.AnnotationDictionary.TryGet(UglyToad.PdfPig.Tokens.NameToken.Create("DA"), out var daTok) ? (daTok as UglyToad.PdfPig.Tokens.StringToken)?.Data ?? "" : "";
+                if (System.Text.RegularExpressions.Regex.IsMatch(da, @"(?<![\d.])1(?:\.0+)?\s+g\b|(?<![\d.])1(?:\.0+)?\s+1(?:\.0+)?\s+1(?:\.0+)?\s+rg\b")) continue;
+                var b = an.Rectangle;
+                double x0 = Math.Min(b.Left, b.Right), x1 = Math.Max(b.Left, b.Right), gore = Math.Max(b.Top, b.Bottom), dole = Math.Min(b.Top, b.Bottom);
+                if (x0 < 0 || x1 > w + 1 || dole < 0 || gore > h + 1) continue;
+                ReciUPravougaoniku(sadrzaj, x0, x1, gore, dole, w, h, rez);
             }
             return rez;
         }
@@ -149,6 +184,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     }
                     // Popunjen PDF obrazac (AcroForm): podaci su vrednosti polja, ne tekst strane (npr. CIT obrazac popunjen u Acrobatu).
                     s.Reci.AddRange(PoljaObrasca(doc, page.Number, w, h));
+                    // v2.8.4 (4.1): FreeText anotacije („pisaća mašina“ u Acrobat-u) – podaci kojih nema u tekstu strane
+                    var ft = FreeTextAnotacije(page, w, h);
+                    s.Reci.AddRange(ft.Where(r => !s.Reci.Any(x => x.T == r.T && Math.Abs(x.Cx - r.Cx) < 0.02 && Math.Abs(x.Cy - r.Cy) < 0.01)));
                     s.Izvor = s.Reci.Count > 0 ? IzvorTeksta.Tekst : IzvorTeksta.Nema;
 
                     // Pokvaren tekst (font bez ispravne mape znakova): strana se iscrtava i čita OCR-om.
@@ -160,6 +198,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                             var ocrReci = ocr.Prepoznaj(png, out var nap0, 300);
                             if (ocrReci.Count > 0)
                             {
+                                s.Ugao = ocr.PoslednjiUgao; PdfCrtac.ZapamtiUgao(pdf, page.Number, s.Ugao);
                                 s.Reci = ocrReci;
                                 s.Izvor = IzvorTeksta.Ocr;
                                 s.Napomena = "tekst PDF-a je pokvaren (kodiranje fonta) – strana pročitana OCR-om" + (nap0.Length > 0 ? ", " + nap0 : "");
@@ -182,13 +221,19 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                             try
                             {
                                 ocrReci = ocr.Prepoznaj(bajtovi, out nap, dpi);
+                                // v2.8.4 (2): OCR čita sirovu sliku, a PDFium iscrtava stranu okrenutu za /Rotate strane – ugao za iscrtavanje je
+                                // ugao sirove slike minus /Rotate (skener čuva položenu sliku i /Rotate 90, pa je iscrtana strana već uspravna)
+                                var rotStrane = ((page.Rotation.Value % 360) + 360) % 360;
+                                s.Ugao = ((ocr.PoslednjiUgao - rotStrane) % 360 + 360) % 360;
                                 var bb = slika.Bounds;
-                                // Koordinate OCR-a su u odnosu na sliku → u odnosu na stranu.
-                                foreach (var r in ocrReci)
-                                {
-                                    r.X0 = (bb.Left + r.X0 * bb.Width) / w; r.X1 = (bb.Left + r.X1 * bb.Width) / w;
-                                    r.Y0 = 1 - (bb.Top - r.Y0 * bb.Height) / h; r.Y1 = 1 - (bb.Top - r.Y1 * bb.Height) / h;
-                                }
+                                // Koordinate OCR-a su u odnosu na sliku → u odnosu na stranu. Okrenut sken (v2.8.4): slika pokriva stranu, pa su
+                                // koordinate u odnosu na okrenutu sliku isto što i u odnosu na okrenutu stranu.
+                                if (ocr.PoslednjiUgao == 0 && rotStrane == 0)
+                                    foreach (var r in ocrReci)
+                                    {
+                                        r.X0 = (bb.Left + r.X0 * bb.Width) / w; r.X1 = (bb.Left + r.X1 * bb.Width) / w;
+                                        r.Y0 = 1 - (bb.Top - r.Y0 * bb.Height) / h; r.Y1 = 1 - (bb.Top - r.Y1 * bb.Height) / h;
+                                    }
                             }
                             catch (Exception ex) { ocrReci = null; nap = "sken nije pročitan direktno (" + ex.Message + ")"; }
                         }
@@ -198,16 +243,20 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                             try
                             {
                                 ocrReci = ocr.Prepoznaj(PdfCrtac.StranaUPng(pdf, page.Number), out var nap2, 300);
+                                s.Ugao = ocr.PoslednjiUgao;
                                 nap = "sken pročitan posle iscrtavanja strane" + (nap2.Length > 0 ? ", " + nap2 : "");
                             }
                             catch (Exception ex) { ocrReci = new List<Rec>(); nap = (nap.Length > 0 ? nap + "; " : "") + "iscrtavanje skena nije uspelo (" + ex.Message + ")"; }
                         }
                         s.Napomena = nap;
+                        PdfCrtac.ZapamtiUgao(pdf, page.Number, s.Ugao);
                         if (ocrReci.Count > 0)
                         {
                             // Sken sa "nevidljivim" tekstom koji je napravio skener (često loš): ako naš OCR prepozna više naziva
                             // rubrika CIM obrasca, koristi se samo naš OCR; inače se tekst iz PDF-a dopunjuje OCR rečima.
-                            if (s.Reci.Count > 0 && brojSidara != null && brojSidara(ocrReci) > brojSidara(s.Reci))
+                            // Okrenut sken (v2.8.4): tekst skenera je u koordinatama neokrenute strane – koristi se samo OCR.
+                            if (s.Ugao != 0 || page.Rotation.Value % 360 != 0) { s.Reci = ocrReci; }
+                            else if (s.Reci.Count > 0 && brojSidara != null && brojSidara(ocrReci) > brojSidara(s.Reci))
                             {
                                 s.Reci = ocrReci;
                                 s.Napomena += (s.Napomena.Length > 0 ? "; " : "") + "tekst skenera zamenjen OCR-om";

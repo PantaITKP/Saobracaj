@@ -48,6 +48,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
         private static readonly Regex Datum = new Regex(@"\b(?<d>[0-3]?\d)\s?[./-]\s?(?<m>[01]?\d)\s?[./-]\s?(?<g>(?:20)?\d{2})\b", RegexOptions.Compiled);
         private static readonly Regex DatumIso = new Regex(@"\b(?<g>20\d{2})-(?<m>[01]\d)-(?<d>[0-3]\d)\b", RegexOptions.Compiled);
+        private static readonly Regex DatumGmd = new Regex(@"\b(?<g>20\d{2})\s?[./]\s?(?<m>[01]?\d)\s?[./]\s?(?<d>[0-3]?\d)\b", RegexOptions.Compiled);
         private static readonly Regex MrnRx = new Regex(@"(?<p>\b(?:EXS|ENS|TS|E|T)\s*-?\s*MRN|\bMRN)?[\s:.\-]*\b(?<n>\d{2}[A-Z]{2}[A-Z0-9]{14})\b", RegexOptions.Compiled);
         private static readonly Regex UtiRx = new Regex(@"\b[A-Z]{3}[UJZ]\s?-?\d{6}\s?-?\d\b", RegexOptions.Compiled);
         private static readonly Regex KolaRx = new Regex(@"(?<!\d)(\d[\d \-]{10,17}\d)(?!\d)", RegexOptions.Compiled);
@@ -155,6 +156,13 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             poz = -1; duz = 0;
             var m = DatumIso.Match(t ?? "");
             if (m.Success) { poz = m.Index; duz = m.Length; return m.Value; }
+            // v2.8.4 (4.4): godina-mesec-dan sa tačkama („2026.10.26“, Lukavac r29)
+            m = DatumGmd.Match(t ?? "");
+            if (m.Success)
+            {
+                int gg = int.Parse(m.Groups["g"].Value), mm = int.Parse(m.Groups["m"].Value), dd = int.Parse(m.Groups["d"].Value);
+                if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) { poz = m.Index; duz = m.Length; return gg.ToString("0000") + "-" + mm.ToString("00") + "-" + dd.ToString("00"); }
+            }
             m = Datum.Match(t ?? "");
             if (!m.Success) return "";
             int d = int.Parse(m.Groups["d"].Value), mes = int.Parse(m.Groups["m"].Value), g = int.Parse(m.Groups["g"].Value);
@@ -677,6 +685,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             PopuniR62(r, Raspored.Linije(Ocisti(ciste)), ocr);
             // v2.8.1: na skenu – broj (2+ cifre, bez slova) niske pouzdanosti; OCR šum od slova i cifara („jj2“; „6350.1“ je u redu)
             r.NepouzdanoCitanje = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}") && w.Pouzdanost < 0.55);
+            // v2.8.4: pouzdanost samih cifara (HOLCIM: 72 162032 3212 146100 sa 0,93–0,96 uz šum „+ gs“; YU DIN rukom: 0,69–0,75)
+            r.PouzdanostCifara = ocr ? ciste.Where(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}")).Select(w => w.Pouzdanost).DefaultIfEmpty(1).Min() : 1;
             r.OcrSum = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\p{L}\p{L}?\d|\d\p{L}"));
             return r;
         }

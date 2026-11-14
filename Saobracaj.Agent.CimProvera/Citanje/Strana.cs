@@ -38,6 +38,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         public IzvorTeksta Izvor;
         public double SrednjaPouzdanost => Reci.Count == 0 ? 0 : Reci.Average(r => r.Pouzdanost);
         public string Napomena = "";
+        /// <summary>v2.8.4 (2): ugao (u smeru kazaljke) za koji je strana okrenuta pre OCR-a; koordinate reči su posle okretanja.</summary>
+        public int Ugao;
         /// <summary>Crno-bela slika strane (PNG 1 bit, ~150 dpi) za linije okvira, polja za označavanje i prazne rubrike; null ako nije iscrtana.</summary>
         public byte[] Slika;
         /// <summary>Ista strana sa svetlijim pragom (samo za linije okvira).</summary>

@@ -38,6 +38,8 @@ namespace Saobracaj.Agent.CimProvera
         public Rezim Rezim;
         public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde (ključ TestPrimalac ili IzvestajAdresa)
         public List<string> KopijaNa = new List<string>();
+        /// <summary>v2.8.4 (10): adrese koje automatski prosleđuju poštu na agenti@ – ne idu u primaoce u Live režimu (ključ ProsledjivanjeNaAgenti).</summary>
+        public List<string> ProsledjivanjeNaAgenti = new List<string>();
         public List<string> InterniDomeni = new List<string>();
         public bool OdgovoriNaIspravanDolazni;
         public bool ObavestiIspravanOdlazni;
@@ -109,6 +111,7 @@ namespace Saobracaj.Agent.CimProvera
                 Rezim = string.Equals(S("Rezim", "Test"), "Live", StringComparison.OrdinalIgnoreCase) ? Rezim.Live : Rezim.Test,
                 InterniDomeni = L("InterniDomeni", "kprevoz.co.rs"),
                 KopijaNa = L("KopijaNa", ""),
+                ProsledjivanjeNaAgenti = L("ProsledjivanjeNaAgenti", ""),
                 OdgovoriNaIspravanDolazni = B("OdgovoriNaIspravanDolazni", true),
                 ObavestiIspravanOdlazni = B("ObavestiIspravanOdlazni", false),
                 ImportOd = DateTime.ParseExact(S("ImportOd", DateTime.Today.ToString("yyyy-MM-dd")), "yyyy-MM-dd", CultureInfo.InvariantCulture),

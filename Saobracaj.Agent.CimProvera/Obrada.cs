@@ -117,6 +117,22 @@ namespace Saobracaj.Agent.CimProvera
 
             IstiListDvaput(dokumenti, log);
 
+            // v2.8.4 (8): dosije pošiljke – raniji mailovi iste pošiljke (7 dana); prateći dokumenti iz dosijea važe kao priloženi
+            PoslednjaPosiljka = null; RazlogVeze = null;
+            if (Dosije != null && MailDosijea != null)
+                try
+                {
+                    var pos = Dosije.Nadji(MailDosijea, dokumenti, out var razlog);
+                    if (pos != null)
+                    {
+                        PoslednjaPosiljka = pos; RazlogVeze = razlog;
+                        var iz = Dosije.DokumentiIzDosijea(pos);
+                        log?.Info("  dosije pošiljke " + pos.Id + " (" + razlog + "; ranije: " + string.Join(", ", pos.Mailovi) + ")" + (iz.Count > 0 ? ", dokumenti iz dosijea: " + string.Join(", ", iz.Select(d => d.Tip + " (" + d.Fajl + ")")) : ""));
+                        dokumenti.AddRange(iz);
+                    }
+                }
+                catch (Exception ex) { log?.Upozorenje("  dosije pošiljke nije pročitan: " + ex.Message); }
+
             var u = new UlazProvere
             {
                 Dokumenti = dokumenti, Posiljalac = posiljalac, InterniPosiljalac = interni,
@@ -130,10 +146,29 @@ namespace Saobracaj.Agent.CimProvera
                 ishod.Provera = new Motor(pravila, log).Proveri(u);
             }
             ishod.Provera.OpisPriloga = ishod.OpisPriloga;
+            // v2.8.4 (8): nova verzija istog lista / skenirana i overena verzija već proverenog digitalnog lista
+            if (PoslednjaPosiljka != null)
+                try { global::Saobracaj.Agent.CimProvera.Dosije.Primeni(PoslednjaPosiljka, ishod.Provera, ishod.Engleski); }
+                catch (Exception ex) { log?.Upozorenje("  dosije (verzije) nije primenjen: " + ex.Message); }
             // v2.8.1: CIT 7 – veza sa listom iz istog maila ili iz ranije obrađenih (stanje\listovi.json), izmene i provere (interno)
             try { ishod.Provera.Cit7 = Cit7Provera.Proveri(ishod.Provera, RanijiListovi?.Invoke(), referentniDatum, NaslovMaila); }
             catch (Exception ex) { log?.Upozorenje("  CIT 7 nije proveren: " + ex.Message); }
             return ishod;
+        }
+
+        /// <summary>v2.8.4 (8): dosije pošiljaka (stanje\posiljke.json) i podaci o mailu; null = bez dosijea.</summary>
+        public Dosije Dosije;
+        public MailZaDosije MailDosijea;
+        /// <summary>Pošiljka sa kojom je poslednji mail povezan (null = nova pošiljka) i razlog veze.</summary>
+        public Dosije.Posiljka PoslednjaPosiljka;
+        public string RazlogVeze;
+
+        /// <summary>Zapis poslednjeg maila u dosije (posle odluke o odgovoru) i čuvanje stanja.</summary>
+        public void ZapamtiUDosije(RezultatProvere r)
+        {
+            if (Dosije == null || MailDosijea == null || r == null) return;
+            Dosije.Zapamti(PoslednjaPosiljka, MailDosijea, r.Dokumenti.Where(d => !d.IzDosijea).ToList(), r);
+            Dosije.Sacuvaj();
         }
 
         /// <summary>v2.8.1: ranije obrađeni tovarni listovi (za CIT 7 bez lista u istom mailu); null = nema istorije.</summary>

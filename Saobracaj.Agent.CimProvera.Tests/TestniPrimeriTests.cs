@@ -122,7 +122,12 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod, TestCategory("Regresija")]
         public void List_koji_je_izdao_KP_je_interni_izvestaj()
         {
-            foreach (var (s, od) in new[] { ("GIPS", "bosstradezonasabac@gmail.com"), ("11132026Scan130104", "priprema@kprevoz.co.rs"), ("cuv za 1 vagon", "strahinja.tadic@pansped.rs") })
+            // v2.8.4: GIPS iz keša strana sa servera (13.11.) ima r62 „jj2 1 63501 / 3212) 498900“ – nepouzdano pročitana r62 se ne koristi
+            // za odluku o KP tovarnom listu (odluka korisnika 14.11.) → interni izveštaj „ručna provera“ (vidi ispod); KP tovarni list ostaju ostala dva
+            var gips = Mail("GIPS", "bosstradezonasabac@gmail.com");
+            Assert.AreEqual(Izvestaj.RazlogRucna, Izvestaj.RazlogInternog(gips.Provera, pravila), "GIPS: r62 nepouzdana – ručna provera");
+            Assert.IsTrue(gips.Provera.Listovi.All(l => l.Cim.R62.NepouzdanaZaOdluke && !l.KpRezim));
+            foreach (var (s, od) in new[] { ("11132026Scan130104", "priprema@kprevoz.co.rs"), ("cuv za 1 vagon", "strahinja.tadic@pansped.rs") })
             {
                 var i = Mail(s, od);
                 Assert.AreEqual(Izvestaj.RazlogKp, Izvestaj.RazlogInternog(i.Provera, pravila), s);
@@ -170,7 +175,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r4 = Nalazi(i).First(n => n.Pravilo == "R4");
             StringAssert.Contains(r4.Primer, "CZ", "primer zemlje iz r10/r12 (Lovosice, 54)");
             var c = i.Provera.Listovi.Single().Cim;
-            Assert.AreEqual("72", c.R62.Zemlja); Assert.AreEqual("240036", c.R62.Stanica); Assert.AreEqual("", c.R62.Preduzece); Assert.AreEqual("", c.R62.Broj);
+            // v2.8.4: r62 preduzeće 3212 upisano anotacijom (FreeText „pisaća mašina“, vidljiva i za štampu) – GK30 je KP tovarni list
+            Assert.AreEqual("72", c.R62.Zemlja); Assert.AreEqual("240036", c.R62.Stanica); Assert.AreEqual("3212", c.R62.Preduzece, "r62 preduzeće 3212 upisano anotacijom"); Assert.AreEqual("", c.R62.Broj);
+            Assert.IsTrue(i.Provera.Listovi.Single().KpRezim, "r62 preduzeće 3212 upisano anotacijom → KP tovarni list");
         }
 
         [TestMethod, TestCategory("Regresija")]
@@ -221,7 +228,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod, TestCategory("Regresija")]
         public void Engleski_izvestaj_bez_cirilice_i_srpskih_reci()
         {
-            foreach (var (s, od) in new[] { ("55_16261", "filep.veronika@rthkft.hu"), ("CIM COAL 16", "tibor.tasnadi@pspcargo.ro"), ("GK30", "ste.obr06@gmail.com") })
+            // v2.8.4: GK30 više nije u spisku – r62 preduzeće 3212 upisano anotacijom, pa je KP tovarni list (samo interni izveštaj, na srpskom)
+            foreach (var (s, od) in new[] { ("55_16261", "filep.veronika@rthkft.hu"), ("CIM COAL 16", "tibor.tasnadi@pspcargo.ro") })
             {
                 var i = Mail(s, od);
                 Assert.IsTrue(i.Engleski, s);
@@ -436,7 +444,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var i = Mail("GK30", "ste.obr06@gmail.com");
             var n = Nalazi(i).Single(x => x.Pravilo == "R25-MASA");
             Assert.AreEqual(Tezina.Greska, n.Tezina);
-            StringAssert.Contains(n.Tekst, "the mass is not entered as a number");
+            // v2.8.4: r62 preduzeće 3212 upisano anotacijom → KP tovarni list, interni izveštaj na srpskom (ranije engleski: „the mass is not entered as a number“)
+            Assert.IsTrue(i.Provera.Listovi.Single().KpRezim, "r62 preduzeće 3212 upisano anotacijom");
             CollectionAssert.AreEqual(new[] { "X kg", "X kg", "X kg" }, n.DopunaRedovi, "redovi T= / N= / G=");
         }
 
@@ -606,11 +615,12 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 }
             }
             var gk = Mail("GK30", "ste.obr06@gmail.com");
-            Assert.AreEqual("3212 XXXXX-X", Nalazi(gk).Single(n => n.Pravilo == "R62").Dopuna, "preduzeće iz r58a (KP 3212), broj kao šablon");
+            // v2.8.4: r62 preduzeće 3212 upisano anotacijom – nedostaje samo broj otpravljanja
+            Assert.AreEqual("XXXXX-X", Nalazi(gk).Single(n => n.Pravilo == "R62").Dopuna, "r62 preduzeće 3212 upisano anotacijom, broj kao šablon");
             Assert.AreEqual("MM-DD-XX", Nalazi(gk).Single(n => n.Pravilo == "R16").Dopuna, "datum nije u dokumentima (ne iz maila), sat XX");
             Assert.AreEqual("XXXX-XX-XX", Nalazi(gk).Single(n => n.Pravilo == "R29").Dopuna);
             var r62 = Nalazi(gk).Single(n => n.Pravilo == "R62").DopunaPoPoljima;
-            Assert.AreEqual("3212", r62["62.3"]); Assert.AreEqual("XXXXX-X", r62["62.4"]); Assert.AreEqual(2, r62.Count, "zemlja i stanica su upisane");
+            Assert.AreEqual("XXXXX-X", r62["62.4"]); Assert.AreEqual(1, r62.Count, "zemlja, stanica i preduzeće su upisani (r62 preduzeće 3212 upisano anotacijom)");
             // 55 16261: datum iz r29 lista („Kiskoros, 13.11.2026“)
             Assert.AreEqual("11-13-XX", Nalazi(Mail("55_16261", "filep.veronika@rthkft.hu")).Single(n => n.Pravilo == "R16").Dopuna);
             Assert.AreEqual("XXXXX-X", Pravila.Sablon.BrojOtpravljanja); Assert.AreEqual("XX XXXXX-X", Pravila.Sablon.Stanica);

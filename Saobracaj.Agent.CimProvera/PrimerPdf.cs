@@ -171,7 +171,7 @@ namespace Saobracaj.Agent.CimProvera
                 if (pdf == null) return null;
                 p = new Prilog { Naziv = p.Naziv, Sadrzaj = pdf, Vrsta = VrstaPriloga.Pdf };
             }
-            byte[] slika = p.Vrsta == VrstaPriloga.Pdf ? PdfCrtac.StranaUPng(p.Sadrzaj, Math.Max(1, strana), Dpi) : p.Sadrzaj;
+            byte[] slika = p.Vrsta == VrstaPriloga.Pdf ? PdfCrtac.StranaUPng(p.Sadrzaj, Math.Max(1, strana), Dpi) : PdfCrtac.SlikaOkrenuta(p.Sadrzaj);
             using (var ms = new MemoryStream(slika))
             using (var img = Image.FromStream(ms))
             {

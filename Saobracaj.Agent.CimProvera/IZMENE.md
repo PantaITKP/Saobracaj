@@ -1,5 +1,22 @@
 # CimProvera – izmene programa
 
+## 2026-11-14 – v2.8.4: ispravke posle pravog saobraćaja 13–14.11. i priprema za produkciju
+
+- **Strana 2/2 spiska kola** (`LokalniCitac.NastavakSpiska`): zaglavlje kolona CIT 23 ili red zbirova „Σ“ → nastavak spiska, nikad tovarni list. Natpisi koji samo liče na rubrike bez natpisa obrasca nisu „neprepoznat CIM“.
+- **Bez odgovora samo kad je sigurno**: mail bez tovarnog lista (spisak kola, carinski dokumenti, najava, sastav voza) ne dobija nikakav odgovor – samo red u logu. Strana koja liči na obrazac CIM/CUV a nije pročitana (`LokalniCitac.LiciNaObrazac`) ide na internu ručnu proveru. JCI „Specifikacija prevoznih sredstava uz rubriku 18“ je carinski dokument.
+- **Položeni i crno-beli skenovi** (`Ocr.Prepoznaj`, `PdfCrtac`): orijentacija (OSD, proba 90°/270°) ispod 0,75; ugao po strani važi za svako iscrtavanje i uzima u obzir /Rotate strane; 1-bit sken – sivi tonovi, uvećanje, nagib. Sken obrasca bez pročitanih natpisa prepoznaje se po okviru i brojevima rubrika uz šifru stanice (voz 258).
+- **r7** (`Provere.AnalizirajR7`, `LokalniCitac.PonoviR7`): tolerancija jednog slova za veznike i reči za platioca, nove reči za platioca, naziv do kraja reda, „SRB: KP 3212“ → upozorenje „nejasno“, šifra 16 samo u propisanom obliku, ponovni OCR isečka r7.
+- **Anotacije** (`PdfStrane.FreeTextAnotacije`): vidljive FreeText anotacije koje se štampaju su podatak (SAD HER 79 r58a „UIC: 3212“, GK30 r62 preduzeće 3212 → KP tovarni list).
+- **Zemlja, r29, r30, r24**: zemlja posle mesta je zemlja; nepoznata reč na kraju adrese uz uputnu u inostranstvu → napomena „proverite zemlju“; datum „2026.10.26“; X po obliku (`CimSablon.ImaX`); K-505 kućica r24; sporno čitanje kućice ne menja cifre opšteg OCR-a.
+- **X19**: neupisana identifikacija na spisku je napomena.
+- **Ponavljanja** (`Ponavljanja.cs`, `stanje\ponavljanja.json`): isti prilog i isti tovarni list (ključ: r62 sa slovnim brojem otpravljanja, pošiljalac + r8 + relacija, sadržaj) se ne prijavljuju ponovo; jedna interna poruka po mailu.
+- **Dosije pošiljke** (`Dosije.cs`, `stanje\posiljke.json`): povezivanje mailova (7 dana), priloženost na celom dosijeu, „nova verzija – ispravljeno / ostalo“, overena verzija digitalnog lista (samo r58a, r62, r29). `validate --stanje` i `.eml` kao ulaz; `preuzmi <uid> --eml`.
+- **Ko popunjava** (`popunjava` u pravilima, GLV-CIM Prilog 2): rubrike 1–30 pošiljalac, r57 prevoznik; nalaz za rubriku prevoznika kod spoljnog pošiljaoca → INTERNO. r49, r50, r58a, r62 čekaju odluku.
+- **Primaoci u Live režimu** (`Mail\PrimaociLive.cs`, samo priprema): odgovor svima iz prepiske, nit i naslov „RE: … – CIM provera: …“; Test zaglavlje `X-CimProvera-Live-Primaoci`.
+- **Interni izveštaji**: „Primer ispravke je u prilogu.“; nepouzdano pročitane rubrike u jednom redu.
+- **r62 nečitljiva**: rukom upisana r62 sa nepouzdanim ciframa se ne koristi za odluke.
+- **Zaštita režima Test** (`Slanje.Posalji`): svaki primalac osim agenti@kprevoz.co.rs se uklanja pre slanja; u log „TEST: uklonjen primalac …“.
+
 ## 2026-11-14 – v2.8.3: ispravke posle testa sa 6 mailova (13–14.11.)
 
 - **Bez izmišljenih naziva** (`Pravila\Dopune.cs`): naziv/adresa/platilac/primalac u dopuni su šablon („XXXXX, ulica i broj, poštanski broj mesto, XX“, „Platilac za deonicu SRB: XXXXX“). Izvor „Transport Partner d.o.o.“ (R1/R4 i KP7-PLATILAC) uklonjen. Na skenu nema dopune u rubrici koja nije pouzdano pročitana. Test `Dopune_nikad_ne_izmisljaju_naziv_firme` pada ako dopuna sadrži naziv firme koji nije pročitan iz priloga.

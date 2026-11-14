@@ -181,6 +181,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Broj otpravljanja (npr. 12345-6).")] public string Broj { get; set; } = "";
         /// <summary>v2.8.1: sken – cifre r62 niske pouzdanosti (i kada ciljani OCR isečaka kućica daje različite brojeve): proverava čovek.</summary>
         [Interni] public bool NepouzdanoCitanje { get; set; }
+        /// <summary>v2.8.4: sken – najmanja pouzdanost grupa cifara r62 (šum oko njih se ne računa); 1 za tekst PDF-a.</summary>
+        [Interni] public double PouzdanostCifara { get; set; } = 1;
+        /// <summary>v2.8.4: r62 na skenu nije pouzdano pročitana – ne koristi se za odluke (KP tovarni list, ponavljanje, dosije).</summary>
+        [Interni] public bool NepouzdanaZaOdluke { get; set; }
         /// <summary>v2.8.1: sken – u rubrici je OCR šum od slova i cifara („jj2“) – razlog za ručnu proveru samo kada neki deo r62 nije pročitan.</summary>
         [Interni] public bool OcrSum { get; set; }
     }
@@ -418,6 +422,9 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string Fajl { get; set; } = "";
         /// <summary>Uslov isporuke iz fakture / deklaracije (npr. "DAP Alesd").</summary>
         [Interni] public string Incoterms { get; set; } = "";
+        /// <summary>v2.8.4 (8): prateći dokument iz ranijeg maila iste pošiljke (dosije) – priloženost na celom dosijeu.</summary>
+        [Interni] public bool IzDosijea { get; set; }
+        [Interni] public string IzMaila { get; set; } = "";
         [Interni] public string Izvor { get; set; } = "claude"; // claude | excel
         /// <summary>Za cit7: pročitan naknadni zahtev (v2.8.1).</summary>
         [Interni] public Cit7Zahtev Cit7 { get; set; }

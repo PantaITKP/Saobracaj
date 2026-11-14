@@ -301,6 +301,28 @@ namespace Saobracaj.Agent.CimProvera
                     ps.Status = "BezPriloga"; return Korak.Gotova;
                 }
                 ps.HesPriloga = Prilog.Sha256(prilozi.SelectMany(p => p.sadrzaj).ToArray()).Substring(0, 16);
+                // v2.8.4 (6.1): isti prilog (isti heš) koji je već proveren se ne proverava ponovo – novi mail dobija istu odluku;
+                // ako je prvi rezultat već poslat, ništa se ne šalje ponovo
+                var ponavljanja = Ponavljanja.Ucitaj(cfg.StanjeFolder);
+                var oznaka = "UID " + uid.Id;
+                void Zapamti(string ishodTxt, RezultatProvere rr, bool prijavljeno)
+                {
+                    if (dryRun) return;
+                    try
+                    {
+                        ponavljanja.ZapamtiPriloge(prilozi, oznaka, ishodTxt, DateTime.Now);
+                        if (prijavljeno && rr != null) ponavljanja.ZapamtiListove(rr, oznaka, DateTime.Now);
+                        ponavljanja.Sacuvaj();
+                        obrada.ZapamtiUDosije(rr);
+                    }
+                    catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": " + Ponavljanja.Ime + " nije upisan: " + ex.Message); }
+                }
+                var istiPrilog = ponavljanja.IstiPrilozi(prilozi);
+                if (istiPrilog != null)
+                {
+                    log.Info("  UID " + uid.Id + ": isti prilog kao " + istiPrilog.Oznaka + " (" + istiPrilog.Vreme.ToString("dd.MM. HH:mm") + ", " + istiPrilog.Ishod + ") – već obrađeno; ništa se ne šalje.");
+                    ps.Status = "IstiPrilog"; return Korak.Gotova;
+                }
 
                 var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
                 var jeOdlazni = odlazni || string.Equals(od, cfg.Nalog, StringComparison.OrdinalIgnoreCase);
@@ -318,6 +340,13 @@ namespace Saobracaj.Agent.CimProvera
 
                 Ishod ishod;
                 obrada.NaslovMaila = m.Subject;
+                // v2.8.4 (8): dosije pošiljke (stanje\posiljke.json): nit, naslov, ključ lista, r8, kola
+                obrada.Dosije = Dosije.Ucitaj(cfg.StanjeFolder);
+                obrada.MailDosijea = new MailZaDosije
+                {
+                    Oznaka = oznaka, MessageId = m.MessageId ?? "", Naslov = m.Subject ?? "", Posiljalac = od, Vreme = datum,
+                    Prethodni = m.References.Concat(string.IsNullOrEmpty(m.InReplyTo) ? new string[0] : new[] { m.InReplyTo }).Distinct().ToList(),
+                };
                 try { ishod = obrada.Proveri(prilozi, od, cfg.JeInterni(od), datum, en); }
                 catch (Exception ex)
                 {
@@ -357,34 +386,31 @@ namespace Saobracaj.Agent.CimProvera
                     // Ne sme se zaključiti "nema CIM-a" ako neki prilog nije ni pročitan ni prepoznat: samo interna poruka, ne pošiljaocu.
                     log.Upozorenje("  UID " + uid.Id + ": prilozi nisu pročitani/prepoznati, ne može da se utvrdi da li mail sadrži CIM – ručna provera.");
                     ps.Status = "NeprocitanoRucnaProvera";
+                    // v2.8.4 (6.3): jedna interna poruka po mailu – staro upozorenje „Mail … prilozi nisu pročitani – . Ne može da se utvrdi…“ uklonjeno
                     try { PosaljiInternoRucnaProvera(m, ishod, en); }
                     catch (Exception ex) { log.Greska("  UID " + uid.Id + ": interna poruka nije poslata: " + ex.Message); }
-                    Upozori(stanje, "neprocitano-" + kljuc, "Mail „" + m.Subject + "“ od " + od + " (" + kljuc + "): prilozi nisu pročitani – "
-                        + string.Join("; ", ishod.NisuProcitani) + ". Ne može da se utvrdi da li sadrži tovarni list; potrebna je ručna provera.", 1000);
                     PosaljiPoredjenje(m, Por(r, "prilozi nisu pročitani"), "prilozi nisu pročitani");
+                    Zapamti("prilozi nisu pročitani – interna ručna provera", r, false);
                     return Korak.Gotova;
                 }
                 if (!r.ImaTovarniList)
                 {
-                    var spiskovi = r.Dokumenti.Where(d => d.Tip == TipDokumenta.SpisakKola).ToList();
-                    if (spiskovi.Count > 0)
-                    {
-                        // Dostavljen je spisak kola (CIT 23) bez tovarnog lista: obaveštenje kao i za greške.
-                        log.Info("  UID " + uid.Id + ": samo spisak kola, bez CIM/CUV (" + string.Join(", ", spiskovi.Select(d => d.Fajl).Distinct()) + ") – šalje se obaveštenje.");
-                        ps.Status = "SamoSpisak";
-                        try { PosaljiSamoSpisak(m, spiskovi, pravila, en, jeOdlazni, ishod.OpisPriloga); }
-                        catch (Exception ex)
-                        {
-                            log.Greska("  UID " + uid.Id + ": obaveštenje nije poslato", ex);
-                            ps.PoslednjaGreska = "obaveštenje nije poslato: " + ex.Message;
-                            return Korak.PrivremenaGreska;
-                        }
-                        PosaljiPoredjenje(m, Por(r, "samo spisak kola, bez tovarnog lista"), "samo spisak kola, bez tovarnog lista");
-                        return Korak.Gotova;
-                    }
-                    log.Info("  UID " + uid.Id + ": nema CIM/CUV – mail se preskače. Dokumenti: " + string.Join(", ", r.Dokumenti.Select(d => d.Tip).Distinct()));
-                    PosaljiPoredjenje(m, Por(r, "tovarni list nije pronađen"), "tovarni list nije pronađen");
-                    ps.Status = "NemaCim"; return Korak.Gotova;
+                    // v2.8.4 (1): mail bez tovarnog lista (samo spisak kola, carinski dokumenti, najava, sastav voza) ne dobija nikakav
+                    // odgovor, ni interni – samo red u logu. (Ranije: obaveštenje „samo spisak kola“.)
+                    log.Info("  UID " + uid.Id + ": " + Izvestaj.LogBezTovarnogLista(r.Dokumenti));
+                    ps.Status = r.Dokumenti.Any(d => d.Tip == TipDokumenta.SpisakKola) ? "SamoSpisak" : "NemaCim";
+                    Zapamti("nema CIM/CUV – bez odgovora", r, false);
+                    return Korak.Gotova;
+                }
+                // v2.8.4 (6.2): isti tovarni list (ista r62, ili pošiljalac + r8 + relacija) sa nepromenjenim rubrikama je već prijavljen
+                var istiList = ponavljanja.IstiListovi(r);
+                if (istiList != null)
+                {
+                    log.Info("  UID " + uid.Id + ": " + Izvestaj.OpisListova(r, false) + " – isti tovarni list kao " + istiList.Oznaka + " (" + istiList.Vreme.ToString("dd.MM. HH:mm")
+                        + "), sadržaj rubrika nepromenjen – već prijavljeno, bez novog izveštaja.");
+                    ps.Status = "IstiList";
+                    Zapamti("isti tovarni list kao " + istiList.Oznaka + " – bez novog izveštaja", r, false);
+                    return Korak.Gotova;
                 }
 
                 ps.Greske = r.BrojGresaka; ps.Upozorenja = r.BrojUpozorenja;
@@ -405,6 +431,7 @@ namespace Saobracaj.Agent.CimProvera
                 }
                 if (dodatak != null && !poslatDodatak) PosaljiPoredjenje(m, dodatak, "izveštaj nije poslat (" + Izvestaj.OpisListova(r, false) + ", grešaka " + r.BrojGresaka + ", upozorenja " + r.BrojUpozorenja + ")");
                 dodatak = null;
+                Zapamti((Izvestaj.RazlogInternog(r, pravila) != null ? "interni izveštaj" : "izveštaj") + " poslat", r, true);
                 return Korak.Obradjena;
             }
         }
@@ -439,9 +466,11 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8.3: kratak interni uvod – nije pismo pošiljaocu (bez „Poštovani“, zahvalnice i potpisa)
             var uvod = (cfg.Rezim == Rezim.Test ? "[TEST] " : "") + Izvestaj.UvodInternogKratak(razlog, r, od, m.Subject, m.Date.LocalDateTime);
             var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? NapraviPrimer(r, pravila, false) : null;
-            var telo = Izvestaj.Telo(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false), interni: true);
-            var html = Izvestaj.Html(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false), interni: true);
+            var telo = Izvestaj.Telo(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false, true), interni: true);
+            var html = Izvestaj.Html(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false, true), interni: true);
             var poruka = Slanje.Nova(cfg, primaoci, null, naslov, telo, odgovorNa: m, html: html);
+            // v2.8.4 (10.3): interni izveštaj nikad ne ide spoljnim adresama – u Live samo KopijaNa / UpozorenjaNa
+            if (cfg.Rezim == Rezim.Test) poruka.Headers.Add(PrimaociLive.ZaglavljeLive, "samo interno (" + string.Join(", ", cfg.KopijaNa.Concat(new[] { cfg.UpozorenjaNa }).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase)) + ")");
             if (primer?.Napravljen == true) Slanje.DodajPrilog(poruka, primer.Ime, primer.Pdf);
             if (dryRun) { log.Info("    [dry-run] interni izveštaj za " + string.Join(", ", primaoci) + ": " + naslov); Console.WriteLine(telo); return; }
             Slanje.Posalji(cfg, poruka);
@@ -500,6 +529,9 @@ namespace Saobracaj.Agent.CimProvera
             return pr;
         }
 
+        /// <summary>Test: lista primalaca u Live režimu za zaglavlje test maila (X-CimProvera-Live-Primaoci).</summary>
+        private string testLive;
+
         private void PosaljiIzvestaj(MimeMessage m, RezultatProvere r, PravilaSkup pravila, bool en, bool odlazni, List<string> nisuProcitani, bool bezKopije)
         {
             var imaNalaza = r.BrojGresaka + r.BrojUpozorenja > 0;
@@ -510,27 +542,40 @@ namespace Saobracaj.Agent.CimProvera
             var za = string.Join(", ", m.To.Mailboxes.Select(x => x.Address));
             var datum = m.Date.LocalDateTime.ToString("dd.MM.yyyy HH:mm");
             var naslov = Izvestaj.Naslov(r, pravila, en);
-            string uvod;
-            List<string> primaoci, kopija = new List<string>();
+            string uvod = null;
+            List<string> primaoci = new List<string>(), kopija = new List<string>();
             if (odlazni)
             {
                 uvod = (en ? "The mail „" : "Mail „") + m.Subject + (en ? "“ that you sent on " : "“ koji ste poslali ") + datum + (en ? " to " : " na ") + za
                        + (r.BrojGresaka > 0 ? (en ? " contains a consignment note with errors:" : " sadrži tovarni list sa greškama:") : ":");
                 primaoci = new List<string> { cfg.Nalog };
             }
-            else
+            PrimaociLive live = null;
+            if (!odlazni)
             {
                 uvod = null; // pismo pošiljaocu počinje zahvalnicom (Izvestaj.Telo)
-                primaoci = new List<string> { od };
-                kopija = bezKopije ? new List<string>() : cfg.KopijaNa;
+                // v2.8.4 (10): Live – „Odgovori svima“ (From + To + Cc, bez agenti@ i prosleđivanja), naslov „RE: … – CIM provera: …“, ista nit
+                live = PrimaociLive.Iz(m, cfg);
+                primaoci = live.To;
+                kopija = live.Cc.Concat(bezKopije ? new List<string>() : cfg.KopijaNa).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                naslov = PrimaociLive.Naslov(m.Subject, en, r.BrojGresaka > 0);
+                if (live.SamoInterno && cfg.Rezim == Rezim.Live)
+                {
+                    log.Info("    " + live.Napomena + " – izveštaj samo interno.");
+                    if (cfg.KopijaNa.Count > 0) PosaljiInterno(m, r, pravila, en, nisuProcitani);
+                    return;
+                }
             }
             if (cfg.Rezim == Rezim.Test)
             {
-                uvod = "[TEST] " + (odlazni ? "Odlazni" : "Dolazni") + " mail od " + od + " za " + za + ", " + datum + ". "
-                       + "U režimu Live izveštaj bi išao na: " + string.Join(", ", primaoci.Concat(kopija)) + ". Naslov primljenog maila: „" + m.Subject + "“."
+                var liveOpis = odlazni ? string.Join(", ", primaoci.Concat(kopija)) : live.Opis() + (cfg.KopijaNa.Count > 0 && !bezKopije ? " (uz KopijaNa)" : "");
+                uvod = "[TEST] U Live režimu išlo bi na: " + liveOpis + (odlazni ? "" : "; naslov: „" + naslov + "“") + "." + Environment.NewLine
+                       + (odlazni ? "Odlazni" : "Dolazni") + " mail od " + od + " za " + za + ", " + datum + ". Naslov primljenog maila: „" + m.Subject + "“."
                        + (uvod != null ? Environment.NewLine + Environment.NewLine + uvod : "");
+                testLive = liveOpis;
                 primaoci = new List<string> { cfg.IzvestajAdresa };
                 kopija = new List<string>();
+                naslov = Izvestaj.Naslov(r, pravila, en);
             }
             var primer = imaNalaza ? NapraviPrimer(r, pravila, en) : null;
             var telo = Izvestaj.Telo(r, pravila, en, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, en));
@@ -553,6 +598,8 @@ namespace Saobracaj.Agent.CimProvera
                 poslatDodatak = true;
             }
             var poruka = Slanje.Nova(cfg, primaoci, kopija, naslov, telo, odgovorNa: m, html: html);
+            if (testLive != null) poruka.Headers.Add(PrimaociLive.ZaglavljeLive, testLive);
+            testLive = null;
             if (primer?.Napravljen == true) Slanje.DodajPrilog(poruka, primer.Ime, primer.Pdf);
             if (dryRun)
             {

@@ -112,6 +112,12 @@ namespace Saobracaj.Agent.CimProvera
             s.ResetArhiva = arhiva;
             s.PrviIzvestajiIzgraditi = true;
             s.Sacuvaj();
+            // v2.8.4 (6): spisak već proverenih priloga i prijavljenih tovarnih listova (ponavljanja.json)
+            var pon = Path.Combine(stanjeF, Ponavljanja.Ime);
+            if (File.Exists(pon)) { File.Delete(pon); izv.AppendLine("- već provereni prilozi i prijavljeni tovarni listovi (" + Ponavljanja.Ime + ")"); }
+            // v2.8.4 (8): dosije pošiljaka (posiljke.json)
+            var dos = Path.Combine(stanjeF, Dosije.Ime);
+            if (File.Exists(dos)) { File.Delete(dos); izv.AppendLine("- dosije pošiljaka (" + Dosije.Ime + ")"); }
 
             // 3. Keš: tekst/OCR strana (<heš>_strane_*.json) i rezultati čitanja i provere (<heš>_L*_*.json).
             var kes = Path.Combine(stanjeF, "kes");

@@ -11,7 +11,7 @@
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <!-- verzija programa prati verziju pravila (meta.version u cim_validation_rules.json) -->
-    <Version>2.8.3</Version>
+    <Version>2.8.4</Version>
   </PropertyGroup>
 
   <ItemGroup>

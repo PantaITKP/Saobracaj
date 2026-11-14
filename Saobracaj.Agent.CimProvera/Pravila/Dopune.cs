@@ -72,7 +72,35 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         internal static string Ocisti(string d)
         {
             d = Regex.Replace((d ?? "").Replace("\n", ", "), @"\s+", " ").Trim(' ', ',', ';');
-            return d.Length == 0 || OpisFormata.IsMatch(d) ? "" : d;
+            // v2.8.4 (7): dopuna sa šumom OCR-a („en jour—heure Nord j“, „jj 20“) se ne upisuje
+            return d.Length == 0 || OpisFormata.IsMatch(d) || SumOcr(d) ? "" : d;
+        }
+
+        /// <summary>Kratke reči (1–2 slova, mala slova) koje su prave reči ili oznake – sve ostale takve reči su šum OCR-a.</summary>
+        private static readonly HashSet<string> KratkeReci = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "i", "u", "a", "o", "e", "y", "s", "z", "na", "za", "od", "do", "se", "je", "br", "ul", "bb", "uz", "iz", "po", "sa", "ka", "ko", "li",
+            "of", "in", "on", "to", "at", "by", "is", "it", "no", "nr", "st", "kg", "km", "an", "as", "or", "de", "la", "le", "du", "et", "en", "au",
+            "am", "im", "um", "zu", "ab", "al", "il", "el", "di", "da", "ag", "sa", "kp", "ok", "ex", "vi", "ii", "hr", "rs", "hu", "mm", "dd",
+        };
+
+        /// <summary>
+        /// v2.8.4 (7): tekst je šum OCR-a: reč sa mešanim pismom (latinica i ćirilica u istoj reči), niz „jj“, slovo između cifara
+        /// („044j202j6“), ili reč od 1–2 mala slova koje nema u rečniku kratkih reči („j“, „ı“, „ij“). Velika slova od 2 znaka
+        /// (oznake zemalja, pokrajina „(VI)“) nisu šum.
+        /// </summary>
+        internal static bool SumOcr(string t)
+        {
+            if (string.IsNullOrWhiteSpace(t)) return false;
+            foreach (var tok in Regex.Split(t, @"[\s/,;:()\[\]„“""'—–\-]+").Where(x => x.Length > 0))
+            {
+                if (Regex.IsMatch(tok, @"\p{IsCyrillic}") && Regex.IsMatch(tok, @"[A-Za-zčćžšđČĆŽŠĐ]")) return true;
+                if (tok.IndexOf("jj", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                if (Regex.IsMatch(tok, @"\d[a-zıj]\d|ı")) return true;
+                var slova = Regex.Replace(tok, @"[^\p{L}]", "");
+                if (slova.Length == tok.Trim('.').Length && slova.Length >= 1 && slova.Length <= 2 && slova != slova.ToUpperInvariant() && !KratkeReci.Contains(slova.ToLowerInvariant())) return true;
+            }
+            return false;
         }
 
         private static string Cif(string s) => Regex.Replace(s ?? "", @"\D", "");
@@ -119,7 +147,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     var delovi = new List<string>();
                     if (prazna || Fali("mesto/stanica", "place/station"))
-                        delovi.Add(Mesto(k.C.R29.Mesto) ?? Sablon.Naziv);   // mesto iz r29 tog lista, inače šablon (nikad izmišljeno)
+                        delovi.Add(Mesto(PouzdanoMesto(k.C.R29, k)) ?? Sablon.Naziv);   // mesto iz r29 tog lista (v2.8.4: samo pouzdano pročitano), inače šablon (nikad izmišljeno)
                     var bezDatuma = prazna || Fali("datum", "date");
                     var bezCasa = prazna || Fali("vreme (čas)", "time (hour)");
                     // v2.8.2: datum SAMO iz dokumenta (r29, priloženi spisak kola), nikad datum maila; nepoznato – „MM-DD“, sat „XX“
@@ -133,7 +161,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     if (n.Detalj != null && Regex.IsMatch(n.Detalj, "budućnosti|future")) return ("", null, false);
                     var delovi = new List<string>();
-                    if (prazna || Fali("mesto", "place")) delovi.Add(Mesto(k.C.R16.Mesto) ?? Sablon.Naziv);
+                    if (prazna || Fali("mesto", "place")) delovi.Add(Mesto(PouzdanoMesto(k.C.R16, k)) ?? Sablon.Naziv);
                     if (prazna || Fali("datum ispostavljanja", "date of issue"))
                     {
                         // v2.8.2: datum SAMO iz dokumenta (r16, priloženi spisak kola); nepoznat deo – X („XXXX-XX-XX“, „XXXX-11-13“)
@@ -362,7 +390,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             t = Regex.Replace(t, @"\b\d[\d\s\-]*\b", " ");
             foreach (var z in Provere.IsoPoNazivu.Keys) t = Regex.Replace(t, @"(?<!\p{L})" + Regex.Escape(z) + @"(?!\p{L})", " ", RegexOptions.IgnoreCase);
             t = Regex.Replace(t, @"\s+", " ").Trim(' ', '.', '-', '–', ':');
-            if (!Regex.IsMatch(t, @"\p{L}{3}")) return null;
+            if (!Regex.IsMatch(t, @"\p{L}{3}") || SumOcr(t)) return null;
             return t.Length > 1 && t == t.ToUpperInvariant() ? CultureInfo.GetCultureInfo("sr-Latn-RS").TextInfo.ToTitleCase(t.ToLowerInvariant()) : t;
         }
 
@@ -370,6 +398,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// v2.8.2: datum iz dokumenta – zadata rubrika lista (r29 ili r16), pa datum na priloženom spisku kola; nikad datum maila.
         /// Delovi su null kada nisu poznati (godina „0000“ u r16 = godina nije upisana).
         /// </summary>
+        /// <summary>v2.8.4 (7): mesto druge rubrike (r29 → r16, r16 → r29) samo kada je ona pouzdano pročitana (SKM r29: „en jour—heure Nord j“ je šum).</summary>
+        private static string PouzdanoMesto(Rubrika r, Kontekst k)
+        {
+            var m = r is MestoDatum md ? md.Mesto : r is Preuzimanje pr ? pr.Mesto : null;
+            if (k.Ocr && (r.Status == StatusRubrike.Necitljivo || r.Pouzdanost < 0.9 || (k.C.PouzdanostStrane > 0 && k.C.PouzdanostStrane < Motor.PragSkena))) return null;
+            return m;
+        }
+
         /// <summary>v2.8.3: datum druge rubrike samo kada je ona pouzdano pročitana (sken: „0.11.2026“ nije 1. novembar).</summary>
         private static string PouzdanDatum(Rubrika r, Kontekst k)
         {

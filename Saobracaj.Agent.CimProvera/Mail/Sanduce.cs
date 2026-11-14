@@ -87,9 +87,49 @@ namespace Saobracaj.Agent.CimProvera.Mail
             m.Headers.Replace("X-Auto-Response-Suppress", "All");
         }
 
+        /// <summary>v2.8.4: jedina dozvoljena adresa u režimu Test (namerno fiksna – ne zavisi od config-a ni od ostalog koda).</summary>
+        public const string TestnaAdresa = "agenti@kprevoz.co.rs";
+
+        /// <summary>Log za zaštitu režima Test („TEST: uklonjen primalac …“); postavlja ga Program.</summary>
+        public static Log Dnevnik;
+        internal static Action<string> ZapisZastite = s => Dnevnik?.Upozorenje(s);
+
+        /// <summary>Stvarno slanje (SMTP); testovi ga zamenjuju da bi videli šta bi bilo poslato.</summary>
+        internal static Action<AgentConfig, MimeMessage> Transport = PosaljiSmtp;
+
         public static void Posalji(AgentConfig cfg, MimeMessage m)
         {
             OznaciOdgovor(m);
+            // v2.8.4: zaštita režima Test – dok je Rezim = Test, svaki primalac (To, Cc, Bcc) koji nije agenti@kprevoz.co.rs se uklanja
+            // pre slanja, bez obzira na to šta je sastavio ostali kod
+            if (cfg.Rezim == Rezim.Test) SamoTestnaAdresa(m, ZapisZastite);
+            Transport(cfg, m);
+        }
+
+        /// <summary>Uklanja sve primaoce (To, Cc, Bcc; i grupe) osim <see cref="TestnaAdresa"/>; svaki uklonjen se upisuje u log.</summary>
+        internal static void SamoTestnaAdresa(MimeMessage m, Action<string> zapis)
+        {
+            foreach (var lista in new[] { m.To, m.Cc, m.Bcc })
+                foreach (var a in lista.ToList())
+                {
+                    var adrese = a is MailboxAddress mb ? new[] { mb } : a is GroupAddress g ? g.Members.Mailboxes.ToArray() : new MailboxAddress[0];
+                    if (a is MailboxAddress mb1 && string.Equals((mb1.Address ?? "").Trim(), TestnaAdresa, StringComparison.OrdinalIgnoreCase)) continue;
+                    lista.Remove(a);
+                    foreach (var x in adrese.Where(x => !string.Equals((x.Address ?? "").Trim(), TestnaAdresa, StringComparison.OrdinalIgnoreCase)))
+                        zapis?.Invoke("TEST: uklonjen primalac " + x.Address);
+                    // agenti@ iz grupe ostaje kao pojedinačan primalac
+                    foreach (var x in adrese.Where(x => string.Equals((x.Address ?? "").Trim(), TestnaAdresa, StringComparison.OrdinalIgnoreCase)))
+                        if (!lista.Mailboxes.Any(y => string.Equals(y.Address, TestnaAdresa, StringComparison.OrdinalIgnoreCase))) lista.Add(MailboxAddress.Parse(TestnaAdresa));
+                }
+            if (!m.To.Mailboxes.Any() && !m.Cc.Mailboxes.Any() && !m.Bcc.Mailboxes.Any())
+            {
+                m.To.Add(MailboxAddress.Parse(TestnaAdresa));
+                zapis?.Invoke("TEST: nijedan primalac nije ostao – mail ide na " + TestnaAdresa);
+            }
+        }
+
+        private static void PosaljiSmtp(AgentConfig cfg, MimeMessage m)
+        {
             using (var smtp = new SmtpClient())
             {
                 smtp.Timeout = 120000;

@@ -98,11 +98,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public bool ImaInternih => Listovi.Any(l => l.Nalazi.Any(n => n.SamoInterno));
         /// <summary>v2.8.1: CIT 7 (naknadni zahtevi) iz maila – veza sa tovarnim listom, izmene, provere. Samo interno.</summary>
         public List<Cit7Rezultat> Cit7 = new List<Cit7Rezultat>();
+        /// <summary>v2.8.4 (8): uvod iz dosijea („Ovo je nova verzija tovarnog lista od …“ / „skenirana i overena verzija…“); null ako nema.</summary>
+        public string UvodDosijea;
 
         /// <summary>Isti rezultat bez nalaza "samo interno" (izveštaj za spoljnog pošiljaoca).</summary>
         public RezultatProvere BezInternih() => new RezultatProvere
         {
-            Dokumenti = Dokumenti, NijeImplementirano = NijeImplementirano, GreskePravila = GreskePravila, OpisPriloga = OpisPriloga,
+            Dokumenti = Dokumenti, NijeImplementirano = NijeImplementirano, GreskePravila = GreskePravila, OpisPriloga = OpisPriloga, UvodDosijea = UvodDosijea,
             Listovi = Listovi.Select(l => new RezultatLista { Dokument = l.Dokument, Cim = l.Cim, Oznaka = l.Oznaka, KpRezim = l.KpRezim, ZaRucnuProveru = l.ZaRucnuProveru, Nalazi = l.Nalazi.Where(n => !n.SamoInterno).ToList() }).ToList(),
         };
     }
@@ -158,6 +160,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             {
                 rb++;
                 PoznatiPodaciKp(cim, p.Kp);
+                // v2.8.4: r62 na skenu niske pouzdanosti (rukom upisana: YU DIN COMMERCE „72 / 165092 / 3212 / 162600“ pročitano kao
+                // „72 10502-2 3242 62600“) ne koristi se za odluke (KP tovarni list, ponavljanje, dosije) – „r62 nečitljiva – ručna provera“
+                var r62Procitano = R62Nepouzdana(cim) ? OznaciR62Necitljivu(cim) : null;
                 var k = new Kontekst(cim, dok, u, p);
                 var rl = new RezultatLista
                 {
@@ -182,7 +187,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     if (!Provere.Sve.TryGetValue(def.Id, out var fn)) continue;
                     if (def.Json["ne_proverava_se"] != null) continue;   // obrisano pravilo (npr. REC3, REC6, KP6 u v2.8) se ne izvršava
-                    if (!k.Kp && (Provere.SamoKp.Contains(def.Id) || (def.PopunjavaPrevoznik && !Provere.UvekVazi.Contains(def.Id)))) continue;
+                    // v2.8.4 (9): pravilo za rubriku koju po GLV-CIM popunjava prevoznik (popunjava = „prevoznik“) proverava se i na listu
+                    // spoljnog pošiljaoca, ali nalaz ide u INTERNO („popunjava prevoznik (KP pri prijemu)“); bez polja „popunjava“ – kao ranije
+                    var prevoznikInterno = !k.Kp && def.Popunjava == "prevoznik";
+                    if (!k.Kp && !prevoznikInterno && (Provere.SamoKp.Contains(def.Id) || (def.PopunjavaPrevoznik && !Provere.UvekVazi.Contains(def.Id)))) continue;
                     List<Pogodak> pogodci;
                     try { pogodci = fn(k).ToList(); }
                     catch (Exception ex)
@@ -194,12 +202,26 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     foreach (var pg in pogodci)
                     {
                         var n = Napravi(def, pg, u.Engleski, cim);
+                        if (prevoznikInterno)
+                        {
+                            var nap = u.Engleski ? " – filled in by the carrier (KP on acceptance)" : " – popunjava prevoznik (KP pri prijemu)";
+                            n.SamoInterno = true; n.Tekst += nap; n.Uputstvo += nap;
+                        }
                         try { Dopune.Popuni(n, pg, k); }
                         catch (Exception ex) { log?.Upozorenje("Dopuna za PDF primer (" + def.Id + ") nije određena: " + ex.Message); }
                         Dodaj(rl.Nalazi, n);
                     }
                 }
 
+                // (bez duplikata: pravilo R62 je već dalo internu napomenu „r62 nečitljiva – proveriti ručno“)
+                if (r62Procitano != null && !rl.Nalazi.Any(n => n.Rubrika == "62" && (n.Tekst ?? "").StartsWith("r62 nečitljiva")))
+                {
+                    var tekst = u.Engleski
+                        ? "Box 62 (consignment identification) is not reliably readable (handwritten / OCR " + cim.R62.PouzdanostCifara.ToString("0.00") + ") – not used for decisions (KP consignment note, repetition, file); manual check. Agent read: " + r62Procitano
+                        : "r62 nečitljiva – ručna provera: identifikacija pošiljke nije pouzdano pročitana (rukom upisana / OCR " + cim.R62.PouzdanostCifara.ToString("0.00") + ") i ne koristi se za odluke (KP tovarni list, ponavljanje, dosije). Agent je pročitao: " + r62Procitano;
+                    Dodaj(rl.Nalazi, new Nalaz { Pravilo = "R62-NECITLJIVA", Rubrika = "62", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tekst, Uputstvo = tekst, SamoInterno = true, Vrednost = r62Procitano, Kljuc = "r62-necitljiva" });
+                    rl.ZaRucnuProveru = true;
+                }
                 // Nečitljive rubrike: upozorenje, ne greška pošiljaoca; dokument ide na ručnu proveru.
                 foreach (var r in k.Necitljive.OrderBy(x => x, StringComparer.Ordinal))
                 {
@@ -222,11 +244,45 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                         n.Kljuc = "rucno|" + n.Kljuc;
                     }
                     rl.ZaRucnuProveru = true;
+                    // v2.8.4 (11.2): nepouzdano pročitane rubrike u JEDNOM redu („Nepouzdano pročitane rubrike (OCR 0,70): 1, 4, 7 … – proveriti
+                    // ručno.“), ne kao 19 posebnih redova
+                    var rucno = rl.Nalazi.Where(n => (n.Kljuc ?? "").StartsWith("rucno|")).ToList();
+                    if (rucno.Count > 0)
+                    {
+                        rl.Nalazi.RemoveAll(n => (n.Kljuc ?? "").StartsWith("rucno|"));
+                        var rubrike = rucno.Select(n => n.Rubrika).Where(x => !string.IsNullOrEmpty(x) && x != "–").Distinct()
+                            .OrderBy(x => int.TryParse(Regex.Match(x, @"^\d+").Value, out var b) ? b : 999).ThenBy(x => x, StringComparer.Ordinal).ToList();
+                        var tekst = (u.Engleski ? "Unreliably read boxes (OCR " : "Nepouzdano pročitane rubrike (OCR ") + cim.PouzdanostStrane.ToString("0.00") + "): "
+                                    + string.Join(", ", rubrike) + (u.Engleski ? " – check manually." : " – proveriti ručno.");
+                        rl.Nalazi.Add(new Nalaz { Pravilo = "NEPOUZDANO-OCR", Rubrika = "–", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tekst, Uputstvo = tekst, SamoInterno = true, Kljuc = "nepouzdano-ocr" });
+                    }
                 }
                 rl.Nalazi = SpojiPoRubrici(rl.Nalazi);
                 rez.Listovi.Add(rl);
             }
             return rez;
+        }
+
+        /// <summary>Prag pouzdanosti r62 na skenu: ispod njega (rukom upisana, kućice spornog čitanja) r62 ne određuje ništa.</summary>
+        public const double PragR62 = 0.85;
+
+        /// <summary>
+        /// v2.8.4: r62 na skenu čije cifre nisu pouzdano pročitane (najmanja pouzdanost grupe cifara ispod <see cref="PragR62"/>,
+        /// sporno čitanje, ili već nečitljiva) – ne koristi se za odluke. Šum oko cifara („+ gs“) ne čini r62 nepouzdanom.
+        /// </summary>
+        internal static bool R62Nepouzdana(CimList c) =>
+            c != null && c.PouzdanostStrane > 0 && c.R62 != null && c.R62.Popunjena
+            && (c.R62.Status == StatusRubrike.Necitljivo || c.R62.NepouzdanoCitanje || c.R62.PouzdanostCifara < PragR62);
+
+        /// <summary>Označava r62 kao nečitljivu (status; tekst ostaje za internu napomenu) i vraća ono što je agent pročitao.</summary>
+        internal static string OznaciR62Necitljivu(CimList c)
+        {
+            var r = c.R62;
+            var procitano = string.Join(" / ", new[] { r.Zemlja, r.Stanica, r.Preduzece, r.Broj }.Select(x => string.IsNullOrWhiteSpace(x) ? "?" : x.Trim()));
+            if (procitano.Replace("?", "").Replace("/", "").Trim().Length == 0) procitano = Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim();
+            // samo za odluke (status i prikaz ostaju; postojeća pravila r62 rade kao ranije)
+            r.NepouzdanaZaOdluke = true;
+            return procitano;
         }
 
         /// <summary>
@@ -342,13 +398,19 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public readonly bool Kp;
         public readonly List<Dokument> Svi;
         public readonly List<(Dokument dok, SpisakKola s)> Spiskovi;
+        /// <summary>v2.8.4 (8): i prateći dokumenti iz dosijea pošiljke – SAMO za priloženost (X26/X27 „naveden u r9, a nije priložen“, X22, R18-SPISAK).</summary>
+        public readonly List<Dokument> SviSaDosijeom;
+        public readonly List<(Dokument dok, SpisakKola s)> SpiskoviSaDosijeom;
+        public IEnumerable<Dokument> TipSaDosijeom(string tip) => SviSaDosijeom.Where(d => d.Tip == tip);
         public readonly SortedSet<string> Necitljive = new SortedSet<string>(StringComparer.Ordinal);
 
         public Kontekst(CimList c, Dokument dok, UlazProvere u, PravilaSkup p)
         {
             C = c; Dok = dok; U = u; P = p;
-            Svi = u.Dokumenti;
+            SviSaDosijeom = u.Dokumenti;
+            Svi = u.Dokumenti.Where(d => !d.IzDosijea).ToList();
             Spiskovi = Svi.Where(d => d.Tip == TipDokumenta.SpisakKola).SelectMany(d => d.Spisak.Select(s => (d, s))).ToList();
+            SpiskoviSaDosijeom = SviSaDosijeom.Where(d => d.Tip == TipDokumenta.SpisakKola).SelectMany(d => d.Spisak.Select(s => (d, s))).ToList();
             // Više tovarnih listova u istom mailu: spisak iz drugog fajla sa drugim brojem otpravljanja pripada drugoj pošiljci.
             if (Svi.Where(d => TipDokumenta.JeTovarniList(d.Tip)).Sum(d => d.Cim.Count) > 1)
             {
@@ -360,7 +422,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             {
                 case "kp": Kp = true; break;
                 case "spoljni": Kp = false; break;
-                default: Kp = u.InterniPosiljalac || p.Kp.JeKpSifra(c.R62.Preduzece); break;
+                // v2.8.4: nečitljiva r62 (rukom upisana na skenu) ne određuje KP tovarni list
+                default: Kp = u.InterniPosiljalac || (!c.R62.NepouzdanaZaOdluke && p.Kp.JeKpSifra(c.R62.Preduzece)); break;
             }
         }
 

@@ -17,7 +17,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public JObject Json;
         public string Tezina => (string)Json["severity"] ?? "error";
         public string Polje => (string)Json["field"];
-        public bool PopunjavaPrevoznik => string.Equals((string)Json["filled_by"], "carrier", StringComparison.OrdinalIgnoreCase);
+        public bool PopunjavaPrevoznik => Popunjava == "prevoznik" || (Popunjava == null && string.Equals((string)Json["filled_by"], "carrier", StringComparison.OrdinalIgnoreCase));
+        /// <summary>v2.8.4 (9): ko popunjava rubriku prema GLV-CIM („pošiljalac“ / „prevoznik“); null kada nije utvrđeno (otvoreno pitanje).</summary>
+        public string Popunjava => (string)Json["popunjava"];
         public string Poruka(bool en) => (en ? (string)Json["message_en"] : null) ?? (string)Json["message"] ?? (string)Json["check"] ?? Id;
     }
 

@@ -88,7 +88,11 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// za 30 % visine gore i dole (kućica šablona na skenu često odseče vrh cifara), brišu se tanke uspravne pregrade
         /// (isprekidane linije kućica, do 3 piksela širine) i sve povezane mrlje znatno niže od cifara (tačke, ostaci linija, sitni natpisi).
         /// </summary>
-        public static byte[] IsecakCifara(Bitmap strana, double x0, double y0, double x1, double y1)
+        public static byte[] IsecakCifara(Bitmap strana, double x0, double y0, double x1, double y1) => IsecakCifara(strana, x0, y0, x1, y1, false);
+
+        /// <param name="zadebljaj">v2.8.4 (4.5): tanke, isprekidane cifre na skenu („1 0 0 1 0 0“ u r24 RE: CIM, nule u dva dela) – mastilo se
+        /// proširi za 1 piksel pre analize mrlja, da se delovi iste cifre spoje.</param>
+        public static byte[] IsecakCifara(Bitmap strana, double x0, double y0, double x1, double y1, bool zadebljaj)
         {
             var dy = (y1 - y0) * 0.3;
             int a = Math.Max(0, (int)(x0 * strana.Width)), b = Math.Max(0, (int)((y0 - dy) * strana.Height));
@@ -111,6 +115,18 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }
             // dugi vodoravni nizovi (linije okvira i kućica)
             for (int y = 0; y < h; y++) { int poc = -1; for (int x = 0; x <= w; x++) { var je = x < w && ink[y * w + x]; if (je && poc < 0) poc = x; if (!je && poc >= 0) { if (x - poc >= w * 0.3) for (int k = poc; k < x; k++) ink[y * w + k] = false; poc = -1; } } }
+            if (zadebljaj)
+            {
+                var deb = new bool[w * h];
+                for (int y = 0; y < h; y++)
+                    for (int x = 0; x < w; x++)
+                    {
+                        if (!ink[y * w + x]) continue;
+                        for (int yy = Math.Max(0, y - 1); yy <= Math.Min(h - 1, y + 1); yy++)
+                            for (int xx = Math.Max(0, x - 1); xx <= Math.Min(w - 1, x + 1); xx++) deb[yy * w + xx] = true;
+                    }
+                ink = deb;
+            }
             // povezane mrlje (4-susedstvo): zadržavaju se samo one visoke bar 45 % najviše mrlje i šire od 3 piksela
             var oznaka = new int[w * h];
             var mrlje = new List<(int x0, int y0, int x1, int y1, List<int> px)>();

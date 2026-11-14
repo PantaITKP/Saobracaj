@@ -117,7 +117,32 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             /// <summary>Stanje polja za označavanje iz šablona: oznaceno / prazno / nesigurno; null ako polja nema u šablonu ili nema slike.</summary>
             public string Polje(string id, double pragOznake = 0.15, double pragPraznog = 0.05) =>
                 IzWorda ? PoljeIzX(id) :
-                Gustina(id) is double g ? (g >= pragOznake ? StanjePolja.Oznaceno : g <= pragPraznog ? StanjePolja.Prazno : StanjePolja.Nesigurno) : null;
+                Gustina(id) is double g ? (g >= pragOznake ? StanjePolja.Oznaceno : g <= pragPraznog ? StanjePolja.Prazno : ImaX(id) ? StanjePolja.Oznaceno : StanjePolja.Nesigurno) : null;
+
+            /// <summary>
+            /// v2.8.4 (4.5): tanak, jasan „X“ u kvadratiću (RE: CIM r30, gustina 0,12 – ispod praga 0,15): mastilo duž OBE dijagonale
+            /// (bar 70 % tačaka svake) i u sredini. Kosa crta, kvačica ili šum ne ispunjavaju obe dijagonale.
+            /// </summary>
+            public bool ImaX(string poljeId)
+            {
+                if (Raster == null || Obrazac == null || !Obrazac.Polja.TryGetValue(poljeId, out var r0)) return false;
+                var r = NaStrani(r0);
+                double w = r[2] - r[0], h = r[3] - r[1];
+                double sw = w * 0.76, sh = h * 0.76, dx = w * 0.09, dy = h * 0.09;
+                // poravnanje šablona na skenu može biti pomereno za deo kvadratića – X se traži i u bliskoj okolini (do ±40 % veličine)
+                for (double ox = -0.4; ox <= 0.401; ox += 0.2)
+                    for (double oy = -0.4; oy <= 0.401; oy += 0.2)
+                    {
+                        double x0 = r[0] + w * (0.12 + ox), y0 = r[1] + h * (0.12 + oy);
+                        bool Mastilo(double fx, double fy) { double cx = x0 + fx * sw, cy = y0 + fy * sh; return Raster.Gustina(cx - dx, cy - dy, cx + dx, cy + dy, false) > 0.05; }
+                        int n = 0, d1 = 0, d2 = 0;
+                        for (double t = 0.1; t <= 0.901; t += 0.1) { n++; if (Mastilo(t, t)) d1++; if (Mastilo(t, 1 - t)) d2++; }
+                        // X nema mastila na sredinama stranica (tekst ili mrlja ima)
+                        var strane = new[] { Mastilo(0.5, 0.05), Mastilo(0.5, 0.95), Mastilo(0.05, 0.5), Mastilo(0.95, 0.5) }.Count(x => x);
+                        if (Mastilo(0.5, 0.5) && d1 >= n * 0.7 && d2 >= n * 0.7 && strane <= 1) return true;
+                    }
+                return false;
+            }
 
             /// <summary>Strana iz Word dokumenta (podaci su tekstualni okviri, „X“ je zaseban okvir preko kvadratića).</summary>
             public bool IzWorda;
