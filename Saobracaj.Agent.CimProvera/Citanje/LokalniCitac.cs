@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L19";   // v2.8.4: nastavak spiska kola CIT 23, kopija bez natpisa obrasca nije list, orijentacija skena
+        public const string VerzijaCitaca = "L20";   // v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L18";   // v2.8.4: orijentacija skena ispod 0,75 (OSD + proba 90°/270°), crno-beli sken, FreeText anotacije
 
@@ -898,9 +898,13 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             {
                 slika = Slike.Ucitaj(p.Vrsta == VrstaPriloga.Pdf ? PdfCrtac.StranaUPng(p.Sadrzaj, s.Broj, 300) : PdfCrtac.SlikaOkrenuta(p.Sadrzaj));
                 foreach (var kv in r.Obrazac.Kucice.OrderBy(k => k.Key, StringComparer.Ordinal))
+                try
                 {
                     var rub = Regex.Match(kv.Key, @"^\d+[ab]?").Value;
                     var o = r.NaStrani(kv.Value);
+                    // v2.8.4: kućica preslikana van strane (ZIJIN C1-2298 str. 5, CIT: r62 donji red na y 1,02–1,03) – nema šta da se čita.
+                    // Ranije je isečak van slike rušio GDI+ („Out of memory.“) i prekidao ciljani OCR svih ostalih kućica strane.
+                    if (o == null || o[0] >= 1 || o[1] >= 1 || o[2] <= 0 || o[3] <= 0) continue;
                     bool Unutra(Rec w) => w.Cx >= o[0] && w.Cx <= o[2] && w.Cy >= o[1] && w.Cy <= o[3];
                     var postojece = r.Rubrika(rub).Where(Unutra).ToList();
                     var ocekivano = OcekivanoCifara(kv.Key);
@@ -947,8 +951,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     lista.Add(nova);
                     r.Dodela.Add((nova, rub, false));
                 }
+                // greška jedne kućice ne prekida ostale
+                catch (Exception ex) { log?.Upozorenje("Ciljani OCR kućice " + kv.Key + " nije uspeo (str. " + s.Broj + "): " + ex.GetType().Name + ": " + ex.Message); }
             }
-            catch (Exception ex) { log?.Upozorenje("Ciljani OCR kućica nije uspeo (str. " + s.Broj + "): " + ex.Message); }
+            catch (Exception ex) { log?.Upozorenje("Ciljani OCR kućica nije uspeo (str. " + s.Broj + "): " + ex.GetType().Name + ": " + ex.Message); }
             finally { slika?.Dispose(); }
         }
 

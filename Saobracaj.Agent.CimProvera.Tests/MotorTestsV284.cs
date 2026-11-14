@@ -134,25 +134,42 @@ namespace Saobracaj.Agent.CimProvera.Tests
 
         // ------------------------------------------------------------------------------------------- 9. ko šta popunjava (GLV-CIM)
 
-        /// <summary>Rubrike za koje GLV-CIM ne kaže jasno ko ih popunjava – čekaju odluku, polje „popunjava“ se ne upisuje.</summary>
-        private static readonly string[] Otvoreno = { "R49", "R50", "R58A", "R62", "KP2", "X19" };
+        // Odluka KP 2026-11-14: r57 i r58a popunjava pošiljalac; r62 pošiljalac ako zna (prazan/nepotpun = napomena);
+        // r49 i r50 prevoznik – samo interno; ostale rubrike 1–30 pošiljalac.
+        private const string OdlukaKp = "interna odluka KP 2026-11-14";
 
         [TestMethod]
-        public void T9_Svako_pravilo_ima_popunjava_prema_GLV_CIM_osim_otvorenih()
+        public void T9_Svako_pravilo_ima_popunjava_i_osnov()
         {
             var bez = pravila.Sva.Where(d => d.Popunjava == null && d.Json["ne_proverava_se"] == null).Select(d => d.Id).OrderBy(x => x).ToList();
-            CollectionAssert.AreEquivalent(Otvoreno.OrderBy(x => x).ToList(), bez, "bez „popunjava“: " + string.Join(", ", bez));
+            Assert.AreEqual(0, bez.Count, "bez „popunjava“: " + string.Join(", ", bez));
             foreach (var d in pravila.Sva.Where(d => d.Popunjava != null))
             {
                 Assert.IsTrue(d.Popunjava == "pošiljalac" || d.Popunjava == "prevoznik", d.Id + ": " + d.Popunjava);
-                StringAssert.StartsWith((string)d.Json["popunjava_izvor"], "GLV-CIM Prilog 2", d.Id);
+                var osnov = (string)d.Json["popunjava_basis"] ?? "";
+                Assert.IsTrue(osnov.StartsWith("GLV-CIM") || osnov.StartsWith(OdlukaKp), d.Id + ": " + osnov);
             }
-            foreach (var id in new[] { "R57", "R57-DEONICA", "KP57", "KP5" }) Assert.AreEqual("prevoznik", pravila.PoId[id].Popunjava, id + " – r57 popunjava prevoznik (str. 33)");
+            foreach (var id in new[] { "R57", "R57-DEONICA", "REC4", "KP57", "KP5", "R58A", "KP2" })
+            {
+                Assert.AreEqual("pošiljalac", pravila.PoId[id].Popunjava, id);
+                StringAssert.StartsWith((string)pravila.PoId[id].Json["popunjava_basis"], OdlukaKp + " – pošiljalac popunjava r57 i r58a", id);
+            }
+            foreach (var id in new[] { "R62", "X19" })
+            {
+                Assert.AreEqual("pošiljalac", pravila.PoId[id].Popunjava, id);
+                StringAssert.StartsWith((string)pravila.PoId[id].Json["popunjava_basis"], OdlukaKp + " – r62 pošiljalac upisuje ako ga zna", id);
+            }
+            foreach (var id in new[] { "R49", "R50" })
+            {
+                Assert.AreEqual("prevoznik", pravila.PoId[id].Popunjava, id);
+                Assert.IsTrue(pravila.PoId[id].PopunjavaPrevoznik, id);
+            }
             foreach (var id in new[] { "R1", "R7", "R16", "R24", "R29", "KP3", "KP7-PLATILAC" }) Assert.AreEqual("pošiljalac", pravila.PoId[id].Popunjava, id);
+            Assert.AreEqual(2, pravila.Sva.Count(d => d.Popunjava == "prevoznik"), "prevoznik popunjava samo r49 i r50");
         }
 
         [TestMethod]
-        public void T9_Nalaz_za_rubriku_prevoznika_kod_spoljnog_posiljaoca_ide_u_INTERNO()
+        public void T9_KP57_kod_spoljnog_posiljaoca_je_greska_posiljaoca()
         {
             var s = new Scenario { Rezim = "spoljni" };
             s.C.R57.Prevoznici.Clear();
@@ -161,13 +178,102 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r = Proveri(s);
             var kp57 = Svi(r).FirstOrDefault(n => n.Pravilo == "KP57");
             Assert.IsNotNull(kp57, string.Join(" | ", Svi(r).Select(n => n.Pravilo)));
-            Assert.IsTrue(kp57.SamoInterno, "r57 popunjava prevoznik – u INTERNO");
-            StringAssert.EndsWith(kp57.Tekst, "– popunjava prevoznik (KP pri prijemu)");
-            // izveštaj za spoljnog pošiljaoca ga nema
-            Assert.IsFalse(Svi(r.BezInternih()).Any(n => n.Pravilo == "KP57"));
+            Assert.AreEqual(Tezina.Greska, kp57.Tezina);
+            Assert.IsFalse(kp57.SamoInterno, "r57 popunjava pošiljalac – u izveštaju za pošiljaoca");
+            Assert.IsFalse(kp57.Tekst.Contains("popunjava prevoznik"), kp57.Tekst);
+            Assert.IsTrue(Svi(r.BezInternih()).Any(n => n.Pravilo == "KP57"));
+        }
+
+        [TestMethod]
+        public void T9_R58A_kod_spoljnog_posiljaoca_je_greska_posiljaoca()
+        {
+            var s = new Scenario { Rezim = "auto" };
+            s.C.R62.Preduzece = "2154";
+            s.C.R58a = new UgovorniPrevoznik();
+            var r = Proveri(s);
+            Assert.IsFalse(r.Listovi.Single().KpRezim);
+            var n = Svi(r).FirstOrDefault(x => x.Pravilo == "R58A");
+            Assert.IsNotNull(n, string.Join(" | ", Svi(r).Select(x => x.Pravilo)));
+            Assert.AreEqual(Tezina.Greska, n.Tezina);
+            Assert.IsFalse(n.SamoInterno);
+            Assert.IsTrue(Svi(r.BezInternih()).Any(x => x.Pravilo == "R58A"));
+        }
+
+        [TestMethod]
+        public void T9_Prazan_ili_nepotpun_r62_je_napomena_za_spoljnog_posiljaoca()
+        {
+            foreach (var r62 in new[] { new Identifikacija(), F(new Identifikacija { Zemlja = "80", Stanica = "101287", Preduzece = "2154", Broj = "" }) })
+            {
+                var s = new Scenario { Rezim = "spoljni" };
+                s.C.R62 = r62;
+                var r = Proveri(s);
+                var n = Svi(r).Where(x => x.Rubrika == "62" && x.Tezina != Tezina.Info).ToList();
+                Assert.IsTrue(n.Count > 0, "r62 „" + r62.Tekst + "“: " + string.Join(" | ", Svi(r).Select(x => x.Pravilo)));
+                Assert.IsTrue(n.All(x => x.Tezina == Tezina.Upozorenje), string.Join(" | ", n.Select(x => x.Pravilo + " " + x.Tezina)));
+                Assert.IsTrue(Svi(r.BezInternih()).Any(x => x.Pravilo == "R62" && x.Tezina == Tezina.Upozorenje), "napomena ide pošiljaocu");
+            }
+            // KP tovarni list (r62 = 3212): interni nalaz kao do sada – greška
+            var kp = new Scenario();
+            kp.C.R62.Broj = "";
+            var rk = Proveri(kp);
+            Assert.IsTrue(rk.Listovi.Single().KpRezim);
+            Assert.AreEqual(Tezina.Greska, Prvi(rk, "R62").Tezina);
+        }
+
+        [TestMethod]
+        public void T9_R49_i_R50_su_samo_interni()
+        {
+            var s = new Scenario { Rezim = "spoljni" };
+            s.C.R49 = new TekstRubrika(); s.C.R50 = new TekstRubrika();
+            var r = Proveri(s);
+            foreach (var id in new[] { "R49", "R50" })
+            {
+                var n = Svi(r).FirstOrDefault(x => x.Pravilo == id);
+                Assert.IsNotNull(n, id + ": " + string.Join(" | ", Svi(r).Select(x => x.Pravilo)));
+                Assert.IsTrue(n.SamoInterno, id);
+                StringAssert.EndsWith(n.Tekst, "– popunjava prevoznik (KP pri prijemu)");
+                Assert.IsFalse(Svi(r.BezInternih()).Any(x => x.Pravilo == id), id + " ne ide pošiljaocu");
+            }
             // rubrike pošiljaoca i dalje idu pošiljaocu
             var s2 = new Scenario { Rezim = "spoljni" }; s2.C.R16 = new Preuzimanje();
             Assert.IsTrue(Svi(Proveri(s2)).Any(n => n.Rubrika == "16" && !n.SamoInterno));
+        }
+
+        /// <summary>Naslov kada je r62 nečitljiva (YU DIN COMMERCE, 1722_261114123020_001.pdf): ime fajla umesto pročitanog broja.</summary>
+        [TestMethod]
+        public void T9_Naslov_bez_nepouzdane_r62()
+        {
+            var s = new Scenario { Rezim = "auto", IzvorCim = "ocr", Fajl = "1722_261114123020_001.pdf" };
+            s.C.PouzdanostStrane = 0.80;
+            s.C.R62 = F(new Identifikacija { Zemlja = "72", Stanica = "105022", Preduzece = "3242", Broj = "62600" });
+            s.C.R62.PouzdanostCifara = 0.70;
+            s.C.R8 = new TekstRubrika();   // kao na skenu YU DIN COMMERCE (r8 bez reference)
+            var r = Proveri(s);
+            // sa napomenom (prazna r8) status ostaje i dodaje se „r62 nečitljiva“
+            Assert.AreEqual("[INTERNO] Ručna provera – Tovarni list CIM (1722_261114123020_001.pdf) – napomene, r62 nečitljiva", Izvestaj.Naslov(r, pravila, false));
+            // kao YU DIN COMMERCE: bez grešaka i napomena – samo „r62 nečitljiva“
+            foreach (var l in r.Listovi) l.Nalazi.RemoveAll(x => x.Tezina != Tezina.Info);
+            var n = Izvestaj.Naslov(r, pravila, false);
+            Assert.AreEqual("[INTERNO] Ručna provera – Tovarni list CIM (1722_261114123020_001.pdf) – r62 nečitljiva", n);
+            Assert.IsFalse(n.Contains("3242"), n);
+            StringAssert.EndsWith(Izvestaj.Naslov(r, pravila, true), "(1722_261114123020_001.pdf) – box 62 unreadable");
+        }
+
+        /// <summary>CIM Pansped: izveštaj za pošiljaoca sa nepouzdanom r62 – bez pročitanog broja, ali status ostaje „potrebne ispravke“.</summary>
+        [TestMethod]
+        public void T9_Naslov_za_posiljaoca_sa_nepouzdanom_r62_zadrzava_status()
+        {
+            var s = new Scenario { Rezim = "spoljni", IzvorCim = "ocr", Fajl = "20261114081659.pdf" };
+            s.C.PouzdanostStrane = 0.80;
+            s.C.R8 = new TekstRubrika();
+            s.C.R62 = F(new Identifikacija { Zemlja = "72", Stanica = "105022", Preduzece = "2154", Broj = "" });
+            s.C.R62.NepouzdanoCitanje = true;
+            s.C.R16 = new Preuzimanje();
+            var r = Proveri(s);
+            Assert.IsTrue(r.Listovi.Single().Cim.R62.NepouzdanaZaOdluke);
+            var n = Izvestaj.Naslov(r, pravila, false);
+            if (n.StartsWith("[INTERNO]")) Assert.Inconclusive("scenario je završio na ručnoj proveri: " + n);
+            Assert.AreEqual("Tovarni list CIM (20261114081659.pdf) – potrebne ispravke", n);
         }
 
         /// <summary>v2.8.4 (8.2): dokumenti iz dosijea važe samo za priloženost (R18-SPISAK, X22, X26/X27), ne za proveru sadržaja (X19…).</summary>

@@ -189,13 +189,15 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         [TestMethod, TestCategory("Regresija")]
-        public void CUV_257_r62_prazna_jedna_greska_bez_r58a()
+        public void CUV_257_r62_prazna_napomena_r58a_greska()
         {
             var i = Mail("CUV_257", "stefan.janjic@eurologsystem.rs");
             foreach (var l in i.Provera.Listovi)
             {
-                Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R62" && n.Tezina == Tezina.Greska), l.Oznaka);
-                Assert.IsFalse(l.Nalazi.Any(n => n.Pravilo == "R58A"), "r62 i r58a obe prazne – prijavljuje se jednom (R62)");
+                // v2.8.4 (odluka KP 2026-11-14): spoljni pošiljalac – prazna r62 je napomena, prazna r58a je greška pošiljaoca
+                Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R62" && n.Tezina == Tezina.Upozorenje && !n.SamoInterno), l.Oznaka);
+                Assert.IsFalse(l.Nalazi.Any(n => n.Pravilo == "R62" && n.Tezina == Tezina.Greska), l.Oznaka);
+                Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R58A" && n.Tezina == Tezina.Greska && !n.SamoInterno), l.Oznaka + ": r58a popunjava pošiljalac");
             }
         }
 

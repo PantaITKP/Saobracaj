@@ -39,7 +39,7 @@ namespace Saobracaj.Agent.CimProvera
             public DateTime Vreme { get; set; }
             /// <summary>Digitalni list (tekst PDF-a, Excel, Word) – sken iste pošiljke je „skenirana i overena verzija“.</summary>
             public bool Digitalni { get; set; }
-            /// <summary>Nalazi (greške i upozorenja) kao „pravilo|rubrika“.</summary>
+            /// <summary>Greške (bez napomena i internih nalaza) kao „pravilo|rubrika“.</summary>
             public List<string> Nalazi { get; set; } = new List<string>();
         }
 
@@ -179,7 +179,8 @@ namespace Saobracaj.Agent.CimProvera
                     {
                         Kljuc = k, Otisak = Ponavljanja.Otisak(l.Cim), Oznaka = mail.Oznaka, Vreme = mail.Vreme,
                         Digitalni = l.Dokument?.Izvor != "ocr",
-                        Nalazi = l.Nalazi.Where(n => n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje).Select(n => n.Pravilo + "|" + n.Rubrika).Distinct().ToList(),
+                        // v2.8.4: samo greške – napomene (ISO šifra zemlje i sl.) ne ulaze u „ispravljeno / ostalo neispravljeno“
+                        Nalazi = l.Nalazi.Where(n => n.Tezina == Tezina.Greska && !n.SamoInterno).Select(n => n.Pravilo + "|" + n.Rubrika).Distinct().ToList(),
                     });
                 }
             return p;
@@ -220,7 +221,7 @@ namespace Saobracaj.Agent.CimProvera
                     continue;
                 }
                 if (raniji == null || raniji.Otisak == Ponavljanja.Otisak(l.Cim)) continue;
-                var sada = l.Nalazi.Where(n => n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje).Select(n => n.Rubrika).Where(x => x != "–").Distinct().ToList();
+                var sada = l.Nalazi.Where(n => n.Tezina == Tezina.Greska && !n.SamoInterno).Select(n => n.Rubrika).Where(x => x != "–").Distinct().ToList();
                 var pre = raniji.Nalazi.Select(x => x.Split('|').Last()).Where(x => x != "–").Distinct().ToList();
                 var ispravljeno = pre.Where(x => !sada.Contains(x)).ToList();
                 var ostalo = pre.Where(x => sada.Contains(x)).ToList();

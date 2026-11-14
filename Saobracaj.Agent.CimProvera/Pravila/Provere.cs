@@ -837,8 +837,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var r = k.C.R58a;
             // r62 = 3212 (list izdao KP): r58a proverava KP2 (3212 ili KP) – isti problem se ne prijavljuje dvaput
             if (k.P.Kp.JeKpSifra(k.C.R62.Preduzece)) yield break;
-            // r62 i r58a obe prazne (CUV_257): rubrike prevoznika nisu popunjene – prijavljuje se jednom, kao R62
-            if (!r.Popunjena && !k.C.R62.Popunjena) yield break;
+            // r62 i r58a obe prazne na KP listu: prijavljuje se jednom, kao R62. v2.8.4 (odluka 2026-11-14): kod spoljnog
+            // pošiljaoca je prazna r62 samo napomena, a r58a popunjava pošiljalac – prazna r58a je njegova greška (CUV_257)
+            if (!r.Popunjena && !k.C.R62.Popunjena && k.Kp) yield break;
             if (!r.Popunjena) { yield return P("58a", "r58a").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
             if (!k.Citljivo(r, "58a")) yield break;
             // v2.7: dovoljna je šifra preduzeća (UIC) ili prepoznatljiv naziv prevoznika; naziv, adresa i potpis nisu obavezni.

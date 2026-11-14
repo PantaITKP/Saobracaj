@@ -13,6 +13,16 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal static class Slike
     {
         /// <summary>
+        /// v2.8.4: početak isečka uvek unutar slike – pravougaonik van slike GDI+ prijavljuje kao „Out of memory.“
+        /// (ZIJIN C1-2298 str. 5: kućica r62 preslikana ispod donje ivice strane).
+        /// </summary>
+        internal static void Unutar(Bitmap strana, ref int a, ref int b)
+        {
+            a = Math.Min(Math.Max(0, a), strana.Width - 1);
+            b = Math.Min(Math.Max(0, b), strana.Height - 1);
+        }
+
+        /// <summary>
         /// Isečak strane (relativne koordinate) kao PNG za OCR cifara: uklanjaju se linije kućica (dugi vodoravni i uspravni
         /// nizovi mastila), dodaje se beli rub i sitan isečak se uvećava.
         /// </summary>
@@ -21,6 +31,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         {
             int a = Math.Max(0, (int)(x0 * strana.Width)), b = Math.Max(0, (int)(y0 * strana.Height));
             int c = Math.Min(strana.Width, (int)Math.Ceiling(x1 * strana.Width)), d = Math.Min(strana.Height, (int)Math.Ceiling(y1 * strana.Height));
+            Unutar(strana, ref a, ref b);
             int w = Math.Max(1, c - a), h = Math.Max(1, d - b);
             var siva = new byte[w * h];
             using (var crop = strana.Clone(new Rectangle(a, b, w, h), PixelFormat.Format24bppRgb))
@@ -97,6 +108,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var dy = (y1 - y0) * 0.3;
             int a = Math.Max(0, (int)(x0 * strana.Width)), b = Math.Max(0, (int)((y0 - dy) * strana.Height));
             int c = Math.Min(strana.Width, (int)Math.Ceiling(x1 * strana.Width)), d = Math.Min(strana.Height, (int)Math.Ceiling((y1 + dy) * strana.Height));
+            Unutar(strana, ref a, ref b);
             int w = Math.Max(1, c - a), h = Math.Max(1, d - b);
             var ink = new bool[w * h];
             using (var crop = strana.Clone(new Rectangle(a, b, w, h), PixelFormat.Format24bppRgb))

@@ -236,7 +236,9 @@
           "Ponavljanja (stanje\\ponavljanja.json): isti prilog (heš) i isti tovarni list sa nepromenjenim rubrikama se ne proveravaju/prijavljuju ponovo; jedna interna poruka po mailu (staro upozorenje „neprocitano-…“ uklonjeno).",
           "Dopune samo iz pouzdano pročitanih rubrika; bez dopune i sidra „posle …“ iz šuma OCR-a (mešano pismo, „jj“, kratke nepoznate reči).",
           "Dosije pošiljke (stanje\\posiljke.json, 7 dana): veza po niti, naslovu, ključu lista, r8, kolima, pošiljaocu iz naslova; priloženost na celom dosijeu; „Ovo je nova verzija tovarnog lista od … Ispravljeno: … Ostalo neispravljeno: …“; skenirana i overena verzija proverenog digitalnog lista – samo pečat (r58a), r62, r29. Reset briše dosije.",
-          "Polje „popunjava“ (pošiljalac/prevoznik) prema GLV-CIM Prilog 2 (str. 26: rubrike 1–30 pošiljalac; str. 33: r57 prevoznik); nalaz za rubriku prevoznika kod spoljnog pošiljaoca ide u INTERNO („popunjava prevoznik (KP pri prijemu)“). r49, r50, r58a, r62 čekaju odluku – ostaju kao ranije.",
+          "Polje „popunjava“ i „popunjava_basis“ za svako pravilo (interna odluka KP 2026-11-14): r57 i r58a popunjava pošiljalac (GLV-CIM Prilog 2, str. 25: „ukoliko ne postoji poseban ugovor“) – KP57, R57, R58A su greške pošiljaoca; r62 pošiljalac upisuje ako zna – prazan ili nepotpun r62 je napomena za spoljnog pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz; r49 i r50 popunjava prevoznik – samo interno („popunjava prevoznik (KP pri prijemu)“); ostale rubrike 1–30 pošiljalac. Prazna r58a uz praznu r62 kod spoljnog pošiljaoca se prijavljuje (ranije samo R62).",
+          "„Nova verzija tovarnog lista“ navodi samo greške (napomene nisu „ostalo neispravljeno“). Naslov sa nepouzdanom r62: ime fajla umesto pročitanog broja i „r62 nečitljiva“.",
+          "Ciljani OCR kućica: kućica preslikana van strane se preskače (ranije GDI+ „Out of memory.“ za isečak van slike, ZIJIN C1-2298 str. 5), greška jedne kućice ne prekida ostale. Čitač L20.",
           "Primaoci u Live režimu (samo priprema): From + To + Cc bez duplikata, bez agenti@ i prosleđivanja, KP adrese ostaju, više od 25 → samo interno; naslov „RE: … – CIM provera: potrebne ispravke“ u istoj niti; Test zaglavlje „U Live režimu išlo bi na: …“.",
           "Interni izveštaji: „Primer ispravke je u prilogu.“ umesto rečenice za pošiljaoca; nepouzdano pročitane rubrike u jednom redu.",
           "r62 na skenu sa nepouzdanim ciframa (rukom upisana) ne koristi se za odluke (KP tovarni list, ponavljanje, dosije) – „r62 nečitljiva – ručna provera“.",
@@ -480,7 +482,7 @@
     {
       "id": "G1",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Dokument je popunjen na najmanje jednom od jezika: nemacki, francuski ili engleski (osim ako je drugacije ugovoreno).",
       "message": "Tovarni list mora biti popunjen i na nemačkom, francuskom ili engleskom jeziku.",
@@ -492,7 +494,7 @@
     {
       "id": "G2",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): pokriva ga upozorenje R14 (prazna r14)",
       "check": "Jedan tovarni list po kolima; više kola na jednom listu samo uz korisnički sporazum.",
       "message": "Na jednom tovarnom listu je više kola. Proverite da li postoji korisnički sporazum koji to dozvoljava.",
@@ -503,7 +505,7 @@
     {
       "id": "G3",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Više kola ili >= 3 UTI na jednom listu => priložen Spisak kola i upisan u tovarni list.",
       "message": "Za više kola ili tri i više UTI potrebno je priložiti Spisak kola (Prilog 5) i navesti ga u rubrici 9.",
@@ -515,7 +517,7 @@
     {
       "id": "G4",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Postoje dodatni listovi => u r9 napomena o dodatnim listovima; dodatni listovi sadrze broj pošiljke i datum preuzimanja.",
       "message": "Dodatni listovi moraju biti navedeni u rubrici 9 i sadržati broj pošiljke i datum preuzimanja.",
@@ -527,7 +529,7 @@
     {
       "id": "G5",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "basis": "v2.8 (test 2026-11-13): oblik r7 nikad nije greška; platioca proverava KP7-PLATILAC",
       "check": "Rubrika 7 sadrži šifru (i tekst gde je propisano). Od v2.7 se ne odnosi na r13 i r57 (šifra i broj tačke nisu obavezni). Od v2.8 samo upozorenje.",
@@ -540,7 +542,7 @@
     {
       "id": "G6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Elektronski list: prilozi (r9) i dokumenti uz šifru 7.10 samo šifrom UN/EDIFACT 1001; papirni list: šifrom i rečima.",
       "message": "Prilozi u rubrici 9 navedeni su rečima, bez šifre UN/EDIFACT 1001 – dodati šifru (na papirnom listu šifra i reči).",
@@ -552,7 +554,7 @@
     {
       "id": "G7",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Pošiljalac nije popunjavao rubrike 40-99 bez posebnog ugovora.",
       "message": "Rubrike 40-99 popunjava prevoznik/carina. Proverite da li ste ih popunili greškom.",
@@ -564,7 +566,7 @@
     {
       "id": "G9",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Ispis elektronskog lista ima na vrhu napomenu 'Ispis elektronskog tovarnog lista - GGGG-MM-DD - izdat od strane ...'.",
       "message": "Ispis elektronskog tovarnog lista nema propisanu napomenu o ispisu na vrhu dokumenta.",
@@ -577,7 +579,7 @@
     {
       "id": "G10",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Prelaz preko carinskog podrucja EU sa robom EU, robom van EU i praznim kolima => odvojeni spiskovi kola.",
       "message": "Za robu EU, robu van EU i prazna kola potrebni su odvojeni spiskovi kola.",
@@ -589,7 +591,7 @@
     {
       "id": "G11",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): pokriva ga upozorenje R14 (prazna r14)",
       "check": "Jedan CIM pokriva više kola => mora postojati korisnički sporazum (r14 / r13.5 / CIM 6 broj ili ponuda). Bez reference na sporazum: upozorenje.",
       "message": "Jedan tovarni list za više kola dozvoljen je samo uz korisnički sporazum. Navedite broj sporazuma/ponude (rubrika 14 ili 13.5).",
@@ -601,7 +603,7 @@
     {
       "id": "G12",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Zaglavlje dokumenta ima natpis informativnog ispisa (nije tovarni list). Proverava se i kada obrazac nije prepoznat.",
       "header_markers": [
@@ -620,7 +622,7 @@
     {
       "id": "R1",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r1",
       "name": "Pošiljalac",
       "flag": "O",
@@ -643,7 +645,7 @@
     {
       "id": "R1-VAT",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r1.vat",
       "flag": "U",
       "severity": "warning",
@@ -656,7 +658,7 @@
     {
       "id": "R1-ISO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "1",
       "severity": "warning",
       "filled_by": "sender",
@@ -671,7 +673,7 @@
     {
       "id": "R2",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r2",
       "name": "Korisnicka šifra pošiljaoca",
       "flag": "F"
@@ -679,7 +681,7 @@
     {
       "id": "R3",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r3",
       "name": "Šifra platioca franko troškova",
       "flag": "F"
@@ -687,7 +689,7 @@
     {
       "id": "R4",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r4",
       "name": "Primalac",
       "flag": "O",
@@ -709,7 +711,7 @@
     {
       "id": "R4-VAT",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r4.vat",
       "flag": "U",
       "severity": "warning",
@@ -722,7 +724,7 @@
     {
       "id": "R4-ISO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "4",
       "severity": "warning",
       "filled_by": "sender",
@@ -737,7 +739,7 @@
     {
       "id": "R5",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r5",
       "name": "Korisnicka šifra primaoca",
       "flag": "F"
@@ -745,7 +747,7 @@
     {
       "id": "R6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r6",
       "name": "Šifra platioca upucenih troškova",
       "flag": "F"
@@ -753,7 +755,7 @@
     {
       "id": "R7",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r7",
       "name": "Izjave pošiljaoca",
       "flag": "U",
@@ -767,7 +769,7 @@
     {
       "id": "R8",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r8",
       "name": "Obavestenje/referenca pošiljaoca",
       "flag": "F"
@@ -775,7 +777,7 @@
     {
       "id": "R9",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r9",
       "name": "Prilozi",
       "flag": "U",
@@ -790,7 +792,7 @@
     {
       "id": "R10",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r10",
       "name": "Mesto isporuke",
       "flag": "O",
@@ -807,7 +809,7 @@
     {
       "id": "R11",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r11",
       "name": "Šifra mesta isporuke",
       "flag": "F"
@@ -815,7 +817,7 @@
     {
       "id": "R12",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r12",
       "name": "Šifra stanice koja opsluzuje mesto isporuke",
       "flag": "O",
@@ -830,7 +832,7 @@
     {
       "id": "R13",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r13",
       "name": "Komercijalni uslovi",
       "flag": "U",
@@ -844,7 +846,7 @@
     {
       "id": "R14",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r14",
       "name": "Broj korisničkog sporazuma ili tarife",
       "flag": "U",
@@ -859,7 +861,7 @@
     {
       "id": "R15",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r15",
       "name": "Obavestenja primaocu",
       "flag": "F"
@@ -867,7 +869,7 @@
     {
       "id": "R16",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r16",
       "name": "Preuzimanje na prevoz",
       "flag": "O",
@@ -888,7 +890,7 @@
     {
       "id": "R17",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r17",
       "name": "Šifra mesta preuzimanja",
       "flag": "F"
@@ -896,7 +898,7 @@
     {
       "id": "R18",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r18",
       "name": "Broj kola",
       "flag": "U",
@@ -910,7 +912,7 @@
     {
       "id": "R18-SPISAK",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r18",
       "severity": "warning",
       "filled_by": "sender",
@@ -925,7 +927,7 @@
     {
       "id": "R19",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r19",
       "name": "Fakturisanje tranzita",
       "flag": "U",
@@ -940,7 +942,7 @@
     {
       "id": "R20",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "name": "Plaćanje troškova",
       "flag": "U",
@@ -955,7 +957,7 @@
     {
       "id": "R20-INCO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "error",
@@ -969,7 +971,7 @@
     {
       "id": "R20-INCO-ZASTARELO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "warning",
@@ -984,7 +986,7 @@
     {
       "id": "R20-RUTA",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "warning",
@@ -999,7 +1001,7 @@
     {
       "id": "R21",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r21",
       "name": "Naznačenje robe",
       "flag": "O",
@@ -1012,7 +1014,7 @@
     {
       "id": "R22",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r22",
       "name": "Naročita pošiljka",
       "flag": "U",
@@ -1027,7 +1029,7 @@
     {
       "id": "R23",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r23",
       "name": "RID",
       "flag": "U",
@@ -1042,7 +1044,7 @@
     {
       "id": "R24",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r24",
       "name": "NHM šifra",
       "flag": "O",
@@ -1058,7 +1060,7 @@
     {
       "id": "R24-NHM6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r24",
       "severity": "recommendation",
       "check": "NHM u r24 ima 4 ili 5 cifara (i za prazna kola: 9922 je ispravno, 992200 poželjno)",
@@ -1071,7 +1073,7 @@
     {
       "id": "R25",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r25",
       "name": "Masa",
       "flag": "O",
@@ -1093,7 +1095,7 @@
     {
       "id": "R25-MASA",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r25",
       "name": "Masa",
       "flag": "O",
@@ -1114,7 +1116,7 @@
     {
       "id": "R26",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r26",
       "name": "Izjava o vrednosti",
       "flag": "U",
@@ -1130,7 +1132,7 @@
     {
       "id": "R27",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r27",
       "name": "Obezbeđenje uredne isporuke",
       "flag": "U",
@@ -1144,7 +1146,7 @@
     {
       "id": "R28",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r28",
       "name": "Pouzeće",
       "flag": "U",
@@ -1159,7 +1161,7 @@
     {
       "id": "R29",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r29",
       "name": "Mesto i datum ispostavljanja",
       "flag": "O",
@@ -1182,7 +1184,7 @@
     {
       "id": "R30",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r30",
       "name": "Oznaka dokumenta",
       "flag": "O",
@@ -1195,10 +1197,12 @@
     },
     {
       "id": "R58A",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "r58a",
       "name": "Ugovorni prevoznik",
       "flag": "O",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "severity": "error",
       "required_parts": [
         "šifra_preduzeća_UIC ili prepoznatljiv naziv prevoznika"
@@ -1212,10 +1216,13 @@
     },
     {
       "id": "R62",
+      "severity_spoljni": "warning",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – r62 pošiljalac upisuje ako ga zna; prazan ili nepotpun r62 je napomena za pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz (GLV-CIM, Prilog 2, str. 34)",
       "field": "r62",
       "name": "Identifikacija pošiljke",
       "flag": "O",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "severity": "error",
       "required_parts": [
         "šifra_zemlje_uic920_14",
@@ -1231,12 +1238,12 @@
     },
     {
       "id": "R57",
-      "popunjava": "prevoznik",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 33, r57 („Ovu rubriku popunjava prevoznik pri otpravljanju“)",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "r57",
       "name": "Ostali prevoznici",
       "flag": "U",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): dovoljno je da su navedeni KP (KP57) i ostali prevoznici; deonica i status nisu obavezni",
       "basis": "interna odluka KP 2026-11-12",
       "condition": "u prevozu učestvuje više prevoznika",
@@ -1252,8 +1259,8 @@
     },
     {
       "id": "R57-DEONICA",
-      "popunjava": "prevoznik",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 33, r57 („Ovu rubriku popunjava prevoznik pri otpravljanju“)",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "r57",
       "flag": "U",
       "ne_proverava_se": "obrisano u v2.7 (interna odluka KP 2026-11-12): deonica nije obavezna",
@@ -1265,6 +1272,8 @@
     },
     {
       "id": "R49",
+      "popunjava": "prevoznik",
+      "popunjava_basis": "GLV-CIM, Prilog 2, str. 25: r57 i rubrike od 40 popunjava prevoznik („ukoliko ne postoji poseban ugovor između pošiljaoca i prevoznika“) – samo interno",
       "field": "r49",
       "flag": "O",
       "filled_by": "carrier",
@@ -1278,6 +1287,8 @@
     },
     {
       "id": "R50",
+      "popunjava": "prevoznik",
+      "popunjava_basis": "GLV-CIM, Prilog 2, str. 25: r57 i rubrike od 40 popunjava prevoznik („ukoliko ne postoji poseban ugovor između pošiljaoca i prevoznika“) – samo interno",
       "field": "r50",
       "flag": "O",
       "filled_by": "carrier",
@@ -1294,7 +1305,7 @@
     {
       "id": "R21-DESC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "O",
       "severity": "error",
       "check": "postoji opis robe; za opasnu robu po RID 5.4.1 (UN broj, naziv, klasa, grupa pakovanja...)",
@@ -1306,7 +1317,7 @@
     {
       "id": "R21-WAGON",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): r18 se ne proverava",
       "flag": "U",
       "condition": "kola predata kao roba",
@@ -1318,7 +1329,7 @@
     {
       "id": "R21-UTI",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "prevoz UTI",
@@ -1331,7 +1342,7 @@
     {
       "id": "R21-PIECES",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "komadna pošiljka",
@@ -1344,7 +1355,7 @@
     {
       "id": "R21-PACK",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "upakovana roba",
@@ -1357,7 +1368,7 @@
     {
       "id": "R21-IMDG",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "opasna roba + pomorska deonica",
@@ -1370,7 +1381,7 @@
     {
       "id": "R21-HS",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "trazi carinski propis",
@@ -1383,7 +1394,7 @@
     {
       "id": "R21-SEALS",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "trazi Carinski zakon",
@@ -1397,7 +1408,7 @@
     {
       "id": "R21-MRN",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "warning",
       "condition": "trazi carinski zakon",
@@ -1411,7 +1422,7 @@
     {
       "id": "R21-MRN99",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "warning",
       "condition": "MRN je upisan u rubrici 99 (carinske napomene), a rubrika 21 nema MRN",
@@ -1425,7 +1436,7 @@
     {
       "id": "R21-ARC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "akcizna roba",
@@ -1436,7 +1447,7 @@
     {
       "id": "R21-EXPORT",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "izvozno carinjenje završeno u carinarnici nadležnoj za mesto preuzimanja (cl. 329 t. 7 UP (EU) 2015/2447)",
@@ -1447,7 +1458,7 @@
     {
       "id": "R21-EWC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "pošiljka otpada",
@@ -1460,7 +1471,7 @@
     {
       "id": "R21-CPC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "F",
       "severity": "info",
       "condition": "dogovoreno sa prevoznikom",
@@ -1471,7 +1482,7 @@
     {
       "id": "R21-CUV",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "roba po CIM i prazna kola po CUV na istom listu",
@@ -1486,7 +1497,7 @@
     {
       "id": "X1",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r21 sadrzi UN broj ili RID klasu",
       "then": "r23 == 'X' i opis po RID 5.4.1",
@@ -1498,7 +1509,7 @@
     {
       "id": "X2",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "r23 == 'X'",
       "then": "r21 ima RID naznačenje; preporucena šifra 7.5",
@@ -1510,7 +1521,7 @@
     {
       "id": "X3",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "RID + pomorska deonica",
       "then": "IMDG izjava u r21 i sertifikat o pakovanju (RID 5.4.2) u r9",
@@ -1522,7 +1533,7 @@
     {
       "id": "X4",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r21 sadrzi E MRN, T MRN, TS MRN ili ARC",
       "then": "odgovarajuci prateći dokument u r9",
@@ -1534,7 +1545,7 @@
     {
       "id": "X5",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "basis": "interna odluka KP 2026-11-12 (naročita pošiljka – samo upozorenja)",
       "if": "r22 označena",
@@ -1547,7 +1558,7 @@
     {
       "id": "X6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "roba je otpad: NHM iz codelists.waste_nhm, reči otpad/otpaci/ostaci/scrap/Abfall/rifiuti/waste u r21, Annex VII u r9, dozvola za otpad u mailu ili šifra 7.26",
       "then": "EWC šifra u r21",
@@ -1559,7 +1570,7 @@
     {
       "id": "X7",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r7 sadrzi šifru 3",
       "then": "prezime i ime pratioca",
@@ -1571,7 +1582,7 @@
     {
       "id": "X8",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r7 sadrzi šifru 42",
       "then": "naziv/šifra prevoznika i mesto/carinarnica",
@@ -1583,7 +1594,7 @@
     {
       "id": "X9",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "više kola ili >= 3 UTI",
       "then": "Spisak kola priložen i naveden u r9",
@@ -1595,7 +1606,7 @@
     {
       "id": "X10",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): r18 se ne proverava",
       "if": "broj kola u r21 (kola kao roba)",
       "then": "isti broj u r18; NHM 9921.xx ili 9922.xx",
@@ -1606,7 +1617,7 @@
     {
       "id": "X11",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "na listu i roba po CIM i prazna kola po CUV",
       "then": "'X' u CIM polju r30 + CUV napomena u r21",
@@ -1618,7 +1629,7 @@
     {
       "id": "X12",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "basis": "interna odluka KP 2026-11-12 (r26 i r28 su upozorenja; r27 ostaje greška kroz R27)",
       "if": "popunjena r26, r27 ili r28",
@@ -1631,7 +1642,7 @@
     {
       "id": "X13",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r25 popunjena",
       "then": "zbir masa po NHM == ukupna masa; broj masa == broj NHM sifara u r24",
@@ -1643,7 +1654,7 @@
     {
       "id": "X14",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "r29 i r16 popunjene",
       "then": "datum r29 <= datum r16",
@@ -1655,7 +1666,7 @@
     {
       "id": "X15",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): broj sporazuma u 13.5 nije potreban",
       "if": "elektronski tovarni list",
       "then": "r13 šifra 5 sa brojem EDI sporazuma",
@@ -1666,7 +1677,7 @@
     {
       "id": "X16",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "pošiljalac i primalac u EU",
       "then": "PDV brojevi u r1 i r4",
@@ -1678,7 +1689,7 @@
     {
       "id": "X17",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "valuta == 'HRK'",
       "then": "upozorenje",
@@ -1690,7 +1701,7 @@
     {
       "id": "X18",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r20 sadrzi troškove sa šifrom iz cost_codes_not_payable_by_consignor na teret pošiljaoca",
       "then": "nije dozvoljeno",
@@ -1701,6 +1712,8 @@
     },
     {
       "id": "X19",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – r62 pošiljalac upisuje ako ga zna; prazan ili nepotpun r62 je napomena za pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz (GLV-CIM, Prilog 2, str. 34)",
       "severity": "error",
       "if": "postoji spisak kola",
       "then": "identifikacija pošiljke na spisku (zemlja, stanica, preduzece, broj) == r62 na CIM-u",
@@ -1712,7 +1725,7 @@
     {
       "id": "X20",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "CIM pokriva više kola ili >= 3 UTI",
       "then": "spisak kola priložen i naveden u r9 (od v2.7 se ne traži u r18)",
@@ -1724,7 +1737,7 @@
     {
       "id": "X21",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "RID oznaka na spisku kola",
       "then": "r23 na CIM-u == 'X' (i obrnuto)",
@@ -1736,7 +1749,7 @@
     {
       "id": "X22",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "u mailu ili u r21 postoji carinski dokument (deklaracija, T1, VDD/EX, MRN)",
       "then": "dokument naveden u r9 ILI r7 šifra 10 sa mestom dostupnosti",
@@ -1748,7 +1761,7 @@
     {
       "id": "X23",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "u mailu EUR.1 / uverenje o poreklu / sertifikat / faktura za carinu",
       "then": "naveden u r9 ako putuje uz pošiljku",
@@ -1760,7 +1773,7 @@
     {
       "id": "X24",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "postoji MRN po kontejneru/kolima (npr. tabela MRN)",
       "then": "MRN upisan u r21 (ili na spisku kola uz odgovarajuca kola/UTI)",
@@ -1772,7 +1785,7 @@
     {
       "id": "X25",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r29 datum",
       "then": "nije posle datuma prijema maila",
@@ -1784,7 +1797,7 @@
     {
       "id": "X26",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "9",
       "severity": "error",
       "filled_by": "sender",
@@ -1799,7 +1812,7 @@
     {
       "id": "X27",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "9",
       "severity": "warning",
       "filled_by": "sender",
@@ -1814,7 +1827,7 @@
     {
       "id": "X28",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "20",
       "severity": "warning",
       "filled_by": "sender",
@@ -1829,7 +1842,7 @@
     {
       "id": "X29",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "CIT 23",
       "severity": "error",
       "filled_by": "sender",
@@ -1844,7 +1857,7 @@
     {
       "id": "X29-NHM6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "CIT 23",
       "severity": "recommendation",
       "filled_by": "sender",
@@ -1858,7 +1871,7 @@
     {
       "id": "X30",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r21",
       "severity": "warning",
       "filled_by": "sender",
@@ -1929,14 +1942,14 @@
     {
       "id": "KP7",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "obrisano u v2.7 (interna odluka KP 2026-11-12); zamenjuju ga KP7-PLATILAC, KP7-NIJE-PLATILAC, KP7-NEJASNO i KP7-INFO",
       "field": "7"
     },
     {
       "id": "KP7-PLATILAC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "7",
       "severity": "error",
       "filled_by": "sender",
@@ -1953,7 +1966,7 @@
     {
       "id": "KP7-NIJE-PLATILAC",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "7",
       "severity": "error",
       "filled_by": "sender",
@@ -1968,7 +1981,7 @@
     {
       "id": "KP7-NEJASNO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "7",
       "severity": "warning",
       "filled_by": "sender",
@@ -1982,7 +1995,7 @@
     {
       "id": "KP7-INFO",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "7",
       "severity": "info",
       "filled_by": "sender",
@@ -1993,11 +2006,11 @@
     },
     {
       "id": "KP57",
-      "popunjava": "prevoznik",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 33, r57 („Ovu rubriku popunjava prevoznik pri otpravljanju“)",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "57",
       "severity": "error",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "if": "svaki CIM/CUV",
       "then": "KP se pominje u r57 ili r58a, u bilo kom obliku (KP, Kombinovani prevoz, 3212…); deonica i status se ne traže, ostali prevoznici se ne proveravaju",
       "basis": "odluka KP 2026-11-11 (zamenjuje KP1); pojednostavljeno interna odluka KP 2026-11-12",
@@ -2008,6 +2021,8 @@
     },
     {
       "id": "KP2",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "severity": "error",
       "if": "r62 šifra preduzeća == 3212 (KP ugovorni prevoznik)",
       "then": "u r58a 3212 ili bilo koji oblik naziva KP; adresa i potpis se ne traže",
@@ -2020,7 +2035,7 @@
     {
       "id": "KP3",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "svaki CIM/CUV",
       "then": "KP naveden u r13 kao prevoznik na bar jednoj relaciji: bilo koji oblik (KP, K prevoz, Kombinovani prevoz, КП, UIC 3212, samo 3212), bilo koji deo r13 (i dodatni list); deonica i broj tačke nisu potrebni",
@@ -2032,8 +2047,8 @@
     },
     {
       "id": "KP5",
-      "popunjava": "prevoznik",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 33, r57 („Ovu rubriku popunjava prevoznik pri otpravljanju“)",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "severity": "warning",
       "if": "uz šifru 3212 stoji drugi naziv",
       "then": "naziv = Kombinovani prevoz",
@@ -2046,7 +2061,7 @@
     {
       "id": "KP6",
       "popunjava": "pošiljalac",
-      "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "ne_proverava_se": "obrisano u v2.8 (test 2026-11-13): KP se ne traži na spisku kola",
       "if": "postoji spisak kola",
       "then": "KP naveden u zaglavlju/polju prevoznika",
@@ -2058,7 +2073,7 @@
     }
   ],
   "recommendations": [
-    { "id": "REC1", "popunjava": "pošiljalac", "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r8", "samo_interno": true,
+    { "id": "REC1", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r8", "samo_interno": true,
       "message": "Preporuka: r8: broj voza ili referenca (ključ za povezivanje sa najavom).",
       "message_en": "Recommendation: box 8: train number or reference (key for linking with the announcement).",
       "primer": "r8: broj voza ili referenca, npr. XXXXX", "primer_en": "box 8: train number or reference, e.g. XXXXX" },
@@ -2066,11 +2081,11 @@
       "message": "Preporuka: KP uvek u obliku „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
       "message_en": "Recommendation: always write KP as „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
       "primer": "KP – Kombinovani prevoz d.o.o., UIC 3212", "primer_en": "KP – Kombinovani prevoz d.o.o., UIC 3212" },
-    { "id": "REC4", "popunjava": "prevoznik", "popunjava_izvor": "GLV-CIM Prilog 2, str. 33, r57 („Ovu rubriku popunjava prevoznik pri otpravljanju“)", "field": "r57", "ne_proverava_se": "obrisano u v2.8.3 (test 2026-11-14): status i deonica u r57 se ne traže od v2.7; za r57 važi samo KP57",
+    { "id": "REC4", "popunjava": "pošiljalac", "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)", "field": "r57", "ne_proverava_se": "obrisano u v2.8.3 (test 2026-11-14): status i deonica u r57 se ne traže od v2.7; za r57 važi samo KP57",
       "message": "Preporuka: r57: deonica KP šiframa stanica i status (nije obavezno).",
       "message_en": "Recommendation: box 57: KP section with station codes and status (not mandatory).",
       "primer": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1", "primer_en": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1" },
-    { "id": "REC5", "popunjava": "pošiljalac", "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
+    { "id": "REC5", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
       "message": "Preporuka: spisak kola: broj osovina, tara/neto/bruto po kolima, tovaren/prazan, NHM 6 cifara, UTI broj/tip/tara, plombe, MRN po kolima/UTI, dužina preko odbojnika.",
       "message_en": "Recommendation: wagon list: number of axles, tare/net/gross per wagon, loaded/empty, 6-digit NHM, ITU number/type/tare, seals, MRN per wagon/ITU, length over buffers.",
       "primer": "kolone spiska: broj kola, osovine, tara, neto, bruto, NHM (6 cifara), plombe", "primer_en": "list columns: wagon no., axles, tare, net, gross, NHM (6 digits), seals" },
@@ -2078,11 +2093,11 @@
       "message": "Preporuka: spisak kola i u Excel formatu uz PDF.",
       "message_en": "Recommendation: wagon list also in Excel format together with the PDF.",
       "primer": "spisak_kola.xlsx uz PDF", "primer_en": "wagon_list.xlsx together with the PDF" },
-    { "id": "REC7", "popunjava": "pošiljalac", "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
+    { "id": "REC7", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
       "message": "Preporuka: elektronski PDF sa tekstom; skenovi najmanje 300 dpi, cela strana.",
       "message_en": "Recommendation: electronic PDF with text; scans at least 300 dpi, full page.",
       "primer": "PDF sa tekstom ili sken 300 dpi", "primer_en": "PDF with text or a 300 dpi scan" },
-    { "id": "REC8", "popunjava": "pošiljalac", "popunjava_izvor": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r1", "samo_interno": true,
+    { "id": "REC8", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r1", "samo_interno": true,
       "message": "Preporuka: kontakt (telefon, e-mail) u r1 i r4; korisničke šifre r2/r3/r5/r6.",
       "message_en": "Recommendation: contact (telephone, e-mail) in boxes 1 and 4; customer codes in boxes 2/3/5/6.",
       "primer": "Tel. +381 11 123 4567, e-mail: otprema@firma.rs", "primer_en": "Tel. +381 11 123 4567, e-mail: dispatch@company.com" }

@@ -484,6 +484,47 @@ namespace Saobracaj.Agent.CimProvera.Tests
             StringAssert.Contains(Izvestaj.Telo(r, pravila, false), "Ovo je nova verzija tovarnog lista od 13.11.2026.");
         }
 
+        /// <summary>
+        /// „Out of memory.“ na serveru (UID 408, ZIJIN C1-2298 str. 5, CIT): kućice r62 donjeg reda preslikane ispod ivice strane
+        /// (y 1,017–1,034) – GDI+ je za pravougaonik van slike bacao OutOfMemoryException. Isečak sada ostaje unutar slike.
+        /// </summary>
+        [TestMethod]
+        public void Isecak_kucice_van_strane_nije_Out_of_memory()
+        {
+            using (var b = new System.Drawing.Bitmap(1240, 1753))
+            {
+                Assert.IsNotNull(Slike.Isecak(b, 0.615, 1.017, 0.69, 1.034, true));
+                Assert.IsNotNull(Slike.IsecakCifara(b, 0.615, 1.017, 0.69, 1.034));
+                Assert.IsNotNull(Slike.IsecakCifara(b, 0.694, 1.016, 0.788, 1.033, true));
+                Assert.IsNotNull(Slike.IsecakCifara(b, 1.02, 0.5, 1.10, 0.6));
+                Assert.IsNotNull(Slike.Isecak(b, -0.2, -0.1, -0.05, -0.02, true));
+            }
+        }
+
+        /// <summary>COAL 16+: „nova verzija“ navodi samo greške – napomene (r1, r4: ISO šifra zemlje) nisu „ostalo neispravljeno“.</summary>
+        [TestMethod]
+        public void T8_Nova_verzija_navodi_samo_greske_bez_napomena()
+        {
+            var d = Dosije.Ucitaj(NovFolder());
+            var c = MotorTests.IspravanCim();
+            var r0 = RezultatSaListom(c);
+            r0.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R1-ISO", Rubrika = "1", Tezina = Tezina.Upozorenje });
+            r0.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R4-ISO", Rubrika = "4", Tezina = Tezina.Upozorenje });
+            r0.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R25", Rubrika = "25", Tezina = Tezina.Greska });
+            r0.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R16", Rubrika = "16", Tezina = Tezina.Greska });
+            r0.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "KP57", Rubrika = "57", Tezina = Tezina.Greska, SamoInterno = true });
+            var p = d.Zapamti(null, Mail8("UID 200", "COAL 16+", new DateTime(2026, 11, 13, 9, 0, 0)), SaListom(c), r0);
+            CollectionAssert.AreEquivalent(new[] { "R25|25", "R16|16" }, p.Listovi.Single().Nalazi, "pamte se samo greške za pošiljaoca");
+            // nova verzija: r25 ispravljen, r16 nije; r1/r4 i dalje samo napomene
+            p.Listovi.Single().Otisak = "staro";
+            var r = RezultatSaListom(c);
+            r.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R1-ISO", Rubrika = "1", Tezina = Tezina.Upozorenje });
+            r.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R4-ISO", Rubrika = "4", Tezina = Tezina.Upozorenje });
+            r.Listovi[0].Nalazi.Add(new Nalaz { Pravilo = "R16", Rubrika = "16", Tezina = Tezina.Greska });
+            Dosije.Primeni(p, r, false);
+            Assert.AreEqual("Ovo je nova verzija tovarnog lista od 13.11.2026. Ispravljeno: r25. Ostalo neispravljeno: r16.", r.UvodDosijea);
+        }
+
         [TestMethod]
         public void T8_Skenirana_overena_verzija_proverava_samo_pecat_r62_r29()
         {

@@ -132,7 +132,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var s = new Scenario { Rezim = "spoljni" };
             s.C.R49 = new TekstRubrika(); s.C.R50 = new TekstRubrika(); s.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "3212" } } });
             s.C.R58a = new UgovorniPrevoznik(); s.C.R62 = new Identifikacija();
-            Assert.IsFalse(Ima(Proveri(s), id));
+            // v2.8.4 (odluka 2026-11-14): r49/r50 popunjava prevoznik – nalaz postoji samo u INTERNO, ne ide pošiljaocu
+            var r = Proveri(s);
+            Assert.IsFalse(Svi(r).Any(n => n.Pravilo == id && !n.SamoInterno), id);
+            Assert.IsFalse(Ima(r.BezInternih(), id), id);
         }
 
         [TestMethod]

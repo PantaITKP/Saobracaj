@@ -11,7 +11,9 @@
 - **X19**: neupisana identifikacija na spisku je napomena.
 - **Ponavljanja** (`Ponavljanja.cs`, `stanje\ponavljanja.json`): isti prilog i isti tovarni list (ključ: r62 sa slovnim brojem otpravljanja, pošiljalac + r8 + relacija, sadržaj) se ne prijavljuju ponovo; jedna interna poruka po mailu.
 - **Dosije pošiljke** (`Dosije.cs`, `stanje\posiljke.json`): povezivanje mailova (7 dana), priloženost na celom dosijeu, „nova verzija – ispravljeno / ostalo“, overena verzija digitalnog lista (samo r58a, r62, r29). `validate --stanje` i `.eml` kao ulaz; `preuzmi <uid> --eml`.
-- **Ko popunjava** (`popunjava` u pravilima, GLV-CIM Prilog 2): rubrike 1–30 pošiljalac, r57 prevoznik; nalaz za rubriku prevoznika kod spoljnog pošiljaoca → INTERNO. r49, r50, r58a, r62 čekaju odluku.
+- **Ko popunjava** (`popunjava` i `popunjava_basis` u pravilima, odluka KP 2026-11-14): r57 i r58a pošiljalac (KP57, R57, R58A – greške pošiljaoca); r62 pošiljalac ako zna – prazan/nepotpun r62 je napomena za spoljnog pošiljaoca, kod KP tovarnog lista interni nalaz; r49 i r50 prevoznik – samo INTERNO; ostale rubrike 1–30 pošiljalac.
+- **Nova verzija** navodi samo greške, bez napomena. **Naslov** sa nepouzdanom r62: „… Tovarni list CIM (<fajl>) – r62 nečitljiva“.
+- **„Out of memory.“ u ciljanom OCR-u** (`LokalniCitac.CiljaniOcr`, `Slike.Unutar`): nije bio nedostatak memorije – kućica preslikana ispod ivice strane (ZIJIN C1-2298 str. 5) davala je isečak van slike, što GDI+ prijavljuje kao OutOfMemoryException. Takva kućica se preskače, isečak ostaje u slici, greška jedne kućice ne prekida ostale. Proces ostaje 32-bitni (x64 radi sa svim bibliotekama, ali menja OCR rezultate bez koristi za ovaj problem). Čitač L20.
 - **Primaoci u Live režimu** (`Mail\PrimaociLive.cs`, samo priprema): odgovor svima iz prepiske, nit i naslov „RE: … – CIM provera: …“; Test zaglavlje `X-CimProvera-Live-Primaoci`.
 - **Interni izveštaji**: „Primer ispravke je u prilogu.“; nepouzdano pročitane rubrike u jednom redu.
 - **r62 nečitljiva**: rukom upisana r62 sa nepouzdanim ciframa se ne koristi za odluke.

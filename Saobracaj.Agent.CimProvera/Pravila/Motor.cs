@@ -202,6 +202,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     foreach (var pg in pogodci)
                     {
                         var n = Napravi(def, pg, u.Engleski, cim);
+                        // v2.8.4: težina kod spoljnog pošiljaoca (R62: prazan ili nepotpun r62 je napomena; kod KP tovarnog lista ostaje kao u pravilu)
+                        if (!k.Kp && (string)def.Json["severity_spoljni"] is string sv && n.Tezina == Tezina.Greska) n.Tezina = sv;
                         if (prevoznikInterno)
                         {
                             var nap = u.Engleski ? " – filled in by the carrier (KP on acceptance)" : " – popunjava prevoznik (KP pri prijemu)";

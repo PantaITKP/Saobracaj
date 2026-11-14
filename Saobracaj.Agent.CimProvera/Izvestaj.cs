@@ -141,20 +141,29 @@ namespace Saobracaj.Agent.CimProvera
         public static string Naslov(RezultatProvere r, PravilaSkup p, bool en)
         {
             var prvi = r.Listovi.FirstOrDefault();
-            var id = prvi?.Cim != null ? R62Id(prvi.Cim) : null;
+            // v2.8.4: nepouzdano pročitana r62 se ne navodi u naslovu – „Tovarni list CIM (fajl.pdf) – r62 nečitljiva“
+            var r62Necitljiva = prvi?.Cim?.R62?.NepouzdanaZaOdluke == true;
+            var id = prvi?.Cim != null && !r62Necitljiva ? R62Id(prvi.Cim) : null;
             if (id == null) id = System.IO.Path.GetFileName((prvi?.Dokument?.Fajl ?? "").Split('/').Last());
+            if (r62Necitljiva) id = "(" + id + ")";
             if (r.Listovi.Count > 1) id += " (+" + (r.Listovi.Count - 1) + ")";
             var refp = prvi?.Cim != null ? ReferencaPosiljaoca(prvi.Cim) : null;
             var status = r.BrojGresaka == 0 && r.BrojUpozorenja == 0 && r.ZaRucnuProveru ? (en ? "manual check required" : "potrebna ručna provera")
                        : r.BrojGresaka > 0 ? p.SablonStatus("errors", en, en ? "corrections required" : "potrebne ispravke")
                        : r.BrojUpozorenja > 0 ? p.SablonStatus("warnings", en, en ? "remarks" : "napomene")
                        : p.SablonStatus("ok", en, en ? "correct" : "ispravan");
+            var interno = RazlogInternog(r, p);
+            // „r62 nečitljiva“ je za interni izveštaj ručne provere; izveštaj za pošiljaoca zadržava svoj status („potrebne ispravke“)
+            if (r62Necitljiva && interno == RazlogRucna)
+            {
+                var r62 = en ? "box 62 unreadable" : "r62 nečitljiva";
+                status = r.BrojGresaka == 0 && r.BrojUpozorenja == 0 ? r62 : status + ", " + r62;
+            }
             var sablon = p.Sablon("subject", en, en ? "Consignment note {form} {shipment_ref}{sender_ref} – {status}" : "Tovarni list {form} {shipment_ref}{sender_ref} – {status}");
             var n = sablon.Replace("{form}", Obrazac(r)).Replace("{shipment_ref}", id).Replace("{sender_ref}", refp != null ? " (" + refp + ")" : "").Replace("{status}", status);
             n = Regex.Replace(n, @"\s{2,}", " ").Trim();
             // v2.8.3: ime fajla koje počinje sa „CIM“/„CUV“ („CIM draft GK30…“) – oznaka obrasca se ne ponavlja („Tovarni list CIM draft GK30…“)
             n = Regex.Replace(n, @"\b(?:CIM|CUV)\s+(?=(?:CIM|CUV)\b)", "", RegexOptions.IgnoreCase);
-            var interno = RazlogInternog(r, p);
             return interno == RazlogKp ? "[INTERNO] KP tovarni list – " + n : interno == RazlogRucna ? "[INTERNO] Ručna provera – " + n : n;
         }
 
