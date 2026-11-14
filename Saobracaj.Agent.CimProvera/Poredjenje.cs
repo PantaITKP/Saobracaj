@@ -422,7 +422,13 @@ namespace Saobracaj.Agent.CimProvera
             string Cist(string s) => Regex.Replace(System.Net.WebUtility.HtmlDecode(Regex.Replace(s, "<[^>]+>", " ")), @"[\s ]+", " ").Trim();
             foreach (Match blok in Regex.Matches(html, @"<h3[^>]*>(?<h>.*?)</h3>|<tr>(?<tr>.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
             {
-                if (blok.Groups["h"].Success) { sb.AppendLine(Cist(blok.Groups["h"].Value)); continue; }
+                if (blok.Groups["h"].Success)
+                {
+                    var h = Cist(blok.Groups["h"].Value);
+                    // v2.8.3: interni odeljak na dnu („INTERNO (ne ide pošiljaocu)“) nije deo izveštaja pošiljaocu – kao „--“ u tekstu
+                    if (h.StartsWith("INTERNO (", StringComparison.Ordinal) || h.StartsWith("INTERNAL (", StringComparison.Ordinal)) { sb.AppendLine("--"); break; }
+                    sb.AppendLine(h); continue;
+                }
                 var td = Regex.Matches(blok.Groups["tr"].Value, @"<td[^>]*>(.*?)</td>", RegexOptions.Singleline | RegexOptions.IgnoreCase).Cast<Match>().Select(x => Cist(x.Groups[1].Value)).ToList();
                 if (td.Count < 3) continue;
                 if (Regex.IsMatch(td[0], @"^\d+$")) td.RemoveAt(0);                  // tabela grešaka: prva kolona je redni broj

@@ -13,5 +13,4 @@ recommendation	X29-NHM6	rCIT 23
 error	KP7-NIJE-PLATILAC	r7
 warning	KP2	r58a
 recommendation	REC1	r8
-recommendation	REC4	r57
 recommendation	REC8	r1

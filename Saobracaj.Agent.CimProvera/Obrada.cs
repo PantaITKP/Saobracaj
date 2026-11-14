@@ -219,6 +219,7 @@ namespace Saobracaj.Agent.CimProvera
                         return Regex.IsMatch(ime, @"train ?list|load ?list|ladeliste") || d.Spisak.Any(s => s.Kola.Count > 0 && s.Kola.All(k => k.Uti.Count > 0) && Regex.IsMatch(ime, "train|load"))
                             ? "spisak tovarnih jedinica" : "spisak kola";
                     case TipDokumenta.SastavVoza: return "izveštaj o sastavu voza (ne proverava se)";
+                    case TipDokumenta.SpisakJedinica: return "spisak tovarnih jedinica";
                     case TipDokumenta.Cit7: return "CIT 7 – naknadni zahtev (interni izveštaj)";
                     case TipDokumenta.DodatniList: return "dodatni list";
                     case TipDokumenta.IzvoznaDeklaracija: return "izvozna deklaracija";
@@ -233,7 +234,7 @@ namespace Saobracaj.Agent.CimProvera
                     case TipDokumenta.AnnexVii: return "dokument o kretanju otpada (Annex VII)";
                     case TipDokumenta.IzvestajRadioloski: return "izveštaj o radiološkoj kontroli";
                     case TipDokumenta.Poledjina: return "poleđina lista";
-                    case TipDokumenta.Najava: return "najava";
+                    case TipDokumenta.Najava: return "najava voza (ne proverava se)";
                     case TipDokumenta.Interni: return "interni obrazac KP";
                     case TipDokumenta.Ugovor: return "ugovor";
                     case TipDokumenta.Ponuda: return "ponuda";

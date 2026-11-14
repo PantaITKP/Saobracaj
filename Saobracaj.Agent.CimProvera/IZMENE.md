@@ -1,5 +1,17 @@
 # CimProvera – izmene programa
 
+## 2026-11-14 – v2.8.3: ispravke posle testa sa 6 mailova (13–14.11.)
+
+- **Bez izmišljenih naziva** (`Pravila\Dopune.cs`): naziv/adresa/platilac/primalac u dopuni su šablon („XXXXX, ulica i broj, poštanski broj mesto, XX“, „Platilac za deonicu SRB: XXXXX“). Izvor „Transport Partner d.o.o.“ (R1/R4 i KP7-PLATILAC) uklonjen. Na skenu nema dopune u rubrici koja nije pouzdano pročitana. Test `Dopune_nikad_ne_izmisljaju_naziv_firme` pada ako dopuna sadrži naziv firme koji nije pročitan iz priloga.
+- **Zemlja r1/r4**: iz adrese (`Dopune.ZemljaIzAdrese` – poštanski broj sa oznakom zemlje, poznata mesta), pa iz stanice te strane; nikad druga strana ni r62; nepoznato „XX“. HERSAD79/80 r1 → DE.
+- **Interni redovi**: odeljak „INTERNO (ne ide pošiljaocu)“ na dnu maila (Test); u Live nikad pošiljaocu (`Izvestaj.ZaPosiljaoca`). REC4 (r57) obrisan.
+- **Kolona „Kako treba da izgleda“** iz iste dopune kao PDF primer; r58a = preduzeće iz r62; NHM „XXXXXX“; „posle „…““ samo iza reda sa bar 3 slova/cifre.
+- **Najava voza** (`Citanje\NajavaVoza.cs`): poseban tip, ne proverava se; u log broj voza, stanice, broj kola, težina, dužina, ETA. „Натурен лист на влак“ → sastav voza.
+- **TCDD 3370A** (`sablon\obrasci\tcdd-3370a.json`): raspored CIT, visina natpisa 0,0042 (podaci TCDD štampe su sitni i ranije su odbacivani kao natpisi), r16/r62 kućice i r29 na mestu TCDD štampe; bira se samo kada je na strani „Taşıma Belgesi“ (`natpisi` u šablonu, prednost pred nacionalnim šablonima). r7/r15 „FREIGHT PAYER FOR X AND KP3212 – Y“ → platilac za Srbiju Y.
+- **CIT 2006 sa skena druge razmere** (`Obrasci.HipotezaOkvir`): početno poravnanje po okviru obrasca, potvrđeno sa ≥ 6 krugova brojeva rubrika (SET EXPORT str. 4: ranije 0 sidara, sada 91).
+- **Interni izveštaj**: kratak uvod bez pisma (`Izvestaj.UvodInternogKratak`), listovi grupisani po fajlu.
+- **Sitnice**: naslov bez „CIM CIM“; `DnoNatpisa` – viši pojas odmah ispod natpisa je upisan tekst (r29 „Wittenberg“ više ne ide na marginu); Excel sa oznakama UTI bez kola → „spisak tovarnih jedinica“; trajanje obrade svakog maila u log; mail sa ≥ 6 PDF/slika ili ≥ 8 MB obrađuje se posle ostalih u krugu, a poslednji UID se pomera samo preko neprekinutog niza završenih poruka.
+
 ## 2026-11-13 – v2.8.2: šabloni umesto izmišljenih brojeva, r25, CIT 7 samo pouzdana veza, A4
 
 - **PDF primer – šabloni sa X** (`Pravila\Dopune.cs`, klasa `Sablon`)

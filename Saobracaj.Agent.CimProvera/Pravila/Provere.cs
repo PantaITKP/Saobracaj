@@ -40,7 +40,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 ["KP7-PLATILAC"] = KP7Platilac, ["KP7-NIJE-PLATILAC"] = KP7NijePlatilac, ["KP7-NEJASNO"] = KP7Nejasno, ["KP7-INFO"] = KP7Info,
                 ["KP57"] = KP57, ["KP2"] = KP2, ["KP3"] = KP3, ["KP5"] = KP5,   // KP6 obrisan u v2.8
                 // recommendations (stalni ID iz JSON-a; REC2 obrisan u v2.7)
-                ["REC1"] = Rec1, ["REC4"] = Rec4, ["REC7"] = Rec7, ["REC8"] = Rec8,   // REC3 i REC6 obrisani u v2.8
+                ["REC1"] = Rec1, ["REC7"] = Rec7, ["REC8"] = Rec8,   // REC3 i REC6 obrisani u v2.8, REC4 (r57 status/deonica) u v2.8.3
             };
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// Sva ostala pravila (i R57, KP7, KP57) važe za SVAKI CIM/CUV: na priprema@ stižu samo pošiljke u kojima KP učestvuje.
         /// </summary>
         // v2.8: R58A i R62 važe za svaki list (test 2026-11-13: GK30, CUV_257, CIM COAL 16); KP2 se proverava kada je r62 = 3212
-        public static readonly HashSet<string> SamoKp = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "R49", "R50", "REC4" };
+        public static readonly HashSet<string> SamoKp = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "R49", "R50" };
 
         /// <summary>Pravila sa filled_by = carrier u JSON-u koja ipak važe uvek (ne zavise od režima KP).</summary>
         public static readonly HashSet<string> UvekVazi = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "KP57", "R58A", "R62", "KP2" };
@@ -343,6 +343,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         internal static bool ZemljaUAdresi(Strana s)
         {
             if (s == null || Prazno(s.NazivZemlje)) return false;
+            return Regex.IsMatch(AdresaBezNaziva(s), @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje.Trim()) + @"(?!\p{L})", RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>Tekst rubrike bez naziva firme (prvi deo upisa) – redovi adrese, za zemlju (v2.8.2/2.8.3).</summary>
+        internal static string AdresaBezNaziva(Strana s)
+        {
+            if (s == null) return "";
             var tekst = s.Tekst ?? "";
             string adresa;
             // naziv: parsirani naziv, a kada je on ceo upis (cifre, predugačak) – prvi deo do zareza ili novog reda
@@ -356,7 +363,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 adresa = redovi.Length > 1 ? string.Join("\n", redovi.Skip(1)) : tekst;
             }
             adresa += "\n" + (s.Adresa ?? "");
-            return Regex.IsMatch(adresa, @"(?<!\p{L})" + Regex.Escape(s.NazivZemlje.Trim()) + @"(?!\p{L})", RegexOptions.IgnoreCase);
+            return adresa;
         }
 
         /// <summary>R1-ISO / R4-ISO: zemlja upisana rečima umesto ISO 3166 šifre – upozorenje, sa predlogom iz istog upisa.</summary>
@@ -1323,8 +1330,30 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 .Concat(RecPrevoznika.Matches(t).Cast<Match>().Select(m => m.Index))
                 .Concat(Regex.Matches(t, ";").Cast<Match>().Select(m => m.Index)).OrderBy(x => x).ToList();
             bool SamoOpseg(string s) => SamoOpseg0(s);
+            // v2.8.3 (TCDD): „FREIGHT PAYER FOR BG EXPRESS 5665 AND KP3212 – CINKOTURK LOGISTIK“ – platilac za deonice navedenih
+            // prevoznika, među kojima je KP (deonica kroz Srbiju) → naziv posle KP 3212 je platilac za Srbiju
+            var tcdd = new List<(int od, int doo)>();
+            // („FOR“ OCR često ispusti: „FREIGHT PAYER BG EXPRESS 5665 KP3212-CINKOTURKLOGISTIK“; „KP3212.“ umesto „KP3212 –“)
+            foreach (Match m in Regex.Matches(t, @"(?<!\p{L})(?:freight\s*payer|payer)\s+(?:for\s+)?(?<deo>[^;" + NR + @"]*?)(?<!\p{L})KP\s*-?\s*" + Regex.Escape(kp.Uic)
+                                                   + @"\s*[-–:.]\s*(?<naziv>[^;" + NR + @"]+)", RegexOptions.IgnoreCase))
+            {
+                var naziv = Regex.Replace(m.Groups["naziv"].Value, @"\s+", " ").Trim(' ', ',', ';', '.', '-', '–');
+                // OCR spaja reči („CINKOTURKLOGISTIK“) – razmak ispred uobičajenog završetka naziva
+                naziv = Regex.Replace(naziv, @"(?<=\p{L}{3})(LOGISTIK|LOGISTICS|LOJISTIK|LOGISTIC)(?!\p{L})", " $1");
+                if (naziv.Length == 0) continue;
+                var deo = Regex.Replace(m.Groups["deo"].Value, @"\s+", " ").Trim();
+                deo = Regex.Replace(deo, @"(?<!\p{L})AND$", "", RegexOptions.IgnoreCase).Trim();
+                a.Platioci.Add(new PlatilacR7
+                {
+                    Zapis = "Freight payer for " + (deo.Length > 0 ? deo + " and " : "") + "KP " + kp.Uic + " – " + naziv,
+                    Opseg = (deo + " KP " + kp.Uic).Trim(), Naziv = naziv, Srbija = true,
+                    Kp = kp.PominjeNaziv(naziv) || Regex.IsMatch(kp.OcrIspravka(naziv), @"(?<!\d)" + kp.Uic + @"(?!\d)"),
+                });
+                tcdd.Add((m.Index, m.Index + m.Length));
+            }
             foreach (Match m in RecPlatioca.Matches(t))
             {
+                if (tcdd.Any(x => m.Index >= x.od && m.Index < x.doo)) continue;
                 var kraj = granice.FirstOrDefault(g => g > m.Index);
                 if (kraj <= m.Index) kraj = t.Length;
                 var zapis = t.Substring(m.Index, kraj - m.Index).Trim(' ', ';', ',');
@@ -1378,7 +1407,16 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var r = k.C.R7;
             var t = !Prazno(r.Tekst) ? r.Tekst : string.Join("\n", r.Stavke.Select(s => (s.Sifra + " " + s.Tekst).Trim()));
-            return AnalizirajR7(t, k.P.Kp);
+            var a = AnalizirajR7(t, k.P.Kp);
+            // v2.8.3: TCDD ponavlja platioca u r15 („… STREIGHT PAYER FOR BG EXPRESS 5665 KP 3212 – CINKOTURK LOGISTIK“) –
+            // kada r7 nema platioca za Srbiju, uzima se iz r15
+            var r15 = k.C.R15?.Tekst ?? "";
+            if (!a.ZaSrbiju.Any() && r15.Length > 0 && RecPlatioca.IsMatch(Regex.Replace(r15, @"(?i)streight\s*payer", "freight payer")))
+            {
+                var b = AnalizirajR7(Regex.Replace(r15, @"(?i)streight\s*payer", "freight payer"), k.P.Kp);
+                a.Platioci.AddRange(b.ZaSrbiju);
+            }
+            return a;
         }
 
         /// <summary>KP7-PLATILAC (greška): u r7 nije naveden platilac za deonicu kroz Srbiju (ni platilac za ceo put).</summary>

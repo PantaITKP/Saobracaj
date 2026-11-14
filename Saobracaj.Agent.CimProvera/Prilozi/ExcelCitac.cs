@@ -192,6 +192,10 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 rez.Add(new Dokument { Tip = TipDokumenta.SpisakKola, Strane = { 1 }, Opis = "spisak kola (" + opisIzvora + ", " + spisak.Kola.Count + " kola)", Spisak = { spisak }, Fajl = fajl, Izvor = izvor });
             if (carinski.Mrn.Count > 0)
                 rez.Add(new Dokument { Tip = TipDokumenta.TabelaMrn, Strane = { 1 }, Opis = "tabela MRN (" + opisIzvora + ", " + carinski.Mrn.Count + " MRN)", Carinski = { carinski }, Fajl = fajl, Izvor = izvor });
+            // v2.8.3: spisak tovarnih jedinica bez kola („Pos. | T2 | SV“, „1;LKWA 0509677“) – oznake UTI (4 slova + 6–7 cifara)
+            var jedinica = sviTekstovi.SelectMany(t => Regex.Matches(t ?? "", @"(?<![A-Z])[A-Z]{4}\s?\d{6,7}(?!\d)").Cast<Match>().Select(m => Regex.Replace(m.Value, @"\s", ""))).Distinct().Count();
+            if (rez.Count == 0 && jedinica >= 3)
+                rez.Add(new Dokument { Tip = TipDokumenta.SpisakJedinica, Strane = { 1 }, Opis = "spisak tovarnih jedinica (" + opisIzvora + ", " + jedinica + " jedinica)", Fajl = fajl, Izvor = izvor });
             if (rez.Count == 0)
                 rez.Add(new Dokument { Tip = TipDokumenta.Ostalo, Strane = { 1 }, Opis = opisIzvora + " bez spiska kola i MRN", Fajl = fajl, Izvor = izvor });
             return rez;

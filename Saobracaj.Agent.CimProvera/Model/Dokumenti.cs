@@ -382,6 +382,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         public const string KopijaLista = "kopija_lista";
         /// <summary>CIT 7 – naknadni nalog / izmena ugovora o prevozu: poseban dokument, ne proverava se po rubrikama CIM-a.</summary>
         public const string Cit7 = "cit7";
+        /// <summary>v2.8.3: spisak tovarnih jedinica (UTI: kontejneri, poluprikolice – „LKWA 0509677“) bez brojeva kola; ne proverava se.</summary>
+        public const string SpisakJedinica = "spisak_jedinica";
         public const string Ostalo = "ostalo";
 
         public static readonly string[] Sve =

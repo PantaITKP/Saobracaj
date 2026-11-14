@@ -341,7 +341,12 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var n = Nalazi(i).Single(x => x.Rubrika == "62");
             Assert.AreEqual(Tezina.Info, n.Tezina); Assert.IsTrue(n.SamoInterno);
             StringAssert.StartsWith(n.Tekst, "r62 nečitljiva – proveriti ručno");
-            StringAssert.Contains(Izvestaj.Telo(i.Provera, pravila, false), "r62 nečitljiva – proveriti ručno");
+            // v2.8.3: interni red je samo u odeljku „INTERNO (ne ide pošiljaocu)“ na dnu, ne među napomenama
+            var telo = Izvestaj.Telo(i.Provera, pravila, false);
+            var deo = telo.Split(new[] { "INTERNO (ne ide pošiljaocu)" }, StringSplitOptions.None);
+            Assert.AreEqual(2, deo.Length, telo);
+            StringAssert.Contains(deo[1], "Rubrika 62");
+            Assert.IsFalse(deo[0].Contains("Rubrika 62"), "r62 nije u tabelama za pošiljaoca");
         }
 
         [TestMethod]

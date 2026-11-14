@@ -15,7 +15,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
     /// (Ispravan_list_nema_nalaza + Prolaz_*) i pad (Pad_*).
     /// </summary>
     [TestClass]
-    public class MotorTests
+    public partial class MotorTests
     {
         private static PravilaSkup pravila;
         private static readonly DateTime Danas = new DateTime(2026, 11, 10);
@@ -269,10 +269,20 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["KP7-INFO"] = s => { },
             ["KP5"] = s => s.C.R57.Prevoznici[0].Naziv = "VTG Railtrain",
             ["REC1"] = s => s.C.R8 = new TekstRubrika(),
-            ["REC4"] = s => s.C.R57.Prevoznici[0].Deonica = "Niš - Dimitrovgrad",
             ["REC7"] = s => s.C.KvalitetSkena = "los",
             ["REC8"] = s => s.C.R1.Telefon = "",
         };
+
+        [TestMethod]
+        public void REC4_r57_preporuka_je_uklonjena_ostaje_samo_KP57()
+        {
+            // v2.8.3: preporuka za r57 (REC4) se ne javlja ni kada je deonica upisana; pravilo KP57 ostaje
+            var s = new Scenario();
+            s.C.R57.Prevoznici[0].Deonica = "Niš - Dimitrovgrad";
+            Assert.IsFalse(Ima(Proveri(s), "REC4"));
+            Assert.IsFalse(Ima(Proveri(new Scenario()), "REC4"));
+            Assert.IsTrue(pravila.PoId.ContainsKey("KP57"));
+        }
 
         public static IEnumerable<object[]> SvaPravila => Kvarovi.Keys.Select(k => new object[] { k });
 

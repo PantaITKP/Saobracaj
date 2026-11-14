@@ -231,13 +231,26 @@ namespace Saobracaj.Agent.CimProvera
                 List<string> imena;
                 try { imena = sz?.Attachments?.Select(a => TekstUtil.Ocisti(a.FileName ?? a.ContentType?.Name ?? "(bez imena)")).ToList() ?? new List<string>(); }
                 catch { imena = new List<string>(); }
+                // v2.8.3: procena trajanja (PDF/slike i veličina) – teški mail ide na kraj kruga
+                int pdfSlika = 0; long bajtova = 0;
+                try
+                {
+                    foreach (var a in sz?.Attachments ?? Enumerable.Empty<BodyPartBasic>())
+                    {
+                        var ime = (a.FileName ?? a.ContentType?.Name ?? "").ToLowerInvariant();
+                        var vrsta = (a.ContentType?.MimeType ?? "").ToLowerInvariant();
+                        if (vrsta.Contains("pdf") || vrsta.StartsWith("image/") || System.Text.RegularExpressions.Regex.IsMatch(ime, @"\.(pdf|jpe?g|png|tiff?)$"))
+                        { pdfSlika++; bajtova += (long)a.Octets; }
+                    }
+                }
+                catch { }
                 red.Add(new RedPoruka.Stavka
                 {
                     Uid = u.Id, Folder = f.FullName, MessageId = mid,
                     Kljuc = Stanje.KljucPoruke(cfg.Nalog, mid.Length > 0 ? mid : f.FullName + "/" + f.UidValidity + "/" + u.Id),
                     Od = sz?.Envelope?.From?.Mailboxes.FirstOrDefault()?.Address ?? "",
                     Naslov = Regex(TekstUtil.Ocisti(sz?.Envelope?.Subject)),
-                    Prilozi = imena,
+                    Prilozi = imena, PdfSlika = pdfSlika, Bajtova = bajtova,
                 });
             }
             var q = new RedPoruka(stanje, fs, cfg.MaxPokusaja, log, dryRun)
@@ -404,8 +417,9 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8: list koji je izdao KP (r62 = 3212) ili list na ručnoj proveri → samo interni izveštaj, nikad pošiljaocu
             var razlog = Izvestaj.RazlogInternog(r, pravila);
             if (razlog != null) { PosaljiInterniIzvestaj(m, r, pravila, nisuProcitani, razlog); return; }
-            // v2.8: nalazi „samo interno“ (npr. R49) se filtriraju iz izveštaja za pošiljaoca i iz PDF primera i u režimu Test
-            if (!odlazni && !cfg.JeInterni(od0) && r.ImaInternih)
+            // v2.8.3: Live – nalazi „samo interno“ (npr. R49, r8, kontakt) nikad u mailu ni u PDF primeru za pošiljaoca (puni izveštaj samo KopijaNa);
+            // Test – mail ide na test adresu sa internim odeljkom na dnu („INTERNO (ne ide pošiljaocu)“). PDF primer ih nikad nema.
+            if (!odlazni && r.ImaInternih && Izvestaj.ZaPosiljaoca(r, cfg.Rezim, cfg.JeInterni(od0)) != r)
             {
                 PosaljiIzvestaj(m, r.BezInternih(), pravila, en, false, nisuProcitani, bezKopije: true);
                 if (cfg.Rezim == Rezim.Live && cfg.KopijaNa.Count > 0) PosaljiInterno(m, r, pravila, en, nisuProcitani);
@@ -422,10 +436,11 @@ namespace Saobracaj.Agent.CimProvera
                 : cfg.KopijaNa.Concat(new[] { cfg.UpozorenjaNa }).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             if (primaoci.Count == 0) { log.Upozorenje("    interni izveštaj nema primaoca (KopijaNa/UpozorenjaNa)."); return; }
             var naslov = Izvestaj.Naslov(r, pravila, false);
-            var uvod = (cfg.Rezim == Rezim.Test ? "[TEST] " : "") + Izvestaj.UvodInternog(razlog, od) + " Mail „" + m.Subject + "“, " + m.Date.LocalDateTime.ToString("dd.MM.yyyy HH:mm") + ".";
+            // v2.8.3: kratak interni uvod – nije pismo pošiljaocu (bez „Poštovani“, zahvalnice i potpisa)
+            var uvod = (cfg.Rezim == Rezim.Test ? "[TEST] " : "") + Izvestaj.UvodInternogKratak(razlog, r, od, m.Subject, m.Date.LocalDateTime);
             var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? NapraviPrimer(r, pravila, false) : null;
-            var telo = Izvestaj.Telo(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false));
-            var html = Izvestaj.Html(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false));
+            var telo = Izvestaj.Telo(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false), interni: true);
+            var html = Izvestaj.Html(r, pravila, false, uvod, nisuProcitani, Izvestaj.PasusPrimera(primer, false), interni: true);
             var poruka = Slanje.Nova(cfg, primaoci, null, naslov, telo, odgovorNa: m, html: html);
             if (primer?.Napravljen == true) Slanje.DodajPrilog(poruka, primer.Ime, primer.Pdf);
             if (dryRun) { log.Info("    [dry-run] interni izveštaj za " + string.Join(", ", primaoci) + ": " + naslov); Console.WriteLine(telo); return; }
@@ -452,7 +467,7 @@ namespace Saobracaj.Agent.CimProvera
         private void PosaljiInterno(MimeMessage m, RezultatProvere r, PravilaSkup pravila, bool en, List<string> nisuProcitani)
         {
             var naslov = "[INTERNO] " + Izvestaj.Naslov(r, pravila, en);
-            var uvod = "Interna kopija za KP: izveštaj za mail „" + m.Subject + "“ od " + (m.From.Mailboxes.FirstOrDefault()?.Address ?? "") + ". Nalazi označeni „(interno)“ nisu poslati pošiljaocu.";
+            var uvod = "Interna kopija za KP: izveštaj za mail „" + m.Subject + "“ od " + (m.From.Mailboxes.FirstOrDefault()?.Address ?? "") + ". Nalazi u odeljku „INTERNO (ne ide pošiljaocu)“ nisu poslati pošiljaocu.";
             var poruka = Slanje.Nova(cfg, cfg.KopijaNa, null, naslov, Izvestaj.Telo(r, pravila, en, uvod, nisuProcitani), odgovorNa: m, html: Izvestaj.Html(r, pravila, en, uvod, nisuProcitani));
             if (dryRun) { log.Info("    [dry-run] interna kopija za " + string.Join(", ", cfg.KopijaNa) + ": " + naslov); return; }
             Slanje.Posalji(cfg, poruka);

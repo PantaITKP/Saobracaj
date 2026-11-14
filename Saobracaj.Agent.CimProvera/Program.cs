@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -24,7 +24,7 @@ namespace Saobracaj.Agent.CimProvera
   validate <fajl|folder>…          provera fajlova bez maila (folder = jedan mail)
       --podfolderi                 svaki podfolder je poseban mail (npr. testovi\fixtures)
       --rezim auto|kp|spoljni      režim ""KP popunjava"" (podrazumevano auto: po r62 = 3212)
-      --datum yyyy-MM-dd           datum prijema (za ""datum u budućnosti""); podrazumevano: najnoviji fajl
+      --datum yyyy-MM-dd[ HH:mm]   datum (i vreme) prijema (za ""datum u budućnosti""); podrazumevano: najnoviji fajl
       --en                         poruka na engleskom
       --izlaz <folder>             upisuje rezultat (txt + json) po slučaju
   rubrike <fajl>… [--ocr]          dijagnostika čitanja: vrsta strane, OCR, poravnanje i tekst svake rubrike
@@ -295,7 +295,7 @@ namespace Saobracaj.Agent.CimProvera
                 var koren = fajlovi.Count == 1 ? Path.GetDirectoryName(fajlovi[0]) : ZajednickiKoren(fajlovi);
                 var prilozi = fajlovi.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                     .Select(f => (ime: RelativnaPutanja(koren, f), sadrzaj: File.ReadAllBytes(f))).ToList();
-                var datum = datumArg != null ? DateTime.ParseExact(datumArg, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+                var datum = datumArg != null ? DateTime.ParseExact(datumArg, new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm" }, CultureInfo.InvariantCulture, DateTimeStyles.None)
                     : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
@@ -304,8 +304,8 @@ namespace Saobracaj.Agent.CimProvera
                 var rPuni = ishod.Provera;
                 // v2.8: isto kao u radu nad sandučetom – interni izveštaj (KP tovarni list / ručna provera) ili izveštaj za pošiljaoca bez nalaza „samo interno“
                 var razlogInt = Izvestaj.RazlogInternog(rPuni, pravila);
-                var r = razlogInt == null && rPuni.ImaInternih && !(posiljalac != null && cfg.JeInterni(posiljalac)) ? rPuni.BezInternih() : rPuni;
-                var uvodV = razlogInt != null ? Izvestaj.UvodInternog(razlogInt, posiljalac) : null;
+                var r = razlogInt == null ? Izvestaj.ZaPosiljaoca(rPuni, cfg.Rezim, posiljalac != null && cfg.JeInterni(posiljalac)) : rPuni;
+                var uvodV = razlogInt != null ? Izvestaj.UvodInternogKratak(razlogInt, rPuni, posiljalac, naslovMaila ?? ime, datum) : null;
                 var en0 = en; en = razlogInt != null ? false : en;
 
                 var sb = new StringBuilder();
@@ -323,7 +323,7 @@ namespace Saobracaj.Agent.CimProvera
                     sb.AppendLine("Režim KP: " + string.Join(", ", r.Listovi.Select(l => l.KpRezim ? "da" : "ne").Distinct()));
                     sb.AppendLine("Predmet: " + Izvestaj.Naslov(r, pravila, en));
                     sb.AppendLine();
-                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani));
+                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, null, razlogInt != null));
                 }
                 if (r.GreskePravila.Count > 0) sb.AppendLine("Pravila sa greškom u izvršavanju: " + string.Join("; ", r.GreskePravila));
                 // v2.8.1: CIT 7 – poseban interni izveštaj
@@ -343,7 +343,7 @@ namespace Saobracaj.Agent.CimProvera
                     if (r.ImaTovarniList)
                     {
                         File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
-                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani), Encoding.UTF8);
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, null, razlogInt != null), Encoding.UTF8);
                         // PDF primer (B2) + slike strana (PNG, 150 dpi) u izlaz\primeri
                         var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? PrimerPdf.Napravi(r, pravila, en, prilozi) : null;
                         if (primer != null)
@@ -364,11 +364,11 @@ namespace Saobracaj.Agent.CimProvera
                         // isti mail kao što ga agent šalje (multipart/alternative, UTF-8; sa PDF primerom kao prilogom) – otvara se u Outlook-u (.eml)
                         var pasus = Izvestaj.PasusPrimera(primer, en);
                         var mail = Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Izvestaj.Naslov(r, pravila, en),
-                            Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, pasus), html: Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus));
+                            Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null), html: Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null));
                         if (primer?.Napravljen == true) Slanje.DodajPrilog(mail, primer.Ime, primer.Pdf);
                         mail.WriteTo(Path.Combine(izlaz, ime + ".eml"));
                         File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
-                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus), Encoding.UTF8);
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null), Encoding.UTF8);
                     }
                     if (cit7Tekst != null)
                     {

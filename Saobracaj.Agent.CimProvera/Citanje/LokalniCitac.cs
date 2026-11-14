@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L17";
+        public const string VerzijaCitaca = "L18";   // v2.8.3: najava voza, sastav voza (BG), TCDD 3370A, poravnanje po okviru, „Original“ = novi list
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L15";
 
@@ -230,6 +230,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var sidara = sablon.BrojSidara(s.Reci);
             var naslovSpiska = Ima("spisak kola", "списак кола", "nachweisung", "wagenliste", "wagen liste", "wagon list", "liste des wagons", "lista de vagoane", "vykaz vozu");
 
+            // v2.8.3: najava / otkaz voza („Najava voza / Train announcement / Zuganmeldung“, „BROJ VOZA / TRAIN NUMBER“) – poseban tip,
+            // ne proverava se (natpisi POŠILJALAC/PRIMALAC/ROBA nisu dovoljni za tovarni list bez naslova obrasca)
+            if (!formaCim && (Ima(NajavaVoza.Natpisi) || (Ima("broj voza") && Ima("train number"))))
+            { nadjeno.Add("natpis najave voza"); return Vrati(TipDokumenta.Najava); }
             // Dodatni list (Pótlap / Zusatzblatt / Dodatni list) po NASLOVU na vrhu strane i odeljcima „Rovat 7 / Feld 7“ – nije drugi tovarni list.
             // (Prednja strana pominje „Siehe Zusatzblatt“ u r7/r20, ali ne u naslovu.)
             var naslov = " " + TekstUtil.Kljuc(string.Join(" ", s.Reci.Where(w => w.Cy < 0.06).Select(w => w.T))) + " ";
@@ -237,7 +241,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             { nadjeno.Add("naslov dodatnog lista"); return Vrati(TipDokumenta.DodatniList); }
             // Izveštaj o sastavu voza / tehnički spisak voza (MÁV VTK „vonatterhelési kimutatás“, Zugvorbereitung, Meldezettel):
             // nije prateći dokument pošiljke – ne proverava se, ne traži se u r9.
-            if (!formaCim && Ima("vonatterhelesi kimutatas", "vonatterhelési kimutatás", "vonatosszeallitas", "vonatösszeállítás", "tehervonat vonatterhelesi", "zugvorbereitung", "meldezettel"))
+            if (!formaCim && Ima("vonatterhelesi kimutatas", "vonatterhelési kimutatás", "vonatosszeallitas", "vonatösszeállítás", "tehervonat vonatterhelesi", "zugvorbereitung", "meldezettel",
+                // v2.8.3: bugarski „Натурен лист на влак“ (BDŽ / Ekspres servis) – sastav voza, ne tovarni list
+                "натурен лист на влак", "naturen list na vlak"))
             { nadjeno.Add("izveštaj o sastavu voza"); return Vrati(TipDokumenta.SastavVoza); }
             // Spisak kola po NASLOVU na vrhu strane („Kocsijegyzék / Wagenliste“) – i kada ima mnogo natpisa polja kao obrazac
             if (SpisakNaslov.Any(k => naslov.Contains(TekstUtil.Kljuc(k))) && !CimKljucevi.Any(k => naslov.Contains(TekstUtil.Kljuc(k))))
@@ -443,7 +449,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     if (!imaPodataka) { prethodni = null; prethodniTip = null; continue; }
                     // Drugi primerak istog lista (original, duplikat…): OCR ga pročita sa malo drugačijim šumom, pa se poredi tolerantno.
                     var primerak = Primerak.Od(cim);
-                    var isti = primerci.FirstOrDefault(x => x.IstiList(primerak));
+                    // v2.8.3: strana sa nazivom primerka „Original“ je prvi primerak NOVOG lista (TCDD: 12 listova istog pošiljaoca i
+                    // primaoca, r62/r18 na skenu nepouzdani) – nikad se ne pripaja prethodnom
+                    var np0 = NazivPrimerka(s);
+                    var isti = np0 != null && (np0.StartsWith("Original") || np0 == "Eredeti") ? null : primerci.FirstOrDefault(x => x.IstiList(primerak));
                     if (isti != null)
                     {
                         // primerak („Foglio di via“, „Duplicata“, „Ankunftsschein“…): strana ide uz isti list
@@ -498,6 +507,11 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         break;
                     case TipDokumenta.DozvolaOtpad:
                         var co = new CarinskiPodaci(); DopuniEwc(co, s); dok.Carinski.Add(co);
+                        break;
+                    case TipDokumenta.Najava:
+                        // v2.8.3: najava voza se ne proverava; u log samo broj voza, stanice, broj kola, težina, dužina i ETA
+                        dok.Opis = NajavaVoza.Opis(s.Tekst);
+                        if (rez.StraneOpis.Count > 0) rez.StraneOpis[rez.StraneOpis.Count - 1] += " – " + dok.Opis;
                         break;
                     case TipDokumenta.Cit7:
                         // v2.8.1: naknadni zahtev se čita (izmene, identifikacija, podnosilac) – proverava se uz tovarni list na koji se odnosi
@@ -904,7 +918,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 t.Contains("fuvarlevel") ? "mađarski tovarni list (fuvarlevél)" :
                 t.Contains("cd cargo") || t.Contains("ceske drahy") ? "elektronski CIM ČD Cargo" :
                 t.Contains("tcdd") || t.Contains("cim tasima") ? "tovarni list TCDD" :
-                t.Contains("wagenbrief cuv") || t.Contains("kolski list") ? "kolski list CUV" : "tovarni list CIM/CUV";
+                // v2.8.3: „Wagenbrief CUV / kolski list“ je štampan na SVAKOM obrascu CIM/CUV – nije dokaz vrste; neprepoznat list je klasifikovan kao CIM
+                "tovarni list CIM";
             var naj = r.Poravnanje;
             return vrsta + ": obrazac nije prepoznat – potreban je novi šablon, ručna provera"
                    + (naj == null ? "" : " (najbliži šablon " + naj.Obrazac + ", " + naj.Ukupno + " sidara" + (naj.Razlog.Length > 0 ? "; " + naj.Razlog : "") + ")");

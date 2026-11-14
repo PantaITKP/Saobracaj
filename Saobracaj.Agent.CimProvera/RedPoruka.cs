@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Saobracaj.Agent.CimProvera
 {
@@ -34,7 +36,25 @@ namespace Saobracaj.Agent.CimProvera
             public string Od = "";
             public string Naslov = "";
             public List<string> Prilozi = new List<string>();
+            /// <summary>v2.8.3: broj PDF/slika priloga i njihova ukupna veličina (iz BodyStructure) – procena trajanja OCR-a.</summary>
+            public int PdfSlika;
+            public long Bajtova;
+            /// <summary>Mail sa mnogo skeniranih strana (npr. 8 PDF priloga, ~60 strana OCR-a) – obrađuje se posle ostalih u krugu.</summary>
+            public bool Tezak => PdfSlika >= TezakPdf || Bajtova >= TezakBajtova;
         }
+
+        /// <summary>v2.8.3: prag „teškog“ maila – obrađuje se posle ostalih da ne blokira mailove iza sebe (mail > 10 min).</summary>
+        public const int TezakPdf = 6;
+        public const long TezakBajtova = 8L * 1024 * 1024;
+
+        /// <summary>
+        /// v2.8.3: redosled obrade – laki mailovi po UID-u, pa teški (po UID-u). Teški mail ne zadržava ostale iz istog kruga.
+        /// </summary>
+        public static List<Stavka> Redosled(IEnumerable<Stavka> red) =>
+            red.Select((s, i) => (s, i)).OrderBy(x => x.s.Tezak ? 1 : 0).ThenBy(x => x.i).Select(x => x.s).ToList();
+
+        internal static string Trajanje(TimeSpan t) =>
+            t.TotalMinutes >= 1 ? (int)t.TotalMinutes + " min " + t.Seconds + " s" : Math.Max(0, (int)Math.Round(t.TotalSeconds)) + " s";
 
         private readonly Stanje stanje;
         private readonly Stanje.FolderStanje fs;
@@ -54,14 +74,26 @@ namespace Saobracaj.Agent.CimProvera
         public int Obradi(IEnumerable<Stavka> red, Func<Stavka, Stanje.PorukaStanje, Korak> obradi)
         {
             int n = 0;
-            bool zadrzi = false;   // posle poruke koja čeka ponovni pokušaj poslednji UID se više ne pomera
-            foreach (var s in red)
+            var lista = red.ToList();
+            // v2.8.3: poslednji UID se pomera samo preko neprekinutog niza ZAVRŠENIH poruka (po UID-u): teški mail koji se obrađuje
+            // posle ostalih, ili poruka koja čeka ponovni pokušaj, nikad se ne preskače u sledećem krugu.
+            var uidovi = lista.Select(x => x.Uid).Distinct().OrderBy(x => x).ToList();
+            var zavrsene = new HashSet<long>();
+            void Pomeri()
+            {
+                foreach (var u in uidovi) { if (!zavrsene.Contains(u)) break; fs.PoslednjiUid = Math.Max(fs.PoslednjiUid, u); }
+            }
+            var odlozeni = lista.Where(x => x.Tezak).ToList();
+            if (odlozeni.Count > 0 && odlozeni.Count < lista.Count)
+                foreach (var t in odlozeni)
+                    log?.Info("  UID " + t.Uid + ": veliki mail (" + t.PdfSlika + " PDF/slika, " + (t.Bajtova / 1048576.0).ToString("0.0") + " MB) – obrađuje se posle ostalih u ovom krugu.");
+            foreach (var s in Redosled(lista))
             {
                 stanje.Poruke.TryGetValue(s.Kljuc, out var ps);
                 if (ps != null && ps.Status != StatusPrivremena)
                 {
                     log?.Info("  UID " + s.Uid + ": već obrađeno (" + ps.Status + ", " + ps.Folder + ")");
-                    if (!zadrzi) fs.PoslednjiUid = Math.Max(fs.PoslednjiUid, s.Uid);
+                    zavrsene.Add(s.Uid); Pomeri();
                     continue;
                 }
                 ps = ps ?? new Stanje.PorukaStanje();
@@ -70,6 +102,7 @@ namespace Saobracaj.Agent.CimProvera
                           + (s.Prilozi.Count == 0 ? "nema" : string.Join(", ", s.Prilozi)) + (ps.Pokusaja > 0 ? " (pokušaj " + (ps.Pokusaja + 1) + "/" + max + ")" : ""));
 
                 Korak k;
+                var sat = Stopwatch.StartNew();
                 try { k = obradi(s, ps); }
                 catch (Exception ex)
                 {
@@ -77,6 +110,9 @@ namespace Saobracaj.Agent.CimProvera
                     ps.PoslednjaGreska = ex.GetType().Name + ": " + ex.Message;
                     k = Korak.PrivremenaGreska;
                 }
+                sat.Stop();
+                // v2.8.3: trajanje obrade svakog maila
+                log?.Info("  UID " + s.Uid + ": trajanje obrade " + Trajanje(sat.Elapsed) + (sat.Elapsed.TotalMinutes >= 10 ? " (duže od 10 min)" : ""));
 
                 if (k == Korak.PrivremenaGreska)
                 {
@@ -85,7 +121,6 @@ namespace Saobracaj.Agent.CimProvera
                     {
                         ps.Status = StatusPrivremena;
                         stanje.Poruke[s.Kljuc] = ps; Sacuvaj();
-                        zadrzi = true;
                         log?.Upozorenje("  UID " + s.Uid + ": greška (pokušaj " + ps.Pokusaja + "/" + max + "), ponovo u sledećem pokretanju; ostale poruke se obrađuju.");
                         continue;
                     }
@@ -98,7 +133,7 @@ namespace Saobracaj.Agent.CimProvera
                 else if (k == Korak.Obradjena) n++;
 
                 stanje.Poruke[s.Kljuc] = ps;
-                if (!zadrzi) fs.PoslednjiUid = Math.Max(fs.PoslednjiUid, s.Uid);
+                zavrsene.Add(s.Uid); Pomeri();
                 Sacuvaj();
             }
             return n;

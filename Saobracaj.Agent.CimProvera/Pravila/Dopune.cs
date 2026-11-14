@@ -34,6 +34,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public const string Mrn = "26RSXXXXXXXXXXXXX";
         public const string Cas = "XX";
         public const string Masa = "X";
+        /// <summary>v2.8.3: naziv firme, platioca, primaoca, mesta – nikad izmišljen.</summary>
+        public const string Naziv = "XXXXX";
+        public const string Ulica = "ulica i broj";
+        public const string UlicaEn = "street and number";
+        public const string PostanskiMesto = "poštanski broj mesto";
+        public const string MestoEn = "postcode town";
+        public const string Nhm = "XXXXXX";
     }
 
     internal static class Dopune
@@ -42,6 +49,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             n.Dopuna = ""; n.Pogresno = ""; n.DopunaSigurna = false; n.DopunaRedovi = null; n.DopunaUzOznake = false; n.DopunaPoPoljima = null;
             if (n.SamoInterno || n.Tezina == Tezina.Info) return;
+            // v2.8.3: na skenu se ništa ne dopisuje u rubriku koja nije pouzdano pročitana (nečitljiva, ispod praga) ni u „praznu“ –
+            // agent ne zna šta stvarno piše (TCDD r4: OCR nije pročitao primaoca); ostaje samo okvir sa brojem
+            if (k.Ocr && Motor.RubrikaLista(k.C, n.Rubrika) is Rubrika rub
+                && (rub.Status == StatusRubrike.Necitljivo || !rub.Popunjena || rub.Pouzdanost < k.U.Prag || (k.C.PouzdanostStrane > 0 && k.C.PouzdanostStrane < Motor.PragSkena)))
+                return;
             string d, p; bool s;
             if (pg.Dopuna != null) { d = pg.Dopuna; p = pg.Pogresno; s = pg.DopunaSigurna; }
             else (d, p, s) = Odredi(n, pg, k);
@@ -54,7 +66,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         /// <summary>Reči i znaci opisa formata – takva dopuna se ne upisuje (sigurnosna mreža; v2.8.1 test „bez opisa“).</summary>
         internal static readonly Regex OpisFormata = new Regex(
-            @"<|>|\bnpr\.|\be\.g\.|naziv, ulica|ulica i broj|street and number|name, street|po[sš]tanski broj i mesto|postcode and place|godina-mesec-dan|year-month-day|mesec-dan-[cč]as|month-day-hour|\bupisati\b|\bunesite\b|\benter\b|\bformat\b|\bsee (description|wagon list)|\bvidi opis|…|\.\.\.",
+            @"<|>|\bnpr\.|\be\.g\.|naziv, ulica|name, street|po[sš]tanski broj i mesto|postcode and place|godina-mesec-dan|year-month-day|mesec-dan-[cč]as|month-day-hour|\bupisati\b|\bunesite\b|\benter\b|\bformat\b|\bsee (description|wagon list)|\bvidi opis|…|\.\.\.",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         internal static string Ocisti(string d)
@@ -82,12 +94,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     var broj = n.Pravilo == "R1" ? "1" : "4";
                     var st = broj == "1" ? k.C.R1 : k.C.R4;
                     var delovi = new List<string>();
+                    // v2.8.3: naziv, adresa, platilac i primalac se NIKAD ne izmišljaju – nepoznato je šablon; zemlja iz adrese, pa iz
+                    // stanice te strane (r1 → r16/r17, r4 → r10/r12), nikad iz druge strane, r62 ni podrazumevano – nepoznata „XX“
                     var iso = Zemlja(k, broj, st);
-                    var mesto = broj == "1" ? Mesto(k.C.R16.Mesto) ?? Mesto(k.C.R29.Mesto) : Mesto(k.C.R10.Stanica) ?? Mesto(k.C.R10.Tekst);
-                    if (prazna || Fali("naziv", "name")) delovi.Add(en ? "Transport Partner Ltd." : "Transport Partner d.o.o.");
-                    if (prazna || Fali("adresa", "address")) { delovi.Add(Ulica(iso)); delovi.Add(PostanskiIMesto(iso, mesto)); }
-                    else if (Fali("poštanski broj i mesto", "postcode and place")) delovi.Add(PostanskiIMesto(iso, mesto));
-                    if (prazna || Fali("zemlja", "country")) delovi.Add(iso ?? "RS");
+                    if (prazna || Fali("naziv", "name")) delovi.Add(Sablon.Naziv);
+                    if (prazna || Fali("adresa", "address")) { delovi.Add(en ? Sablon.UlicaEn : Sablon.Ulica); delovi.Add(en ? Sablon.MestoEn : Sablon.PostanskiMesto); }
+                    else if (Fali("poštanski broj i mesto", "postcode and place")) delovi.Add(en ? Sablon.MestoEn : Sablon.PostanskiMesto);
+                    if (prazna || Fali("zemlja", "country")) delovi.Add(iso ?? Sablon.Zemlja);
                     // kontakt pošiljaoca (primer GIPS r1: „RS, Marko Marković“) – kada u rubrici nema telefona ni e-maila
                     if (broj == "1" && Prazno(st.Telefon) && Prazno(st.Email)) delovi.Add(en ? "John Smith" : "Marko Marković");
                     return (string.Join(", ", delovi.Where(x => !Prazno(x))), null, false);
@@ -106,11 +119,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     var delovi = new List<string>();
                     if (prazna || Fali("mesto/stanica", "place/station"))
-                        delovi.Add(Mesto(k.C.R29.Mesto) ?? Mesto(k.C.R1.Adresa) ?? (en ? "Novi Sad" : "Novi Sad"));
+                        delovi.Add(Mesto(k.C.R29.Mesto) ?? Sablon.Naziv);   // mesto iz r29 tog lista, inače šablon (nikad izmišljeno)
                     var bezDatuma = prazna || Fali("datum", "date");
                     var bezCasa = prazna || Fali("vreme (čas)", "time (hour)");
                     // v2.8.2: datum SAMO iz dokumenta (r29, priloženi spisak kola), nikad datum maila; nepoznato – „MM-DD“, sat „XX“
-                    var (_, mesec, dan) = DatumIzDokumenta(k.C.R29.Datum, k);
+                    var (_, mesec, dan) = DatumIzDokumenta(PouzdanDatum(k.C.R29, k), k);
                     var md = mesec != null ? mesec + "-" + dan : "MM-DD";
                     if (bezDatuma) delovi.Add(md + (bezCasa ? "-" + Sablon.Cas : ""));
                     else if (bezCasa) delovi.Add(Sablon.Cas);
@@ -120,11 +133,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 {
                     if (n.Detalj != null && Regex.IsMatch(n.Detalj, "budućnosti|future")) return ("", null, false);
                     var delovi = new List<string>();
-                    if (prazna || Fali("mesto", "place")) delovi.Add(Mesto(k.C.R16.Mesto) ?? Mesto(k.C.R1.Adresa) ?? "Novi Sad");
+                    if (prazna || Fali("mesto", "place")) delovi.Add(Mesto(k.C.R16.Mesto) ?? Sablon.Naziv);
                     if (prazna || Fali("datum ispostavljanja", "date of issue"))
                     {
                         // v2.8.2: datum SAMO iz dokumenta (r16, priloženi spisak kola); nepoznat deo – X („XXXX-XX-XX“, „XXXX-11-13“)
-                        var (god, mes, dan) = DatumIzDokumenta(k.C.R16.Datum, k);
+                        var (god, mes, dan) = DatumIzDokumenta(PouzdanDatum(k.C.R16, k), k);
                         delovi.Add((god ?? "XXXX") + "-" + (mes ?? "XX") + "-" + (dan ?? "XX"));
                     }
                     return (string.Join(", ", delovi), null, false);
@@ -170,7 +183,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 case "KP57":
                     return (k.P.Kp.Uic + " KP", null, false);
                 case "KP7-PLATILAC":
-                    return (en ? "Payer for SRB: Transport Partner Ltd." : "Platilac za deonicu SRB: Transport Partner d.o.o.", null, false);
+                    return (en ? "Payer for SRB: " + Sablon.Naziv : "Platilac za deonicu SRB: " + Sablon.Naziv, null, false);
                 case "R30":
                     return ("X", null, false);
                 case "R9":
@@ -277,54 +290,67 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// <summary>ISO šifra zemlje strane: iz same rubrike (naziv zemlje), iz lista (r1 → r16/r17, r4 → r10/r12), iz poštanskog broja i mesta.</summary>
         private static string Zemlja(Kontekst k, string broj, Model.Strana st)
         {
-            if (!Prazno(st.NazivZemlje) && Provere.IsoPoNazivu.TryGetValue(st.NazivZemlje.Trim(), out var iz)) return iz;
-            var t = (st.Tekst ?? "") + " " + (st.Adresa ?? "");
-            foreach (var kv in PoznataMesta) if (Regex.IsMatch(t, @"(?<!\p{L})" + Regex.Escape(kv.Key) + @"(?!\p{L})", RegexOptions.IgnoreCase)) return kv.Value.iso;
+            // 1. iz adrese: naziv zemlje u adresi (ne u nazivu firme), mesto, poštanski broj sa oznakom zemlje („D-44653“)
+            if (Provere.ZemljaUAdresi(st) && Provere.IsoPoNazivu.TryGetValue(st.NazivZemlje.Trim(), out var iz)) return iz;
+            var adresa = Provere.AdresaBezNaziva(st);
+            var izAdrese = ZemljaIzAdrese(adresa);
+            if (izAdrese != null) return izAdrese;
+            // 2. iz šifre zemlje stanice TE strane (r1 → r16/r17, r4 → r10/r12); nikad druga strana, r62 ni podrazumevano
             return Provere.ZemljaLista(k, broj);
         }
 
-        /// <summary>Poznata mesta (stanice i gradovi iz dosadašnjih listova): poštanski broj i zemlja – za dopunu „21000 Novi Sad, RS“.</summary>
-        private static readonly Dictionary<string, (string psb, string iso)> PoznataMesta = new Dictionary<string, (string, string)>(StringComparer.OrdinalIgnoreCase)
+        /// <summary>
+        /// v2.8.3: ISO zemlja iz teksta adrese – poštanski broj sa oznakom zemlje („D-44653“, „H-6200“, „TR-06420“) ili poznato mesto
+        /// („44653 Herne“ → DE, „Kiskőrös“ → HU, „Ankara“ → TR). null kada se ne može odrediti.
+        /// </summary>
+        internal static string ZemljaIzAdrese(string tekst)
         {
-            ["Novi Sad"] = ("21000", "RS"), ["Beograd"] = ("11000", "RS"), ["Belgrade"] = ("11000", "RS"), ["Novi Beograd"] = ("11070", "RS"), ["Šabac"] = ("15000", "RS"), ["Sabac"] = ("15000", "RS"),
-            ["Ruma"] = ("22400", "RS"), ["Sremska Mitrovica"] = ("22000", "RS"), ["Pančevo"] = ("26000", "RS"), ["Zrenjanin"] = ("23000", "RS"), ["Subotica"] = ("24000", "RS"),
-            ["Prokuplje"] = ("18400", "RS"), ["Niš"] = ("18000", "RS"), ["Kragujevac"] = ("34000", "RS"), ["Vrbas"] = ("21460", "RS"), ["Stara Pazova"] = ("22300", "RS"),
-            ["Lovosice"] = ("410 02", "CZ"), ["Budapest"] = ("1051", "HU"), ["Kiskőrös"] = ("6200", "HU"), ["Ljubljana"] = ("1000", "SI"), ["Zagreb"] = ("10000", "HR"),
-            ["Constanta"] = ("900001", "RO"), ["Constanța"] = ("900001", "RO"), ["Wien"] = ("1010", "AT"), ["Nonantola"] = ("41015", "IT"),
+            if (string.IsNullOrWhiteSpace(tekst)) return null;
+            var p = Regex.Match(tekst, @"(?<![\p{L}\d])(D|DE|A|AT|H|HU|CZ|SK|PL|I|IT|RO|BG|TR|SLO|SI|HR|SRB|RS|CH|NL|B|F)\s?-\s?\d{3,6}\b");
+            if (p.Success)
+            {
+                switch (p.Groups[1].Value)
+                {
+                    case "D": case "DE": return "DE"; case "A": case "AT": return "AT"; case "H": case "HU": return "HU"; case "I": case "IT": return "IT";
+                    case "SLO": case "SI": return "SI"; case "SRB": case "RS": return "RS"; case "B": return "BE"; case "F": return "FR";
+                    default: return p.Groups[1].Value;
+                }
+            }
+            var norm = " " + Regex.Replace(Saobracaj.Common.Text.TekstUtil.BezDijakritika(tekst).ToLowerInvariant(), @"[^a-z0-9]+", " ") + " ";
+            foreach (var kv in Gradovi.OrderByDescending(x => x.Key.Length))
+                if (norm.Contains(" " + kv.Key + " ")) return kv.Value;
+            return null;
+        }
+
+        /// <summary>Gradovi i stanice (bez dijakritika, mala slova) → ISO zemlja – za zemlju iz adrese (v2.8.3).</summary>
+        private static readonly Dictionary<string, string> Gradovi = new Dictionary<string, string>
+        {
+            // DE
+            ["herne"] = "DE", ["hamburg"] = "DE", ["bremen"] = "DE", ["bremerhaven"] = "DE", ["duisburg"] = "DE", ["dortmund"] = "DE", ["koln"] = "DE", ["koeln"] = "DE",
+            ["berlin"] = "DE", ["munchen"] = "DE", ["muenchen"] = "DE", ["nurnberg"] = "DE", ["nuernberg"] = "DE", ["hannover"] = "DE", ["mannheim"] = "DE",
+            ["ludwigshafen"] = "DE", ["wittenberg"] = "DE", ["lutherstadt wittenberg"] = "DE", ["leipzig"] = "DE", ["neuss"] = "DE", ["frankfurt"] = "DE", ["stuttgart"] = "DE",
+            // HU
+            ["budapest"] = "HU", ["kiskoros"] = "HU", ["szeged"] = "HU", ["kelebia"] = "HU", ["debrecen"] = "HU", ["gyor"] = "HU", ["sopron"] = "HU", ["miskolc"] = "HU", ["zahony"] = "HU",
+            // TR
+            ["ankara"] = "TR", ["konya"] = "TR", ["istanbul"] = "TR", ["izmir"] = "TR", ["luleburgaz"] = "TR", ["cankaya"] = "TR", ["kapikule"] = "TR", ["halkali"] = "TR",
+            ["cerkezkoy"] = "TR", ["bursa"] = "TR", ["kocaeli"] = "TR", ["mersin"] = "TR", ["tekirdag"] = "TR", ["edirne"] = "TR",
+            // CZ, SK, PL, AT
+            ["lovosice"] = "CZ", ["praha"] = "CZ", ["prague"] = "CZ", ["ostrava"] = "CZ", ["brno"] = "CZ", ["decin"] = "CZ", ["svetec"] = "CZ", ["usti nad labem"] = "CZ",
+            ["bratislava"] = "SK", ["kosice"] = "SK", ["dunajska streda"] = "SK", ["gdansk"] = "PL", ["warszawa"] = "PL", ["katowice"] = "PL",
+            ["wien"] = "AT", ["vienna"] = "AT", ["linz"] = "AT", ["graz"] = "AT", ["villach"] = "AT", ["salzburg"] = "AT", ["enns"] = "AT",
+            // IT, SI, HR
+            ["poggio rusco"] = "IT", ["nonantola"] = "IT", ["milano"] = "IT", ["verona"] = "IT", ["trieste"] = "IT", ["bologna"] = "IT", ["padova"] = "IT", ["busca"] = "IT", ["san zeno"] = "IT",
+            ["ljubljana"] = "SI", ["koper"] = "SI", ["maribor"] = "SI", ["dobova"] = "SI", ["sezana"] = "SI",
+            ["zagreb"] = "HR", ["rijeka"] = "HR", ["tovarnik"] = "HR", ["savski marof"] = "HR",
+            // RO, BG, GR, MK, ME, BA
+            ["agigea"] = "RO", ["constanta"] = "RO", ["bucuresti"] = "RO", ["bucharest"] = "RO", ["arad"] = "RO", ["timisoara"] = "RO", ["beclean pe somes"] = "RO",
+            ["sofia"] = "BG", ["svilengrad"] = "BG", ["plovdiv"] = "BG", ["varna"] = "BG", ["ruse"] = "BG", ["kalotina"] = "BG", ["dragoman"] = "BG",
+            ["thessaloniki"] = "GR", ["skopje"] = "MK", ["podgorica"] = "ME", ["sarajevo"] = "BA",
+            // RS
+            ["novi sad"] = "RS", ["beograd"] = "RS", ["belgrade"] = "RS", ["novi beograd"] = "RS", ["sabac"] = "RS", ["ruma"] = "RS", ["sremska mitrovica"] = "RS",
+            ["pancevo"] = "RS", ["zrenjanin"] = "RS", ["subotica"] = "RS", ["prokuplje"] = "RS", ["nis"] = "RS", ["kragujevac"] = "RS", ["vrbas"] = "RS", ["stara pazova"] = "RS",
+            ["futog"] = "RS", ["vrsac"] = "RS", ["sid"] = "RS", ["dimitrovgrad"] = "RS", ["presevo"] = "RS", ["kikinda"] = "RS", ["smederevo"] = "RS", ["vreoci"] = "RS", ["lapovo"] = "RS",
         };
-
-        private static string PostanskiIMesto(string iso, string mesto)
-        {
-            if (mesto != null && PoznataMesta.TryGetValue(mesto, out var pm)) return pm.psb + " " + mesto;
-            if (mesto != null) return mesto;
-            switch (iso ?? "RS")
-            {
-                case "CZ": return "110 00 Praha";
-                case "HU": return "1051 Budapest";
-                case "RO": return "900001 Constanța";
-                case "SI": return "1000 Ljubljana";
-                case "HR": return "10000 Zagreb";
-                case "AT": return "1010 Wien";
-                case "DE": return "10115 Berlin";
-                case "IT": return "00184 Roma";
-                case "BG": return "1000 Sofia";
-                case "SK": return "811 01 Bratislava";
-                default: return "21000 Novi Sad";
-            }
-        }
-
-        private static string Ulica(string iso)
-        {
-            switch (iso ?? "RS")
-            {
-                case "RS": case "BA": case "ME": case "HR": return "Bulevar oslobođenja 12";
-                case "DE": case "AT": return "Hauptstraße 12";
-                case "HU": return "Fő utca 12";
-                case "CZ": return "Nádražní 12";
-                case "RO": return "Strada Portului 12";
-                default: return "Main Street 12";
-            }
-        }
 
         /// <summary>Naziv mesta iz rubrike (bez šifre stanice, zemlje i interpunkcije): „Agigea Nord   Romania“ → „Agigea Nord“.</summary>
         private static string Mesto(string s)
@@ -344,6 +370,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// v2.8.2: datum iz dokumenta – zadata rubrika lista (r29 ili r16), pa datum na priloženom spisku kola; nikad datum maila.
         /// Delovi su null kada nisu poznati (godina „0000“ u r16 = godina nije upisana).
         /// </summary>
+        /// <summary>v2.8.3: datum druge rubrike samo kada je ona pouzdano pročitana (sken: „0.11.2026“ nije 1. novembar).</summary>
+        private static string PouzdanDatum(Rubrika r, Kontekst k)
+        {
+            var d = r is MestoDatum md ? md.Datum : r is Preuzimanje pr ? pr.Datum : null;
+            if (k.Ocr && (r.Status == StatusRubrike.Necitljivo || r.Pouzdanost < 0.9 || (k.C.PouzdanostStrane > 0 && k.C.PouzdanostStrane < Motor.PragSkena))) return null;
+            return d;
+        }
+
         private static (string god, string mes, string dan) DatumIzDokumenta(string iz, Kontekst k)
         {
             foreach (var d in new[] { iz }.Concat(k.Spiskovi.Select(s => s.s.Datum)))

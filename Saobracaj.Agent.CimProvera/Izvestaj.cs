@@ -152,6 +152,8 @@ namespace Saobracaj.Agent.CimProvera
             var sablon = p.Sablon("subject", en, en ? "Consignment note {form} {shipment_ref}{sender_ref} – {status}" : "Tovarni list {form} {shipment_ref}{sender_ref} – {status}");
             var n = sablon.Replace("{form}", Obrazac(r)).Replace("{shipment_ref}", id).Replace("{sender_ref}", refp != null ? " (" + refp + ")" : "").Replace("{status}", status);
             n = Regex.Replace(n, @"\s{2,}", " ").Trim();
+            // v2.8.3: ime fajla koje počinje sa „CIM“/„CUV“ („CIM draft GK30…“) – oznaka obrasca se ne ponavlja („Tovarni list CIM draft GK30…“)
+            n = Regex.Replace(n, @"\b(?:CIM|CUV)\s+(?=(?:CIM|CUV)\b)", "", RegexOptions.IgnoreCase);
             var interno = RazlogInternog(r, p);
             return interno == RazlogKp ? "[INTERNO] KP tovarni list – " + n : interno == RazlogRucna ? "[INTERNO] Ručna provera – " + n : n;
         }
@@ -168,6 +170,75 @@ namespace Saobracaj.Agent.CimProvera
             if (r.Listovi.Any(l => l.ZaRucnuProveru || !string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac))) return RazlogRucna;
             return null;
         }
+
+        /// <summary>
+        /// v2.8.3: kratak uvod internog izveštaja (nije pismo pošiljaocu – bez „Poštovani“, zahvalnice i potpisa):
+        /// „INTERNO – ručna provera. Mail „FW: test“ (posiljalac, 14.11. 00:09). Tovarni list CIM (fajl, str. 4) nije proveren: obrazac nije prepoznat. Uradite ručnu proveru pre odgovora pošiljaocu.“
+        /// </summary>
+        public static string UvodInternogKratak(string razlog, RezultatProvere r, string posiljalac, string naslovMaila, DateTime? datum)
+        {
+            var sb = new StringBuilder();
+            sb.Append("INTERNO – " + (razlog == RazlogKp ? "KP tovarni list" : "ručna provera") + ".");
+            var o = new List<string>();
+            if (!string.IsNullOrWhiteSpace(posiljalac)) o.Add(posiljalac.Trim());
+            if (datum.HasValue) o.Add(datum.Value.ToString("dd.MM. HH:mm"));
+            if (!string.IsNullOrWhiteSpace(naslovMaila))
+                sb.Append(" Mail „" + naslovMaila.Trim() + "“" + (o.Count > 0 ? " (" + string.Join(", ", o) + ")" : "") + ".");
+            else if (o.Count > 0)
+                sb.Append(" Mail (" + string.Join(", ", o) + ").");
+            if (razlog == RazlogKp)
+            {
+                sb.Append(" Tovarni list je izdao KP (r62, preduzeće 3212) – nalazi su naši i ne šalju se pošiljaocu.");
+                return sb.ToString();
+            }
+            var listovi = r?.Listovi ?? new List<RezultatLista>();
+            // neprepoznati obrasci, grupisano po vrsti: „Tovarni list CIM (SET EXPORT TREN SARE.pdf, str. 4) nije proveren: …“
+            foreach (var g in listovi.Where(l => !string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac)).GroupBy(l =>
+                     {
+                         var v = l.Cim.NeprepoznatObrazac.Split(':')[0].Trim();
+                         return v.StartsWith("tovarni list ", StringComparison.OrdinalIgnoreCase) ? v.Substring(13) : v;
+                     }))
+                sb.Append(g.Count() == 1 ? " Tovarni list " + g.Key + Gde(g.ToList()) + " nije proveren: obrazac nije prepoznat."
+                                         : " Tovarni listovi " + g.Key + Gde(g.ToList()) + " nisu provereni: obrazac nije prepoznat.");
+            var sken = listovi.Where(l => string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac) && l.ZaRucnuProveru).ToList();
+            if (sken.Count == 1) sb.Append(" Tovarni list" + Gde(sken) + " nije pouzdano pročitan (sken) – nalazi iz tih rubrika su samo napomene za proveru.");
+            else if (sken.Count > 1) sb.Append(" " + sken.Count + " tovarnih listova" + Gde(sken) + " nije pouzdano pročitano (sken) – nalazi iz tih rubrika su samo napomene za proveru.");
+            sb.Append(" Uradite ručnu proveru pre odgovora pošiljaocu.");
+            return sb.ToString();
+        }
+
+        /// <summary>„ (12 е въглища.pdf, str. 1–12; 5 рилс.pdf, str. 1–5)“ – listovi grupisani po fajlu, strane u rasponima.</summary>
+        private static string Gde(List<RezultatLista> listovi)
+        {
+            var delovi = listovi.Where(l => !string.IsNullOrEmpty(l.Dokument?.Fajl))
+                .GroupBy(l => System.IO.Path.GetFileName(l.Dokument.Fajl), StringComparer.OrdinalIgnoreCase)
+                .Select(g =>
+                {
+                    var strane = g.SelectMany(l => l.Dokument.Strane.Take(1)).Distinct().OrderBy(x => x).ToList();
+                    return g.Key + (strane.Count > 0 ? ", str. " + Rasponi(strane) : "");
+                }).ToList();
+            return delovi.Count == 0 ? "" : " (" + string.Join("; ", delovi) + ")";
+        }
+
+        private static string Rasponi(List<int> s)
+        {
+            var d = new List<string>();
+            for (int i = 0; i < s.Count;)
+            {
+                int j = i;
+                while (j + 1 < s.Count && s[j + 1] == s[j] + 1) j++;
+                d.Add(j - i >= 2 ? s[i] + "–" + s[j] : string.Join(", ", s.Skip(i).Take(j - i + 1)));
+                i = j + 1;
+            }
+            return string.Join(", ", d);
+        }
+
+        /// <summary>
+        /// v2.8.3: rezultat koji ide u mail pošiljaocu. Live: bez nalaza „samo interno“ (nikad ni u mailu ni u PDF primeru) – i kada je
+        /// mail prosledio neko iz KP-a; puni izveštaj ide samo na KopijaNa. Test: puni rezultat – interni redovi u odeljku na dnu.
+        /// </summary>
+        internal static RezultatProvere ZaPosiljaoca(RezultatProvere r, Rezim rezim, bool interniPosiljalac) =>
+            rezim == Rezim.Test || !r.ImaInternih ? r : r.BezInternih();
 
         /// <summary>Uvodna rečenica internog izveštaja (šta je razlog i da ništa nije poslato pošiljaocu).</summary>
         public static string UvodInternog(string razlog, string posiljalac) =>
@@ -329,7 +400,7 @@ namespace Saobracaj.Agent.CimProvera
             // upisana vrednost: samo kratka i kada nalaz nema svoj opis (dugačak sirovi tekst rubrike se ne prepisuje)
             if (det.Length == 0 && n.Tezina != Tezina.Preporuka && n.Vrednost.Length > 0 && n.Vrednost.Length <= 60 && n.Vrednost != "nečitljivo")
                 t += (en ? " Entered: " : " Upisano: ") + n.Vrednost + ".";
-            if (n.SamoInterno) t += en ? " (internal – not sent to the consignor)" : " (interno – ne šalje se pošiljaocu)";
+            // (interni redovi su u posebnom odeljku „INTERNO (ne ide pošiljaocu)“ – oznaka u redu nije potrebna)
             // više listova: nalazi su grupisani po listu (podnaslov), pa oznaka dokumenta ide u red samo bez podnaslova
             return Regex.Replace(t, @"\s{2,}", " ").Trim();
         }
@@ -337,25 +408,69 @@ namespace Saobracaj.Agent.CimProvera
         private static string Veliko(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s.Substring(1);
 
         private static string Primer(Nalaz n, bool en) =>
-            !string.IsNullOrWhiteSpace(n.Primer) ? n.Primer.Trim() : (en ? "see description" : "vidi opis");
+            PrimerIzDopune(n, en) ?? (!string.IsNullOrWhiteSpace(n.Primer) ? n.Primer.Trim() : (en ? "see description" : "vidi opis"));
+
+        /// <summary>
+        /// v2.8.3: kolona „Kako treba da izgleda“ iz ISTE vrednosti koja se upisuje u PDF primer (jedan izvor): „+ DE (posle „44653 Herne“)“,
+        /// „„2520“ → „252010““, „Preduzeće: 3212, Broj otpravljanja: XXXXX-X“, „Netto: X kg, Tara: X kg, Bruto: X kg“.
+        /// null kada u primeru nema dopune (tada ostaje opis formata iz pravila).
+        /// </summary>
+        internal static string PrimerIzDopune(Nalaz n, bool en)
+        {
+            if (n == null || string.IsNullOrWhiteSpace(n.Dopuna) || n.SamoInterno) return null;
+            if (n.Tezina != Tezina.Greska && !n.DopunaSigurna) return null;
+            if (!string.IsNullOrEmpty(n.Pogresno)) return "„" + n.Pogresno + "“ → „" + n.Dopuna + "“";
+            if (n.DopunaPoPoljima != null && n.DopunaPoPoljima.Count > 0)
+            {
+                string Polje(string k)
+                {
+                    switch (k)
+                    {
+                        case "62.1": return en ? "Country" : "Zemlja";
+                        case "62.2": return en ? "Station" : "Stanica";
+                        case "62.3": return en ? "Undertaking" : "Preduzeće";
+                        case "62.4": return en ? "Consignment no." : "Broj otpravljanja";
+                        default: return k;
+                    }
+                }
+                return string.Join(", ", n.DopunaPoPoljima.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => Polje(x.Key) + ": " + x.Value));
+            }
+            if (n.DopunaRedovi != null) return n.Dopuna;
+            // posle poslednjeg upisanog reda rubrike (n.Vrednost: redovi spojeni sa „ / “)
+            var redovi = (n.Vrednost ?? "").Split(new[] { " / " }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x.Length > 0 && x != "nečitljivo").ToList();
+            // poslednji red sa bar 3 slova ili cifre („o“, „-“ su ostaci OCR-a/okvira, ne mesto za dopunu)
+            var posle = n.Vrednost.Length <= 140 ? redovi.LastOrDefault(x => Regex.Matches(x, @"[\p{L}\d]").Count >= 3) : null;
+            return "+ " + n.Dopuna + (posle != null ? " (" + (en ? "after" : "posle") + " „" + posle + "“)" : "");
+        }
 
         /// <summary>Redovi tabele POTREBNE ISPRAVKE (greške).</summary>
         internal static List<Red> RedoviIspravki(RezultatProvere r, PravilaSkup p, bool en) =>
-            Grupisi(r, Tezina.Greska).Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
+            Grupisi(r, Tezina.Greska).Where(s => !s.N.SamoInterno).Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
 
         /// <summary>Redovi tabele NAPOMENE: upozorenja, preporuke pravila (npr. NHM 6 cifara) i opšte preporuke (najviše 5).</summary>
         internal static List<Red> RedoviNapomena(RezultatProvere r, PravilaSkup p, bool en)
         {
-            var prep = Grupisi(r, Tezina.Preporuka);
+            // v2.8.3: interni nalazi su u posebnom odeljku na dnu (RedoviInterni), nikad među napomenama za pošiljaoca
+            var prep = Grupisi(r, Tezina.Preporuka).Where(s => !s.N.SamoInterno).ToList();
             var opste = prep.Where(s => s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal)).Take(MaxPreporuka);
-            return Grupisi(r, Tezina.Upozorenje).Concat(prep.Where(s => !s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal))).Concat(opste)
+            return Grupisi(r, Tezina.Upozorenje).Where(s => !s.N.SamoInterno).Concat(prep.Where(s => !s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal))).Concat(opste)
                 .Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) })
                 .OrderBy(x => x.Listovi.Count == r.Listovi.Count && r.Listovi.Count > 1 ? -1 : r.Listovi.FindIndex(l => x.Listovi.Count > 0 && l.Oznaka == x.Listovi[0])).ToList();
         }
 
         /// <summary>Informacije ispod tabela (npr. „Platilac za deonicu kroz Srbiju: …“).</summary>
         internal static List<string> Informacije(RezultatProvere r) =>
-            r.Listovi.SelectMany(l => l.Nalazi).Where(n => n.Tezina == Tezina.Info).Select(n => n.Tekst.Trim()).Distinct().ToList();
+            r.Listovi.SelectMany(l => l.Nalazi).Where(n => n.Tezina == Tezina.Info && !n.SamoInterno).Select(n => n.Tekst.Trim()).Distinct().ToList();
+
+        /// <summary>
+        /// v2.8.3: redovi „samo interno“ (r49, r50, kontakt, r8, nečitljive rubrike skena…) – poseban odeljak na dnu maila
+        /// „INTERNO (ne ide pošiljaocu)“. Izveštaj za spoljnog pošiljaoca (BezInternih) ih nema.
+        /// </summary>
+        internal static List<Red> RedoviInterni(RezultatProvere r, PravilaSkup p, bool en) =>
+            new[] { Tezina.Greska, Tezina.Upozorenje, Tezina.Preporuka, Tezina.Info }.SelectMany(tz => Grupisi(r, tz)).Where(s => s.N.SamoInterno)
+                .Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
+
+        private static string NaslovInternih(bool en) => en ? "INTERNAL (not sent to the consignor)" : "INTERNO (ne ide pošiljaocu)";
 
         /// <summary>„1 tovarni list“, „2–4 tovarna lista“, „5+ tovarnih listova“ (21 list, 22 lista, 11–14 listova).</summary>
         internal static string BrojListova(int n, bool en)
@@ -463,14 +578,18 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>
         /// Tekstualni deo maila. <paramref name="uvod"/> = napomena na vrhu (režim Test, odlazni mail, interna kopija) – nije deo pisma.
         /// </summary>
-        public static string Telo(RezultatProvere r, PravilaSkup p, bool en, string uvod = null, IList<string> nisuProcitani = null, string primer = null)
+        public static string Telo(RezultatProvere r, PravilaSkup p, bool en, string uvod = null, IList<string> nisuProcitani = null, string primer = null, bool interni = false)
         {
             var nl = Environment.NewLine;
             var sb = new StringBuilder();
             if (!string.IsNullOrEmpty(uvod)) sb.AppendLine(uvod).AppendLine();
-            sb.AppendLine(en ? "Dear Sir or Madam," : "Poštovani,").AppendLine();
-            sb.AppendLine(Zahvalnica(r, en)).AppendLine();
-            sb.AppendLine(Uvodna(r, en)).AppendLine();
+            // v2.8.3: interni izveštaj nije pismo pošiljaocu – bez „Poštovani“, zahvalnice, uvodne ocene i potpisa
+            if (!interni)
+            {
+                sb.AppendLine(en ? "Dear Sir or Madam," : "Poštovani,").AppendLine();
+                sb.AppendLine(Zahvalnica(r, en)).AppendLine();
+                sb.AppendLine(Uvodna(r, en)).AppendLine();
+            }
 
             void Tabela(string naslov, List<Red> redovi)
             {
@@ -499,11 +618,21 @@ namespace Saobracaj.Agent.CimProvera
             if (nisuProcitani != null && nisuProcitani.Count > 0) sb.AppendLine(NisuProcitaniTekst(nisuProcitani, en)).AppendLine();
             foreach (var t in RucnaProvera(r, en)) sb.AppendLine(t).AppendLine();
 
-            sb.AppendLine(Zavrsetak(en)).AppendLine();
-            sb.AppendLine(en ? "Kind regards," : "S poštovanjem,").AppendLine();
-            foreach (var x in Potpis.Redovi(p, en)) sb.AppendLine(x);
+            if (!interni)
+            {
+                sb.AppendLine(Zavrsetak(en)).AppendLine();
+                sb.AppendLine(en ? "Kind regards," : "S poštovanjem,").AppendLine();
+                foreach (var x in Potpis.Redovi(p, en)) sb.AppendLine(x);
+            }
             sb.Append(nl).AppendLine("--");
             sb.AppendLine(Futer(p, en));
+            // v2.8.3: interni redovi – poseban odeljak na dnu, odvojen linijom (spoljni pošiljalac ga ne dobija: BezInternih)
+            var interniRedovi = RedoviInterni(r, p, en);
+            if (interniRedovi.Count > 0)
+            {
+                sb.AppendLine().AppendLine(new string((char)0x2500, 60));
+                Tabela(NaslovInternih(en), interniRedovi);
+            }
             return sb.ToString();
         }
 
@@ -516,15 +645,18 @@ namespace Saobracaj.Agent.CimProvera
         private const string Td = "style=\"border:1px solid #999999;padding:5px 7px;vertical-align:top;font-family:Arial,Calibri,sans-serif;font-size:10pt\"";
 
         /// <summary>HTML deo maila: jednostavne tabele sa inline stilovima (bez klasa, slika i skripti – zbog Outlook-a).</summary>
-        public static string Html(RezultatProvere r, PravilaSkup p, bool en, string uvod = null, IList<string> nisuProcitani = null, string primer = null)
+        public static string Html(RezultatProvere r, PravilaSkup p, bool en, string uvod = null, IList<string> nisuProcitani = null, string primer = null, bool interni = false)
         {
             var sb = new StringBuilder();
             sb.Append("<div style=\"" + Font + "\">");
             if (!string.IsNullOrEmpty(uvod))
                 sb.Append("<p style=\"background-color:#f2f2f2;border:1px solid #cccccc;padding:6px 8px;font-size:9pt;color:#555555\">" + H(uvod).Replace("\n", "<br>") + "</p>");
-            sb.Append("<p>" + (en ? "Dear Sir or Madam," : "Poštovani,") + "</p>");
-            sb.Append("<p>" + H(Zahvalnica(r, en)) + "</p>");
-            sb.Append("<p>" + H(Uvodna(r, en)) + "</p>");
+            if (!interni)
+            {
+                sb.Append("<p>" + (en ? "Dear Sir or Madam," : "Poštovani,") + "</p>");
+                sb.Append("<p>" + H(Zahvalnica(r, en)) + "</p>");
+                sb.Append("<p>" + H(Uvodna(r, en)) + "</p>");
+            }
 
             void Tabela(string naslov, List<Red> redovi, string boja)
             {
@@ -552,10 +684,19 @@ namespace Saobracaj.Agent.CimProvera
             if (nisuProcitani != null && nisuProcitani.Count > 0) sb.Append("<p>" + H(NisuProcitaniTekst(nisuProcitani, en)) + "</p>");
             foreach (var t in RucnaProvera(r, en)) sb.Append("<p>" + H(t) + "</p>");
 
-            sb.Append("<p style=\"margin-top:14px\">" + H(Zavrsetak(en)).Replace(Environment.NewLine + Environment.NewLine, "</p><p>") + "</p>");
-            sb.Append("<p>" + (en ? "Kind regards," : "S poštovanjem,") + "</p>");
-            sb.Append("<p>" + string.Join("<br>", Potpis.Redovi(p, en).Select(H)) + "</p>");
+            if (!interni)
+            {
+                sb.Append("<p style=\"margin-top:14px\">" + H(Zavrsetak(en)).Replace(Environment.NewLine + Environment.NewLine, "</p><p>") + "</p>");
+                sb.Append("<p>" + (en ? "Kind regards," : "S poštovanjem,") + "</p>");
+                sb.Append("<p>" + string.Join("<br>", Potpis.Redovi(p, en).Select(H)) + "</p>");
+            }
             sb.Append("<p style=\"color:#888888;font-size:8pt;margin-top:16px\">" + H(Futer(p, en)) + "</p>");
+            var interniRedovi = RedoviInterni(r, p, en);
+            if (interniRedovi.Count > 0)
+            {
+                sb.Append("<hr style=\"border:0;border-top:2px dashed #999999;margin:18px 0 8px 0\">");
+                Tabela(NaslovInternih(en), interniRedovi, "#555555");
+            }
             sb.Append("</div>");
             return sb.ToString();
         }

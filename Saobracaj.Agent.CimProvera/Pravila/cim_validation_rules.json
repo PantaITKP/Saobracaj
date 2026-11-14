@@ -26,8 +26,8 @@
       "RID tabela A, pogl. 3.2",
       "EWC katalog otpada (Odluka 2014/955/EU)"
     ],
-    "version": "2.8.2",
-    "updated": "2026-11-13",
+    "version": "2.8.3",
+    "updated": "2026-11-14",
     "company": {
       "name": "Kombinovani prevoz d.o.o.",
       "short": "KP",
@@ -204,6 +204,23 @@
           "R1 / R4 / R1-ISO / R4-ISO: zemlja se traži samo u redovima adrese, ne u nazivu firme („Louis Dreyfus Company Hungary Kft.“ nije zemlja – nedostaje zemlja, greška R1).",
           "PDF primer: strana ostaje A4 (list se umanji); ono što ne staje u rubriku ide na donju marginu strane, sa brojem u krugu i brojem rubrike. Dopuna nikad ne ide u red štampanih natpisa obrasca na vrhu rubrike. Posebna .xlsx kopija primera se ne pravi.",
           "PDF primer: r62 se upisuje po poljima obrasca (zemlja, stanica, preduzeće, broj otpravljanja – kućice 62.1–62.4); mase sa hiljadama odvojenim razmakom („703 000 kg“); broj u krugu uvek u gornjem desnom uglu SVOJE rubrike, nikad u susednoj ni u okviru druge rubrike unutar nje (r14 u r13, r2/r3 uz r1); datum samo iz dokumenta (r29, r16, spisak kola), nikad datum maila – nepoznat „XXXX-XX-XX“ / „MM-DD-XX“."
+        ]
+      },
+      {
+        "date": "2026-11-14",
+        "version": "2.8.3",
+        "basis": "ispravke posle testa sa 6 mailova (13–14.11.2026)",
+        "changes": [
+          "Naziv, adresa, platilac i primalac se u dopuni nikad ne izmišljaju: šablon „XXXXX, ulica i broj, poštanski broj mesto, XX“ i „Platilac za deonicu SRB: XXXXX“; realan primer ostaje samo za ime, telefon i mail kontakta. Na skenu se ne dopisuje ništa u rubriku koja nije pouzdano pročitana (samo okvir sa brojem).",
+          "Zemlja r1/r4: iz adrese (naziv zemlje, poštanski broj sa oznakom zemlje, poznato mesto – Herne → DE, Kiskőrös → HU, Ankara/Konya → TR, Lovosice → CZ, Poggio Rusco/Nonantola → IT), pa iz stanice te strane (r1 → r16/r17, r4 → r10/r12); nikad iz druge strane, r62 ni podrazumevano – nepoznata „XX“.",
+          "Interni nalazi (r49, r50, r8, kontakt…): u režimu Test u posebnom odeljku na dnu maila „INTERNO (ne ide pošiljaocu)“, odvojenom linijom; u režimu Live nikad u mailu ni u PDF primeru pošiljaocu. Primer za r8: „r8: broj voza ili referenca, npr. XXXXX“.",
+          "REC4 (preporuka za r57) obrisana; ostaje KP57.",
+          "Kolona „Kako treba da izgleda“ iz iste dopune kao PDF primer („+ DE (posle „44653 Herne“)“, „Preduzeće: 3212, Broj otpravljanja: XXXXX-X“); r58a predlog = preduzeće iz r62 (3127 HSL), 3212 samo kada je r62 = 3212; nepoznat NHM „XXXXXX“.",
+          "Najava/otkaz voza („Najava voza / Train announcement / Zuganmeldung“, „BROJ VOZA / TRAIN NUMBER“) je poseban dokument – ne proverava se („najava voza (ne proverava se)“); u log: broj voza, otpravna i uputna stanica, broj kola, težina, dužina, ETA. Bugarski „Натурен лист на влак“ je sastav voza.",
+          "TCDD 3370A (CIM Taşıma Belgesi): poseban šablon (raspored CIT, sitniji natpisi, r16 datum, r29, r62 na mestu TCDD štampe), bira se samo po natpisu obrasca; „FREIGHT PAYER FOR X AND KP3212 – Y“ u r7 (ili r15) → Y je platilac za deonicu kroz Srbiju.",
+          "CIT 2006 sa skena druge razmere (SET EXPORT str. 4): početno poravnanje po okviru obrasca, potvrđeno krugovima brojeva rubrika. Neprepoznat list je „tovarni list CIM“ (natpis „Wagenbrief CUV / kolski list“ je na svakom obrascu).",
+          "Interni izveštaj bez „Poštovani“, zahvalnice i potpisa – kratak uvod („INTERNO – ručna provera. Mail … Tovarni list CIM (fajl, str. N) nije proveren: obrazac nije prepoznat. Uradite ručnu proveru pre odgovora pošiljaocu.“), listovi grupisani po fajlu.",
+          "Sitnice: naslov bez „CIM CIM“; dopuna se ne smatra natpisom kada je odmah ispod natpisa rubrike (r29 „Wittenberg“); Excel sa oznakama tovarnih jedinica bez kola je „spisak tovarnih jedinica“; trajanje obrade svakog maila u log, a mail sa mnogo skenova obrađuje se posle ostalih u krugu (poslednji UID se ne pomera preko neobrađene poruke)."
         ]
       }
     ]
@@ -929,8 +946,8 @@
       "basis": "interna odluka KP 2026-11-12 (priručnik traži 6 cifara)",
       "message": "Rubrika 24: upisati NHM šifru robe (najmanje 4 cifre).",
       "message_en": "Box 24: enter the NHM code of the goods (at least 4 digits).",
-      "primer": "NHM šifra sa 6 cifara, npr. 262190",
-      "primer_en": "6-digit NHM code, e.g. 262190"
+      "primer": "NHM šifra sa 6 cifara: XXXXXX",
+      "primer_en": "6-digit NHM code: XXXXXX"
     },
     {
       "id": "R24-NHM6",
@@ -940,8 +957,8 @@
       "basis": "interna odluka KP 2026-11-12",
       "message": "Rubrika 24: poželjno je upisati NHM šifru sa 6 cifara{izvor}.",
       "message_en": "Box 24: a 6-digit NHM code is preferred{izvor}.",
-      "primer": "NHM šifra sa 6 cifara, npr. 262190",
-      "primer_en": "6-digit NHM code, e.g. 262190"
+      "primer": "NHM šifra sa 6 cifara: XXXXXX",
+      "primer_en": "6-digit NHM code: XXXXXX"
     },
     {
       "id": "R25",
@@ -1220,8 +1237,8 @@
       "check": "šifra robe po Harmonizovanoj nomenklaturi",
       "message": "Rubrika 21: upisati šifru robe po Harmonizovanoj nomenklaturi kada to traže carinski propisi.",
       "message_en": "Box 21: enter the Harmonized System code when required by customs regulations.",
-      "primer": "HS 262190",
-      "primer_en": "HS 262190"
+      "primer": "HS XXXXXX",
+      "primer_en": "HS XXXXXX"
     },
     {
       "id": "R21-SEALS",
@@ -1609,8 +1626,8 @@
       "basis": "interna odluka KP 2026-11-12 (priručnik traži 6 cifara)",
       "message": "NHM šifra na spisku kola ({nhm}) ima manje od 4 cifre.",
       "message_en": "The NHM code on the wagon list ({nhm}) has fewer than 4 digits.",
-      "primer": "NHM šifra sa 6 cifara u svakom redu spiska, npr. 262190",
-      "primer_en": "6-digit NHM code in every row of the list, e.g. 262190"
+      "primer": "NHM šifra sa 6 cifara u svakom redu spiska: XXXXXX",
+      "primer_en": "6-digit NHM code in every row of the list: XXXXXX"
     },
     {
       "id": "X29-NHM6",
@@ -1621,8 +1638,8 @@
       "basis": "interna odluka KP 2026-11-12",
       "message": "Spisak kola: poželjno je upisati NHM šifru sa 6 cifara{izvor}.",
       "message_en": "Wagon list: a 6-digit NHM code is preferred{izvor}.",
-      "primer": "NHM šifra sa 6 cifara u svakom redu spiska, npr. 262190",
-      "primer_en": "6-digit NHM code in every row of the list, e.g. 262190"
+      "primer": "NHM šifra sa 6 cifara u svakom redu spiska: XXXXXX",
+      "primer_en": "6-digit NHM code in every row of the list: XXXXXX"
     },
     {
       "id": "X30",
@@ -1808,14 +1825,14 @@
   ],
   "recommendations": [
     { "id": "REC1", "severity": "recommendation", "field": "r8", "samo_interno": true,
-      "message": "Preporuka: r8: broj voza / ID najave (npr. 004NISBAR26) – ključ za povezivanje sa najavom.",
-      "message_en": "Recommendation: box 8: train number / announcement ID (e.g. 004NISBAR26) – key for linking with the announcement.",
-      "primer": "r8: 004NISBAR26", "primer_en": "box 8: 004NISBAR26" },
+      "message": "Preporuka: r8: broj voza ili referenca (ključ za povezivanje sa najavom).",
+      "message_en": "Recommendation: box 8: train number or reference (key for linking with the announcement).",
+      "primer": "r8: broj voza ili referenca, npr. XXXXX", "primer_en": "box 8: train number or reference, e.g. XXXXX" },
     { "id": "REC3", "ne_proverava_se": "obrisano u v2.8 (test 2026-11-13): KP se prihvata u bilo kom obliku (v2.7) – stavka je samo šum u izveštaju",
       "message": "Preporuka: KP uvek u obliku „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
       "message_en": "Recommendation: always write KP as „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
       "primer": "KP – Kombinovani prevoz d.o.o., UIC 3212", "primer_en": "KP – Kombinovani prevoz d.o.o., UIC 3212" },
-    { "id": "REC4", "severity": "recommendation", "field": "r57",
+    { "id": "REC4", "field": "r57", "ne_proverava_se": "obrisano u v2.8.3 (test 2026-11-14): status i deonica u r57 se ne traže od v2.7; za r57 važi samo KP57",
       "message": "Preporuka: r57: deonica KP šiframa stanica i status (nije obavezno).",
       "message_en": "Recommendation: box 57: KP section with station codes and status (not mandatory).",
       "primer": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1", "primer_en": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1" },

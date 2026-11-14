@@ -660,10 +660,14 @@ namespace Saobracaj.Agent.CimProvera
             while (y < y1 && !Ima(y)) y++;
             if (y >= y1 || y - y0 > Px(14)) return o.Y;          // nema natpisa na vrhu
             int dno = y;
+            bool prvi = true;
             while (true)
             {
                 while (dno < y1 && Ima(dno)) dno++;               // kraj pojasa
-                if (dno - y > Px(10)) return o.Y;                 // previsok pojas – nije natpis (upisan tekst ili crtež)
+                if (dno - y > Px(10)) return prvi ? o.Y : y - 1;  // previsok pojas – nije natpis (upisan tekst ili crtež)
+                // v2.8.3: pojas viši od reda natpisa odmah ispod natpisa je upisan tekst („Wittenberg“ u r29 CUV-a), ne natpis
+                if (!prvi && dno - y > Px(5.5f)) return y - 1;
+                prvi = false;
                 int sledeci = dno;
                 while (sledeci < y1 && !Ima(sledeci)) sledeci++;
                 if (sledeci >= y1 || sledeci - dno > Px(3) || sledeci - y0 > Px(22)) return dno;

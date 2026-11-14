@@ -172,11 +172,35 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// Linije okvira: nizovi mastila duži od 3 % širine (vodoravne) / 2 % visine (uspravne), sa prekidom do 2 piksela.
         /// Delovi iz susednih redova (debljina linije, blago nakrivljen sken) se spajaju u jednu liniju.
         /// </summary>
+        private List<LinijaOkvira> hlTamne, vlTamne;
+
+        /// <summary>
+        /// v2.8.3: linije samo iz tamnog praga (bez svetle mape) – za okvir obrasca na skenu sa šumom, gde svetla mapa
+        /// spaja šum sa linijama (SET EXPORT str. 4). Ne menja masku linija.
+        /// </summary>
+        public (List<LinijaOkvira> vodoravne, List<LinijaOkvira> uspravne) LinijeTamne()
+        {
+            if (hlTamne == null)
+            {
+                if (svetlo == null) { Linije(); hlTamne = hl; vlTamne = vl; }
+                else { var (h, v, _, _) = RacunajLinije(ink); hlTamne = h; vlTamne = v; }
+            }
+            return (hlTamne, vlTamne);
+        }
+
         private void Linije()
         {
             if (hl != null) return;
             linija = new bool[W * H];
-            var izvor = svetlo ?? ink;
+            var (h0, v0, hDelovi, vDelovi) = RacunajLinije(svetlo ?? ink);
+            hl = h0; vl = v0;
+            // Maska linija (za mastilo bez okvira i za ćelije): ceo pojas linije, ±2 px oko sredine.
+            foreach (var d in hDelovi) for (int y = Math.Max(0, d.a - 1); y <= Math.Min(H - 1, d.a + 1); y++) for (int x = d.b0; x <= d.b1; x++) linija[y * W + x] = true;
+            foreach (var d in vDelovi) for (int x = Math.Max(0, d.a - 1); x <= Math.Min(W - 1, d.a + 1); x++) for (int y = d.b0; y <= d.b1; y++) linija[y * W + x] = true;
+        }
+
+        private (List<LinijaOkvira>, List<LinijaOkvira>, List<(int a, int b0, int b1)>, List<(int a, int b0, int b1)>) RacunajLinije(bool[] izvor)
+        {
             int minH = Math.Max(20, (int)(W * 0.03)), minV = Math.Max(20, (int)(H * 0.02));
             // Niz sa prekidima do 6 px (isprekidana, svetla linija skena), pokriven bar 60 %, i TANAK: 4 px iznad i ispod
             // (levo i desno) uglavnom nema mastila. Red teksta ima uspravne poteze, pa nije linija.
@@ -191,11 +215,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 foreach (var (y0, y1) in Nizovi(i => izvor[i * W + x], H, 6))
                     if (y1 - y0 + 1 >= minV && Pokriveno(i => izvor[i * W + x], y0, y1) >= 0.6 && Tanko(y0, y1, i => Dark(x, i), i => !Dark(x - 4, i) && !Dark(x + 4, i)) >= 0.6)
                         vDelovi.Add((x, y0, y1));
-            hl = Spoji(hDelovi).Select(s => new LinijaOkvira { A = s.a / (double)H, B0 = s.b0 / (double)W, B1 = (s.b1 + 1) / (double)W }).ToList();
-            vl = Spoji(vDelovi).Select(s => new LinijaOkvira { A = s.a / (double)W, B0 = s.b0 / (double)H, B1 = (s.b1 + 1) / (double)H }).ToList();
-            // Maska linija (za mastilo bez okvira i za ćelije): ceo pojas linije, ±2 px oko sredine.
-            foreach (var d in hDelovi) for (int y = Math.Max(0, d.a - 1); y <= Math.Min(H - 1, d.a + 1); y++) for (int x = d.b0; x <= d.b1; x++) linija[y * W + x] = true;
-            foreach (var d in vDelovi) for (int x = Math.Max(0, d.a - 1); x <= Math.Min(W - 1, d.a + 1); x++) for (int y = d.b0; y <= d.b1; y++) linija[y * W + x] = true;
+            var h1 = Spoji(hDelovi).Select(s => new LinijaOkvira { A = s.a / (double)H, B0 = s.b0 / (double)W, B1 = (s.b1 + 1) / (double)W }).ToList();
+            var v1 = Spoji(vDelovi).Select(s => new LinijaOkvira { A = s.a / (double)W, B0 = s.b0 / (double)H, B1 = (s.b1 + 1) / (double)H }).ToList();
+            return (h1, v1, hDelovi, vDelovi);
         }
 
         private static double Tanko(int a, int b, Func<int, bool> je, Func<int, bool> okoPrazno)
