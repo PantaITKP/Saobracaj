@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -136,6 +136,7 @@ namespace Saobracaj.Agent.CimProvera
                     }
                     return 0;
                 }
+                if (a.Count > 0 && a[0] == "ponovna-obrada") return PonovnaObrada(cfg, log, a);
                 if (a.Count > 1 && a[0] == "preuzmi")
                 {
                     // preuzmi <uid> [--odlazni] [--izlaz folder]: čuva priloge jedne poruke (folder se otvara samo za čitanje; ništa se ne menja)
@@ -228,6 +229,24 @@ namespace Saobracaj.Agent.CimProvera
                     if (!mutex.WaitOne(0)) { log.Info("Druga instanca agenta već radi – izlaz."); return 0; }
                     try
                     {
+                        // v2.9.1: jednokratni zahtev za ponovnu obradu (samo upis) – fajl „ponovna_obrada.zahtev“ („--od-uid 191“) u folderu
+                        // agenta; izvršava se pod nalogom zadatka (DPAPI konekcija i lozinka sandučeta), pa se preimenuje u „.gotovo“
+                        var zahtev = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ponovna_obrada.zahtev");
+                        if (!dry && File.Exists(zahtev))
+                        {
+                            var uToku = Path.ChangeExtension(zahtev, ".u_toku");
+                            File.Move(zahtev, uToku);
+                            var arg = new List<string> { "ponovna-obrada" };
+                            arg.AddRange(File.ReadAllText(uToku).Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries));
+                            int rez;
+                            try { rez = PonovnaObrada(cfg, log, arg); }
+                            catch (Exception ex) { log.Greska("Ponovna obrada nije uspela", ex); rez = 1; }
+                            if (rez == 2) { File.Move(uToku, zahtev); return new AgentRad(cfg, log, dry).Pokreni(); }   // čeka prava (OP_913) – ponovo u sledećem prolazu
+                            File.AppendAllText(uToku, Environment.NewLine + "# " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz") + " – završeno, kod " + rez + " (detalji u logu)" + Environment.NewLine);
+                            var gotovo = Path.ChangeExtension(zahtev, ".gotovo");
+                            if (File.Exists(gotovo)) File.Delete(gotovo);
+                            File.Move(uToku, gotovo);
+                        }
                         var i = a.IndexOf("--petlja");
                         if (i < 0) return new AgentRad(cfg, log, dry).Pokreni();
                         var min = i + 1 < a.Count && int.TryParse(a[i + 1], out var m) ? m : 2;
@@ -247,6 +266,80 @@ namespace Saobracaj.Agent.CimProvera
                 log.Greska("Neočekivana greška", ex);
                 return 1;
             }
+        }
+
+        // ------------------------------------------------------------------------------------------- ponovna obrada (v2.9.1)
+
+        /// <summary>
+        /// v2.9.1 (tačka 7.2): ponovna-obrada --od-uid N [--do-uid M] [--folder F]: mailovi iz sandučeta (samo čitanje) od UID-a N redom
+        /// prijema se preuzimaju kao .eml (bez sopstvenih izveštaja agenta i mailova bez priloga) i obrađuju kao validate --upis, sa
+        /// privremenim folderom stanja (dosije i ponavljanja od nule). Ne šalje se nijedan mail; stanje agenta (stanje.json,
+        /// posiljke.json, ponavljanja) se ne menja; keš OCR-a se koristi kao i inače.
+        /// </summary>
+        private static int PonovnaObrada(AgentConfig cfg, Log log, List<string> a)
+        {
+            string Op(string ime) { var i = a.IndexOf(ime); return i > 0 && i + 1 < a.Count ? a[i + 1] : null; }
+            var od = long.Parse(Op("--od-uid") ?? "0");
+            var doUid = long.TryParse(Op("--do-uid") ?? "", out var du) ? du : long.MaxValue;
+            if (od <= 0) { Console.Error.WriteLine("Upotreba: ponovna-obrada --od-uid N [--do-uid M]"); return 1; }
+            if (!cfg.UpisUBazu || string.IsNullOrEmpty(cfg.Konekcija)) { Console.Error.WriteLine("ponovna-obrada: upis u bazu nije podešen (UpisUBazu / Konekcija.dpapi)."); return 1; }
+            // v2.9.1: bez prava na planiranje.tmpNHM (OP_913) NHM bi ostao NULL – obrada čeka (kod 2, zahtev ostaje za sledeći prolaz)
+            using (var k = Baza.UpisUBazu.Otvori(cfg.Konekcija))
+            {
+                try { using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT TOP 1 ID FROM planiranje.tmpNHM", k)) cmd.ExecuteScalar(); }
+                catch (System.Data.SqlClient.SqlException ex) { log.Upozorenje("Ponovna obrada čeka: nema pristupa planiranje.tmpNHM (pokrenuti OP_913_tmp_Prava.sql) – " + ex.Message); return 2; }
+                // --obrisi-podatke: samo PODACI iz tmp tabela (kao OP_915_tmp_BrisanjePodataka.sql); tmpSinonimi i tmpNHM ostaju
+                if (a.Contains("--obrisi-podatke"))
+                {
+                    using (var tx = k.BeginTransaction())
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(@"DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke;
+UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM planiranje.tmpTeretnica; DELETE FROM planiranje.tmpJobs; DELETE FROM planiranje.tmpDokument;", k, tx) { CommandTimeout = 300 })
+                    {
+                        cmd.ExecuteNonQuery();
+                        tx.Commit();
+                    }
+                    log.Info("Ponovna obrada: podaci iz tmp tabela obrisani (DELETE; tmpSinonimi i tmpNHM ostaju).");
+                }
+            }
+            var radni = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ponovna_obrada", DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            var eml = Path.Combine(radni, "eml"); var stanje = Path.Combine(radni, "stanje");
+            Directory.CreateDirectory(eml); Directory.CreateDirectory(stanje);
+            log.Info("Ponovna obrada (samo upis): UID " + od + (doUid < long.MaxValue ? "–" + doUid : "+") + ", radni folder " + radni + "; mail se ne šalje, stanje agenta se ne menja.");
+            var poruke = new List<(DateTimeOffset vreme, string fajl)>();
+            // nulta tačka (vreme reseta) iz stanja agenta – samo čitanje; za folder poslatih (odlazni) poruke posle tog vremena
+            var nulta = Stanje.Ucitaj(cfg.StanjeFolder).NultaTacka;
+            using (var s = new Sanduce(cfg))
+            {
+                s.Povezi();
+                var folderi = new List<(MailKit.IMailFolder f, bool odlazni)> { (s.Dolazni(), false) };
+                if (cfg.CitajOdlazne && nulta.HasValue) try { folderi.Add((s.Odlazni(), true)); } catch (Exception ex) { log.Upozorenje("Ponovna obrada: folder poslatih nije dostupan: " + ex.Message); }
+                foreach (var (f, odlazni) in folderi)
+                {
+                    f.Open(MailKit.FolderAccess.ReadOnly);
+                    var uids = f.Search(MailKit.Search.SearchQuery.All).Where(u => odlazni || (u.Id >= od && u.Id <= doUid)).OrderBy(u => u.Id).ToList();
+                    if (odlazni)
+                    {
+                        var datumi = f.Fetch(uids, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).ToDictionary(x => x.UniqueId, x => x.InternalDate);
+                        uids = uids.Where(u => datumi.TryGetValue(u, out var d) && d.HasValue && d.Value >= nulta.Value).ToList();
+                    }
+                    foreach (var u in uids)
+                    {
+                        var m = f.GetMessage(u);
+                        var razlog = Slanje.RazlogPreskakanja(m, cfg, !odlazni);
+                        if (razlog != null) { log.Info("  " + f.FullName + " UID " + u.Id + ": preskočeno – " + razlog); continue; }
+                        if (!Prilozi.Raspakivanje.PriloziMaila(m).Any()) { log.Info("  " + f.FullName + " UID " + u.Id + ": bez priloga – preskočeno"); continue; }
+                        var put = Path.Combine(eml, string.Concat(f.FullName.Replace('/', '_').Split(Path.GetInvalidFileNameChars())) + "__" + u.Id + ".eml");
+                        m.WriteTo(put);
+                        poruke.Add((m.Date, put));
+                    }
+                }
+            }
+            log.Info("Ponovna obrada: " + poruke.Count + " mailova sa prilozima.");
+            if (poruke.Count == 0) return 0;
+            var arg = new List<string> { "validate" };
+            arg.AddRange(poruke.OrderBy(x => x.vreme).Select(x => x.fajl));
+            arg.AddRange(new[] { "--upis", "--stanje", stanje, "--izlaz", Path.Combine(radni, "izvestaji") });
+            return Validate(cfg, log, arg.Skip(1).ToList());
         }
 
         // ------------------------------------------------------------------------------------------- validate
@@ -273,6 +366,9 @@ namespace Saobracaj.Agent.CimProvera
             // v2.9.0: --upis – upis u planiranje.tmp* (konekcija iz config-a / CIMPROVERA_KONEKCIJA); --meta <json> – podaci o mailu po slučaju
             var upisArg = Zastavica("--upis");
             var metaF = Opcija("--meta");
+            // v2.9.1: --prefiks planiranje.tmpProba – lokalna proba upisa u kopije tmp tabela (prave tmp tabele se ne diraju)
+            var prefiks = Opcija("--prefiks") ?? Baza.UpisUBazu.PodrazumevaniPrefiks;
+            if (!prefiks.StartsWith(Baza.UpisUBazu.PodrazumevaniPrefiks, StringComparison.Ordinal)) { Console.Error.WriteLine("--prefiks mora da počinje sa planiranje.tmp"); return 1; }
             var meta = metaF == null ? new Dictionary<string, Newtonsoft.Json.Linq.JObject>(StringComparer.OrdinalIgnoreCase)
                 : Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(metaF, Encoding.UTF8)).Properties().ToDictionary(x => x.Name, x => (Newtonsoft.Json.Linq.JObject)x.Value, StringComparer.OrdinalIgnoreCase);
             Baza.UpisUBazu upis = null;
@@ -304,6 +400,13 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8.1: CIT 7 bez lista u mailu – ranije obrađeni listovi iz zadatog foldera stanja (listovi.json)
             if (istorija != null) obrada.RanijiListovi = () => IstorijaListova.Ucitaj(istorija);
             int ukupnoGresaka = 0;
+            void KrajUpisa()
+            {
+                if (upis == null) return;
+                foreach (var x in upis.ZaSifarnik) { Console.WriteLine("ZA ŠIFARNIK: " + x); log.Info("Za šifarnik: " + x); }
+                foreach (var kv in upis.KodoviBezSifre) Console.WriteLine("SRB KOD BEZ ŠIFRE: " + kv.Key + ";" + kv.Value);
+                if (izlaz != null) try { Baza.UpisUBazu.SacuvajPredlogKodova(upis.KodoviBezSifre, Path.Combine(izlaz, "predlog_kodova_stanica.csv")); } catch { }
+            }
 
             foreach (var (ime, fajlovi) in slucajevi)
             {
@@ -313,6 +416,10 @@ namespace Saobracaj.Agent.CimProvera
                 var prilozi = ulazniMail != null ? Prilozi.Raspakivanje.PriloziMaila(ulazniMail).ToList()
                     : fajlovi.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).Select(f => (ime: RelativnaPutanja(koren, f), sadrzaj: File.ReadAllBytes(f))).ToList();
                 meta.TryGetValue(ime, out var mt);
+                // v2.9.1: ponovna obrada – „<folder>__<uid>.eml“ → UID i sanduče kao u radu nad sandučetom
+                var uidIme = System.Text.RegularExpressions.Regex.Match(ime, @"^(?<f>.+?)__(?<u>\d+)\.eml$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                long uidMaila = uidIme.Success ? long.Parse(uidIme.Groups["u"].Value) : mt?["uid"] != null ? (long)mt["uid"] : 0;
+                var sanduceMaila = uidIme.Success ? cfg.Nalog + "|" + uidIme.Groups["f"].Value.Replace('_', '/') : "validate";
                 posiljalac = posiljalac0 ?? ulazniMail?.From.Mailboxes.FirstOrDefault()?.Address ?? (string)mt?["od"];
                 naslovMaila = naslov0 ?? ulazniMail?.Subject ?? (string)mt?["naslov"];
                 en = enZadat || (!sr && ulazniMail != null && posiljalac != null && Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslovMaila, ulazniMail.TextBody));
@@ -321,15 +428,15 @@ namespace Saobracaj.Agent.CimProvera
                     : mt?["vreme"] != null ? DateTime.ParseExact((string)mt["vreme"], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
                     : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
                 // v2.9.0: upis posle obrade slučaja (kao u radu nad sandučetom: posle provere i izveštaja)
-                void Upisi(RezultatProvere rr)
+                void Upisi(RezultatProvere rr, bool ponovljeni = false)
                 {
-                    if (!upisArg || rr == null) return;
+                    if (!upisArg || (rr == null && !ponovljeni)) return;
                     try
                     {
-                        upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp);
+                        upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp) { Prefiks = prefiks };
                         var iu = upis.Upisi(new Baza.MailZaUpis
                         {
-                            MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Sanduce = "validate", Posiljalac = posiljalac ?? "",
+                            MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Uid = uidMaila, Sanduce = sanduceMaila, Posiljalac = posiljalac ?? "",
                             Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
                             Prilozi = prilozi, Provera = rr, Dosije = obrada.PoslednjaPosiljka,
                         });
@@ -341,11 +448,12 @@ namespace Saobracaj.Agent.CimProvera
                 var primaociLive = ulazniMail != null ? PrimaociLive.Iz(ulazniMail, cfg) : PrimaociLive.Iz(posiljalac, null, null, cfg.Nalog, cfg.ProsledjivanjeNaAgenti);
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
-                var oznakaPon = ime + " (" + datum.ToString("dd.MM. HH:mm") + ")";
+                var oznakaPon = uidMaila > 0 ? "UID " + uidMaila : ime + " (" + datum.ToString("dd.MM. HH:mm") + ")";
                 if (ponavljanja?.IstiPrilozi(prilozi) is Ponavljanja.Zapis istiP)
                 {
                     var t = "################ " + ime + Environment.NewLine + "BEZ ODGOVORA – isti prilog kao " + istiP.Oznaka + " (" + istiP.Ishod + ") – već obrađeno; ništa se ne šalje.";
                     Console.WriteLine(t);
+                    Upisi(null, true);   // v2.9.1 (5.7): prijem i Napomena posla
                     if (izlaz != null) { Directory.CreateDirectory(izlaz); File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), t, Encoding.UTF8); }
                     continue;
                 }
@@ -478,6 +586,7 @@ namespace Saobracaj.Agent.CimProvera
             var ni = Motor.NijeImplementirano(pravila);
             Console.WriteLine("Pravila iz JSON-a koja nisu implementirana (ne izvršavaju se): " + (ni.Count == 0 ? "nema" : string.Join(", ", ni)));
             Console.WriteLine("OCR strana: " + citac.BrojOcrStrana + ".");
+            KrajUpisa();
             return 0;
         }
 

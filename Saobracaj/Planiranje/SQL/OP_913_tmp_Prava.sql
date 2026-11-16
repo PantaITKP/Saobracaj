@@ -46,6 +46,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON planiranje.tmpSinonimi        TO [svc_ci
 GRANT SELECT ON dbo.stanice   TO [svc_cimprovera];
 GRANT SELECT ON dbo.Partnerji TO [svc_cimprovera];
 GRANT SELECT ON dbo.NHM       TO [svc_cimprovera];
+GRANT SELECT ON planiranje.tmpNHM TO [svc_cimprovera];   -- v2.9.1: šifarnik NHM iz tarife (OP_916 / OP_917)
 -- samo čitanje, za poređenje u tački 8
 GRANT SELECT ON planiranje.OP_Jobs    TO [svc_cimprovera];
 GRANT SELECT ON dbo.Teretnica         TO [svc_cimprovera];

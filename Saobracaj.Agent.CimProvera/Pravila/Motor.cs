@@ -85,6 +85,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
     internal sealed class RezultatProvere
     {
         public List<RezultatLista> Listovi = new List<RezultatLista>();
+        /// <summary>v2.9.1 (4.1): kopije istog tovarnog lista (ista pouzdana r62: original, faktura, list prijema, duplikat…) – proverava se
+        /// i prijavljuje samo najbolje pročitana kopija; ostale ostaju ovde (bez nalaza) za upis u bazu (najbolje pročitano polje).</summary>
+        public List<RezultatLista> KopijeListova = new List<RezultatLista>();
         public List<Dokument> Dokumenti = new List<Dokument>();
         public List<string> NijeImplementirano = new List<string>();
         public List<string> GreskePravila = new List<string>();
@@ -155,10 +158,23 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             rez.NijeImplementirano = NijeImplementirano(p);
 
             var listovi = u.Dokumenti.Where(d => TipDokumenta.JeTovarniList(d.Tip)).SelectMany(d => d.Cim.Select(c => (d, c))).ToList();
+            // v2.9.1 (4.1): kopije istog lista (ista pouzdana r62) – proverava se jednom, najbolje pročitana kopija (tekst PDF-a, pa veća pouzdanost OCR-a)
+            var kopijaOd = new Dictionary<CimList, CimList>();
+            foreach (var g in listovi.Where(x => string.IsNullOrEmpty(x.c.NeprepoznatObrazac) && !R62Nepouzdana(x.c)).GroupBy(x => Ponavljanja.KljucLista(x.c))
+                         .Where(g => g.Key != null && g.Key.StartsWith("r62:", StringComparison.Ordinal) && g.Count() > 1))
+            {
+                var glavni = g.OrderByDescending(x => x.c.PouzdanostStrane <= 0 ? 1.0 : x.c.PouzdanostStrane).ThenBy(x => listovi.IndexOf(x)).First();
+                foreach (var x in g) if (!ReferenceEquals(x.c, glavni.c)) kopijaOd[x.c] = glavni.c;
+            }
             int rb = 0;
             foreach (var (dok, cim) in listovi)
             {
                 rb++;
+                if (kopijaOd.ContainsKey(cim))
+                {
+                    rez.KopijeListova.Add(new RezultatLista { Dokument = dok, Cim = cim, Oznaka = dok.Fajl + " – list " + cim.RedniBroj + " (kopija)" });
+                    continue;
+                }
                 PoznatiPodaciKp(cim, p.Kp);
                 // v2.8.4: r62 na skenu niske pouzdanosti (rukom upisana: YU DIN COMMERCE „72 / 165092 / 3212 / 162600“ pročitano kao
                 // „72 10502-2 3242 62600“) ne koristi se za odluke (KP tovarni list, ponavljanje, dosije) – „r62 nečitljiva – ručna provera“
@@ -167,8 +183,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 var rl = new RezultatLista
                 {
                     Dokument = dok, Cim = cim, KpRezim = k.Kp,
-                    Oznaka = listovi.Count == 1 ? dok.Fajl : dok.Fajl + (dok.Cim.Count > 1 || listovi.Count(x => x.d.Fajl == dok.Fajl) > 1 ? " – list " + cim.RedniBroj : "") ,
+                    Oznaka = listovi.Count - kopijaOd.Count == 1 ? dok.Fajl : dok.Fajl + (dok.Cim.Count > 1 || listovi.Count(x => x.d.Fajl == dok.Fajl) > 1 ? " – list " + cim.RedniBroj : "") ,
                 };
+                var brKopija = kopijaOd.Count(x => ReferenceEquals(x.Value, cim));
+                if (brKopija > 0) rl.Oznaka += " (+" + brKopija + " " + (brKopija == 1 ? "kopija" : "kopije") + ")";
 
                 // Obrazac nije prepoznat (ili poravnanje nije pouzdano): rubrike se ne proveravaju nasumično – ručna provera.
                 if (!string.IsNullOrEmpty(cim.NeprepoznatObrazac))

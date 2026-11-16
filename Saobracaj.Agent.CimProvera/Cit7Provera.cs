@@ -150,13 +150,17 @@ namespace Saobracaj.Agent.CimProvera
                     else c.Upozorenja.Add("Uz zahtev nije priložen duplikat tovarnog lista sa istim izmenama (" + string.Join(", ", c.Izmene.Select(x => "r" + x.rubrika)) + ") – duplikat sa upisanim izmenama se prilaže uz CIT 7.");
                 }
 
+                // v2.9.1 (5.6): CIT 7 koji je potpisao ili overio prevoznik, ili „Correction / Ispravka“ – ne primenjuju se pravila o pravu
+                // raspolaganja pošiljaoca/primaoca
+                var prevoznikIliIspravka = PrevoznikIliIspravka(z);
+                if (prevoznikIliIspravka) c.Napomene.Add("CIT 7 je potpisao/overio prevoznik ili je u pitanju ispravka (Correction) – pravila o pravu raspolaganja pošiljaoca/primaoca se ne primenjuju.");
                 // 2. ko podnosi zahtev; pošiljalac → r7 „Primalac nema pravo raspolaganja“
                 // poređenje po NAZIVU (prvi deo do zareza), ne po adresi – „EurologSystem Beograd“ nije primalac iz Novog Beograda
                 var jePrimalac = Slicno(z.Podnosilac, NazivStrane(veza?.R4)) || Slicno(z.Podnosilac, NazivStrane(z.Primalac));
                 var jePosiljalac = !jePrimalac && (Slicno(z.Podnosilac, NazivStrane(veza?.R1)) || Slicno(z.Podnosilac, NazivStrane(z.Posiljalac)));
                 c.Podnosilac = jePrimalac ? "primalac" : jePosiljalac ? "pošiljalac"
                     : z.Podnosilac.Length > 0 ? "nije utvrđeno – potpisao „" + z.Podnosilac + "“" + (Slicno(z.Podnosilac, veza?.R7) ? ", naveden u r7 lista (platilac/zastupnik)" : "") + "; nije ni pošiljalac ni primalac iz lista" : "nije utvrđeno (potpis nije pročitan)";
-                if (!jePrimalac)
+                if (!jePrimalac && !prevoznikIliIspravka)
                 {
                     if (veza == null) c.Napomene.Add("CIT 7 je nepovezan – ne može da se proveri da li u r7 tovarnog lista piše „Primalac nema pravo raspolaganja“.");
                     else if (!PrimalacNemaPravo(veza.R7))
@@ -168,7 +172,10 @@ namespace Saobracaj.Agent.CimProvera
                 // 3. deljenje pošiljke
                 var deli = Regex.IsMatch(z.Napomene ?? "", @"deo po[sš]iljke|deli[mč]i[cč]n|podel|razdvoj|\bsplit|partial|teilweise|teil(ung|sendung|lieferung)|fraction|partag", RegexOptions.IgnoreCase)
                            || c.Izmene.Where(x => x.rubrika == "10" || x.rubrika == "12").GroupBy(x => x.rubrika).Any(g => g.Select(x => Kljuc(x.nova)).Distinct().Count() > 1)
-                           || (z.BrojeviKola.Count > 0 && veza != null && veza.Kola.Count > z.BrojeviKola.Count && z.BrojeviKola.All(veza.Kola.Contains));
+                           || (z.BrojeviKola.Count > 0 && veza != null && veza.Kola.Count > z.BrojeviKola.Count && z.BrojeviKola.All(veza.Kola.Contains)
+                               && !Regex.IsMatch(z.Kola ?? "", @"\+\s*\d+\s*(wagons?|kola|wagen|vagon\w*)", RegexOptions.IgnoreCase));
+                // otkačivanje kola (wagon … detached) nije deljenje pošiljke
+                if (deli && (prevoznikIliIspravka || Regex.IsMatch(z.Napomene ?? "", @"detached|otka[čc]|abgeh[äa]ngt|ausgesetzt|uncoupled", RegexOptions.IgnoreCase))) deli = false;
                 if (deli) c.Upozorenja.Add("Zahtevom se pošiljka deli (izmena za deo kola ili više novih uputnih stanica) – deljenje pošiljke naknadnim zahtevom nije dozvoljeno.");
 
                 // 4. carinsko područje
@@ -187,6 +194,15 @@ namespace Saobracaj.Agent.CimProvera
                 rez.Add(c);
             }
             return rez;
+        }
+
+        /// <summary>v2.9.1: CIT 7 potpisao/overio prevoznik (pečat „… Railways a.s.“, „Rail Cargo“, železnica) ili je obrazac „Correction / Ispravka“.</summary>
+        internal static bool PrevoznikIliIspravka(Cit7Zahtev z)
+        {
+            var t = (z.Napomene ?? "") + "\n" + (z.Tekst ?? "");
+            if (Regex.IsMatch(t, @"(?<!\p{L})(correction|corrections|ispravka|ispravke|berichtigung|korrektur|rectification)(?!\p{L})", RegexOptions.IgnoreCase)) return true;
+            return Regex.IsMatch((z.Podnosilac ?? "") + " " + (z.Tekst ?? ""), @"(?<!\p{L})(railways?|rail\s+cargo|cargo\s+rail|eisenbahn|bahn\s+ag|železnic\w*|zeleznic\w*|vasut|vasút|carrier|prevoznik|beförderer|beforderer|transporteur)(?!\p{L})", RegexOptions.IgnoreCase)
+                   && !Regex.IsMatch(z.Podnosilac ?? "", @"(?<!\p{L})(logisti\w*|spedi\w*|forwarding|walter)(?!\p{L})", RegexOptions.IgnoreCase);
         }
 
         // ------------------------------------------------------------------------------------------- veza sa listom

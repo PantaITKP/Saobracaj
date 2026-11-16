@@ -17,10 +17,19 @@ namespace Saobracaj.Agent.CimProvera.Baza
     {
         public int PaSifra; public string PaNaziv = ""; public string PaDoNaziv = ""; public string PaKraj = ""; public string Drzava = "";
         public string Uic = ""; public bool Prevoznik; public bool Posiljalac; public bool Primalac;
-        internal string Norm1; internal string Norm2;
+        internal string Norm1; internal string Norm2; internal HashSet<string> Reci1 = new HashSet<string>(); internal HashSet<string> Reci2 = new HashSet<string>();
     }
 
-    internal sealed class NhmZapis { public int Id; public string Broj = ""; public string Naziv = ""; }
+    /// <summary>v2.9.1: red šifarnika planiranje.tmpNHM (tarifa Srbija Kargo, Deo 2 – Klasifikacija robe).</summary>
+    internal sealed class NhmZapis
+    {
+        public int Id; public string Kod8 = ""; public int Nivo = 8; public string Naziv = ""; public string NazivNorm = "";
+        public string Kod6 => Kod8.Length >= 6 ? Kod8.Substring(0, 6) : Kod8;
+        public string Kod4 => Kod8.Length >= 4 ? Kod8.Substring(0, 4) : Kod8;
+        /// <summary>„2520 10 00“.</summary>
+        public string Prikaz => Kod8.Length == 8 ? Kod8.Substring(0, 4) + " " + Kod8.Substring(4, 2) + " " + Kod8.Substring(6, 2) : Kod8;
+        internal HashSet<string> Reci;
+    }
 
     internal sealed class SinonimZapis { public string Tip = ""; public string Tekst = ""; public int CiljniId; }
 
@@ -46,11 +55,22 @@ namespace Saobracaj.Agent.CimProvera.Baza
             {
                 p.Norm1 = Slicnost.Partner(p.PaNaziv, p.PaKraj); p.Norm2 = Slicnost.Partner(p.PaDoNaziv, p.PaKraj);
                 p.Drzava = (p.Drzava ?? "").Trim().ToUpperInvariant(); p.Uic = Regex.Replace(p.Uic ?? "", @"\D", "");
+                p.Reci1 = new HashSet<string>(Slicnost.Osnovno(p.PaNaziv).Split(' ')); p.Reci2 = new HashSet<string>(Slicnost.Osnovno(p.PaDoNaziv).Split(' '));
+            }
+            foreach (var n in Nhm)
+            {
+                n.Kod8 = Regex.Replace(n.Kod8 ?? "", @"\D", "");
+                if (string.IsNullOrEmpty(n.NazivNorm)) n.NazivNorm = Slicnost.Osnovno(n.Naziv).ToLowerInvariant();
+                n.Reci = new HashSet<string>(Slicnost.Osnovno(n.NazivNorm).Split(' ').Where(w => w.Length >= 3));
             }
             return this;
         }
 
-        public static Sifarnici Ucitaj(SqlConnection c, Log log, SqlTransaction tx = null)
+        /// <summary>v2.9.1: naziv tmp tabele sa zadatim prefiksom („planiranje.tmp“; za probe „planiranje.tmpProba“).</summary>
+        internal static string Tmp(string sql, string prefiks) =>
+            string.IsNullOrEmpty(prefiks) || prefiks == UpisUBazu.PodrazumevaniPrefiks ? sql : sql.Replace(UpisUBazu.PodrazumevaniPrefiks, prefiks);
+
+        public static Sifarnici Ucitaj(SqlConnection c, Log log, SqlTransaction tx = null, string prefiks = null)
         {
             var s = new Sifarnici();
             using (var cmd = new SqlCommand("SELECT ID, Opis, ISNULL(Granicna, 0), ISNULL(Kod, ''), ISNULL(Drzava, '') FROM dbo.stanice", c, tx))
@@ -64,10 +84,16 @@ namespace Saobracaj.Agent.CimProvera.Baza
                         PaSifra = r.GetInt32(0), PaNaziv = r.GetString(1).Trim(), PaDoNaziv = r.GetString(2).Trim(), PaKraj = r.GetString(3).Trim(), Drzava = r.GetString(4).Trim(),
                         Uic = r.GetString(5).Trim(), Prevoznik = Convert.ToInt32(r.GetValue(6)) == 1, Posiljalac = Convert.ToInt32(r.GetValue(7)) == 1, Primalac = Convert.ToInt32(r.GetValue(8)) == 1,
                     });
-            using (var cmd = new SqlCommand("SELECT ID, RTRIM(Broj), RTRIM(Naziv) FROM dbo.NHM", c, tx))
-            using (var r = cmd.ExecuteReader())
-                while (r.Read()) s.Nhm.Add(new NhmZapis { Id = r.GetInt32(0), Broj = r.GetString(1), Naziv = r.GetString(2) });
-            using (var cmd = new SqlCommand("SELECT Tip, TekstNormalizovan, CiljniID FROM planiranje.tmpSinonimi", c, tx))
+            // v2.9.1: NHM iz tarife (planiranje.tmpNHM) umesto dbo.NHM; bez tabele/prava NHM ostaje NULL (upozorenje u logu)
+            try
+            {
+                using (var cmd = new SqlCommand(Tmp("SELECT ID, Kod8, Nivo, ISNULL(NazivLat, ''), ISNULL(NazivNorm, '') FROM planiranje.tmpNHM", prefiks), c, tx))
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read()) s.Nhm.Add(new NhmZapis { Id = r.GetInt32(0), Kod8 = r.GetString(1).Trim(), Nivo = Convert.ToInt32(r.GetValue(2)), Naziv = r.GetString(3).Trim(), NazivNorm = r.GetString(4).Trim() });
+                if (s.Nhm.Count == 0) log?.Upozorenje("  upis u bazu: planiranje.tmpNHM je prazna – NHM se ne upisuje (pokrenuti OP_917_tmp_NHM_Podaci.sql).");
+            }
+            catch (SqlException ex) { log?.Upozorenje("  upis u bazu: planiranje.tmpNHM nije pročitana (" + ex.Message + ") – NHM se ne upisuje (OP_916/OP_917/OP_913)."); }
+            using (var cmd = new SqlCommand(Tmp("SELECT Tip, TekstNormalizovan, CiljniID FROM planiranje.tmpSinonimi", prefiks), c, tx))
             using (var r = cmd.ExecuteReader())
                 while (r.Read()) s.Sinonimi.Add(new SinonimZapis { Tip = r.GetString(0), Tekst = r.GetString(1), CiljniId = r.GetInt32(2) });
             // učestalost: samo čitanje postojećih tabela; bez prava (OP_913) se preskače – duplikati se tada biraju po šifri i ID-u
@@ -159,10 +185,15 @@ WHERE ID IS NOT NULL GROUP BY ID";
             var st = d.Length >= 7 ? d.Substring(2) : d;              // 5 cifara + kontrolna
             var st5 = st.Length >= 5 ? st.Substring(0, 5) : st;
             return kodCifre == d || kodCifre == st || kodCifre == st5 || kodCifre == zemlja + st5 || kodCifre == zemlja + st
-                   || (kodCifre.Length >= 7 && kodCifre.EndsWith(st, StringComparison.Ordinal));
+                   || (kodCifre.Length >= 7 && kodCifre.EndsWith(st, StringComparison.Ordinal))
+                   // v2.9.1: šifra bez kontrolne cifre („72 14305“) i Kod sa kontrolnom cifrom („143057“)
+                   || (st.Length == 5 && kodCifre.Length == 6 && kodCifre.StartsWith(st, StringComparison.Ordinal));
         }
 
         private string ImeStanice(int id) => s.Stanice.FirstOrDefault(x => x.Id == id)?.Opis ?? id.ToString();
+
+        /// <summary>v2.9.1: stanice iz šifarnika sa istom šifrom (npr. 1380 Wlasna i 1385 Kwidzyn – obe 51023119).</summary>
+        public List<int> StaniceSaKodom(string sifra) => s.Stanice.Where(x => KodPoklapa(sifra, x.KodCifre)).Select(x => x.Id).ToList();
 
         /// <summary>Država stanice iz šifarnika („SRB“, „IT“…), prazno ako nije upisana.</summary>
         public string DrzavaStanice(int id) => s.Stanice.FirstOrDefault(x => x.Id == id)?.Drzava ?? "";
@@ -218,7 +249,25 @@ WHERE ID IS NOT NULL GROUP BY ID";
             }
         }
 
+        /// <summary>v2.9.1: SRB kodovi stanica iz dokumenata kojih nema u šifarniku (kod → naziv iz dokumenta, predlog ID) – CSV predlog za korisnika.</summary>
+        public readonly SortedDictionary<string, string> KodoviBezSifre = new SortedDictionary<string, string>(StringComparer.Ordinal);
+
         private void ZavrsiStanicu(Pogodak p, string tekst, string sifra, List<string> drzave, Dictionary<int, double> ocene, bool granicna, Func<StanicaZapis, bool> dozvoljena)
+        {
+            try { ZavrsiStanicu0(p, tekst, sifra, drzave, ocene, granicna, dozvoljena); }
+            finally
+            {
+                var d = Regex.Replace(sifra ?? "", @"\D", "");
+                // SRB šifra: „72“ + stanica, ili 5–6 cifara kada je dokument/stanica iz Srbije (strane šifre bez zemlje se ne prijavljuju)
+                // „21001-3“ (5 cifara, crtica, kontrolna cifra) je oblik šifre stanice ŽS/KP i bez oznake zemlje
+                var izSrbije = drzave.Contains("SRB") || (p.Id.HasValue && DrzavaStanice(p.Id.Value) == "SRB") || Regex.IsMatch(sifra ?? "", @"^\s*(?:72\s*)?\d{5}\s*-\s*\d\s*$");
+                var srb = d.Length >= 7 && d.StartsWith("72") ? d.Substring(2) : (d.Length == 6 || d.Length == 5) && izSrbije ? d : "";
+                if (srb.Length >= 5 && !s.Stanice.Any(x => x.Drzava == "SRB" && KodPoklapa("72" + srb, x.KodCifre)) && !KodoviBezSifre.ContainsKey(srb))
+                    KodoviBezSifre[srb] = Regex.Replace(tekst ?? "", @"\s+", " ").Trim() + ";" + (p.Id.HasValue && DrzavaStanice(p.Id.Value) == "SRB" ? p.Id + " " + ImeStanice(p.Id.Value) : "");
+            }
+        }
+
+        private void ZavrsiStanicu0(Pogodak p, string tekst, string sifra, List<string> drzave, Dictionary<int, double> ocene, bool granicna, Func<StanicaZapis, bool> dozvoljena)
         {
             // šifra iz dokumenta bez naziva (ili OCR naziv): stanica sa istom šifrom je kandidat
             if (!string.IsNullOrWhiteSpace(sifra))
@@ -264,9 +313,27 @@ WHERE ID IS NOT NULL GROUP BY ID";
         // ------------------------------------------------------------------------------------------- partneri
 
         /// <summary>
-        /// Partner po nazivu (tačka 2.2) → PaSifra. Redosled: (1) tmpSinonimi; (2) za prevoznika sa UIC šifrom: tačan UIC među
-        /// Prevoznik = 1, naziv za potvrdu i za iste šifre; (3) sličnost naziva (PaNaziv, PaDoNaziv) ≥ 0,85, kod skoro jednakih država iz
-        /// dokumenta, pa UIC, pa oznaka (Prevoznik / Pošiljalac / Primalac), pa manja šifra. Ispod praga: null i 3 najbliža kandidata.
+        /// v2.9.1: partneri koji nisu nađeni ili su nađeni preko šifre/skraćenice bez UIC-a ili oznake Prevoznik – za dnevnu internu listu
+        /// („nije nađen u Partnerji: UIC …, naziv …“, „partner postoji, ali nema UIC / oznaku Prevoznik: PaSifra …“).
+        /// </summary>
+        public readonly SortedSet<string> ZaSifarnik = new SortedSet<string>(StringComparer.Ordinal);
+
+        private static readonly HashSet<string> NisuSkracenice = new HashSet<string>
+        {
+            "KP", "SRB", "RS", "DOO", "AD", "SRO", "KFT", "ZRT", "GMBH", "SRL", "SPA", "LTD", "THE", "AND", "FOR", "RAIL", "CARGO", "VIA",
+        };
+
+        /// <summary>Skraćenice prevoznika iz teksta r57/r13 („3277 CRW“ → CRW): reči od 3–6 velikih slova.</summary>
+        internal static List<string> Skracenice(string tekst) =>
+            Regex.Matches(tekst ?? "", @"(?<![\p{L}\d])\p{Lu}{3,6}(?![\p{L}\d])").Cast<Match>().Select(m => Slicnost.Osnovno(m.Value))
+                .Where(x => x.Length >= 3 && !NisuSkracenice.Contains(x)).Distinct().ToList();
+
+        /// <summary>
+        /// Partner po nazivu → PaSifra. Redosled (v2.9.1): (1) tmpSinonimi; za prevoznika: (2) tačan UIC među Prevoznik = 1, (3) tačan UIC
+        /// među svim partnerima (napomena „oznaka Prevoznik nije postavljena“), (4) skraćenica iz r57/r13 kao posebna reč naziva
+        /// (PaNaziv, PaDoNaziv), prednost Prevoznik = 1 i zemlja deonice – jedan kandidat → pouzdanost 90, više → NULL i kandidati;
+        /// (5) sličnost naziva ≥ 0,85. Dva bliska kandidata (razlika &lt; 0,05) → NULL, osim kada samo jedan odgovara zemlji iz dokumenta
+        /// ili ulozi (Prevoznik / Posiljalac / Primalac) – filter bira između kandidata, ne isključuje ostale.
         /// </summary>
         public Pogodak Partner(string naziv, string uic = null, string[] drzave = null, string uloga = null)
         {
@@ -279,11 +346,15 @@ WHERE ID IS NOT NULL GROUP BY ID";
                 var sin = s.Sinonimi.FirstOrDefault(x => x.Tip == "PARTNER" && x.Tekst == n && s.Partneri.Any(z => z.PaSifra == x.CiljniId));
                 if (sin != null) { p.Id = sin.CiljniId; p.Pouzdanost = 100; p.Napomena = "sinonim (tmpSinonimi)"; return p; }
             }
+            bool Uloga(PartnerZapis z) => uloga == "prevoznik" ? z.Prevoznik : uloga == "posiljalac" ? z.Posiljalac : uloga == "primalac" ? z.Primalac : true;
             double Ocena(PartnerZapis z) => Math.Max(Slicnost.Ocena(n, z.Norm1), Slicnost.Ocena(n, z.Norm2));
             string Opis(PartnerZapis z, double o) => z.PaSifra + " " + z.PaNaziv + (z.Drzava.Length > 0 ? " (" + z.Drzava + ")" : "") + (z.Uic.Length > 0 ? " UIC " + z.Uic : "") + " " + o.ToString("0.00", CultureInfo.InvariantCulture);
+            string Oznaka(PartnerZapis z) => z.PaSifra + " " + z.PaNaziv;
             if (uloga == "prevoznik" && u.Length == 4)
             {
                 var poUic = s.Partneri.Where(z => z.Prevoznik && z.Uic.TrimStart('0') == u.TrimStart('0')).ToList();
+                var bezOznake = false;
+                if (poUic.Count == 0) { poUic = s.Partneri.Where(z => z.Uic.Length > 0 && z.Uic.TrimStart('0') == u.TrimStart('0')).ToList(); bezOznake = poUic.Count > 0; }
                 if (poUic.Count > 0)
                 {
                     var ocene = poUic.Select(z => (z, o: n.Length > 0 ? Ocena(z) : 0)).OrderByDescending(x => x.o).ThenByDescending(x => dr.Contains(x.z.Drzava)).ThenBy(x => x.z.PaSifra).ToList();
@@ -298,55 +369,197 @@ WHERE ID IS NOT NULL GROUP BY ID";
                     }
                     p.Id = z0.z.PaSifra; p.Pouzdanost = poUic.Count == 1 ? 95 : (int)Math.Round(80 + 15 * z0.o);
                     p.Kandidati = string.Join("; ", ocene.Take(3).Select(x => Opis(x.z, x.o)));
-                    p.Napomena = "UIC " + u + (poUic.Count > 1 ? " (" + poUic.Count + " partnera sa istom šifrom, izbor po nazivu)" : "") + (n.Length > 0 && z0.o < 0.5 ? "; naziv iz dokumenta se ne poklapa (" + z0.o.ToString("0.00", CultureInfo.InvariantCulture) + ")" : "");
+                    p.Napomena = "UIC " + u + (poUic.Count > 1 ? " (" + poUic.Count + " partnera sa istom šifrom, izbor po nazivu)" : "") + (n.Length > 0 && z0.o < 0.5 ? "; naziv iz dokumenta se ne poklapa (" + z0.o.ToString("0.00", CultureInfo.InvariantCulture) + ")" : "")
+                                 + (bezOznake ? "; oznaka Prevoznik nije postavljena" : "");
+                    if (bezOznake) ZaSifarnik.Add("partner postoji, ali nema oznaku Prevoznik: PaSifra " + Oznaka(z0.z) + " (UIC " + u + ")");
                     return p;
                 }
-                p.Napomena = "UIC " + u + " nije u šifarniku (Prevoznik = 1); ";
+                p.Napomena = "UIC " + u + " nije u šifarniku; ";
             }
-            if (n.Length < 2) { p.Napomena += "naziv nije pročitan"; return p; }
-            var lista = s.Partneri.Select(z => (z, o: Ocena(z))).Where(x => x.o > 0.5).OrderByDescending(x => x.o).ToList();
-            if (lista.Count == 0) { p.Napomena += "partner nije pronađen"; return p; }
+            // skraćenica prevoznika („3277 CRW“ → „CENTRAL RAILWAYS A.S. CRW“): posebna reč naziva – odmah kada je naziv samo skraćenica,
+            // inače tek kada naziv ne prolazi prag („CER Hungary Zrt.“ se traži po nazivu, ne po „CER“)
+            var samoSkracenica = Slicnost.Osnovno(naziv).Split(' ').Where(w => w.Length > 0).ToList() is var tok && tok.Count > 0 && tok.Count <= 2 && tok.All(w => w.Length <= 6);
+            Pogodak PoSkracenici()
+            {
+                if (uloga != "prevoznik") return null;
+                foreach (var sk in Skracenice(naziv))
+                {
+                    var kand = s.Partneri.Where(z => z.Reci1.Contains(sk) || z.Reci2.Contains(sk)).ToList();
+                    if (kand.Count == 0) continue;
+                    var uz = kand.Where(z => z.Prevoznik).ToList(); if (uz.Count > 0) kand = uz;
+                    if (dr.Count > 0) { var zz = kand.Where(z => dr.Contains(z.Drzava)).ToList(); if (zz.Count > 0) kand = zz; }
+                    p.Kandidati = string.Join("; ", kand.Take(3).Select(z => Opis(z, 1)));
+                    if (kand.Count > 1) { p.Napomena += "skraćenica „" + sk + "“: " + kand.Count + " partnera – nije upisano"; p.Pouzdanost = 50; return p; }
+                    var z1 = kand[0];
+                    p.Id = z1.PaSifra; p.Pouzdanost = 90;
+                    p.Napomena += "skraćenica „" + sk + "“ u nazivu partnera";
+                    if (u.Length == 4 || !z1.Prevoznik)
+                        ZaSifarnik.Add("partner postoji, ali nema " + (u.Length == 4 && z1.Uic.Length == 0 ? "UIC " + u : "") + (u.Length == 4 && z1.Uic.Length == 0 && !z1.Prevoznik ? " ni " : "") + (!z1.Prevoznik ? "oznaku Prevoznik" : "") + ": PaSifra " + Oznaka(z1));
+                    return p;
+                }
+                return null;
+            }
+            if (samoSkracenica && PoSkracenici() is Pogodak ps) return ps;
+            if (n.Length < 2)
+            {
+                p.Napomena += "naziv nije pročitan";
+                if (uloga == "prevoznik" && u.Length == 4) ZaSifarnik.Add("nije nađen u Partnerji: UIC " + u + ", naziv " + (p.Tekst.Length > 0 ? p.Tekst : "–"));
+                return p;
+            }
+            var lista = s.Partneri.Select(z => (z, o: Ocena(z))).Where(x => x.o > 0.5)
+                .OrderByDescending(x => x.o).ThenByDescending(x => Uloga(x.z)).ThenByDescending(x => dr.Contains(x.z.Drzava)).ToList();
+            if ((lista.Count == 0 || lista[0].o < PragPartnera) && !samoSkracenica && PoSkracenici() is Pogodak ps2) return ps2;
+            if (lista.Count == 0 || lista[0].o < PragPartnera)
+            {
+                if (uloga == "prevoznik") ZaSifarnik.Add("nije nađen u Partnerji: " + (u.Length == 4 ? "UIC " + u + ", " : "") + "naziv " + p.Tekst);
+                if (lista.Count == 0) { p.Napomena += "partner nije pronađen"; return p; }
+            }
             var izbor = lista[0];
             p.Kandidati = string.Join("; ", lista.Take(3).Select(x => Opis(x.z, x.o)));
             if (izbor.o < PragPartnera) { p.Napomena += "najbliži naziv ispod praga " + PragPartnera.ToString("0.00", CultureInfo.InvariantCulture); p.Pouzdanost = (int)Math.Round(izbor.o * 100); return p; }
-            // dva bliska kandidata (razlika < 0,05): NULL i kandidati – pogrešan partner je gori od praznog (odluka 14.11.;
-            // izuzetak su nazivi iz tmpSinonimi, obrađeni gore)
-            if (lista.Count > 1 && lista[0].o - lista[1].o < RazlikaKandidata)
+            // dva bliska kandidata (razlika < 0,05): NULL i kandidati – pogrešan partner je gori od praznog (odluka 14.11.; izuzetak su
+            // nazivi iz tmpSinonimi); v2.9.1: ako samo jedan od bliskih odgovara zemlji iz dokumenta (ili ulozi), bira se on
+            var bliski = lista.Where(x => izbor.o - x.o < RazlikaKandidata).ToList();
+            if (bliski.Count > 1)
             {
-                p.Napomena += "dva bliska kandidata (" + lista[0].z.PaSifra + " " + lista[0].o.ToString("0.00", CultureInfo.InvariantCulture) + ", " + lista[1].z.PaSifra + " "
-                              + lista[1].o.ToString("0.00", CultureInfo.InvariantCulture) + "; razlika < " + RazlikaKandidata.ToString("0.00", CultureInfo.InvariantCulture) + ") – nije upisano";
+                var drDok = (drzave ?? new string[0]).ToList();   // samo zemlja navedena u dokumentu (pravni oblik nije dovoljan)
+                var poZemlji = drDok.Count > 0 ? bliski.Where(x => drDok.Contains(x.z.Drzava)).ToList() : bliski;
+                var poUlozi = poZemlji.Where(x => Uloga(x.z)).ToList();
+                var jedan = poZemlji.Count == 1 ? poZemlji[0] : poUlozi.Count == 1 && poZemlji.Count > 1 ? poUlozi[0] : ((PartnerZapis z, double o)?)null;
+                if (jedan != null && jedan.Value.o >= PragPartnera)
+                {
+                    p.Id = jedan.Value.z.PaSifra; p.Pouzdanost = (int)Math.Round(jedan.Value.o * 85);
+                    p.Napomena += "bliski kandidati – izabran po " + (poZemlji.Count == 1 && drDok.Count > 0 ? "zemlji (" + string.Join("/", drDok) + ")" : "oznaci uloge (" + uloga + ")");
+                    return p;
+                }
+                p.Napomena += "dva bliska kandidata (" + bliski[0].z.PaSifra + " " + bliski[0].o.ToString("0.00", CultureInfo.InvariantCulture) + ", " + bliski[1].z.PaSifra + " "
+                              + bliski[1].o.ToString("0.00", CultureInfo.InvariantCulture) + "; razlika < " + RazlikaKandidata.ToString("0.00", CultureInfo.InvariantCulture) + ") – nije upisano";
                 p.Pouzdanost = (int)Math.Round(izbor.o * 50);
                 return p;
             }
             p.Id = izbor.z.PaSifra; p.Pouzdanost = (int)Math.Round(izbor.o * 100);
+            if (uloga == "prevoznik" && (!izbor.z.Prevoznik || (u.Length == 4 && izbor.z.Uic.Length == 0)))
+                ZaSifarnik.Add("partner postoji, ali nema " + (u.Length == 4 && izbor.z.Uic.Length == 0 ? "UIC " + u : "oznaku Prevoznik") + ": PaSifra " + Oznaka(izbor.z));
+            return p;
+        }
+
+        /// <summary>Država partnera iz šifarnika (PaSifDrzave), prazno ako nije upisana.</summary>
+        public string DrzavaPartnera(int paSifra) => s.Partneri.FirstOrDefault(x => x.PaSifra == paSifra)?.Drzava ?? "";
+
+        /// <summary>Partner sa oznakom Prevoznik = 1 po adresi pošiljaoca maila (domen u nazivu: „cercargo.eu“ → CER …) – samo kandidat za izvođenje.</summary>
+        public Pogodak PrevoznikPoDomenu(string adresa)
+        {
+            var p = new Pogodak { Tekst = adresa ?? "" };
+            var dom = Regex.Match(adresa ?? "", @"@([^@\s>]+)$").Groups[1].Value.ToLowerInvariant();
+            if (dom.Length == 0) return p;
+            var deo = dom.Split('.')[0];
+            // „cercargo“ → „CER“ + „CARGO“: prva reč naziva partnera je početak domena
+            var kand = s.Partneri.Where(z => z.Prevoznik && z.Reci1.Count > 0).Where(z =>
+            {
+                var prva = Slicnost.Osnovno(z.PaNaziv).Split(' ')[0].ToLowerInvariant();
+                return prva.Length >= 3 && deo.StartsWith(prva, StringComparison.Ordinal);
+            }).ToList();
+            if (kand.Count == 0) { p.Napomena = "nema prevoznika za domen " + dom; return p; }
+            p.Kandidati = string.Join("; ", kand.Take(5).Select(z => z.PaSifra + " " + z.PaNaziv + " (" + z.Drzava + ")"));
+            var tld = dom.Substring(dom.LastIndexOf('.') + 1).ToUpperInvariant();
+            var poZemlji = kand.Where(z => z.Drzava == tld || (tld == "EU" && false)).ToList();
+            if (kand.Count == 1) { p.Id = kand[0].PaSifra; p.Pouzdanost = 60; p.Napomena = "pošiljalac maila (" + dom + ")"; }
+            else if (poZemlji.Count == 1) { p.Id = poZemlji[0].PaSifra; p.Pouzdanost = 55; p.Napomena = "pošiljalac maila (" + dom + "), zemlja " + tld; }
+            else p.Napomena = "pošiljalac maila (" + dom + "): više prevoznika – nije upisano";
+            return p;
+        }
+
+        // ------------------------------------------------------------------------------------------- granični prelazi
+
+        /// <summary>
+        /// v2.9.1: granični prelaz (tmpSinonimi tip GRANICA: „KELEBIA“, „0711“, „HU“ → 328 Subotica gr.) iz teksta (naziv prelaza, granični
+        /// kod) ili zemlje susednog prevoznika. Po nazivu/kodu pouzdanost 90, samo po zemlji 60.
+        /// </summary>
+        public Pogodak Granica(string tekst, string zemlja = null)
+        {
+            var p = new Pogodak { Tekst = ((tekst ?? "") + (string.IsNullOrEmpty(zemlja) ? "" : " [" + zemlja + "]")).Trim() };
+            var gr = s.Sinonimi.Where(x => x.Tip == "GRANICA" && s.Stanice.Any(z => z.Id == x.CiljniId)).ToList();
+            if (gr.Count == 0) { p.Napomena = "tabela prelaza (tmpSinonimi GRANICA) je prazna"; return p; }
+            var t = " " + Slicnost.Osnovno(tekst) + " ";
+            // naziv prelaza ili kod (duži tekstovi prvo: „STAMORA MORAVITA“ pre „HU“); oznake zemalja samo iz parametra zemlja
+            foreach (var x in gr.Where(x => x.Tekst.Length > 3 || Regex.IsMatch(x.Tekst, @"^\d+$")).OrderByDescending(x => x.Tekst.Length))
+                if (t.Contains(" " + x.Tekst + " ")) { p.Id = x.CiljniId; p.Pouzdanost = 90; p.Napomena = "granični prelaz „" + x.Tekst + "“"; return p; }
+            foreach (var z in Drzave(zemlja))
+            {
+                var x = gr.FirstOrDefault(y => y.Tekst == z);
+                if (x != null) { p.Id = x.CiljniId; p.Pouzdanost = 60; p.Napomena = "granični prelaz samo po zemlji susednog prevoznika (" + z + ")"; return p; }
+            }
+            p.Napomena = "granični prelaz nije prepoznat";
             return p;
         }
 
         // ------------------------------------------------------------------------------------------- NHM
 
+        private string OpisNhm(NhmZapis z) => z.Id + " " + z.Prikaz + " " + PodaciPosla.Skrati(z.Naziv, 60);
+
         /// <summary>
-        /// NHM (tačka 2.3): šifra iz dokumenta (6 cifara, npr. 252010) – prvo tačno poklapanje sa Broj bez razmaka, pa po prve 4 cifre;
-        /// više redova iste 4-cifrene šifre („9922 10“ / „9922 40“) – onaj čija podgrupa odgovara 5. i 6. cifri, inače najmanji ID.
+        /// v2.9.1 (tačka 3.1): NHM iz šifre (samo cifre) → ID iz planiranje.tmpNHM. 8 cifara → tačan Kod8; inače redovi sa istim Kod6:
+        /// tačno jedan → taj red; nijedan ili više → red grupe Kod4 (Nivo 4); bez Kod4 → NULL i kandidati.
         /// </summary>
         public Pogodak Nhm(string sifra)
         {
             var d = Regex.Replace(sifra ?? "", @"\D", "");
             var p = new Pogodak { Tekst = sifra ?? "" };
             if (d.Length < 4) { p.Napomena = "NHM nije pročitan"; return p; }
-            string B(NhmZapis z) => Regex.Replace(z.Broj ?? "", @"\s", "");
-            var tacno = s.Nhm.Where(z => B(z) == d).OrderBy(z => z.Id).FirstOrDefault();
-            if (tacno != null) { p.Id = tacno.Id; p.Pouzdanost = 100; return p; }
+            if (s.Nhm.Count == 0) { p.Napomena = "šifarnik planiranje.tmpNHM nije učitan"; return p; }
+            if (d.Length > 8) d = d.Substring(0, 8);
+            if (d.Length == 8 && s.Nhm.FirstOrDefault(z => z.Kod8 == d) is NhmZapis t8) { p.Id = t8.Id; p.Pouzdanost = 100; p.Napomena = "Kod8 " + t8.Prikaz; return p; }
             var d4 = d.Substring(0, 4);
-            var grupa = s.Nhm.Where(z => B(z).Length >= 4 && (B(z).Substring(0, 4) == d4 || B(z).Split('/').Any(x => x == d4))).OrderBy(z => z.Id).ToList();
-            if (grupa.Count == 0) { p.Napomena = "NHM " + d + " nije u šifarniku"; return p; }
-            var cetiri = grupa.FirstOrDefault(z => B(z) == d4);
-            var pod = d.Length >= 6 ? grupa.FirstOrDefault(z => B(z).Length == 6 && B(z).Substring(4, 2) == d.Substring(4, 2)) : null;
-            var izbor = pod ?? cetiri ?? grupa[0];
-            p.Id = izbor.Id; p.Pouzdanost = pod != null || cetiri != null ? 95 : 70;
-            if (grupa.Count > 1) p.Kandidati = string.Join("; ", grupa.Take(4).Select(z => z.Id + " " + z.Broj + " " + z.Naziv));
-            if (pod == null && cetiri == null) p.Napomena = "više redova za " + d4 + ", podgrupa " + (d.Length >= 6 ? d.Substring(4, 2) : "?") + " ne postoji – izabran najmanji ID " + izbor.Id;
+            if (d.Length >= 6)
+            {
+                var d6 = d.Substring(0, 6);
+                var k6 = s.Nhm.Where(z => z.Kod6 == d6 && z.Nivo >= 6).ToList();
+                if (k6.Count == 1) { p.Id = k6[0].Id; p.Pouzdanost = 95; p.Napomena = "Kod6 " + d6 + " → " + k6[0].Prikaz; return p; }
+                if (k6.Count > 1) p.Kandidati = string.Join("; ", k6.Take(4).Select(OpisNhm));
+                p.Napomena = "Kod6 " + d6 + (k6.Count == 0 ? " ne postoji" : ": " + k6.Count + " redova") + " – ";
+            }
+            var g = s.Nhm.Where(z => z.Kod4 == d4 && z.Nivo == 4).OrderBy(z => z.Id).FirstOrDefault();
+            if (g != null) { p.Id = g.Id; p.Pouzdanost = d.Length == 4 ? 100 : 85; p.Napomena += "grupa " + d4; return p; }
+            var sl = s.Nhm.Where(z => z.Kod4 == d4).ToList();
+            if (sl.Count == 0) sl = s.Nhm.Where(z => z.Kod8.StartsWith(d.Substring(0, 2), StringComparison.Ordinal) && z.Nivo <= 4).ToList();
+            p.Kandidati = string.Join("; ", sl.Take(3).Select(OpisNhm));
+            p.Napomena += "NHM " + d + ": grupa " + d4 + " nije u tarifi";
             return p;
         }
+
+        private static readonly HashSet<string> NhmStop = new HashSet<string>
+        {
+            "ILI", "SVE", "VRSTE", "OSIM", "THE", "AND", "FOR", "BULK", "RINFUZA", "RASUTO", "TERET", "ROBA", "NEW", "USED", "OSTALO", "OSTALI", "WAGON", "KOLA", "VAGON",
+        };
+
+        /// <summary>
+        /// v2.9.1 (tačka 3.1.2): NHM po nazivu robe kada šifre nema – tmpSinonimi (tip NHM, CiljniID = tmpNHM.ID), pa reči naziva u
+        /// nazivu iz tarife (NazivNorm). Jedan kandidat → njegov red; više kandidata iste grupe → red Kod4; ostalo → NULL i kandidati.
+        /// </summary>
+        public Pogodak NhmPoNazivu(string naziv)
+        {
+            var p = new Pogodak { Tekst = (naziv ?? "").Trim() };
+            var n = Slicnost.Osnovno(naziv);
+            if (n.Length < 3) { p.Napomena = "naziv robe nije pročitan"; return p; }
+            var sin = s.Sinonimi.FirstOrDefault(x => x.Tip == "NHM" && x.Tekst == n && s.Nhm.Any(z => z.Id == x.CiljniId));
+            if (sin != null) { p.Id = sin.CiljniId; p.Pouzdanost = 100; p.Napomena = "sinonim (tmpSinonimi)"; return p; }
+            if (s.Nhm.Count == 0) { p.Napomena = "šifarnik planiranje.tmpNHM nije učitan"; return p; }
+            var reci = n.Split(' ').Where(w => w.Length >= 3 && !NhmStop.Contains(w) && !Regex.IsMatch(w, @"\d")).Distinct().ToList();
+            if (reci.Count == 0 || reci.Count > 6) { p.Napomena = "naziv robe nije upotrebljiv za traženje"; return p; }
+            bool Rec(NhmZapis z, string w) => z.Reci.Contains(w) || (w.Length >= 5 && z.Reci.Any(x => x.Length >= 5 && (x.StartsWith(w.Substring(0, Math.Min(w.Length, x.Length) - 1), StringComparison.Ordinal) || w.StartsWith(x.Substring(0, x.Length - 1), StringComparison.Ordinal))));
+            var kand = s.Nhm.Where(z => z.Nivo >= 4 && reci.All(w => Rec(z, w))).OrderBy(z => z.Reci.Count).ThenBy(z => z.Nivo).ToList();
+            if (kand.Count == 0) { p.Napomena = "naziv robe „" + p.Tekst + "“ nije pronađen u tarifi (strani naziv → tmpSinonimi tip NHM)"; return p; }
+            p.Kandidati = string.Join("; ", kand.Take(3).Select(OpisNhm));
+            if (kand.Count == 1) { p.Id = kand[0].Id; p.Pouzdanost = 80; p.Napomena = "po nazivu robe"; return p; }
+            var grupe = kand.Select(z => z.Kod4).Distinct().ToList();
+            if (grupe.Count == 1 && s.Nhm.FirstOrDefault(z => z.Kod4 == grupe[0] && z.Nivo == 4) is NhmZapis g)
+            { p.Id = g.Id; p.Pouzdanost = 75; p.Napomena = "po nazivu robe: " + kand.Count + " redova iste grupe " + grupe[0]; return p; }
+            p.Napomena = "po nazivu robe: " + kand.Count + " kandidata u " + grupe.Count + " grupa – nije upisano";
+            return p;
+        }
+
+        /// <summary>Red tmpNHM po ID-u (null ako ga nema).</summary>
+        public NhmZapis NhmRed(int? id) => id.HasValue ? s.Nhm.FirstOrDefault(z => z.Id == id.Value) : null;
 
         /// <summary>NHM sa 4 cifre (VRNP u stavkama teretnice), npr. „1001“.</summary>
         public static string Nhm4(string sifra)

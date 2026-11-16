@@ -1,6 +1,7 @@
 ﻿/* =====================================================================
    OP_911_tmp_Brisanje.sql
-   Briše privremene tabele agenta CimProvera (OP_910_tmp_Kreiranje.sql, sa sinonimima iz OP_914_tmp_Sinonimi.sql) i forme iz
+   Briše privremene tabele agenta CimProvera (OP_910_tmp_Kreiranje.sql, sa sinonimima iz OP_914_tmp_Sinonimi.sql,
+   izmene iz OP_916_tmp_Izmene.sql i šifarnik NHM iz OP_917_tmp_NHM_Podaci.sql) i forme iz
    OP_912_tmp_Forme.sql.
 
    - Briše samo tabele sa spiska ispod (planiranje.tmp*), ne sve tmp% tabele u šemi.
@@ -35,6 +36,7 @@ IF OBJECT_ID(N'planiranje.tmpTeretnica',       N'U') IS NOT NULL DROP TABLE plan
 IF OBJECT_ID(N'planiranje.tmpJobs',            N'U') IS NOT NULL DROP TABLE planiranje.tmpJobs;
 IF OBJECT_ID(N'planiranje.tmpDokument',        N'U') IS NOT NULL DROP TABLE planiranje.tmpDokument;
 IF OBJECT_ID(N'planiranje.tmpSinonimi',        N'U') IS NOT NULL DROP TABLE planiranje.tmpSinonimi;
+IF OBJECT_ID(N'planiranje.tmpNHM',             N'U') IS NOT NULL DROP TABLE planiranje.tmpNHM;   -- OP_916 / OP_917
 
 COMMIT TRANSACTION;
 PRINT N'OP_911_tmp_Brisanje: gotovo.';

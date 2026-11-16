@@ -135,7 +135,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         private static List<Strana> ProcitajTekst(byte[] pdf, Ocr ocr, int maxStrana, bool uvekOcr, Func<IEnumerable<Rec>, int> brojSidara, bool izWorda = false)
         {
             var rez = new List<Strana>();
-            using (var doc = PdfDocument.Open(pdf))
+            // v2.9.1 (5.5): blaži režim – PDF bez ugrađenog fonta („Could not find the font with name /Helvetica“) se čita, strana bez teksta ide na OCR
+            using (var doc = PdfDocument.Open(pdf, new ParsingOptions { UseLenientParsing = true, SkipMissingFonts = true }))
             {
                 string BezDvostrukihSlova(string t, IReadOnlyList<UglyToad.PdfPig.Content.Letter> slova)
                 {

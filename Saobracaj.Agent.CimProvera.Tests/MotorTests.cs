@@ -637,7 +637,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         public void Vise_listova_isti_nalaz_jednom_u_poruci()
         {
             var a = IspravanCim(); a.R29.Datum = ""; a.RedniBroj = 1;
-            var b = IspravanCim(); b.R29.Datum = ""; b.RedniBroj = 2;
+            var b = IspravanCim(); b.R29.Datum = ""; b.RedniBroj = 2; b.R62.Broj = "15890-0";   // v2.9.1: različita r62 – dva lista (ista r62 = kopija)
             var u = new UlazProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cim, Fajl = "TCDD.pdf", Cim = { a, b } } }, RezimKp = "kp", ReferentniDatum = Danas };
             var r = new Motor(pravila).Proveri(u);
             Assert.AreEqual(2, r.Listovi.Count);
@@ -646,6 +646,20 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // v2.8: nalazi grupisani po listu – isti nalaz za sve listove ide pod podnaslov „Svi tovarni listovi“
             StringAssert.Contains(telo, "— Svi tovarni listovi —");
             StringAssert.Contains(Izvestaj.Html(r, pravila, false), "Svi tovarni listovi");
+        }
+
+        [TestMethod]
+        public void V291_Kopije_istog_lista_provera_jednom()
+        {
+            // „WAGON 1 stampa.pdf“ str. 1–5: original, faktura, list prijema… sa istom r62 – jedan tovarni list u proveri i izveštaju
+            var a = IspravanCim(); a.RedniBroj = 1;
+            var b = IspravanCim(); b.RedniBroj = 2;
+            var c = IspravanCim(); c.RedniBroj = 3;
+            var u = new UlazProvere { Dokumenti = { new Dokument { Tip = TipDokumenta.Cim, Fajl = "WAGON 1 stampa.pdf", Cim = { a, b, c } } }, RezimKp = "kp", ReferentniDatum = Danas };
+            var r = new Motor(pravila).Proveri(u);
+            Assert.AreEqual(1, r.Listovi.Count);
+            Assert.AreEqual(2, r.KopijeListova.Count, "kopije ostaju za upis (najbolje pročitano polje)");
+            StringAssert.Contains(r.Listovi[0].Oznaka, "(+2 kopije)");
         }
 
         [TestMethod]

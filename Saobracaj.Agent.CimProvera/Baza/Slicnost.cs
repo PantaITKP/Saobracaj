@@ -36,6 +36,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
             new[] { "D", "O", "O" }, new[] { "S", "R", "O" }, new[] { "S", "P", "A" }, new[] { "S", "R", "L" }, new[] { "SP", "Z", "O", "O" },
             new[] { "SP", "ZOO" }, new[] { "A", "S" }, new[] { "A", "D" }, new[] { "D", "D" }, new[] { "S", "A" }, new[] { "A", "G" }, new[] { "S", "C" },
             new[] { "L", "L", "C" }, new[] { "N", "V" }, new[] { "B", "V" }, new[] { "Z", "R", "T" }, new[] { "K", "F", "T" }, new[] { "E", "O", "O", "D" }, new[] { "O", "O", "D" },
+            // v2.9.1: „Joint stock company“, „J.P.“ (javno preduzeće), „Public enterprise“
+            new[] { "JOINT", "STOCK", "COMPANY" }, new[] { "J", "P" }, new[] { "PUBLIC", "ENTERPRISE" },
         };
 
         private static readonly HashSet<string> PravneReci = new HashSet<string>
@@ -49,6 +51,15 @@ namespace Saobracaj.Agent.CimProvera.Baza
             "BEOGRAD", "BELGRADE", "BELGRAD", "BG", "ZAGREB", "BUDAPEST", "BUCURESTI", "BUCHAREST", "BRATISLAVA", "LJUBLJANA", "SOFIA", "SOFIJA", "WIEN", "VIENNA", "PRAHA", "PRAGUE",
         };
 
+        /// <summary>
+        /// v2.9.1: nazivi zemalja uz naziv firme („DP World Serbia“ = „DP WORLD“) – izostavljaju se samo kada ostanu bar dve druge reči
+        /// („CER Hungary“ i „CER Slovakia“ ostaju različiti).
+        /// </summary>
+        private static readonly HashSet<string> Zemlje = new HashSet<string>
+        {
+            "SERBIA", "SRBIJA", "SRBIJE", "SERBIEN", "HUNGARY", "MAGYARORSZAG", "ROMANIA", "CROATIA", "HRVATSKA", "SLOVAKIA", "AUSTRIA", "GERMANY", "DEUTSCHLAND", "POLAND", "POLSKA", "BULGARIA", "TURKEY",
+        };
+
         /// <summary>Naziv partnera za poređenje: osnovno, bez delova u zagradama, pravnih oblika i gradova.</summary>
         public static string Partner(string s, string grad = null)
         {
@@ -59,6 +70,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                     if (Enumerable.Range(0, niz.Length).All(j => reci[i + j] == niz[j])) { reci.RemoveRange(i, niz.Length); i--; }
             var g = Osnovno(grad);
             reci = reci.Where(x => !PravneReci.Contains(x) && !Gradovi.Contains(x) && x != g && x.Length >= 2).ToList();
+            if (reci.Count(x => !Zemlje.Contains(x)) >= 2) reci = reci.Where(x => !Zemlje.Contains(x)).ToList();
             return string.Join(" ", reci);
         }
 

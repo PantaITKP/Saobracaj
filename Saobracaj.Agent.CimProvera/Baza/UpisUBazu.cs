@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -43,9 +43,12 @@ namespace Saobracaj.Agent.CimProvera.Baza
     /// v2.9.0: upis obrađenog maila u privremene tabele planiranje.tmp* (tačka 4 zahteva). Jedan mail = jedna transakcija; greška
     /// → rollback i izuzetak pozivaocu (provera i izveštaj se ne menjaju). Agent piše samo u planiranje.tmp*, šifarnike samo čita.
     /// </summary>
-    internal sealed class UpisUBazu
+    internal sealed partial class UpisUBazu
     {
         public const string Korisnik = "CimProvera";
+        /// <summary>Prefiks tmp tabela; za lokalne probe „planiranje.tmpProba“ (iste tabele pod drugim imenom, validate --prefiks).</summary>
+        public const string PodrazumevaniPrefiks = "planiranje.tmp";
+        public string Prefiks = PodrazumevaniPrefiks;
         private const int DanaZaVezu = 10;
         private readonly string konekcija;
         private readonly Log log;
@@ -59,6 +62,28 @@ namespace Saobracaj.Agent.CimProvera.Baza
 
         /// <summary>Šifarnici (za testove se mogu zadati unapred).</summary>
         public Sifarnici Sifarnici { get => sif; set { sif = value; pk = value == null ? null : new Poklapanje(value); } }
+
+        /// <summary>v2.9.1: partneri za dopunu šifarnika (nije nađen / nema UIC / nema oznaku Prevoznik) – dnevna interna lista.</summary>
+        public IEnumerable<string> ZaSifarnik => pk?.ZaSifarnik ?? Enumerable.Empty<string>();
+
+        /// <summary>v2.9.1: SRB kodovi stanica iz dokumenata kojih nema u šifarniku: kod → „naziv iz dokumenta;predlog“.</summary>
+        public IDictionary<string, string> KodoviBezSifre => pk?.KodoviBezSifre ?? new SortedDictionary<string, string>();
+
+        /// <summary>CSV predlog kodova stanica (kod;naziv u dokumentu;predlog ID) – šifarnik se ne menja.</summary>
+        public static void SacuvajPredlogKodova(IDictionary<string, string> kodovi, string put)
+        {
+            if (kodovi.Count == 0) return;
+            var postojeci = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            if (System.IO.File.Exists(put))
+                foreach (var red in System.IO.File.ReadAllLines(put, Encoding.UTF8).Skip(1))
+                {
+                    var i = red.IndexOf(';');
+                    if (i > 0) postojeci[red.Substring(0, i)] = red.Substring(i + 1);
+                }
+            foreach (var kv in kodovi) if (!postojeci.ContainsKey(kv.Key)) postojeci[kv.Key] = kv.Value;
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(put));
+            System.IO.File.WriteAllLines(put, new[] { "Kod;NazivUDokumentu;PredlogStanica" }.Concat(postojeci.Select(kv => kv.Key + ";" + kv.Value)), new UTF8Encoding(true));
+        }
 
         public static SqlConnection Otvori(string konekcija)
         {
@@ -80,7 +105,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             c = svoja ? Otvori(konekcija) : spoljna.Connection;
             try
             {
-                if (sif == null) Sifarnici = Sifarnici.Ucitaj(c, log, spoljna);
+                if (sif == null) Sifarnici = Sifarnici.Ucitaj(c, log, spoljna, Prefiks);
                 tx = svoja ? c.BeginTransaction(IsolationLevel.ReadCommitted) : spoljna;
                 try
                 {
@@ -106,7 +131,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         private void UpisiMail(MailZaUpis m, IshodUpisa ishod)
         {
             var r = m.Provera;
-            if (r == null) return;
+            // v2.9.1 (5.7): ponovljeni mail (isti prilozi, odgovor se ne šalje) – prijem se beleži (BrojPrijema) i tekst maila ide u Napomenu posla
+            if (r == null) { UpisiPonovljeni(m, ishod); return; }
             var dokumenti = r.Dokumenti.Where(d => !d.IzDosijea).ToList();
             // 1. prijem: svaki prilog (isti heš = isti red)
             var fajlovi = new List<Prilog>();
@@ -121,16 +147,27 @@ namespace Saobracaj.Agent.CimProvera.Baza
             }
             int? DokId(string fajl) => dokId.Where(kv => IstiFajl(fajl, kv.Key)).Select(kv => (int?)kv.Value).FirstOrDefault();
 
-            // 2. tovarni listovi → poslovi
+            // 2. tovarni listovi → kopije istog lista se spajaju (4.1) → listovi istog voza su jedan posao (4.2, 4.3)
             var posloviMaila = new List<(int id, PodaciPosla p)>();
-            foreach (var l in r.Listovi.Where(x => x.Cim != null && string.IsNullOrEmpty(x.Cim.NeprepoznatObrazac)))
+            var listovi = new List<ListPosla>();
+            foreach (var l in r.Listovi.Concat(r.KopijeListova).Where(x => x.Cim != null && string.IsNullOrEmpty(x.Cim.NeprepoznatObrazac)))
             {
-                var p = PosaoIzDokumenata.Napravi(l.Cim, l.Dokument, l, pk, kp, m.Naslov);
+                var p = PosaoIzDokumenata.Napravi(l.Cim, l.Dokument, l, pk, kp, m.Naslov, m.Posiljalac);
                 if (p.KljucPosiljke == null) { ishod.Napomene.Add(l.Oznaka + ": tovarni list bez ključa pošiljke – posao nije upisan"); continue; }
                 var did = DokId(l.Dokument?.Fajl);
-                var id = UpisiPosao(p, did, m, "NOVA_VERZIJA_CIM", ishod);
-                posloviMaila.Add((id, p));
-                if (did.HasValue) Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j, KljucPosiljke = @k WHERE ID = @d", "@j", id, "@k", PodaciPosla.Skrati(p.KljucPosiljke, 200), "@d", did.Value);
+                listovi.Add(new ListPosla { P = p, DokId = did, Oznaka = l.Oznaka, SviDokumenti = did.HasValue ? new List<int> { did.Value } : new List<int>() });
+            }
+            var spojeni = SpojiKopije(listovi);
+            if (spojeni.Count < listovi.Count) ishod.Napomene.Add(listovi.Count + " listova = " + spojeni.Count + " tovarnih listova (kopije spojene)");
+            foreach (var voz in Vozovi(spojeni))
+            {
+                var id = UpisiVoz(voz, m, ishod);
+                foreach (var l in voz.Listovi)
+                {
+                    posloviMaila.Add((id, l.P));
+                    foreach (var did in l.SviDokumenti.Distinct())
+                        Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j, KljucPosiljke = ISNULL(KljucPosiljke, @k) WHERE ID = @d", "@j", id, "@k", PodaciPosla.Skrati(l.P.KljucPosiljke, 200), "@d", did);
+                }
             }
 
             // 3. spiskovi kola → teretnice (spiskovi istih kola u istom mailu – Excel i PDF – su jedan spisak)
@@ -149,7 +186,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 var jobId = PoveziSpisak(spisak, glavni, posloviMaila, m);
                 var tid = UpisiTeretnicu(spisak, glavni, jobId, g.Select(x => DokId(x.Fajl)).FirstOrDefault(x => x.HasValue), m, ishod);
                 foreach (var d in g) if (DokId(d.Fajl) is int di) Izvrsi("UPDATE planiranje.tmpDokument SET TeretnicaID = @t, JobID = ISNULL(JobID, @j) WHERE ID = @d", "@t", tid, "@j", (object)jobId ?? DBNull.Value, "@d", di);
-                if (jobId.HasValue) { Stanica2IzSpiska(jobId.Value, g.Select(x => x.Spisak[0].OtpravnaTekst).Concat(g.Select(x => System.IO.Path.GetFileNameWithoutExtension(x.Fajl ?? ""))).Concat(new[] { m.Naslov }).ToList(), DokId(glavni.Fajl)); PosaoIzTeretnice(jobId.Value, tid, DokId(glavni.Fajl), "SPISAK_KOLA", ishod); }
+                if (jobId.HasValue) { Stanica2IzSpiska(jobId.Value, g.Select(x => x.Spisak[0].OtpravnaTekst).Concat(g.Select(x => System.IO.Path.GetFileNameWithoutExtension(x.Fajl ?? ""))).Concat(new[] { m.Naslov }).ToList(), DokId(glavni.Fajl)); PosaoIzTeretnice(jobId.Value, tid, DokId(glavni.Fajl), "SPISAK_KOLA", ishod, spisak); }
             }
 
             // 3a. spisak koji je stigao pre tovarnog lista: nepovezane teretnice za nove/izmenjene poslove
@@ -241,17 +278,45 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
 
         // ------------------------------------------------------------------------------------------- posao
 
-        /// <summary>Blok napomene: „&lt;datum vreme&gt; &lt;pošiljalac&gt;: &lt;naslov&gt;“ + telo bez citata i potpisa.</summary>
+        /// <summary>Zaglavlje bloka napomene za mail: „&lt;datum vreme&gt; &lt;pošiljalac&gt;: &lt;naslov&gt;“ (po njemu se mail upisuje tačno jednom).</summary>
+        internal static string ZaglavljeNapomene(MailZaUpis m) =>
+            m.Primljeno.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) + " " + m.Posiljalac + ": " + Regex.Replace(m.Naslov ?? "", @"\s+", " ").Trim();
+
+        private static readonly Regex Pozdrav = new Regex(@"(?i)^\s*(s\s+po[šs]tovanjem|srda[čc]an\s+pozdrav|s\s+pozdravom|pozdrav|lp|best\s+regards|kind\s+regards|regards|br|thanks?\s*(?:&|and)\s*regards|mit\s+freundlichen\s+gr(?:ü|u)(?:ß|ss)en|mfg|viele\s+gr(?:ü|u)(?:ß|ss)e|üdvözlettel|udvozlettel|cu\s+stim[aă]|cordiali\s+saluti|saygılarımla|z\s+pozdravem|s\s+pozdravom)[\s,.!]*$");
+        private static readonly Regex Odricanje = new Regex(@"(?i)^\s*(disclaimer|confidential|this (e-?mail|message) (and any|is|may)|ova (poruka|e-?mail)|napomena o poverljivosti|the information (contained|in this)|diese (e-?mail|nachricht)|before printing|please consider the environment)");
+
+        /// <summary>
+        /// Blok napomene: zaglavlje + telo bez citata; v2.9.1 (5.8): posle pozdrava („S poštovanjem“, „Best regards“, „Mit freundlichen
+        /// Grüßen“, „S pozdravom“, „Üdvözlettel“…) ostaje samo ime (prvi sledeći red), bez potpisa, pravnih upozorenja, linkova i telefona.
+        /// </summary>
         internal static string BlokNapomene(MailZaUpis m)
         {
             var telo = Obrada.TekstPosiljaoca("", m.Telo ?? "");
             var redovi = telo.Replace("\r", "").Split('\n').Select(x => x.TrimEnd()).ToList();
-            // bez praznih redova na početku/kraju i bez odricanja odgovornosti
-            var kraj = redovi.FindIndex(x => Regex.IsMatch(x, @"(?i)^\s*(disclaimer|confidential|this (e-?mail|message) (and any|is|may)|ova (poruka|e-?mail)|napomena o poverljivosti)"));
+            var kraj = redovi.FindIndex(x => Odricanje.IsMatch(x));
             if (kraj >= 0) redovi = redovi.Take(kraj).ToList();
+            var poz = redovi.FindIndex(x => Pozdrav.IsMatch(x));
+            if (poz >= 0)
+            {
+                // ime posle pozdrava (TekstPosiljaoca se zaustavlja na pozdravu – ime se uzima iz celog tela)
+                var sirovi = (m.Telo ?? "").Replace("\r", "").Split('\n').Select(x => x.Trim()).ToList();
+                var ip = sirovi.FindIndex(x => Pozdrav.IsMatch(x));
+                var ime = redovi.Skip(poz + 1).FirstOrDefault(x => x.Trim().Length > 0) ?? (ip >= 0 ? sirovi.Skip(ip + 1).FirstOrDefault(x => x.Length > 0) : null);
+                redovi = redovi.Take(poz + 1).ToList();
+                if (ime != null && ime.Trim().Length <= 60 && !Regex.IsMatch(ime, @"\d|@|http|www\.")) redovi.Add(ime.Trim());
+            }
+            redovi = redovi.Select(x => Regex.Replace(x, @"(?i)\b(?:https?://|www\.)\S+|<mailto:[^>]+>|<https?:[^>]+>", "").TrimEnd())
+                .Where(x => !Regex.IsMatch(x, @"^\s*(?:(?:tel|phone|mob|mobile|fax|t|m|f|e|e-mail|email)\.?\s*[:.]?\s*)?[+\d][\d\s/().\-]{6,}\s*$", RegexOptions.IgnoreCase)).ToList();
             var t = Regex.Replace(string.Join("\n", redovi), @"\n{3,}", "\n\n").Trim();
-            return m.Primljeno.ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) + " " + m.Posiljalac + ": " + Regex.Replace(m.Naslov ?? "", @"\s+", " ").Trim()
-                   + (t.Length > 0 ? "\n" + t : "");
+            return ZaglavljeNapomene(m) + (t.Length > 0 ? "\n" + t : "");
+        }
+
+        /// <summary>Napomena sa blokom maila na vrhu; null kada je mail već upisan (isto zaglavlje) – svaki mail tačno jednom.</summary>
+        private static string NovaNapomena(int jobId, MailZaUpis m, string blok, string stara)
+        {
+            var z = ZaglavljeNapomene(m);
+            if (!string.IsNullOrEmpty(stara) && stara.Contains(z)) return null;
+            return SpojiNapomenu(blok, stara);
         }
 
         /// <summary>Novi blok na početak, stari ostaju (najnoviji gore); preko 2000 znakova skraćuju se najstariji blokovi („…“).</summary>
@@ -261,20 +326,22 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
             return t.Length <= 2000 ? t : t.Substring(0, 1999) + "…";
         }
 
-        /// <summary>Nov posao (ključ ne postoji) ili nova verzija (ključ postoji): samo promenjena polja, Verzija + 1, istorija.</summary>
-        private int UpisiPosao(PodaciPosla p, int? dokId, MailZaUpis m, string razlog, IshodUpisa ishod)
+        /// <summary>
+        /// Nov posao (<paramref name="postojeci"/> null) ili nova verzija postojećeg: samo promenjena polja, Verzija + 1, istorija.
+        /// Ključ posla se ne menja (posao voza ima ključ glavnog lista grupe 1). Tekst maila ide u Napomenu tačno jednom (v2.9.1).
+        /// </summary>
+        private int UpisiPosao(PodaciPosla p, int? postojeci, int? dokId, MailZaUpis m, string razlog, IshodUpisa ishod)
         {
-            var id = Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", PodaciPosla.Skrati(p.KljucPosiljke, 200));
-            // isti list sa drugačije pročitanim ključem (OCR pošiljaoca na drugom skenu): isti broj voza, ista otpravna i uputna u 10 dana
-            var poVozu = false;
-            if (id == null && p.BrojVoza.Length > 0 && p.V["OtpravnaID"] is int o0 && p.V["UputnaID"] is int u0)
-            {
-                var isti = NedavniPoslovi().Where(j => ExcelCitac.BrojVoza(j.Referenca) == p.BrojVoza && j.Otpravna == o0 && j.Uputna == u0).OrderByDescending(j => j.Id).FirstOrDefault();
-                if (isti != null) { id = isti.Id; poVozu = true; ishod.Napomene.Add("tovarni list voza " + p.BrojVoza + " povezan sa poslom " + isti.Id + " (isti voz i relacija, drugi ključ)"); }
-            }
+            object id = postojeci;
+            var poVozu = true;
             var blok = BlokNapomene(m);
+            if (p.Napomene.Count > 0) blok += "\n[agent] " + string.Join("\n[agent] ", p.Napomene);
             if (id == null)
             {
+                // ključ posla je jedinstven (UX_tmpJobs_Kljuc): drugi voz sa istim ključem „ref:“ dobija nastavak „#2“, „#3“…
+                if (p.V.TryGetValue("KljucPosiljke", out var kv0) && kv0 is string k0 && k0.Length > 0)
+                    for (int n = 2; Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", p.V["KljucPosiljke"]) != null && n < 50; n++)
+                        p.V["KljucPosiljke"] = PodaciPosla.Skrati(k0, 195) + "#" + n;
                 var kol = PosaoIzDokumenata.Kolone.Where(k => p.V.ContainsKey(k)).ToList();
                 var sql = "INSERT planiranje.tmpJobs (" + string.Join(", ", kol) + ", Napomena, Kreirao, Verzija, PoslednjiDokumentID) OUTPUT INSERTED.ID VALUES ("
                           + string.Join(", ", kol.Select(k => "@" + k)) + ", @Napomena, @Kreirao, 1, @dok)";
@@ -306,13 +373,15 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
                     Istorija(jid, null, k, Tekst(stara), Tekst(nova), dokId, razlog, "u novom dokumentu nije pročitano – zadržana ranija vrednost");
                 }
             }
+            var napomena = NovaNapomena(jid, m, blok, stari["Napomena"] as string);
             if (promene.Count == 0)
             {
-                Izvrsi("UPDATE planiranje.tmpJobs SET PoslednjiDokumentID = ISNULL(@dok, PoslednjiDokumentID) WHERE ID = @id", "@dok", (object)dokId ?? DBNull.Value, "@id", jid);
+                Izvrsi("UPDATE planiranje.tmpJobs SET PoslednjiDokumentID = ISNULL(@dok, PoslednjiDokumentID)" + (napomena != null ? ", Napomena = @nap" : "") + " WHERE ID = @id",
+                    "@dok", (object)dokId ?? DBNull.Value, "@id", jid, "@nap", (object)napomena ?? DBNull.Value);
                 ishod.IstihPoslova++;
                 return jid;
             }
-            PrimeniPromene(jid, stari, p, promene, rucno, dokId, razlog, SpojiNapomenu(blok, stari["Napomena"] as string));
+            PrimeniPromene(jid, stari, p, promene, rucno, dokId, razlog, napomena);
             ishod.IzmenjenihPoslova++;
             return jid;
         }
@@ -490,6 +559,8 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
                 var nhm = Poklapanje.Nhm4(k.Nhm.Length > 0 ? k.Nhm : s.NhmZaglavlje.Length > 0 ? s.NhmZaglavlje : nhmPosla);
                 var bruto = k.BrutoKg; var tara = k.TaraKg; var neto = k.NetoKg;
                 if (neto == null && bruto.HasValue && tara.HasValue) neto = bruto - tara;
+                // v2.9.1: prazna kola (9921/9922) sa jednom masom na spisku – to je tara kola
+                if ((k.Prazna || nhm.StartsWith("9921") || nhm.StartsWith("9922")) && tara == null && neto > 0) { tara = neto; neto = 0; }
                 var serija = k.Serija.Length > 0 ? k.Serija : BrojKolaUic.Slovo(k.Broj);
                 l.Add(new StavkaVrednosti
                 {
@@ -633,7 +704,7 @@ VALUES (@rb, @t, @bk, @s, @o, @du, @ta, @ne, 0, 0, 0, 0, 0, @v, @rid, @pr, 0, 0,
         private string NhmPosla(int jobId)
         {
             var id = Skalar("SELECT NHM1 FROM planiranje.tmpJobs WHERE ID = @j", "@j", jobId);
-            return id == null || id is DBNull ? "" : sif.Nhm.FirstOrDefault(z => z.Id == Convert.ToInt32(id))?.Broj ?? "";
+            return id == null || id is DBNull ? "" : sif.Nhm.FirstOrDefault(z => z.Id == Convert.ToInt32(id))?.Kod8 ?? "";
         }
 
         /// <summary>
@@ -649,53 +720,6 @@ VALUES (@rb, @t, @bk, @s, @o, @du, @ta, @ne, 0, 0, 0, 0, 0, @v, @rid, @pr, 0, 0,
 UPDATE s SET Otpravna = j.Stanica1ID, Uputna = j.Stanica3ID, Izvozna = j.OtpravnaID, Uvozna = j.UputnaID, Dokument = ISNULL(s.Dokument, @dok), VRNP = ISNULL(s.VRNP, @nhm)
 FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.BrojTeretnice JOIN planiranje.tmpJobs j ON j.ID = t.JobID WHERE t.ID = @t;",
                 "@t", tid, "@dok", otp.Success ? (object)otp.Groups[1].Value : DBNull.Value, "@nhm", nhm.Length > 0 ? (object)nhm : DBNull.Value);
-        }
-
-        /// <summary>Posle povezivanja: posao iz stavki teretnice (BrojKola, Bruto, Neto, Duzina, SerijaKola, NHM, OMBroj), razlog SPISAK_KOLA.</summary>
-        private void PosaoIzTeretnice(int jobId, int tid, int? dokId, string razlog, IshodUpisa ishod)
-        {
-            var s = new SpisakKola();
-            var izvorDuzine = Skalar("SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE TeretnicaID = @t AND Kolona = 'Duzina'", "@t", tid) as string == "istorija" ? "istorija" : "spisak";
-            using (var cmd = Komanda("SELECT BrojKola, ISNULL(Serija, ''), ISNULL(BrojOsovina, 0), Duzina, ISNULL(Tara, 0), ISNULL(Neto, 0), ISNULL(VRNP, ''), ISNULL(RID, '') FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t ORDER BY RB", "@t", tid))
-            using (var r = cmd.ExecuteReader())
-                while (r.Read())
-                {
-                    var tara = Convert.ToDouble(r.GetValue(4)) * 1000; var neto = Convert.ToDouble(r.GetValue(5)) * 1000;   // stavke su u t, spisak u kg
-                    s.Kola.Add(new KolaNaSpisku
-                    {
-                        Broj = BrojKolaUic.Cifre(r.GetString(0)), Serija = r.GetString(1).Length > 1 ? r.GetString(1) : "", Nhm = r.GetString(6), KemlerUn = r.GetString(7),
-                        TaraKg = tara > 0 ? tara : (double?)null, NetoKg = neto > 0 ? neto : (double?)null, DuzinaM = r.IsDBNull(3) ? (double?)null : Convert.ToDouble(r.GetValue(3)), DuzinaIzvor = r.IsDBNull(3) ? "" : izvorDuzine,
-                    });
-                }
-            if (s.Kola.Count == 0) return;
-            var p = PosaoIzDokumenata.IzSpiska(s, pk, NhmPosla(jobId), "");
-            var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId);
-            var rucno = Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND RucnoIzmenjeno = 1", "@id", jobId);
-            // NHM sa spiska samo kada ga spisak ima (inače ostaje NHM tovarnog lista); stavke čuvaju 4 cifre (VRNP) – iste 4 cifre
-            // kao NHM posla ne menjaju podgrupu („9922 10“ iz tovarnog lista ostaje)
-            if (!s.Kola.Any(k => k.Nhm.Length > 0)) { p.V.Remove("NHM1"); p.V.Remove("NHM2"); }
-            string Nhm4Id(object id) => id is int i ? Poklapanje.Nhm4(sif.Nhm.FirstOrDefault(z => z.Id == i)?.Broj) : "";
-            foreach (var k in new[] { "NHM1", "NHM2" })
-                if (p.V.TryGetValue(k, out var nv) && stari.TryGetValue(k, out var sv) && sv != null && Nhm4Id(nv) == Nhm4Id(sv)) p.V.Remove(k);
-            // broj kola u tovarnom listu i na spisku (tačka 7a.3): razlika u istoriju i poreklo
-            // broj kola iz tovarnog lista je u poreklu (rubrika r18/r21) dok ga spisak ne zameni
-            var izCim = Skalar("SELECT Vrednost FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'BrojKola1' AND Rubrika = 'r18/r21'", "@j", jobId);
-            var kolaCim = izCim != null && int.TryParse(Convert.ToString(izCim), out var bk) ? bk : 0;
-            var kolaSpisak = s.Kola.Count;
-            var promene = Uporedi(stari, p.V, PosaoIzDokumenata.KoloneSpiska);
-            var nap = kolaCim > 0 && kolaCim != kolaSpisak ? "Broj kola u tovarnom listu (" + kolaCim + ") ne odgovara spisku kola (" + kolaSpisak + ")" : null;
-            if (nap != null)
-            {
-                ishod.Napomene.Add(nap);
-                var po = p.Poreklo.FirstOrDefault(x => x.Kolona == "BrojKola1");
-                if (po != null) po.Kandidati = nap;
-                if (!promene.Contains("BrojKola1")) Istorija(jobId, tid, "BrojKola1", kolaCim.ToString(), kolaSpisak.ToString(), dokId, razlog, nap);
-            }
-            if (promene.Count == 0) return;
-            foreach (var po in p.Poreklo) if (po.Rubrika != "istorija") po.Rubrika = "spisak";
-            PrimeniPromene(jobId, stari, p, promene, rucno, dokId, razlog, null);
-            if (nap != null && promene.Contains("BrojKola1"))
-                Izvrsi("UPDATE planiranje.tmpJobsIstorija SET Napomena = @n WHERE ID = (SELECT MAX(ID) FROM planiranje.tmpJobsIstorija WHERE JobID = @j AND Kolona = 'BrojKola1')", "@n", nap, "@j", jobId);
         }
 
         /// <summary>Stanica2 (utovarno mesto, „u.m. Pančevo Varoš“) iz zaglavlja spiska, imena fajla i naslova maila – kada posao još nema Stanica2.</summary>
@@ -745,44 +769,6 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
             return n;
         }
 
-        // ------------------------------------------------------------------------------------------- CIT 7
-
-        /// <summary>CIT 7 povezan sa poslom (tačka 4.4): nova uputna (r10/r12) i primalac (r4) kao nova verzija posla, razlog CIT7.</summary>
-        private void PrimeniCit7(Cit7Rezultat c7, int? dokId, MailZaUpis m, IshodUpisa ishod)
-        {
-            if (c7?.Veza == null || c7.Izmene.Count == 0) return;
-            int? jobId = null;
-            if (c7.Veza.Lista?.Cim != null && Ponavljanja.KljucLista(c7.Veza.Lista.Cim) is string k1 && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", PodaciPosla.Skrati(k1, 200)) is object o1) jobId = Convert.ToInt32(o1);
-            if (jobId == null)
-            {
-                var r62 = R62Kljuc(new Identifikacija { Zemlja = c7.Veza.Zemlja, Stanica = c7.Veza.Stanica, Preduzece = c7.Veza.Preduzece, Broj = c7.Veza.Broj });
-                if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", r62) is object o2) jobId = Convert.ToInt32(o2);
-            }
-            if (jobId == null && c7.Veza.Kola.Count > 0 && TeretnicaIstihKola(c7.Veza.Kola, true) is var tk && tk?.jobId != null) jobId = tk.Value.jobId;
-            if (jobId == null) { ishod.Napomene.Add("CIT 7 (" + c7.Fajl + "): posao nije pronađen – samo tmpDokument"); return; }
-            if (dokId.HasValue) Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j WHERE ID = @d", "@j", jobId.Value, "@d", dokId.Value);
-            var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId.Value);
-            var p = new PodaciPosla();
-            var upIzmena = c7.Izmene.Where(x => x.rubrika == "10" || x.rubrika == "12").Select(x => x.nova).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-            bool kraj = stari["UputnaID"] is int u0 && pk.DrzavaStanice(u0) == "SRB";
-            if (upIzmena.Count > 0)
-            {
-                var tekst = string.Join("\n", upIzmena);
-                var sifra = Regex.Match(tekst, @"\d{2}\s?\d{5}-?\d").Value;
-                var st = pk.Stanica(tekst, sifra.Length > 0 ? sifra : null);
-                p.Postavi("UputnaID", st, "CIT 7 r10/r12", c7.Fajl);
-                kraj = st.Id.HasValue && pk.DrzavaStanice(st.Id.Value) == "SRB";
-                if (kraj) p.Postavi("Stanica3ID", st, "CIT 7 r10/r12 (voz se završava u Srbiji)", c7.Fajl);
-            }
-            var prim = c7.Izmene.Where(x => x.rubrika == "4").Select(x => x.nova).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-            if (prim != null && kraj) p.Postavi("PredajeOperateruID", pk.Partner(prim.Split('\n', ',')[0], null, null, "primalac"), "CIT 7 r4 (primalac)", c7.Fajl);
-            var promene = Uporedi(stari, p.V, p.V.Keys.ToList());
-            if (promene.Count == 0) return;
-            var rucno = Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND RucnoIzmenjeno = 1", "@id", jobId.Value);
-            PrimeniPromene(jobId.Value, stari, p, promene, rucno, dokId, "CIT7", SpojiNapomenu(BlokNapomene(m), stari["Napomena"] as string));
-            ishod.IzmenjenihPoslova++;
-        }
-
         // ------------------------------------------------------------------------------------------- SQL pomoćne
 
         private static object N(string s, int max) => string.IsNullOrEmpty(s) ? (object)DBNull.Value : s.Length <= max ? s : s.Substring(0, max - 1) + "…";
@@ -796,7 +782,7 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
 
         private SqlCommand Komanda(string sql, params object[] arg)
         {
-            var cmd = new SqlCommand(sql, c, tx) { CommandTimeout = 120 };
+            var cmd = new SqlCommand(Sifarnici.Tmp(sql, Prefiks), c, tx) { CommandTimeout = 120 };
             for (int i = 0; i + 1 < arg.Length; i += 2)
             {
                 var v = arg[i + 1] ?? DBNull.Value;

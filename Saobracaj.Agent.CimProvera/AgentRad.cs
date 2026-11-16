@@ -71,6 +71,7 @@ namespace Saobracaj.Agent.CimProvera
                 if (!dryRun) stanje.Sacuvaj();
                 return 1;
             }
+            DnevnaListaSifarnika(stanje);
             if (!dryRun) stanje.Sacuvaj();
             log.Info("Kraj: obrađeno " + obradjeno + " poruka; OCR strana " + citac.BrojOcrStrana + ".");
             return 0;
@@ -323,6 +324,8 @@ namespace Saobracaj.Agent.CimProvera
                 if (istiPrilog != null)
                 {
                     log.Info("  UID " + uid.Id + ": isti prilog kao " + istiPrilog.Oznaka + " (" + istiPrilog.Vreme.ToString("dd.MM. HH:mm") + ", " + istiPrilog.Ishod + ") – već obrađeno; ništa se ne šalje.");
+                    // v2.9.1 (5.7): prijem se ipak beleži u tmpDokument, a tekst maila ide u Napomenu posla
+                    UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, null, prilozi, null);
                     ps.Status = "IstiPrilog"; return Korak.Gotova;
                 }
 
@@ -447,7 +450,7 @@ namespace Saobracaj.Agent.CimProvera
         /// </summary>
         private void UpisiUBazu(Stanje stanje, PravilaSkup pravila, MimeMessage m, long uid, string folder, RezultatProvere r, List<(string ime, byte[] sadrzaj)> prilozi, Dosije.Posiljka dosije)
         {
-            if (!cfg.UpisUBazu || r == null || dryRun) return;
+            if (!cfg.UpisUBazu || dryRun) return;   // r == null: ponovljeni mail (isti prilozi) – samo prijem i Napomena
             if (string.IsNullOrEmpty(cfg.Konekcija))
             {
                 log.Upozorenje("  UID " + uid + ": upis u bazu je uključen, ali konekcija nije podešena" + (AgentConfig.OtvorenaKonekcija ? " (ključ Konekcija u otvorenom tekstu se ne koristi – samo Konekcija.dpapi)" : "") + " – preskočeno.");
@@ -713,14 +716,37 @@ namespace Saobracaj.Agent.CimProvera
         /// izveštaji (Slanje.Posalji). Isto upozorenje najviše jednom na <paramref name="sati"/> sati; neuspelo slanje se
         /// ponavlja posle 10 minuta i svaki ishod se vidi u logu.
         /// </summary>
-        private void Upozori(Stanje stanje, string kljuc, string tekst, int sati = 6)
+        /// <summary>
+        /// v2.9.1 (5.3): partneri koje treba dopuniti u šifarniku (nije nađen u Partnerji / nema UIC / nema oznaku Prevoznik) – skupljaju se
+        /// u stanje\za_sifarnik.txt i šalju interno najviše jednom dnevno; SRB kodovi stanica bez šifre → sifarnici\predlog_kodova_stanica.csv.
+        /// </summary>
+        private void DnevnaListaSifarnika(Stanje stanje)
         {
-            if (dryRun) return;
-            if (string.IsNullOrEmpty(cfg.UpozorenjaNa)) { log.Upozorenje("Upozorenje „" + kljuc + "“ nema primaoca (UpozorenjaNa/IzvestajAdresa)."); return; }
+            if (dryRun || upis == null) return;
+            try
+            {
+                Baza.UpisUBazu.SacuvajPredlogKodova(upis.KodoviBezSifre, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sifarnici", "predlog_kodova_stanica.csv"));
+                var put = Path.Combine(cfg.StanjeFolder, "za_sifarnik.txt");
+                var sve = new SortedSet<string>(File.Exists(put) ? File.ReadAllLines(put, System.Text.Encoding.UTF8) : new string[0], StringComparer.Ordinal);
+                sve.UnionWith(upis.ZaSifarnik);
+                if (sve.Count == 0) return;
+                File.WriteAllLines(put, sve, System.Text.Encoding.UTF8);
+                if (!stanje.SmeUpozorenje("sifarnik-dnevno", 24)) return;
+                if (Upozori(stanje, "sifarnik-dnevno", "Šifarnik partnera (dbo.Partnerji) – predlog za dopunu (interno, jednom dnevno):" + Environment.NewLine
+                        + string.Join(Environment.NewLine, sve.Select(x => "- " + x)) + Environment.NewLine + Environment.NewLine + "Agent šifarnik ne menja.", 24))
+                    File.Delete(put);
+            }
+            catch (Exception ex) { log.Upozorenje("Lista za šifarnik nije sačuvana: " + ex.Message); }
+        }
+
+        private bool Upozori(Stanje stanje, string kljuc, string tekst, int sati = 6)
+        {
+            if (dryRun) return false;
+            if (string.IsNullOrEmpty(cfg.UpozorenjaNa)) { log.Upozorenje("Upozorenje „" + kljuc + "“ nema primaoca (UpozorenjaNa/IzvestajAdresa)."); return false; }
             if (!stanje.SmeUpozorenje(kljuc, sati))
             {
                 log.Info("Upozorenje „" + kljuc + "“ se ne šalje ponovo – poslednji pokušaj " + stanje.Upozorenja[kljuc].ToString("dd.MM. HH:mm") + " (najviše jednom na " + sati + " h).");
-                return;
+                return false;
             }
             try
             {
@@ -728,11 +754,13 @@ namespace Saobracaj.Agent.CimProvera
                     + Environment.NewLine + Environment.NewLine + "Server: " + Environment.MachineName + ", " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz")));
                 stanje.ZapisiUpozorenje(kljuc, true, sati);
                 log.Info("Upozorenje „" + kljuc + "“ poslato na " + cfg.UpozorenjaNa + ".");
+                return true;
             }
             catch (Exception ex)
             {
                 stanje.ZapisiUpozorenje(kljuc, false, sati);
                 log.Greska("Upozorenje „" + kljuc + "“ nije poslato mailom (ponovni pokušaj za 10 min): " + ex.Message);
+                return false;
             }
         }
     }

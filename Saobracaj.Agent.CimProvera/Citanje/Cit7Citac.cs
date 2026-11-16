@@ -136,7 +136,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return red.Count == 0 ? null : string.Join(" ", red.Select(w => w.T));
         }
 
-        private static readonly Regex Oznaka = new Regex(@"^\s*(?:box|rubrika|rubr\.|rub\.|polje|feld|case|r\.)\s*(\d{1,2}[ab]?)\s*[:.\-–]?\s*(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        // v2.9.1: i iza natpisa „Correction / Ispravka / Berichtigung / Korrektur“ („Correction: Box 25: 941 389 kg“)
+        private static readonly Regex Oznaka = new Regex(@"^\s*(?:(?:correction|corrections|ispravka|ispravke|berichtigung|korrektur|rectification)\s*[:.\-–]?\s*)?(?:box|rubrika|rubr\.|rub\.|polje|feld|case|r\.)\s*(\d{1,2}[ab]?)\s*[:.\-–]?\s*(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         /// <summary>„Box 4: GRANEXPORT…⏎Luka Dunav br.5⏎Box 10: Sremska Mitrovica“ → (4, „GRANEXPORT…, Luka Dunav br.5“), (10, „Sremska Mitrovica“).</summary>
         internal static List<Cit7Izmena> Izmene(string tekst)
@@ -148,6 +149,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 var m = Oznaka.Match(red);
                 if (m.Success) { tekuca = new Cit7Izmena { Rubrika = m.Groups[1].Value.ToLowerInvariant(), Vrednost = m.Groups[2].Value.Trim() }; rez.Add(tekuca); continue; }
                 if (tekuca != null) tekuca.Vrednost = (tekuca.Vrednost.Length > 0 ? tekuca.Vrednost + ", " : "") + red;
+            }
+            // v2.9.1: masa (r25) – samo broj i jedinica (OCR natpisa obrasca ispod „Correction: Box 25: 941 389 kg“ nije deo vrednosti)
+            foreach (var x in rez.Where(x => x.Rubrika == "25"))
+            {
+                var m = Regex.Match(x.Vrednost, @"\d[\d.,\s]*\d(?:\s*(?:kg|t|to)\b)?", RegexOptions.IgnoreCase);
+                if (m.Success) x.Vrednost = m.Value.Trim();
             }
             return rez.Where(x => x.Vrednost.Length > 0).ToList();
         }

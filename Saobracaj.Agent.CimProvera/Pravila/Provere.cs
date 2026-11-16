@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -1384,6 +1384,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 if (poslednji == null || !samoOpseg(m.Groups["o"].Value) || RecPlatioca.IsMatch(m.Groups["o"].Value) || RecPrevoznika.IsMatch(m.Groups["o"].Value)) continue;
                 // ista rečenica: između reči za platioca i oznake nema kraja rečenice („… doo. CIM 6: …“)
                 if (Regex.IsMatch(t.Substring(poslednji.Index, m.Index - poslednji.Index), @"(?<=\p{L}{2}|\d|\))\.\s+(?=\p{Lu})")) continue;
+                // v2.9.1: novi red je nov zapis („Payer on IZS: for KP Pansped doo⏎MÁV: H-KÁRPÁT 3404, RS: KP 3212“ – drugi red su prevoznici)
+                if (t.Substring(poslednji.Index, m.Index - poslednji.Index).Contains(NR)) continue;
                 sb.Append(t, poz, m.Index - poz).Append("; Payer ");
                 poz = m.Groups["o"].Index;
             }
@@ -1434,6 +1436,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 });
                 tcdd.Add((m.Index, m.Index + m.Length));
             }
+            // v2.9.1 (5.3): „FREIGHT PAYER [FOR BG] EXPRESS IN⏎KP-CINKOTURK LOJISTIK“ – „KP-firma“ posle reči za platioca (bez šifre 3212):
+            // firma plaća deonicu KP
+            foreach (Match m in Regex.Matches(t, @"(?<!\p{L})(?:freight\s*payer|payer|frachtzahler|platilac)(?!\p{L})(?<deo>[^;]{0,80}?)(?<!\p{L})KP\s*[-–:]\s*(?<naziv>\p{L}[^;" + NR + @"]{2,})", RegexOptions.IgnoreCase))
+            {
+                if (tcdd.Any(x => m.Index >= x.od && m.Index < x.doo)) continue;
+                var naziv = Regex.Replace(m.Groups["naziv"].Value, @"\s+", " ").Trim(' ', ',', ';', '.', '-', '–');
+                naziv = Regex.Replace(naziv, @"(?<=\p{L}{3})(LOGISTIK|LOGISTICS|LOJISTIK|LOGISTIC)(?!\p{L})", " $1");
+                if (naziv.Length < 3 || kp.JeKp(naziv) && Regex.Replace(kp.OcrIspravka(naziv), @"(?i)\bKP\b|" + kp.Uic + @"|[\s.,()\-]", "").Length <= 3) continue;
+                a.Platioci.Add(new PlatilacR7 { Zapis = Regex.Replace(m.Value.Replace(NR, " "), @"\s+", " ").Trim(), Opseg = "KP", Naziv = naziv, Srbija = true, Kp = false });
+                tcdd.Add((m.Index, m.Index + m.Length));
+            }
             foreach (Match m in RecPlatioca.Matches(t))
             {
                 if (tcdd.Any(x => m.Index >= x.od && m.Index < x.doo)) continue;
@@ -1466,6 +1479,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                                  && Regex.IsMatch(redovi[ri], @"^\p{L}[\p{L}&]*(\s|$)") && !Regex.IsMatch(redovi[ri], @"\d") && !redovi[ri].Contains(":") && PravniOblik.IsMatch(redovi[ri]); ri++)
                     prviRed += " " + redovi[ri];
                 var naziv = Regex.Split(prviRed, @"(?<=\p{L}{2}|\d|\))\.\s+(?=\p{Lu})|,\s*(?:[A-Z]{2,4})\s+(?:ist|is)\s|\s/\s")[0].Trim(' ', ',', ';', '.', ':', '-', '–');
+                // v2.9.1: „for KP Panšped doo“, „KP-CINKOTURK LOJISTIK“, „KP: firma“, „za KP firma“, „für KP firma“ – firma plaća deonicu KP
+                var bezPrefiksa = SkiniPrefiksKp(naziv, kp);
+                if (bezPrefiksa != naziv) { opseg = (opseg + " KP").Trim(); naziv = bezPrefiksa; }
                 opseg = opseg.Replace(NR, " ").Trim();
                 if (naziv.Length > 80) naziv = naziv.Substring(0, 77).TrimEnd() + "…";
                 var sep = paidBy ? "" : raz.Value.Trim();
@@ -1500,6 +1516,23 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 }
             }
             return a;
+        }
+
+        /// <summary>
+        /// v2.9.1: prefiks „za deonicu KP“ ispred naziva platioca („for KP Panšped doo“, „za KP firma“, „für KP firma“, „KP-CINKOTURK
+        /// LOJISTIK“, „KP: firma“) se skida – firma plaća deonicu KP, KP nije platilac. Bez naziva firme („KP 3212“, „KP UIC 3212, KP“)
+        /// tekst ostaje (KP7-NIJE-PLATILAC ostaje).
+        /// </summary>
+        internal static string SkiniPrefiksKp(string naziv, PraviloKp kp)
+        {
+            var m = Regex.Match(naziv ?? "", @"^\s*(?:(?<za>for|za|f[üu]e?r|pour|per)\s+)?(?:KP|K\.P\.|Kombinovani\s+prevoz)\s*(?:\(?\s*(?:UIC\s*)?" + Regex.Escape(kp?.Uic ?? "3212") + @"\s*\)?)?(?<sep>\s*[:\-–]\s*|\s+)(?<f>.+)$", RegexOptions.IgnoreCase);
+            if (!m.Success) return naziv;
+            if (!m.Groups["za"].Success && m.Groups["sep"].Value.Trim().Length == 0) return naziv;   // „KP Panšped“ bez „for/za“ i bez „:“/„-“ ostaje
+            var f = m.Groups["f"].Value.Trim(' ', ',', ';', '.', ':', '-', '–');
+            // ostatak mora biti firma: reč od bar 3 slova koja nije KP / UIC / šifra
+            var reci = Regex.Matches(f, @"\p{L}{3,}").Cast<Match>().Select(x => x.Value).Where(x => !Regex.IsMatch(x, @"^(?i)(uic|kombinovani|prevoz)$")).ToList();
+            if (reci.Count == 0 || (kp != null && kp.JeKp(f) && Regex.Replace(kp.OcrIspravka(f), @"(?i)\bKP\b|kombinovani\s+prevoz|" + kp.Uic + @"|uic|[\s.,()\-]", "").Length <= 3)) return naziv;
+            return f;
         }
 
         private static AnalizaR7 R7Analiza(Kontekst k)

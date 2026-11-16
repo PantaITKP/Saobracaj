@@ -35,9 +35,13 @@ namespace Saobracaj.Agent.CimProvera.Tests
             return k;
         }
 
+        /// <summary>v2.9.1: kopije tmp tabela za probe (CIMPROVERA_TMP_PREFIKS, npr. „planiranje.tmpProbaB“) – prave tmp tabele, u koje
+        /// piše agent na serveru, test tada ne dira ni u transakciji.</summary>
+        private static readonly string Prefiks = Environment.GetEnvironmentVariable("CIMPROVERA_TMP_PREFIKS") ?? UpisUBazu.PodrazumevaniPrefiks;
+
         private static object Skalar(SqlTransaction tx, string sql, params object[] arg)
         {
-            using (var cmd = new SqlCommand(sql, tx.Connection, tx))
+            using (var cmd = new SqlCommand(Sifarnici.Tmp(sql, Prefiks), tx.Connection, tx))
             {
                 for (int i = 0; i + 1 < arg.Length; i += 2) cmd.Parameters.AddWithValue((string)arg[i], arg[i + 1]);
                 var v = cmd.ExecuteScalar();
@@ -52,7 +56,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 var tx = c.BeginTransaction();
                 try
                 {
-                    var u = new UpisUBazu(null, null, pravila.Kp);
+                    var u = new UpisUBazu(null, null, pravila.Kp) { Prefiks = Prefiks };
                     telo(tx, u);
                 }
                 finally { tx.Rollback(); }
@@ -137,7 +141,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 Assert.AreEqual(2, Skalar(tx, "SELECT BrojPrijema FROM planiranje.tmpDokument WHERE ImeFajla = @f", "@f", f3.Item1), "isti fajl – isti red tmpDokument");
 
                 // ručno izmenjeno polje se ne menja – razlika ide u istoriju
-                using (var cmd = new SqlCommand("UPDATE planiranje.tmpJobsPolje SET RucnoIzmenjeno = 1 WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'BrojPonude'", tx.Connection, tx)) { cmd.Parameters.AddWithValue("@j", jid); cmd.ExecuteNonQuery(); }
+                using (var cmd = new SqlCommand(Sifarnici.Tmp("UPDATE planiranje.tmpJobsPolje SET RucnoIzmenjeno = 1 WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'BrojPonude'", Prefiks), tx.Connection, tx)) { cmd.Parameters.AddWithValue("@j", jid); cmd.ExecuteNonQuery(); }
                 c.R14 = new TekstRubrika { Status = StatusRubrike.Popunjeno, Tekst = "KP2027" };
                 u.Upisi(new MailZaUpis { MessageId = "test-5@" + voz, Naslov = "CIM 3", Posiljalac = "test@primer.rs", Prilozi = { Fajl("cim v3.pdf") }, Provera = r3, Sanduce = "test" }, tx);
                 Assert.AreEqual("KP2026", Skalar(tx, "SELECT BrojPonude FROM planiranje.tmpJobs WHERE ID = @j", "@j", jid));
@@ -269,7 +273,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 Assert.AreEqual(2234.533m, J("Bruto1"));
                 Assert.AreEqual(1671.863m, J("Neto1"));
                 Assert.AreEqual(28, J("BrojKola1"), "najnoviji spisak kola");
-                Assert.AreEqual(8, J("NHM1"), "NHM 1001");
+                Assert.AreEqual("1001", Skalar(tx, "SELECT Kod4 FROM planiranje.tmpNHM WHERE ID = @n", "@n", J("NHM1")), "NHM 1001 (tmpNHM)");
                 Assert.AreEqual("Ua", J("SerijaKola1"));
                 Assert.IsNull(J("PreuzimaOdID"), "KP je prvi u lancu prevoznika → NULL (odluka 14.11.)");
                 Assert.AreEqual(404, J("Stanica2ID"), "u.m. Pančevo Varoš: " + Skalar(tx, "SELECT ISNULL(Rubrika,'') + ' | ' + ISNULL(TekstIzDokumenta,'') + ' | ' + ISNULL(Kandidati,'') FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Stanica2ID'", "@j", jid));
@@ -282,6 +286,55 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 Assert.AreEqual(14.800m, Skalar(tx, "SELECT Duzina FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t AND BrojKola = '33839338201-9'", "@t", tid));
                 Assert.AreEqual("istorija", Skalar(tx, "SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE TeretnicaID = @t AND Kolona = 'Duzina'", "@t", tid));
                 Assert.AreEqual("istorija", Skalar(tx, "SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Duzina1'", "@j", jid), "poreklo dužine posla");
+                Assert.IsTrue((decimal)J("Tara1") > 500m, "v2.9.1: Tara1 sa spiska");
+            });
+        }
+
+        // ------------------------------------------------------------------------------------------- v2.9.1 (testovi 15. i 16.11.)
+
+        private const string Testovi1516 = @"\\192.168.1.6\Cloude\Agenti\CimProvera\testovi\nezavisni\2026-11-16-pravi\prilozi";
+
+        private static List<(string, byte[])> Prilozi1516(string folder, Func<string, bool> filter = null)
+        {
+            var d = Path.Combine(Testovi1516, folder);
+            if (!Directory.Exists(d)) Assert.Inconclusive("Nema testnih dokumenata: " + d);
+            return Directory.GetFiles(d).Where(x => !Path.GetFileName(x).StartsWith("PRIMER_") && !x.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) && (filter == null || filter(Path.GetFileName(x))))
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase).Select(f => (Path.GetFileName(f), File.ReadAllBytes(f))).ToList();
+        }
+
+        /// <summary>
+        /// v2.9.1 (tačka 6): SAD-HER 79 (UID 429) + ponovljeni mail ARR (UID 455): jedan posao, 19 kola, mase sa spiska (Wg.Ladung / Tara vagona /
+        /// Ukupna težina), NHM1 grupa 3402 (najčešća po jedinicama), napomena r25 ↔ spisak, ponovljeni mail samo prijem (BrojPrijema 2) i Napomena.
+        /// </summary>
+        [TestMethod]
+        public void V291_SAD_HER_79_jedan_posao_mase_sa_spiska_i_ponovljeni_mail()
+        {
+            Konekcija();
+            var p429 = Prilozi1516("429");
+            var cfg = RegresijaTests.Cfg(Path.Combine(Path.GetTempPath(), "CimProveraTest", "stanje291"));
+            Ishod i1;
+            using (var c = new LokalniCitac(cfg, null, pravila.Kp))
+                i1 = new Obrada(pravila, c, null, cfg.PragPouzdanosti).Proveri(p429, "dispo@crw.sk", false, new DateTime(2026, 11, 15, 3, 34, 0), true);
+            URollbacku((tx, u) =>
+            {
+                Skalar(tx, "DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke; UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM planiranje.tmpTeretnica; UPDATE planiranje.tmpJobs SET PoslednjiDokumentID = NULL; DELETE FROM planiranje.tmpJobs; DELETE FROM planiranje.tmpDokument;");
+                u.Upisi(new MailZaUpis { MessageId = "t-429", Uid = 429, Naslov = "Aviso: 46836/15 / lkw walter SAD-HER 79", Posiljalac = "dispo@crw.sk", Primljeno = new DateTime(2026, 11, 15, 3, 34, 0), Prilozi = p429, Provera = i1.Provera, Sanduce = "test", Telo = "Dear all,\nplease find attached.\nBest regards\nDispo CRW\n+421 2 123 456" }, tx);
+                // ponovljeni mail (isti prilozi): provera null – samo prijem i Napomena
+                var ish = u.Upisi(new MailZaUpis { MessageId = "t-455", Uid = 455, Naslov = "ARR - Aviso: 46836/15 / lkw walter SAD-HER 79", Posiljalac = "dispo@crw.sk", Primljeno = new DateTime(2026, 11, 15, 11, 56, 0), Prilozi = p429, Provera = null, Sanduce = "test", Telo = "Train arrived." }, tx);
+                Assert.AreEqual(1, Skalar(tx, "SELECT COUNT(*) FROM planiranje.tmpJobs"), "jedan posao");
+                var jid = Convert.ToInt32(Skalar(tx, "SELECT TOP 1 ID FROM planiranje.tmpJobs"));
+                object J(string kol) => Skalar(tx, "SELECT " + kol + " FROM planiranje.tmpJobs WHERE ID = @j", "@j", jid);
+                Assert.AreEqual(19, J("BrojKola1"));
+                Assert.AreEqual(963.423m, J("Neto1")); Assert.AreEqual(666.900m, J("Tara1")); Assert.AreEqual(1630.323m, J("Bruto1"));
+                Assert.AreEqual("3402", Skalar(tx, "SELECT Kod4 FROM planiranje.tmpNHM WHERE ID = @n", "@n", J("NHM1")));
+                Assert.AreEqual(230, J("OtpravnaID")); Assert.AreEqual(1451, J("UputnaID")); Assert.AreEqual(230, J("Stanica1ID")); Assert.AreEqual(328, J("Stanica3ID"));
+                Assert.AreEqual(1580, J("PlatilacID")); Assert.AreEqual(1722, J("PredajeOperateruID")); Assert.IsNull(J("PredajePartneruID"));
+                StringAssert.Contains((string)Skalar(tx, "SELECT Kandidati FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Neto1'", "@j", jid), "r25");
+                Assert.AreEqual(2, Skalar(tx, "SELECT MAX(BrojPrijema) FROM planiranje.tmpDokument"), ish.ToString());
+                var nap = (string)J("Napomena");
+                StringAssert.Contains(nap, "11:56 dispo@crw.sk: ARR - Aviso"); StringAssert.Contains(nap, "03:34 dispo@crw.sk: Aviso");
+                Assert.IsFalse(nap.Contains("+421"), "bez telefona iz potpisa");
+                Assert.AreEqual(1, Skalar(tx, "SELECT COUNT(*) FROM planiranje.tmpJobsIstorija WHERE JobID = @j AND Razlog = 'PONOVLJEN_MAIL'", "@j", jid));
             });
         }
     }

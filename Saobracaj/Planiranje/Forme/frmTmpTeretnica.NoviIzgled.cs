@@ -30,6 +30,7 @@ namespace Saobracaj.Planiranje.Forme
                 .Prikaz("Korisnik", "Korisnik")
                 .Prikaz("Verzija", "Verzija")
                 .Prikaz("Referenca", "Referenca")
+                .Prikaz("Grupa", "Grupa posla")
                 .Prikaz("Dokument", "Izvorni dokument")
                 .Prikaz("Napomena", "Napomena");
 

@@ -50,9 +50,19 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Pa(2233, "Rail Cargo Austria GmbH", "AT"); Pa(3229, "Rail Cargo Logistics - Serbia d.o.o", "SRB", "", true, "Rail Cargo Logistics - Serbia d.o.o.");
             Pa(2246, "Victoriaoil d.o.o.", "SRB", "", true, "VICTORIAOIL DOO ŠID"); Pa(2669, "GRANEXPORT DOO", "SRB", "", true, "GRANEXPORT DOO");
             Pa(2965, "URSA DOO BEOGRAD", "SRB", "", true, "URSA DOO BEOGRAD"); Pa(2823, "EVRO", "BG", "5082", true, "EVROINJENERING LTD");
-            void Nh(int id, string broj, string naziv) => s.Nhm.Add(new NhmZapis { Id = id, Broj = broj, Naziv = naziv });
-            Nh(8, "1001", "PŠENICA"); Nh(92, "2520", "GIPS"); Nh(268, "2521", "KAMEN KREČNJAČKI"); Nh(6, "9922 00", "PRAZNI VAGONI-PREVOZ NA UTOVAR");
-            Nh(243, "9922 10", "PRAZNI VAGONI"); Nh(188, "9922 40", "PRAZNI VAGONI"); Nh(162, "9920", "PRAZAN"); Nh(267, "9943/9944", "POLUPRIKOLICE");
+            // v2.9.1: NHM iz tarife (planiranje.tmpNHM): Kod8, nivo (4 = „XXXX 00 00“, 6 = „XXXX XX 00“, 8 = ostalo), naziv latinicom
+            void Nh(int id, string kod8, int nivo, string naziv) => s.Nhm.Add(new NhmZapis { Id = id, Kod8 = kod8, Nivo = nivo, Naziv = naziv });
+            Nh(8, "10010000", 4, "Pšenica i suražica"); Nh(9, "10019900", 6, "Pšenica, osim tvrde pšenice");
+            Nh(92, "25200000", 4, "Gips; anhidrid gipsa, pečeni gips"); Nh(93, "25201000", 6, "Gips; anhidrid gipsa"); Nh(94, "25202000", 6, "Gips, pečeni");
+            Nh(268, "25210000", 4, "Krečnjački kamen"); Nh(6, "99220000", 4, "Železnička kola (vagon) kao prevozno sredstvo, prazan");
+            Nh(243, "99221000", 6, "Železnička kola, prazna, kontrola"); Nh(188, "99224000", 6, "Železnička kola, prazna, iznajmljivanje");
+            Nh(300, "28330000", 4, "Sulfati; stipse; peroksosulfati"); Nh(301, "28332900", 6, "Sulfati, osim od natrijuma, magnezijuma, aluminijuma");
+            Nh(302, "28332920", 8, "Sulfati kadmijuma, hroma, cinka"); Nh(303, "28332930", 8, "Sulfati kobalta, titana");
+            Nh(310, "48100000", 4, "Hartija i karton, premazani kaolinom"); Nh(311, "48109200", 6, "Hartija i karton, višeslojni, premazani");
+            Nh(320, "99310000", 4, "Kontejneri, veliki, prazni, korišćeni"); Nh(330, "34020000", 4, "Organske površinski aktivne materije");
+            Nh(331, "34025000", 6, "Preparati za pranje, pripremljeni za pakovanje"); Nh(340, "31050000", 4, "Mineralna ili hemijska đubriva");
+            Nh(350, "21060000", 4, "Prehrambeni proizvodi, na drugom mestu nepomenuti"); Nh(360, "27020000", 4, "Mrki ugalj (lignit)");
+            Nh(370, "15120000", 4, "Ulje od semena suncokreta");
             // sinonimi kao u bazi (OP_914_tmp_Sinonimi.sql)
             s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "PANSPED", CiljniId = 1969 });
             s.Sinonimi.Add(new SinonimZapis { Tip = "STANICA", Tekst = "PANCEVO", CiljniId = 246 });
@@ -238,16 +248,34 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Nhm_sifre()
         {
+            // v2.9.1 (3.1): 8 cifara → tačan Kod8; Kod6 sa tačno jednim redom → taj red; nijedan ili više → grupa Kod4; bez Kod4 → NULL
             var pk = Pk();
-            Assert.AreEqual(92, pk.Nhm("252010").Id, "252010 → 2520");
-            Assert.AreEqual(6, pk.Nhm("992200").Id, "992200 → 9922 00");
+            Assert.AreEqual(93, pk.Nhm("252010").Id, "252010 → 2520 10 00 (jedan red Kod6)");
+            Assert.AreEqual(6, pk.Nhm("992200").Id, "992200 → grupa 9922 (Kod6 nema reda)");
+            Assert.AreEqual(6, pk.Nhm("9922").Id, "9922 bez podgrupe → grupa 9922 (odluka 3)");
             Assert.AreEqual(243, pk.Nhm("992210").Id);
-            Assert.AreEqual(8, pk.Nhm("100100").Id);
+            Assert.AreEqual(8, pk.Nhm("100100").Id, "100100 → grupa 1001");
             Assert.AreEqual(8, pk.Nhm("1001.00").Id);
-            var p = pk.Nhm("992290");   // podgrupa 90 ne postoji → najmanji ID, izbor u poreklu
-            Assert.AreEqual(6, p.Id); StringAssert.Contains(p.Napomena, "najmanji ID");
-            Assert.AreEqual(267, pk.Nhm("994300").Id);
-            Assert.IsNull(pk.Nhm("123456").Id);
+            var p = pk.Nhm("992290");
+            Assert.AreEqual(6, p.Id); StringAssert.Contains(p.Napomena, "grupa 9922");
+            Assert.AreEqual(300, pk.Nhm("283329").Id, "2833 29: tri reda sa istim Kod6 → grupa 2833");
+            Assert.AreEqual(302, pk.Nhm("28332920").Id, "tačan Kod8");
+            Assert.AreEqual(311, pk.Nhm("48109200").Id, "CER „48109200 – Papír“ → tačan Kod8");
+            Assert.AreEqual(320, pk.Nhm("993100").Id, "„993100 TANK KONTEYNER“ → grupa 9931");
+            Assert.AreEqual(331, pk.Nhm("340250").Id, "340250 → 3402 50 00");
+            var n = pk.Nhm("123456");
+            Assert.IsNull(n.Id); StringAssert.Contains(n.Napomena, "nije u tarifi");
+        }
+
+        [TestMethod]
+        public void Nhm_po_nazivu_i_iz_teksta()
+        {
+            var pk = Pk();
+            Assert.AreEqual(360, pk.NhmPoNazivu("Mrki ugalj").Id, "jedan siguran kandidat");
+            Assert.AreEqual(92, pk.NhmPoNazivu("Gips").Id, "više redova iste grupe → red grupe Kod4");
+            Assert.IsNull(pk.NhmPoNazivu("GYPSUM").Id, "strani naziv → NULL (tmpSinonimi tip NHM)");
+            CollectionAssert.AreEqual(new[] { "993100" }, PosaoIzDokumenata.NhmIzTeksta("993100 TANK KONTEYNER").ToList());
+            CollectionAssert.AreEqual(new[] { "48109200" }, PosaoIzDokumenata.NhmIzTeksta("48109200 – Papír és karton").ToList());
         }
 
         // ------------------------------------------------------------------------------------------- deonica KP
@@ -350,10 +378,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var c = List("Šid", "", "Zagreb", "", "", new string[0]);
             var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
             Assert.AreEqual(0m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]); Assert.IsNull(p.V["Duzina1"]); Assert.AreEqual(0, p.V["BrojKola1"]);
-            // samo tara (prazna kola): bruto = tara, neto = 0
+            // v2.9.1 (5.1): samo tara – Tara1 = tara, bruto i neto 0 (tara nikad ne ide u bruto)
             c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Tara: 650.000 kg" };
             p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
-            Assert.AreEqual(650m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]);
+            Assert.AreEqual(650m, p.V["Tara1"]); Assert.AreEqual(0m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]);
         }
 
         [TestMethod]
@@ -498,6 +526,324 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsTrue(AgentConfig.OtvorenaKonekcija);
             Assert.AreEqual("iz-dpapi", AgentConfig.KonekcijaIz("iz-dpapi", null));
             Assert.IsFalse(AgentConfig.Ucitaj(new System.Collections.Specialized.NameValueCollection()).UpisUBazu, "podrazumevano isključeno (jedinični testovi)");
+        }
+
+        // =========================================================================================== v2.9.1 (zadatak 16.11.)
+
+        private static Poklapanje Pk291()
+        {
+            var s = Sif();
+            s.Partneri.Add(new PartnerZapis { PaSifra = 1722, PaNaziv = "CENTRAL RAILWAYS A.S. CRW", PaDoNaziv = "CENTRAL RAILWAYS A.S. CRW", Drzava = "SK", Prevoznik = true });
+            s.Partneri.Add(new PartnerZapis { PaSifra = 1692, PaNaziv = "CER Hungary", PaDoNaziv = "CER Hungary", Drzava = "HU", Prevoznik = true });
+            s.Partneri.Add(new PartnerZapis { PaSifra = 1641, PaNaziv = "CER Slovakia a.s.", PaDoNaziv = "CER Slovakia a.s.", Drzava = "HU", Uic = "3085", Prevoznik = false });
+            s.Partneri.Add(new PartnerZapis { PaSifra = 3531, PaNaziv = "FORTRACK RAIL KFT", PaDoNaziv = "FORTRACK RAIL KFT", Drzava = "HU", Uic = "5059", Prevoznik = true });
+            s.Stanice.Add(new StanicaZapis { Id = 273, Opis = "Preševo gr.", Drzava = "SRB" });
+            s.Stanice.Add(new StanicaZapis { Id = 1385, Opis = "Kwidzyn", Drzava = "PL", Kod = "51023119" });
+            foreach (var (t, id) in new[] { ("KELEBIA", 328), ("0711", 328), ("HU", 328), ("TOVARNIK", 381), ("HR", 381), ("STAMORA", 93), ("RO", 93), ("KAPIKULE", 118), ("BG", 118), ("TABANOVCI", 273), ("MK", 273) })
+                s.Sinonimi.Add(new SinonimZapis { Tip = "GRANICA", Tekst = t, CiljniId = id });
+            return new Poklapanje(s.Pripremi());
+        }
+
+        [DataTestMethod]
+        [DataRow("il 1 42-0003-26", "42-0003-26")]
+        [DataRow("©j 520 o 0", null)]
+        [DataRow("Bj 5 2 0 1 0 0", null)]
+        [DataRow("sie –", null)]
+        [DataRow("LDC8-HAMMNOV1", "LDC8-HAMMNOV1")]
+        [DataRow("SAD HER 79", "SAD HER 79")]
+        [DataRow("Budamar Coal 17", "Budamar Coal 17")]
+        public void V291_Referenca_i_ponuda_samo_kada_lici_na_oznaku(string tekst, string ocekivano)
+        {
+            Assert.AreEqual(ocekivano, PosaoIzDokumenata.Oznaka(tekst));
+        }
+
+        [TestMethod]
+        public void V291_Broj_ponude_iz_r7()
+        {
+            Assert.AreEqual("8957", PosaoIzDokumenata.PonudaIzR7("Payer for SRB: Panšped doo\nKP Ponuda 8957"));
+            Assert.IsNull(PosaoIzDokumenata.PonudaIzR7("Payer for SRB: Panšped doo"));
+        }
+
+        [TestMethod]
+        public void V291_Mase_oznake_tara_nikad_u_bruto()
+        {
+            var c = List("Šid", "", "Hamm", "", "", new string[0]);
+            // LDC8: „Netto: x.xxx,xxx Tare: 643.420 Bruto: x.xxx,xxx“ → Tara 643,420; neto i bruto nisu navedeni (0)
+            c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Netto: x.xxx,xxx kg\nTare: 643.420 kg\nBruto: x.xxx,xxx kg", Ukupno = "643.420" };
+            var (t, n, b, _) = PosaoIzDokumenata.Mase(c);
+            Assert.AreEqual(643420, t); Assert.IsNull(n); Assert.IsNull(b);
+            var p = PosaoIzDokumenata.Napravi(c, null, null, Pk(), pravila.Kp);
+            Assert.AreEqual(643.42m, p.V["Tara1"]); Assert.AreEqual(0m, p.V["Bruto1"]); Assert.AreEqual(0m, p.V["Neto1"]);
+            // r25 bez oznaka = masa robe → neto (SAD-HER 79: 713 123 kg)
+            c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "713.123", Ukupno = "713.123" };
+            (t, n, b, _) = PosaoIzDokumenata.Mase(c);
+            Assert.AreEqual(713123, n); Assert.IsNull(t); Assert.IsNull(b);
+            // dve od tri → treća (izračunato)
+            c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Ntto: 1.510,26 to\nTara: 580,26 to" };
+            var m = PosaoIzDokumenata.Mase(c);
+            Assert.AreEqual(2090520, Math.Round(m.bruto.Value)); StringAssert.Contains(m.opis, "izračunat");
+            // TCDD „Ağırlık 8000 27600 35600“: tri broja bez oznaka, zbir dva = treći
+            c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Agirlik 8000 27600 35600", Ukupno = "35600", Pojedinacne = new List<string> { "8000", "27600" } };
+            (t, n, b, _) = PosaoIzDokumenata.Mase(c);
+            Assert.AreEqual(8000, t); Assert.AreEqual(27600, n); Assert.AreEqual(35600, b);
+            // ostale oznake: Ladung / Gesamt / Dara
+            c.R25 = new Masa { Status = StatusRubrike.Popunjeno, Tekst = "Wg.Ladung: 31112 kg Dara: 35100 kg Gesamt: 66212 kg" };
+            (t, n, b, _) = PosaoIzDokumenata.Mase(c);
+            Assert.AreEqual(35100, t); Assert.AreEqual(31112, n); Assert.AreEqual(66212, b);
+        }
+
+        [TestMethod]
+        public void V291_Kljuc_bez_r62_ref_r8_relacija()
+        {
+            var c = List("Agigea", "", "Vreoci", "", "", new string[0]);
+            c.R62 = new Identifikacija { Zemlja = "53", Stanica = "", Preduzece = "", Broj = "" };
+            Assert.AreEqual("ref:BUDAMARCOAL17|1|2", PosaoIzDokumenata.Kljuc(c, "Budamar Coal 17", 1, 2));
+            c.R62 = new Identifikacija { Zemlja = "72", Stanica = "16509", Preduzece = "3212", Broj = "16150-0" };
+            StringAssert.StartsWith(PosaoIzDokumenata.Kljuc(c, "Budamar Coal 17", 1, 2), "r62:");
+        }
+
+        [TestMethod]
+        public void V291_Platilac_for_KP_firma_nije_greska_KP7()
+        {
+            var a = Provere.AnalizirajR7("Payer on IZS: for KP Pansped doo\nMÁV: H-KÁRPÁT 3404, RS: KP 3212", pravila.Kp);
+            var za = a.ZaSrbiju.ToList();
+            Assert.AreEqual(1, za.Count); Assert.IsFalse(za[0].Kp, "KP nije platilac – firma plaća deonicu KP");
+            Assert.AreEqual("Pansped doo", za[0].Naziv);
+            Assert.AreEqual("CINKOTURK LOJISTIK", Provere.SkiniPrefiksKp("KP-CINKOTURK LOJISTIK", pravila.Kp));
+            // CIM WAGON (TCDD, ID 1496): „FREIGHT PAYER EXPRESS IN⏎KP-CINKOTURK LOJISTIK“ – bez šifre 3212
+            var c = Provere.AnalizirajR7("FREIGHT PAYER   EXPRESS IN\nKP-CINKOTURK LOJISTIK", pravila.Kp).ZaSrbiju.ToList();
+            Assert.AreEqual(1, c.Count); Assert.AreEqual("CINKOTURK LOJISTIK", c[0].Naziv); Assert.IsFalse(c[0].Kp);
+            Assert.AreEqual("Panšped doo", Provere.SkiniPrefiksKp("za KP Panšped doo", pravila.Kp));
+            Assert.AreEqual("EurologSystem doo", Provere.SkiniPrefiksKp("für KP EurologSystem doo", pravila.Kp));
+            Assert.AreEqual("Panšped", Provere.SkiniPrefiksKp("KP: Panšped", pravila.Kp));
+            // prava greška ostaje: KP naveden kao platilac
+            Assert.AreEqual("KP UIC 3212, KP", Provere.SkiniPrefiksKp("KP UIC 3212, KP", pravila.Kp));
+            Assert.IsTrue(Provere.AnalizirajR7("Frachtzahler SRB: KP UIC 3212, KP", pravila.Kp).ZaSrbiju.Any(x => x.Kp));
+        }
+
+        [TestMethod]
+        public void V291_Prevoznik_UIC_svi_partneri_i_skracenica()
+        {
+            var pk = Pk291();
+            // „3277 CRW“: UIC nije u šifarniku → skraćenica „CRW“ kao posebna reč naziva
+            var p = pk.Partner("CRW", "3277", null, "prevoznik");
+            Assert.AreEqual(1722, p.Id, p + " | " + p.Kandidati); Assert.AreEqual(90, p.Pouzdanost);
+            Assert.IsTrue(pk.ZaSifarnik.Any(x => x.Contains("1722") && x.Contains("UIC 3277")), string.Join("; ", pk.ZaSifarnik));
+            // tačan UIC među svim partnerima (Prevoznik nije 1) → uzima se, napomena
+            var c = pk.Partner("CER", "3085", null, "prevoznik");
+            Assert.AreEqual(1641, c.Id); StringAssert.Contains(c.Napomena, "oznaka Prevoznik nije postavljena");
+            Assert.AreEqual(3531, pk.Partner("Fortrack", "5059", null, "prevoznik").Id);
+            // nije nađen → lista za šifarnik
+            Assert.IsNull(pk.Partner("XYZ Rail", "9999", null, "prevoznik").Id);
+            Assert.IsTrue(pk.ZaSifarnik.Any(x => x.StartsWith("nije nađen u Partnerji: UIC 9999")));
+        }
+
+        [TestMethod]
+        public void V291_Granicni_prelaz_i_stanica_po_kodu()
+        {
+            var pk = Pk291();
+            Assert.AreEqual(328, pk.Granica("Subotica br./Kelebia gr.").Id);
+            Assert.AreEqual(328, pk.Granica("55071126 - Kelebia oh.").Id);
+            Assert.AreEqual(328, pk.Granica("granični kod 0711").Id);
+            Assert.AreEqual(93, pk.Granica("Agigea Nord - Stamora M - Vreoci").Id);
+            Assert.AreEqual(118, pk.Granica("13.4 VIA KAPIKULE/SVILENGRAD").Id);
+            var z = pk.Granica(null, "HU");
+            Assert.AreEqual(328, z.Id); Assert.AreEqual(60, z.Pouzdanost, "samo po zemlji – pouzdanost 60");
+            Assert.IsNull(pk.Granica("Beograd").Id);
+            // LDC8: r62 72 165167 → 380 Šid (naziv „Industrial siding of Victoriaoil Šid“ ne prolazi prag)
+            Assert.AreEqual(380, pk.Stanica("Industrial siding of Victoriaoil", "72165167").Id);
+            Assert.AreEqual(1385, pk.Stanica("Kwidzyn", "51 023119").Id);
+            // šifra bez kontrolne cifre („72 16509“) = Kod sa kontrolnom cifrom (165092 Sremska Mitrovica)
+            Assert.IsTrue(Poklapanje.KodPoklapa("72 16509", "165092"));
+            Assert.IsFalse(Poklapanje.KodPoklapa("72 16508", "165092"));
+        }
+
+        [TestMethod]
+        public void V291_Relacija_KP_nije_u_r57_izvedeni_prevoznici_i_PredajePartneru()
+        {
+            var pk = Pk291();
+            // voz polazi iz Srbije, KP nije u r57 → PredajeOperateru = prevoznik prve strane deonice (pouzdanost ≤ 60)
+            var c = List("Šid", "72 16516-7", "Budapest Ferencváros", "55 12345-6", "", new[] { "5059 FORTRACK KELEBIA-BUDAPEST" });
+            var p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp);
+            Assert.AreEqual(3531, p.V["PredajeOperateruID"]);
+            Assert.IsTrue(p.Poreklo.First(x => x.Kolona == "PredajeOperateruID").Pouzdanost <= 60);
+            Assert.IsNull(p.V["PredajePartneruID"], "KP nije poslednji");
+            // voz se završava u Srbiji, KP nije u r57 → PreuzimaOd = poslednji prevoznik; PredajePartneru = primalac iz r4
+            c = List("Budapest Ferencváros", "55 12345-6", "Šid", "72 16516-7", "", new[] { "5059 FORTRACK BUDAPEST-KELEBIA" }, r4: "Victoriaoil d.o.o.");
+            p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp);
+            Assert.AreEqual(3531, p.V["PreuzimaOdID"]);
+            Assert.AreEqual(2246, p.V["PredajePartneruID"], "KP poslednji → primalac iz r4");
+            Assert.AreEqual(328, p.V["Stanica1ID"], "Kelebia → Subotica gr.");
+            // ni prevoznika u r57 → pošiljalac maila sa Prevoznik = 1 (SURC 015: CER Hungary)
+            c = List("Gdynia", "51 60036-1", "Šid", "72 16516-7", "", new string[0]);
+            p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp, null, "henrietta.varga.szalai@cercargo.eu");
+            Assert.AreEqual(1692, p.V["PreuzimaOdID"]);
+            Assert.IsTrue(p.Poreklo.First(x => x.Kolona == "PreuzimaOdID").Pouzdanost <= 60);
+        }
+
+        private static ListPosla Lp(string kljuc, string[] kola, int s1 = 246, int s3 = 118, bool prazna = false, double? neto = null, double? tara = null, string nhm4 = "2520")
+        {
+            var p = new PodaciPosla { KljucPosiljke = kljuc, Kola = kola.ToList(), Prazna = prazna, Nhm4 = nhm4, NetoKg = neto, TaraKg = tara };
+            p.V["Stanica1ID"] = s1; p.V["Stanica3ID"] = s3; p.V["OtpravnaID"] = s1; p.V["UputnaID"] = 993; p.V["BrojKola1"] = kola.Length;
+            p.Postavi("Referenca", null, "", "r8", 0);
+            return new ListPosla { P = p, Oznaka = kljuc };
+        }
+
+        [TestMethod]
+        public void V291_Kopije_istog_lista_i_jedan_voz()
+        {
+            // isti r62 u više listova kompleta → jedan; ključ „ref:“ isti, a kola različita → dva lista
+            var a = Lp("r62:72-220012-3212-160010", new[] { "315554000242" });
+            var b = Lp("r62:72-220012-3212-160010", new[] { "315554000242" });
+            b.P.Postavi("Referenca", "WAGON 1", "WAGON 1", "r8", 90);
+            var c = Lp("ref:X|246|993", new[] { "315554000010" });
+            var d = Lp("ref:X|246|993", new[] { "315554000291" });
+            var sp = UpisUBazu.SpojiKopije(new List<ListPosla> { a, b, c, d });
+            Assert.AreEqual(3, sp.Count);
+            Assert.AreEqual("WAGON 1", sp.First(x => x.P.KljucPosiljke.StartsWith("r62")).P.V["Referenca"], "polje iz bolje pročitane kopije");
+            Assert.AreNotEqual(c.KljucTl, d.KljucTl, "zapis TL je jedinstven po listu");
+            // ista deonica KP → jedan voz; druga Stanica1 (Paraćin) → drugi voz
+            var e = Lp("ref:Y|247|993", new[] { "315554000999" }, s1: 247);
+            var vozovi = UpisUBazu.Vozovi(new List<ListPosla> { a, c, d, e });
+            Assert.AreEqual(2, vozovi.Count);
+            Assert.AreEqual(3, vozovi.First(v => v.Listovi[0].Stanica1 == 246).Listovi.Count);
+        }
+
+        [TestMethod]
+        public void V291_Grupe_posla_natovarena_i_prazna_kola()
+        {
+            var tl = new List<ZapisTl>
+            {
+                ZapisTl.Iz(Lp("r62:a", Enumerable.Range(0, 27).Select(i => "3155540" + i.ToString("00000")).ToArray(), neto: 1510260, tara: 580260)),
+                ZapisTl.Iz(Lp("r62:b", new[] { "338549920001" }, prazna: true, tara: 21600, nhm4: "9922")),
+            };
+            tl[0].BrojKola = 27;
+            var g = UpisUBazu.Grupe(tl);
+            Assert.AreEqual(2, g.Count);
+            Assert.IsFalse(g[0][0].Prazna, "grupa 1 = natovarena kola");
+            Assert.IsTrue(g[1][0].Prazna);
+            Assert.AreEqual(21600, g[1][0].Bruto, "prazna kola: bruto = tara");
+            Assert.AreEqual(0, g[1][0].Neto);
+        }
+
+        [TestMethod]
+        public void V291_Spisak_red_ukupno_samo_tara_intermodal()
+        {
+            var pk = Pk();
+            // zbir stavki se ne slaže sa redom „Ukupno“ (> 0,5 %) → upisuje se „Ukupno“, napomena za ručnu proveru
+            var s = new SpisakKola { NhmZaglavlje = "252010", UkupnoNetoKg = 100000 };
+            s.Kola.Add(new KolaNaSpisku { Broj = "338753123456", NetoKg = 44000, TaraKg = 20000 });
+            s.Kola.Add(new KolaNaSpisku { Broj = "338753123457", NetoKg = 45000, TaraKg = 21000 });
+            var p = PosaoIzDokumenata.IzSpiska(s, pk, "", "");
+            Assert.AreEqual(100m, p.V["Neto1"]); Assert.AreEqual(41m, p.V["Tara1"]); Assert.AreEqual(130m, p.V["Bruto1"], "bruto = neto + tara");
+            Assert.IsTrue(p.Napomene.Any(x => x.Contains("ručnu proveru")));
+            // samo tara (Coal 17: kola se tek tovare) → Tara, bez neta i bruta
+            s = new SpisakKola();
+            s.Kola.Add(new KolaNaSpisku { Broj = "317853001574", TaraKg = 21700 });
+            s.Kola.Add(new KolaNaSpisku { Broj = "317853003273", TaraKg = 21150 });
+            p = PosaoIzDokumenata.IzSpiska(s, pk, "", "");
+            Assert.AreEqual(42.85m, p.V["Tara1"]); Assert.IsFalse(p.V.ContainsKey("Neto1")); Assert.IsFalse(p.V.ContainsKey("Bruto1"));
+            // intermodalni voz: NHM1 = najčešća grupa po jedinicama, sva natovarena kola u jednoj grupi
+            s = new SpisakKola { NhmJedinica = new List<string> { "340250", "340250", "340250", "310540", "210610" } };
+            s.Kola.Add(new KolaNaSpisku { Broj = "378049925456", Nhm = "340250", Uti = { "LKWA9039609" } });
+            s.Kola.Add(new KolaNaSpisku { Broj = "358049562889", Nhm = "310540", Uti = { "LKWA2027817" } });
+            p = PosaoIzDokumenata.IzSpiska(s, pk, "", "");
+            Assert.AreEqual(330, p.V["NHM1"], "grupa 3402 (Kod4)"); Assert.AreEqual(2, p.V["BrojKola1"]); Assert.IsNull(p.V["NHM2"]);
+            Assert.IsTrue(p.Napomene.Any(x => x.Contains("3105 ×1")));
+            // dužina voza sa spiska (CER „Vonat hossza m“) kada dužine kola nisu poznate
+            s = new SpisakKola { DuzinaVozaM = 479.6 };
+            s.Kola.Add(new KolaNaSpisku { Broj = "215124694328", NetoKg = 27194 });
+            p = PosaoIzDokumenata.IzSpiska(s, pk, "", "");
+            Assert.AreEqual(479.6m, p.V["Duzina1"]);
+        }
+
+        [TestMethod]
+        public void V291_Spisak_kolone_LKW_CIT23_i_red_ukupno()
+        {
+            var kp = pravila.Kp;
+            // LKW Walter „Specification…“: kolone kola (Tara vagona, Wg.Ladung, Ukupna težina) imaju prednost nad kolonama prikolica
+            var redovi = new List<string[]>
+            {
+                new[] { "Pos.", "Wagon Number", "Tara vagona", "Wg.Ladung", "Registration of trailer", "Unit-Nr", "Tara", "Netto", "Brutto", "NHM", "Ukupna težina" },
+                new[] { "1", "378049925456", "35100", "31112.99", "HROM3960", "LKWA9039609", "7000", "9893.64", "16893.64", "340250", "66212.99" },
+                new[] { "", "", "", "", "HROM4067", "LKWA9040678", "6650", "7569.35", "14219.35", "340250", "" },
+                new[] { "2", "358049566328", "35000", "43915.45", "HROB4918", "LKWA2049185", "7000", "17151.84", "24151.84", "340250", "78915.45" },
+                new[] { "3", "358049564703", "35000", "37466.65", "HROM3912", "LKWA9039126", "6650", "16595.29", "23245.29", "310540", "72466.65" },
+                new[] { "", "", "", "112495.09", "", "", "", "", "112495.09", "", "217595.09" },
+            };
+            var d = ExcelCitac.AnalizaRedova(redovi, kp, "Specification.xls", "excel", "Excel").First(x => x.Tip == TipDokumenta.SpisakKola);
+            var s = d.Spisak[0];
+            Assert.AreEqual(3, s.Kola.Count, "kola = redovi sa brojem kola, ne prikolice");
+            Assert.AreEqual(35100, s.Kola[0].TaraKg); Assert.AreEqual(31113, s.Kola[0].NetoKg); Assert.AreEqual(66213, s.Kola[0].BrutoKg);
+            Assert.AreEqual(112495, s.UkupnoNetoKg); Assert.AreEqual(217595, s.UkupnoBrutoKg);
+            Assert.AreEqual(4, s.NhmJedinica.Count, "NHM po jedinicama (prikolicama)");
+            // CIT 23 (Prilog 4 GLV-TC): red sa brojevima kolona 1–9 – kolona 6 = neto, 7 = tara, 8 = bruto
+            redovi = new List<string[]>
+            {
+                new[] { "Spisak kola - Wagenliste", "Prilog - Anlage 4 GLV - TC 23 GTM - CIT" },
+                new[] { "Red. Br.", "Kola br.", "Osovine", "Naznačenje robe", "Pozicija NHM", "RID", "Masa", "", "Tara kola", "Bruto masa", "Napomene" },
+                new[] { "1", "2", "3", "4", "", "5", "6", "", "7", "8", "9" },
+                new[] { "1", "314354200367", "4", "gypsum", "2833 29", "", "54100", "56200", "21100", "75200", "" },
+                new[] { "2", "314354200276", "4", "gypsum", "2833 29", "", "55200", "55200", "21000", "76200", "" },
+                new[] { "Ukupno - Insgesamt", "", "8", "osovina", "", "", "109300", "", "42100", "151400", "" },
+            };
+            s = ExcelCitac.AnalizaRedova(redovi, kp, "CIT 23 GTM.xls", "excel", "Excel").First(x => x.Tip == TipDokumenta.SpisakKola).Spisak[0];
+            Assert.AreEqual(54100, s.Kola[0].NetoKg); Assert.AreEqual(21100, s.Kola[0].TaraKg); Assert.AreEqual(75200, s.Kola[0].BrutoKg);
+            Assert.AreEqual(109300, s.UkupnoNetoKg); Assert.AreEqual(42100, s.UkupnoTaraKg);
+        }
+
+        [TestMethod]
+        public void V291_Zaglavlje_spiska_CER_i_PSP()
+        {
+            var redovi = new List<string[]>
+            {
+                new[] { "", "Vonat hossza m", "", "Feladási állomás" },
+                new[] { "", "479.6", "", "51600361 - Gdynia Port-Zmpg" },
+                new[] { "", "Szállítandó áru", "Rakomány tömege t", "Érkezési állomás" },
+                new[] { "", "48109200 - Papír és karton", "948.946", "55071126 - Kelebia oh." },
+                new[] { "#", "Pályaszám", "Tsz.", "Hossz", "Saját", "Rakomány", "Elegy" },
+                new[] { "1.", "21 51 2469 432-8", "2", "15.5", "15", "27.194", "42.194" },
+                new[] { "2.", "21 51 2469 149-8", "2", "15.5", "14.9", "27.15", "42.05" },
+            };
+            var s = ExcelCitac.AnalizaRedova(redovi, pravila.Kp, "Kocsilista.xlsx", "excel", "Excel").First(x => x.Tip == TipDokumenta.SpisakKola).Spisak[0];
+            Assert.AreEqual(479.6, s.DuzinaVozaM); Assert.AreEqual(948946, s.UkupnoNetoKg);
+            StringAssert.Contains(s.PrelazniPut, "Kelebia"); StringAssert.StartsWith(s.NhmZaglavlje, "48109200");
+            Assert.AreEqual(15000, s.Kola[0].TaraKg); Assert.AreEqual(27194, s.Kola[0].NetoKg); Assert.AreEqual(42194, s.Kola[0].BrutoKg); Assert.AreEqual(2, s.Kola[0].Osovine);
+            // PSP „Lista de vagoane“: Itinerariu → prelazni put
+            redovi = new List<string[]>
+            {
+                new[] { "Itinerariu", "" }, new[] { "Agigea Nord - Stamora M - Vreoci", "" },
+                new[] { "Nr.", "Nr. Vagon", "Nr. osii", "Masa inc.", "Tara vg.", "Masa bruta" },
+                new[] { "1", "3178 530 0157-4", "4", "", "21700", "" },
+                new[] { "2", "3178 530 0327-3", "4", "", "21150", "" },
+            };
+            s = ExcelCitac.AnalizaRedova(redovi, pravila.Kp, "wagon list 17.xlsx", "excel", "Excel").First(x => x.Tip == TipDokumenta.SpisakKola).Spisak[0];
+            StringAssert.Contains(s.PrelazniPut, "Stamora");
+            Assert.AreEqual(21700, s.Kola[0].TaraKg); Assert.IsNull(s.Kola[0].NetoKg);
+        }
+
+        [TestMethod]
+        public void V291_CIT7_ispravka_prevoznik_i_box25()
+        {
+            var iz = Citanje.Cit7Citac.Izmene("Correction: Box 25: 941 389 kg");
+            Assert.AreEqual(1, iz.Count); Assert.AreEqual("25", iz[0].Rubrika); StringAssert.Contains(iz[0].Vrednost, "941 389");
+            var z = new Cit7Zahtev { Napomene = "Remarks: wagon 358049566241 detached\nCorrection: Box 25: 941 389 kg", Podnosilac = "Bratislava CENTRAL RAILWAYS a.s.", Kola = "378049564271 + 17 wagons" };
+            Assert.IsTrue(Cit7Provera.PrevoznikIliIspravka(z));
+            Assert.IsFalse(Cit7Provera.PrevoznikIliIspravka(new Cit7Zahtev { Napomene = "Box 4: GRANEXPORT", Podnosilac = "Panšped doo" }));
+        }
+
+        [TestMethod]
+        public void V291_Napomena_bez_potpisa_linkova_i_telefona()
+        {
+            var m = new MailZaUpis
+            {
+                Posiljalac = "dispo@crw.sk", Naslov = "ARR - Aviso: 46836/15", Primljeno = new DateTime(2026, 11, 15, 11, 56, 0),
+                Telo = "Hello,\nthe train arrived.\n\nBest regards\nJán Novák\nDispatcher\nTel.: +421 2 1234 5678\nwww.crw.sk\nThis e-mail and any attachments are confidential.",
+            };
+            var b = UpisUBazu.BlokNapomene(m);
+            StringAssert.StartsWith(b, "15.11.2026 11:56 dispo@crw.sk: ARR - Aviso: 46836/15");
+            StringAssert.Contains(b, "the train arrived"); StringAssert.Contains(b, "Ján Novák");
+            Assert.IsFalse(b.Contains("Dispatcher") || b.Contains("+421") || b.Contains("www.") || b.Contains("confidential"), b);
         }
     }
 }

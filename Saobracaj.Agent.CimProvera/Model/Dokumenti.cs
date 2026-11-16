@@ -309,6 +309,14 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string UputnaTekst { get; set; } = "";
         /// <summary>NHM iz zaglavlja spiska („1001.00“ → „100100“), prazno ako nije naveden.</summary>
         [Interni] public string NhmZaglavlje { get; set; } = "";
+        // v2.9.1: red „Ukupno / Insgesamt / zbir“ sa spiska (kg), dužina voza (m), prelazni put („Subotica br./Kelebia gr.“, „55071126 – Kelebia“)
+        [Interni] public double? UkupnoTaraKg { get; set; }
+        [Interni] public double? UkupnoNetoKg { get; set; }
+        [Interni] public double? UkupnoBrutoKg { get; set; }
+        [Interni] public double? DuzinaVozaM { get; set; }
+        [Interni] public string PrelazniPut { get; set; } = "";
+        /// <summary>v2.9.1: NHM po tovarnim jedinicama (prikolice/kontejneri na kolima) – intermodalni voz: NHM1 = najčešća grupa po jedinicama.</summary>
+        [Interni] public List<string> NhmJedinica { get; set; } = new List<string>();
         [Opis("Kola na spisku.")] public List<KolaNaSpisku> Kola { get; set; } = new List<KolaNaSpisku>();
     }
 
