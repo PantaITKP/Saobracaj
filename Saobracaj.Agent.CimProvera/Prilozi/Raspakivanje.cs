@@ -8,7 +8,7 @@ using MimeKit;
 
 namespace Saobracaj.Agent.CimProvera.Prilozi
 {
-    internal enum VrstaPriloga { Pdf, Slika, Excel, Ostalo }
+    internal enum VrstaPriloga { Pdf, Slika, Excel, Word, Ostalo }
 
     /// <summary>Jedan fajl za proveru (posle raspakivanja ZIP/EML/MSG).</summary>
     internal sealed class Prilog
@@ -17,6 +17,10 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         public byte[] Sadrzaj;
         public VrstaPriloga Vrsta;
         public string MediaType;      // za Claude: application/pdf, image/jpeg, …
+        /// <summary>PDF nastao pretvaranjem Word priloga: natpisi obrasca su slika (OCR samo za sidra), vrednosti iz tekstualnog sloja.</summary>
+        public bool IzWorda;
+        /// <summary>Već pročitane strane (test podaci „&lt;ime&gt;.strane.json“ iz keša agenta): čitač ih koristi umesto ponovnog čitanja.</summary>
+        public List<Citanje.Strana> Strane;
         public string Hes => hes ?? (hes = Sha256(Sadrzaj));
         private string hes;
 
@@ -37,11 +41,33 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
     {
         private const int MaxDubina = 5;
 
+        /// <summary>
+        /// v2.8.1: „&lt;ime&gt;.strane.json“ (već pročitane strane) se prihvata SAMO u testovima (jedinični testovi i
+        /// <c>validate --test-strane</c>). U obradi maila je uvek isključeno – inače bi svako mogao da pošalje izmišljen
+        /// „pročitan“ sadržaj koji bi agent proverio kao pravi tovarni list.
+        /// </summary>
+        internal static bool DozvoliProcitaneStrane;
+
+        public const string NedozvoljenTip = "nedozvoljen tip priloga";
+
         public static List<Prilog> Raspakuj(string naziv, byte[] sadrzaj, List<string> preskoceno, int dubina = 0)
         {
             var rez = new List<Prilog>();
             if (sadrzaj == null || sadrzaj.Length == 0) return rez;
             var ext = (Path.GetExtension(naziv) ?? "").ToLowerInvariant();
+            if (naziv.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase) && !DozvoliProcitaneStrane)
+            {
+                preskoceno.Add(naziv + " (" + NedozvoljenTip + ")");
+                return rez;
+            }
+            // test podaci: pročitane strane iz keša agenta („CIM.pdf.strane.json“ = prilog „CIM.pdf“ čiji original nije dostupan)
+            if (naziv.EndsWith(".strane.json", StringComparison.OrdinalIgnoreCase))
+            {
+                string json; using (var sr = new StreamReader(new MemoryStream(sadrzaj), System.Text.Encoding.UTF8, true)) json = sr.ReadToEnd();
+                var strane = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Citanje.Strana>>(json);
+                rez.Add(new Prilog { Naziv = naziv.Substring(0, naziv.Length - ".strane.json".Length), Sadrzaj = sadrzaj, Vrsta = VrstaPriloga.Pdf, MediaType = "application/pdf", Strane = strane });
+                return rez;
+            }
             var vrsta = Prepoznaj(ext, sadrzaj, out var media);
 
             if (vrsta != VrstaPriloga.Ostalo)
@@ -135,6 +161,35 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             }
         }
 
+        private static readonly System.Text.RegularExpressions.Regex ImeUkrasa = new System.Text.RegularExpressions.Regex(
+            @"logo|signature|signatur|potpis|podpis|unterschrift|banner|baner|facebook|linkedin|twitter|instagram|youtube|whatsapp|viber|xing|icon|ikon|social|outlook",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        /// <summary>
+        /// Slika iz potpisa maila, logo firme ili ikona (ne tovarni list): razlog za log/izveštaj, ili null kada slika može da bude
+        /// dokument. Sken ili fotografija tovarnog lista je velika (≥ ~1000 px, desetine KB), pa ova pravila ne mogu da je preskoče:
+        /// manja od 15 KB; manje od 250 000 piksela (npr. 500×500); traka/baner (odnos stranica ≥ 3, kraća strana &lt; 500 px);
+        /// ime logo/potpis/ikona društvene mreže i manje od 1,5 Mpx.
+        /// </summary>
+        public static string Ukras(Prilog p)
+        {
+            if (p?.Vrsta != VrstaPriloga.Slika || p.Sadrzaj == null) return null;
+            if (p.Sadrzaj.Length < 15 * 1024) return "mala slika (" + p.Sadrzaj.Length / 1024 + " KB)";
+            int w, h;
+            try
+            {
+                using (var ms = new MemoryStream(p.Sadrzaj))
+                using (var img = System.Drawing.Image.FromStream(ms, false, false)) { w = img.Width; h = img.Height; }
+            }
+            catch { return null; }   // ne može da se otvori – čita se (i ide na ručnu proveru ako ne uspe)
+            var dim = w + "×" + h + " px";
+            if ((long)w * h < 250_000) return "mala slika (" + dim + ")";
+            if (Math.Max(w, h) >= 3.0 * Math.Min(w, h) && Math.Min(w, h) < 500) return "traka/baner (" + dim + ")";
+            var ime = Path.GetFileNameWithoutExtension((p.Naziv ?? "").Split('/', '\\').Last());
+            if (ImeUkrasa.IsMatch(ime) && (long)w * h < 1_500_000) return "logo/ikona po imenu (" + dim + ")";
+            return null;
+        }
+
         private static VrstaPriloga Prepoznaj(string ext, byte[] b, out string media)
         {
             media = null;
@@ -147,6 +202,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 case ".gif": media = "image/gif"; return VrstaPriloga.Slika;
                 case ".webp": media = "image/webp"; return VrstaPriloga.Slika;
                 case ".xls": case ".xlsx": case ".xlsm": return VrstaPriloga.Excel;
+                // Word i RTF se pretvaraju u PDF (Syncfusion DocIO); .odt ide na ručnu proveru sa razlogom
+                case ".docx": case ".docm": case ".doc": case ".dot": case ".dotx": case ".dotm": case ".rtf": case ".odt": return VrstaPriloga.Word;
             }
             if (b.Length > 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) { media = "image/jpeg"; return VrstaPriloga.Slika; }
             if (b.Length > 8 && b[0] == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') { media = "image/png"; return VrstaPriloga.Slika; }

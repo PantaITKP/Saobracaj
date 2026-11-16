@@ -1090,5 +1090,18 @@ namespace Saobracaj
             var forma = new Saobracaj.Planiranje.Forme.frmOPParametri();
             if (forma.Pravo) forma.Show(); else forma.Dispose();
         }
+
+        // Priprema / Porudžbine: poslovi i teretnice koje je agent CimProvera upisao u planiranje.tmp* (test, samo prikaz)
+        private void tsbTmpJobs_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmTmpJobs();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
+
+        private void tsbTmpTeretnica_Click(object sender, EventArgs e)
+        {
+            var forma = new Saobracaj.Planiranje.Forme.frmTmpTeretnica();
+            if (forma.Pravo) forma.Show(); else forma.Dispose();
+        }
     }
 }

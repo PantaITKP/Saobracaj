@@ -56,6 +56,8 @@ namespace Saobracaj
             this.toolStripButton14 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton81 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton83 = new System.Windows.Forms.ToolStripButton();
+            this.tsbTmpJobs = new System.Windows.Forms.ToolStripButton();
+            this.tsbTmpTeretnica = new System.Windows.Forms.ToolStripButton();
             this.toolStripEx6 = new Syncfusion.Windows.Forms.Tools.ToolStripEx();
             this.toolStripButton15 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton16 = new System.Windows.Forms.ToolStripButton();
@@ -617,7 +619,9 @@ namespace Saobracaj
             this.toolStripEx5.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButton14,
             this.toolStripButton81,
-            this.toolStripButton83});
+            this.toolStripButton83,
+            this.tsbTmpJobs,
+            this.tsbTmpTeretnica});
             this.toolStripEx5.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
             this.toolStripEx5.Location = new System.Drawing.Point(0, 1);
             this.toolStripEx5.Name = "toolStripEx5";
@@ -657,6 +661,22 @@ namespace Saobracaj
             this.toolStripButton83.Size = new System.Drawing.Size(138, 17);
             this.toolStripButton83.Text = "Tehnologije pregled";
             this.toolStripButton83.Click += new System.EventHandler(this.toolStripButton83_Click);
+            //
+            // tsbTmpJobs
+            //
+            this.tsbTmpJobs.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbTmpJobs.Name = "tsbTmpJobs";
+            this.tsbTmpJobs.Size = new System.Drawing.Size(138, 17);
+            this.tsbTmpJobs.Text = "CIM poslovi (test)";
+            this.tsbTmpJobs.Click += new System.EventHandler(this.tsbTmpJobs_Click);
+            //
+            // tsbTmpTeretnica
+            //
+            this.tsbTmpTeretnica.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsbTmpTeretnica.Name = "tsbTmpTeretnica";
+            this.tsbTmpTeretnica.Size = new System.Drawing.Size(138, 17);
+            this.tsbTmpTeretnica.Text = "CIM teretnice (test)";
+            this.tsbTmpTeretnica.Click += new System.EventHandler(this.tsbTmpTeretnica_Click);
             // 
             // toolStripEx6
             // 
@@ -3079,6 +3099,8 @@ namespace Saobracaj
         private System.Windows.Forms.ToolStripButton tsbOPTurnusi;
         private System.Windows.Forms.ToolStripButton tsbOPTablicaMasa;
         private System.Windows.Forms.ToolStripButton tsbOPParametri;
+        private System.Windows.Forms.ToolStripButton tsbTmpJobs;
+        private System.Windows.Forms.ToolStripButton tsbTmpTeretnica;
         private System.Windows.Forms.ToolStripButton toolStripButton85;
         private System.Windows.Forms.ToolStripButton toolStripButton86;
         private System.Windows.Forms.ToolStripButton toolStripButton87;

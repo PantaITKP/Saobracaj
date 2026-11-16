@@ -16,6 +16,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// <summary>Naziv fonta (tekst iz PDF-a); prazno za OCR.</summary>
         public string Font = "";
         public string Potpis => Font + "|" + (Math.Round(Velicina * 2) / 2).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        /// <summary>Tekstualni blok (okvir Word-a) kome reč pripada; 0 = bez bloka. Ceo blok ide u rubriku u kojoj je veći deo teksta.</summary>
+        public int Blok;
+        /// <summary>Font reči iz tekstualnog okvira Word dokumenta pretvorenog u PDF (podatak, nikad natpis obrasca).</summary>
+        public const string FontWord = "WordOkvir";
+        /// <summary>Upisan podatak, nikad odštampani natpis: vrednost polja PDF obrasca ili tekst iz Word okvira.</summary>
+        public bool JePodatak => Font == "AcroForm" || Font == FontWord;
         public double Cx => (X0 + X1) / 2;
         public double Cy => (Y0 + Y1) / 2;
         public double Visina => Y1 - Y0;
@@ -32,6 +38,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         public IzvorTeksta Izvor;
         public double SrednjaPouzdanost => Reci.Count == 0 ? 0 : Reci.Average(r => r.Pouzdanost);
         public string Napomena = "";
+        /// <summary>v2.8.4 (2): ugao (u smeru kazaljke) za koji je strana okrenuta pre OCR-a; koordinate reči su posle okretanja.</summary>
+        public int Ugao;
         /// <summary>Crno-bela slika strane (PNG 1 bit, ~150 dpi) za linije okvira, polja za označavanje i prazne rubrike; null ako nije iscrtana.</summary>
         public byte[] Slika;
         /// <summary>Ista strana sa svetlijim pragom (samo za linije okvira).</summary>

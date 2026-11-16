@@ -33,10 +33,13 @@ namespace Saobracaj.Agent.CimProvera
         public string DolazniFolder;
         public string OdlazniFolder;       // prazno = poseban folder "Sent" sa servera
         public bool CitajOdlazne;
-        public string PosiljalacIzvestaja; // From izveštaja (podrazumevano = Nalog)
+        public string PosiljalacIzvestaja; // From izveštaja (ključ From ili PosiljalacIzvestaja; podrazumevano = sanduče)
+        public string ReplyTo;             // Reply-To izveštaja (ključ ReplyTo; podrazumevano = From)
         public Rezim Rezim;
-        public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde
+        public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde (ključ TestPrimalac ili IzvestajAdresa)
         public List<string> KopijaNa = new List<string>();
+        /// <summary>v2.8.4 (10): adrese koje automatski prosleđuju poštu na agenti@ – ne idu u primaoce u Live režimu (ključ ProsledjivanjeNaAgenti).</summary>
+        public List<string> ProsledjivanjeNaAgenti = new List<string>();
         public List<string> InterniDomeni = new List<string>();
         public bool OdgovoriNaIspravanDolazni;
         public bool ObavestiIspravanOdlazni;
@@ -74,12 +77,25 @@ namespace Saobracaj.Agent.CimProvera
         public string RezultatiFolder;
         /// <summary>Kratka potvrda pošiljaocu kada je dolazni CIM ispravan („tovarni list je ispravan“).</summary>
         public bool PotvrdaIspravnogDolaznog;
+        /// <summary>Potpis u mailu sa izveštajem: ime (prazno = potpis počinje odeljenjem), telefon, odeljenje, e-mail.</summary>
+        public string PotpisIme, PotpisTelefon, PotpisOdeljenje, PotpisEmail;
+
+        // v2.9.0: upis u privremene tabele planiranje.tmp* (posle provere; greška ne menja proveru ni izveštaj)
+        /// <summary>Upis poslova i teretnica u bazu (podrazumevano isključeno; na serveru true).</summary>
+        public bool UpisUBazu;
+        /// <summary>Konekcija za upis: samo Konekcija.dpapi (DPAPI pod servisnim nalogom) ili CIMPROVERA_KONEKCIJA (ručni test).</summary>
+        public string Konekcija;
 
         public string Bazni => AppDomain.CurrentDomain.BaseDirectory;
 
-        public static AgentConfig Ucitaj()
+        public static AgentConfig Ucitaj() => Ucitaj(ConfigurationManager.AppSettings);
+
+        /// <summary>
+        /// Podešavanja iz appSettings. Adrese nisu u kodu: CitajSanduce (ili Nalog) = sanduče koje se čita i nalog za IMAP/SMTP,
+        /// From (ili PosiljalacIzvestaja), ReplyTo, TestPrimalac (ili IzvestajAdresa); prazno = isto kao sanduče.
+        /// </summary>
+        internal static AgentConfig Ucitaj(System.Collections.Specialized.NameValueCollection a)
         {
-            var a = ConfigurationManager.AppSettings;
             string S(string k, string d) => string.IsNullOrWhiteSpace(a[k]) ? d : a[k].Trim();
             int I(string k, int d) => int.TryParse(a[k], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : d;
             bool B(string k, bool d) => string.IsNullOrWhiteSpace(a[k]) ? d : string.Equals(a[k].Trim(), "true", StringComparison.OrdinalIgnoreCase);
@@ -88,7 +104,7 @@ namespace Saobracaj.Agent.CimProvera
 
             var cfg = new AgentConfig
             {
-                Nalog = S("Nalog", "stefan.obradovic@kprevoz.co.rs"),
+                Nalog = S("CitajSanduce", S("Nalog", "")),
                 ImapHost = S("ImapHost", "mail.kprevoz.co.rs"),
                 ImapPort = I("ImapPort", 993),
                 ImapSsl = B("ImapSsl", true),
@@ -101,6 +117,7 @@ namespace Saobracaj.Agent.CimProvera
                 Rezim = string.Equals(S("Rezim", "Test"), "Live", StringComparison.OrdinalIgnoreCase) ? Rezim.Live : Rezim.Test,
                 InterniDomeni = L("InterniDomeni", "kprevoz.co.rs"),
                 KopijaNa = L("KopijaNa", ""),
+                ProsledjivanjeNaAgenti = L("ProsledjivanjeNaAgenti", ""),
                 OdgovoriNaIspravanDolazni = B("OdgovoriNaIspravanDolazni", true),
                 ObavestiIspravanOdlazni = B("ObavestiIspravanOdlazni", false),
                 ImportOd = DateTime.ParseExact(S("ImportOd", DateTime.Today.ToString("yyyy-MM-dd")), "yyyy-MM-dd", CultureInfo.InvariantCulture),
@@ -117,7 +134,7 @@ namespace Saobracaj.Agent.CimProvera
                 OcrDodatniJezici = S("OcrDodatniJezici", "hun+ita+ron+bul+slv+hrv"),
                 OcrMinPouzdanostReci = double.TryParse(a["OcrMinPouzdanostReci"], NumberStyles.Float, CultureInfo.InvariantCulture, out var mp) ? mp : 0.3,
                 PragPouzdanosti = double.TryParse(a["PragPouzdanosti"], NumberStyles.Float, CultureInfo.InvariantCulture, out var prag) ? prag : 0.6,
-                MaxPokusaja = I("MaxPokusaja", 5),
+                MaxPokusaja = I("MaxPokusaja", 3),
                 MaxPrilogMB = I("MaxPrilogMB", 30),
 
                 ObrasciFolder = S("ObrasciFolder", @"sablon\obrasci"),
@@ -126,6 +143,10 @@ namespace Saobracaj.Agent.CimProvera
                 PragPraznogPolja = D("PragPraznogPolja", 0.05),
                 RezultatiFolder = S("RezultatiFolder", @"testovi\rezultati"),
                 PotvrdaIspravnogDolaznog = B("PotvrdaIspravnogDolaznog", false),
+                PotpisIme = S("PotpisIme", ""),
+                PotpisTelefon = S("PotpisTelefon", ""),
+                PotpisOdeljenje = S("PotpisOdeljenje", "Priprema saobraćaja"),
+                PotpisEmail = S("PotpisEmail", "priprema@kprevoz.co.rs"),
             };
             cfg.PragPoravnanja = new Citanje.PragoviPoravnanja
             {
@@ -136,8 +157,9 @@ namespace Saobracaj.Agent.CimProvera
             };
             cfg.ObrasciFolder = Apsolutna(cfg.ObrasciFolder);
             if (cfg.RezultatiFolder.Length > 0) cfg.RezultatiFolder = Apsolutna(cfg.RezultatiFolder);
-            cfg.PosiljalacIzvestaja = S("PosiljalacIzvestaja", cfg.Nalog);
-            cfg.IzvestajAdresa = S("IzvestajAdresa", cfg.Nalog);
+            cfg.PosiljalacIzvestaja = S("From", S("PosiljalacIzvestaja", cfg.Nalog));
+            cfg.ReplyTo = S("ReplyTo", cfg.PosiljalacIzvestaja);
+            cfg.IzvestajAdresa = S("TestPrimalac", S("IzvestajAdresa", cfg.Nalog));
             cfg.UpozorenjaNa = S("UpozorenjaNa", cfg.IzvestajAdresa);
 
             cfg.PravilaFolder = Apsolutna(cfg.PravilaFolder);
@@ -147,8 +169,23 @@ namespace Saobracaj.Agent.CimProvera
             cfg.LogFolder = Apsolutna(cfg.LogFolder);
 
             cfg.Lozinka = Tajna("Lozinka", "CIMPROVERA_LOZINKA");
+            cfg.UpisUBazu = B("UpisUBazu", false);
+            cfg.Konekcija = KonekcijaIz(Tajna("Konekcija", "CIMPROVERA_KONEKCIJA"), S("Konekcija", ""));
             return cfg;
         }
+
+        /// <summary>
+        /// Konekcija za upis samo iz Konekcija.dpapi (DPAPI pod servisnim nalogom, Instaliraj.ps1) ili promenljive CIMPROVERA_KONEKCIJA
+        /// (ručni test). Connection string u otvorenom tekstu (ključ „Konekcija“) se ne koristi – null, upozorenje bez sadržaja konekcije.
+        /// </summary>
+        internal static string KonekcijaIz(string tajna, string otvoreno)
+        {
+            if (!string.IsNullOrWhiteSpace(otvoreno)) OtvorenaKonekcija = true;
+            return string.IsNullOrWhiteSpace(tajna) ? null : tajna.Trim();
+        }
+
+        /// <summary>U config-u je connection string u otvorenom tekstu (ključ „Konekcija“) – ne koristi se.</summary>
+        public static bool OtvorenaKonekcija;
 
         /// <summary>Relativna putanja se računa od foldera exe-a.</summary>
         public static string Apsolutna(string p) =>
@@ -189,6 +226,15 @@ namespace Saobracaj.Agent.CimProvera
 
         /// <summary>Tajne iz config-a koje postoje, ali ne mogu da se dešifruju pod trenutnim nalogom.</summary>
         public static readonly List<string> NedesifrovaneTajne = new List<string>();
+
+        /// <summary>DPAPI vrednost (base64, iz --zastiti) → tekst; null ako ne može da se dešifruje pod trenutnim nalogom.</summary>
+        public static string Desifruj(string base64)
+        {
+            if (string.IsNullOrWhiteSpace(base64)) return null;
+            try { return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(base64.Trim()), Entropija, Opseg)); }
+            catch (CryptographicException) { return null; }
+            catch (FormatException) { return null; }
+        }
 
         public static string Zastiti(string vrednost) =>
             Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(vrednost), Entropija, Opseg));

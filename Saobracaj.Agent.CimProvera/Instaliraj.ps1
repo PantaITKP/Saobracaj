@@ -6,11 +6,14 @@
 # folder, sifrovanje lozinke maila (DPAPI pod servisnim nalogom), test, probno pokretanje i zadatak u Task
 # Scheduler-u na 2 minuta. Moze da se pokrene vise puta (i za promenu lozinke). Bez API kljuceva: dokumenti se
 # citaju lokalno (tekst iz PDF-a + Tesseract OCR), nista ne izlazi iz firme.
-# Bez baze: stanje i kes procitanih dokumenata su lokalno na serveru (C:\ProgramData\Saobracaj\CimProvera),
-# dostupni samo servisnom nalogu i administratorima.
+# Stanje i kes procitanih dokumenata su lokalno na serveru (C:\ProgramData\Saobracaj\CimProvera), dostupni samo servisnom
+# nalogu i administratorima. v2.9.0: upis u privremene tabele planiranje.tmp* (Konekcija.dpapi, Windows prijava servisnog
+# naloga; prava daje OP_913_tmp_Prava.sql).
 # Skripta je namerno bez slova sa kvacicama (PowerShell 5.1 cita .ps1 bez BOM-a kao ANSI).
 
 $ErrorActionPreference = 'Stop'
+$SqlInstanca = 'SQLEXPRESS2008K'
+$SqlBaza     = 'Perftech_Beograd'
 $Nalog   = 'svc_cimprovera'
 $Zadatak = 'Saobracaj\Agent CimProvera'
 $Stanje  = 'C:\ProgramData\Saobracaj\CimProvera\stanje'
@@ -147,7 +150,8 @@ $xml = New-Object Xml.XmlDocument
 $xml.PreserveWhitespace = $true
 $xml.Load($Cfg)
 $app = $xml.SelectSingleNode('/configuration/appSettings')
-$mail = $app.SelectSingleNode("add[@key='Nalog']").GetAttribute('value')
+$cs = $app.SelectSingleNode("add[@key='CitajSanduce']")   # v2.7.1: CitajSanduce (stari kljuc: Nalog)
+if ($cs -ne $null -and $cs.GetAttribute('value').Trim().Length -gt 0) { $mail = $cs.GetAttribute('value').Trim() } else { $mail = $app.SelectSingleNode("add[@key='Nalog']").GetAttribute('value') }
 
 Korak "3. Lozinka sanduceta $mail"
 $loz = Obican (Read-Host "    Lozinka za $mail" -AsSecureString)
@@ -189,8 +193,52 @@ Postavi 'StanjeFolder' $Stanje
 $xml.Save($Cfg)
 Ok 'sifrovana lozinka i StanjeFolder upisani u Saobracaj.Agent.CimProvera.exe.config'
 
+# Syncfusion licencni kljuc (Word -> PDF): DPAPI pod servisnim nalogom, poseban fajl Syncfusion.dpapi (ne config, ne log).
+# Servisni nalog je gore dobio novu lozinku, pa stari Syncfusion.dpapi vise ne moze da se desifruje: kljuc se unosi svaki put.
+Korak '3b. Syncfusion licencni kljuc (Word prilozi -> PDF)'
+$SfFajl = Join-Path $Folder 'Syncfusion.dpapi'
+# Kljuc je dugacak: moze i iz fajla syncfusion_kljuc.txt - u C:\ProgramData\Saobracaj\CimProvera ili u folderu agenta
+# (isti kljuc kao u aplikaciji Saobracaj, RegisterLicense); fajl se brise odmah posle citanja.
+$SfUlaz = @((Join-Path (Split-Path $Stanje) 'syncfusion_kljuc.txt'), (Join-Path $Folder 'syncfusion_kljuc.txt')) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $SfUlaz) { $SfUlaz = Join-Path (Split-Path $Stanje) 'syncfusion_kljuc.txt' }
+if (Test-Path $SfUlaz) {
+    $sf = ((Get-Content $SfUlaz -Raw) -replace '\s', '')
+    Remove-Item $SfUlaz -Force
+    if (Test-Path $SfUlaz) { Stop-Greska "Fajl $SfUlaz ne moze da se obrise - obrisite ga rucno." }
+    Ok "kljuc procitan iz $SfUlaz (fajl je obrisan)"
+} else {
+    Write-Host "    (kljuc moze i iz fajla $SfUlaz - skripta ga cita i brise)"
+    $sf = Obican (Read-Host '    Syncfusion kljuc (desni klik = nalepi; Enter = bez kljuca, Word prilozi tada idu na rucnu proveru)' -AsSecureString)
+}
+if ([string]::IsNullOrWhiteSpace($sf)) {
+    Remove-Item $SfFajl -Force -ErrorAction SilentlyContinue
+    Write-Host '    PAZNJA  kljuc nije unet: Word prilozi se ne pretvaraju u PDF (rucna provera).' -ForegroundColor Yellow
+} else {
+    if ($sf.Contains('"')) { Stop-Greska 'Kljuc sadrzi znak navodnika (") koji skripta ne podrzava.' }
+    $sifra = Zastiti $sf.Trim(); $sf = $null
+    [IO.File]::WriteAllText($SfFajl, $sifra, (New-Object Text.UTF8Encoding($false)))
+    $sifra = $null
+    if ((Alat 'icacls' @($SfFajl, '/inheritance:r', '/grant:r', '*S-1-5-32-544:F', "${Nalog}:R", '/Q')) -ne 0) { Write-Host '    PAZNJA  prava na Syncfusion.dpapi nisu suzena (icacls).' -ForegroundColor Yellow }
+    Ok 'sifrovan kljuc upisan u Syncfusion.dpapi (citaju ga samo administratori i servisni nalog)'
+}
+
+# v2.9.0: upis u privremene tabele planiranje.tmp* pod servisnim nalogom (Windows prijava, bez lozinke).
+# Konekcija je LOKALNA (.\SQLEXPRESS2008K): Windows prijava lokalnog naloga preko IP adrese ne prolazi (server nije u domenu).
+# Connection string se cuva samo sifrovan (Konekcija.dpapi, DPAPI pod servisnim nalogom) – servisni nalog je gore dobio novu
+# lozinku, pa se sifruje ponovo pri svakoj instalaciji. Prava u bazi daje OP_913_tmp_Prava.sql (pokrece administrator baze).
+Korak '3c. Upis u bazu (UpisUBazu, Konekcija.dpapi)'
+$xml = New-Object Xml.XmlDocument; $xml.PreserveWhitespace = $true; $xml.Load($Cfg)
+$app = $xml.SelectSingleNode('/configuration/appSettings')
+$otvoreno = $app.SelectSingleNode("add[@key='Konekcija']")
+if ($otvoreno -ne $null) { [void]$app.RemoveChild($otvoreno); Ok 'kljuc Konekcija u otvorenom tekstu uklonjen (koristi se samo Konekcija.dpapi)' }
+Postavi 'Konekcija.dpapi' (Zastiti "Data Source=.\$SqlInstanca;Initial Catalog=$SqlBaza;Integrated Security=True;Application Name=Saobracaj.Agent.CimProvera")
+if ($app.SelectSingleNode("add[@key='UpisUBazu']") -eq $null) { Postavi 'UpisUBazu' 'true' }
+$xml.Save($Cfg)
+Ok "Konekcija.dpapi: lokalno .\$SqlInstanca, baza $SqlBaza, Windows prijava $PunNalog; UpisUBazu = $($app.SelectSingleNode("add[@key='UpisUBazu']").GetAttribute('value'))"
+Write-Host "    Prava u bazi: OP_913_tmp_Prava.sql (login $PunNalog, SELECT/INSERT/UPDATE/DELETE samo na planiranje.tmp*). Bez njih agent radi, a upis javlja gresku (jednom na 6 h)."
+
 # ------------------------------------------------------------------ 4. test veza i prvo pokretanje
-Korak '4. Test (pravila, sablon, OCR, IMAP, SMTP) pod servisnim nalogom'
+Korak '4. Test (pravila, sablon, OCR, Syncfusion kljuc, IMAP, SMTP) pod servisnim nalogom'
 $out = Join-Path $Folder 'test_veze.txt'
 $kod = KaoServis @('--test-veze') $out
 Get-Content $out -Encoding UTF8 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "    $_" }

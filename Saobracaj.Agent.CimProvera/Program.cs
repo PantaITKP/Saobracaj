@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -24,9 +24,10 @@ namespace Saobracaj.Agent.CimProvera
   validate <fajl|folder>…          provera fajlova bez maila (folder = jedan mail)
       --podfolderi                 svaki podfolder je poseban mail (npr. testovi\fixtures)
       --rezim auto|kp|spoljni      režim ""KP popunjava"" (podrazumevano auto: po r62 = 3212)
-      --datum yyyy-MM-dd           datum prijema (za ""datum u budućnosti""); podrazumevano: najnoviji fajl
+      --datum yyyy-MM-dd[ HH:mm]   datum (i vreme) prijema (za ""datum u budućnosti""); podrazumevano: najnoviji fajl
       --en                         poruka na engleskom
       --izlaz <folder>             upisuje rezultat (txt + json) po slučaju
+      --stanje <folder>            ponavljanja kroz niz poziva (isti prilog / isti tovarni list – bez novog izveštaja)
   rubrike <fajl>… [--ocr]          dijagnostika čitanja: vrsta strane, OCR, poravnanje i tekst svake rubrike
                                    (--ocr: PDF strane se iscrtavaju i čitaju OCR-om i kada imaju tekst)
   slike <fajl|folder>… [--izlaz f] JSON pročitanih rubrika + slika strane sa okvirima rubrika za svaki tovarni list
@@ -35,8 +36,13 @@ namespace Saobracaj.Agent.CimProvera
                                    nacrt šablona novog obrasca iz uzorka: linije okvira, brojevi rubrika, rubrike,
                                    kvadratići i sidra (JSON + slika); posle provere kopirati u ObrasciFolder
   preuzmi <uid> [--odlazni] [--izlaz f]  čuva priloge jedne poruke (IMAP samo za čitanje)
+  reset-stanje [--zadatak ""ime""] [--bez-zadatka]
+                                   zaustavlja zadatak, pravi rezervnu kopiju stanja (stanje\arhiva\datum_vreme),
+                                   briše spisak obrađenih mailova i keš (OCR, rezultati), postavlja nultu tačku i
+                                   ponovo uključuje zadatak; pravila, šabloni, config, logovi i testovi ostaju
   --test-veze                      proverava pravila, šablon, OCR (tessdata), IMAP i SMTP, bez obrade
-  --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)";
+  --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)
+  Word prilozi (.docx/.doc/.rtf) se pretvaraju u PDF preko Syncfusion DocIO; ključ je u Syncfusion.dpapi (Instaliraj.ps1)";
 
         private static int Main(string[] args)
         {
@@ -47,6 +53,10 @@ namespace Saobracaj.Agent.CimProvera
             try { cfg = AgentConfig.Ucitaj(); }
             catch (Exception ex) { Console.Error.WriteLine("Greška u config-u: " + ex); return 1; }
             var log = new Log(cfg.LogFolder, cfg.LogDana);
+            Slanje.Dnevnik = log;   // v2.8.4: zaštita režima Test upisuje uklonjene primaoce u log
+            Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
+            // Syncfusion ključ (Word → PDF) iz Syncfusion.dpapi; greška se upisuje tek kada Word prilog treba pretvoriti
+            try { Prilozi.WordUPdf.UcitajKljuc(); } catch { }
 
             try
             {
@@ -88,6 +98,44 @@ namespace Saobracaj.Agent.CimProvera
                                 Console.WriteLine("  " + l.Oznaka + " | " + n.Tezina + " | " + n.Pravilo + " | r" + n.Rubrika + " | " + n.Vrednost + " | " + n.Detalj + " | takođe: " + string.Join(",", n.Takodje.Select(t => t.Pravilo)));
                     return 0;
                 }
+                if (a.Count > 1 && a[0] == "tabela")
+                {
+                    // tabela <fajl.xlsx|.xls|.docx>: dijagnostika tovarnog lista iz tabele – prepoznavanje, natpisi, rubrike
+                    var pr = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, null);
+                    var b = File.ReadAllBytes(a[1]);
+                    var word = a[1].EndsWith(".docx", StringComparison.OrdinalIgnoreCase);
+                    var listovi = word ? Prilozi.TabelarniCim.IzWorda(b) : Prilozi.TabelarniCim.IzExcela(b);
+                    using (var c = new LokalniCitac(cfg, log, pr.Kp))
+                        foreach (var cel in listovi.Where(x => x.Count > 0))
+                        {
+                            Console.WriteLine("=== list: " + cel.Count + " ćelija; tovarni list: " + Prilozi.TabelarniCim.JeTovarniList(cel, out var razlog) + " (" + razlog + ")");
+                            if (a.Contains("--celije")) { foreach (var red in cel.GroupBy(x => x.Red).OrderBy(g => g.Key).Take(60)) Console.WriteLine("  " + (red.Key + 1) + ": " + string.Join(" | ", red.OrderBy(x => x.Kol).Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " ")))); continue; }
+                            var cim = Prilozi.TabelarniCim.Procitaj(cel, c.JeNatpisCelije, c.Pragovi, out var po);
+                            foreach (var kv in po.OrderBy(k => Regex.Match(k.Key, @"\d+").Success ? int.Parse(Regex.Match(k.Key, @"\d+").Value) : 0))
+                                Console.WriteLine("  r" + kv.Key.PadRight(6) + string.Join(" | ", kv.Value.Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " "))));
+                            Console.WriteLine("  natpisi: " + string.Join(" | ", cel.Where(x => c.JeNatpisCelije(x.Tekst)).Select(x => x.Adresa + "=" + Regex.Replace(x.Tekst, @"\s+", " "))));
+                            Console.WriteLine("  → obrazac " + cim.Obrazac + ", r62 " + cim.R62.Zemlja + "/" + cim.R62.Stanica + "/" + cim.R62.Preduzece + "/" + cim.R62.Broj + ", r16 " + cim.R16.Mesto + " " + cim.R16.Datum
+                                + ", r22 " + cim.R22.Tekst + ", r24 " + cim.R24.Tekst + ", r25 " + cim.R25.Tekst + ", r29 " + cim.R29.Mesto + " " + cim.R29.Datum + ", r30 CIM=" + cim.R30.Cim + " CUV=" + cim.R30.Cuv);
+                        }
+                    return 0;
+                }
+                if (a.Count > 1 && a[0] == "pdf-polja")
+                {
+                    // pdf-polja <fajl>: dijagnostika polja PDF obrasca (AcroForm) i anotacija po stranama
+                    using (var doc = UglyToad.PdfPig.PdfDocument.Open(File.ReadAllBytes(a[1])))
+                    {
+                        Console.WriteLine("AcroForm: " + (doc.TryGetForm(out var form) && form != null ? form.Fields.Count + " polja" : "nema"));
+                        if (form != null)
+                            foreach (var f in form.Fields.Take(40))
+                                Console.WriteLine("  " + f.GetType().Name + " | " + f.Information?.PartialName + " | str " + f.PageNumber + " | " + f.Bounds
+                                    + (f is UglyToad.PdfPig.AcroForms.Fields.AcroTextField t ? " | „" + t.Value + "“" : "")
+                                    + (f is UglyToad.PdfPig.AcroForms.Fields.AcroNonTerminalField nt ? " | deca " + nt.Children.Count : ""));
+                        foreach (var p in doc.GetPages().Take(2))
+                            foreach (var an in p.ExperimentalAccess.GetAnnotations().Take(10))
+                                Console.WriteLine("  str " + p.Number + " anotacija " + an.Type + " " + an.Rectangle + " „" + an.Content + "“ ap=" + (an.HasNormalAppearance));
+                    }
+                    return 0;
+                }
                 if (a.Count > 1 && a[0] == "preuzmi")
                 {
                     // preuzmi <uid> [--odlazni] [--izlaz folder]: čuva priloge jedne poruke (folder se otvara samo za čitanje; ništa se ne menja)
@@ -100,6 +148,8 @@ namespace Saobracaj.Agent.CimProvera
                         f.Open(MailKit.FolderAccess.ReadOnly);
                         var m = f.GetMessage(new MailKit.UniqueId(uint.Parse(a[1])));
                         Directory.CreateDirectory(izlaz);
+                        // v2.8.4: --eml – cela poruka sa zaglavljima (From/To/Cc, In-Reply-To) za validate i primaoce u Live režimu
+                        if (a.Contains("--eml")) { var e = Path.Combine(izlaz, a[1] + ".eml"); m.WriteTo(e); Console.WriteLine(e); }
                         foreach (var (ime, sadrzaj) in Prilozi.Raspakivanje.PriloziMaila(m))
                         {
                             var put = Path.Combine(izlaz, string.Concat(ime.Split(Path.GetInvalidFileNameChars())));
@@ -158,6 +208,17 @@ namespace Saobracaj.Agent.CimProvera
                     Console.WriteLine("Rezultati: " + izlaz);
                     return 0;
                 }
+                if (a.Count > 0 && a[0] == "reset-potpun")
+                {
+                    // v2.8.2: potpun reset (stanje, keš, rezultati, logovi) + nulta tačka po UID-u; --suvo = samo spisak
+                    var zi = a.IndexOf("--zadatak");
+                    return ResetStanja.Potpun(cfg, log, zi > 0 && zi + 1 < a.Count ? a[zi + 1] : ResetStanja.PodrazumevaniZadatak, a.Contains("--bez-zadatka"), a.Contains("--suvo"));
+                }
+                if (a.Count > 0 && a[0] == "reset-stanje")
+                {
+                    var zi = a.IndexOf("--zadatak");
+                    return ResetStanja.Pokreni(cfg, log, zi > 0 && zi + 1 < a.Count ? a[zi + 1] : ResetStanja.PodrazumevaniZadatak, a.Contains("--bez-zadatka"));
+                }
                 if (a.Contains("--test-veze")) return TestVeze(cfg, log);
 
                 var dry = a.Contains("--dry-run");
@@ -199,8 +260,25 @@ namespace Saobracaj.Agent.CimProvera
             var datumArg = Opcija("--datum");
             var izlaz = Opcija("--izlaz");
             var posiljalac = Opcija("--posiljalac");
+            // v2.8.1: naslov i telo maila (za jezik kod opštih domena: gmail.com…)
+            var naslovMaila = Opcija("--naslov");
+            var teloMaila = Opcija("--telo");
+            var istorija = Opcija("--istorija");
+            // v2.8.4 (6): stanje ponavljanja (isti prilog / isti tovarni list) kroz niz validate poziva – isto kao u radu nad sandučetom
+            var stanjePon = Opcija("--stanje");
+            var ponavljanja = stanjePon != null ? Ponavljanja.Ucitaj(stanjePon) : null;
             var en = Zastavica("--en");
+            var sr = Zastavica("--sr");
             var podfolderi = Zastavica("--podfolderi");
+            // v2.9.0: --upis – upis u planiranje.tmp* (konekcija iz config-a / CIMPROVERA_KONEKCIJA); --meta <json> – podaci o mailu po slučaju
+            var upisArg = Zastavica("--upis");
+            var metaF = Opcija("--meta");
+            var meta = metaF == null ? new Dictionary<string, Newtonsoft.Json.Linq.JObject>(StringComparer.OrdinalIgnoreCase)
+                : Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(metaF, Encoding.UTF8)).Properties().ToDictionary(x => x.Name, x => (Newtonsoft.Json.Linq.JObject)x.Value, StringComparer.OrdinalIgnoreCase);
+            Baza.UpisUBazu upis = null;
+            if (upisArg && string.IsNullOrEmpty(cfg.Konekcija)) { Console.Error.WriteLine("--upis: konekcija nije podešena (Konekcija / Konekcija.dpapi / CIMPROVERA_KONEKCIJA)."); return 1; }
+            // v2.8.1: test podaci „<ime>.strane.json“ samo uz izričitu zastavicu (u radu nad sandučetom nikad)
+            Prilozi.Raspakivanje.DozvoliProcitaneStrane = Zastavica("--test-strane");
             if (a.Count == 0) { Console.Error.WriteLine("Upotreba: validate <fajl|folder>… (vidi --help)"); return 1; }
 
             var slucajevi = new List<(string ime, List<string> fajlovi)>();
@@ -217,42 +295,132 @@ namespace Saobracaj.Agent.CimProvera
                 else { Console.Error.WriteLine("Ne postoji: " + p); return 1; }
             }
 
+            // jezik: --en / --sr, inače po pošiljaocu (--posiljalac) kao u radu nad sandučetom (v2.8)
+            if (!en && !sr && posiljalac != null) en = Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslovMaila, teloMaila);
+            var enZadat = en; var posiljalac0 = posiljalac; var naslov0 = naslovMaila;
             var pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log);
             using var citac = new LokalniCitac(cfg, log, pravila.Kp);
             var obrada = new Obrada(pravila, citac, log, cfg.PragPouzdanosti);
+            // v2.8.1: CIT 7 bez lista u mailu – ranije obrađeni listovi iz zadatog foldera stanja (listovi.json)
+            if (istorija != null) obrada.RanijiListovi = () => IstorijaListova.Ucitaj(istorija);
             int ukupnoGresaka = 0;
 
             foreach (var (ime, fajlovi) in slucajevi)
             {
                 var koren = fajlovi.Count == 1 ? Path.GetDirectoryName(fajlovi[0]) : ZajednickiKoren(fajlovi);
-                var prilozi = fajlovi.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                    .Select(f => (ime: RelativnaPutanja(koren, f), sadrzaj: File.ReadAllBytes(f))).ToList();
-                var datum = datumArg != null ? DateTime.ParseExact(datumArg, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+                // v2.8.4: ceo mail (.eml): prilozi, pošiljalac, naslov, datum i zaglavlja (primaoci u Live režimu, nit za dosije)
+                MimeKit.MimeMessage ulazniMail = fajlovi.Count == 1 && fajlovi[0].EndsWith(".eml", StringComparison.OrdinalIgnoreCase) ? MimeKit.MimeMessage.Load(fajlovi[0]) : null;
+                var prilozi = ulazniMail != null ? Prilozi.Raspakivanje.PriloziMaila(ulazniMail).ToList()
+                    : fajlovi.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).Select(f => (ime: RelativnaPutanja(koren, f), sadrzaj: File.ReadAllBytes(f))).ToList();
+                meta.TryGetValue(ime, out var mt);
+                posiljalac = posiljalac0 ?? ulazniMail?.From.Mailboxes.FirstOrDefault()?.Address ?? (string)mt?["od"];
+                naslovMaila = naslov0 ?? ulazniMail?.Subject ?? (string)mt?["naslov"];
+                en = enZadat || (!sr && ulazniMail != null && posiljalac != null && Obrada.EngleskiZaPosiljaoca(posiljalac, cfg.JeInterni, naslovMaila, ulazniMail.TextBody));
+                var datum = datumArg != null ? DateTime.ParseExact(datumArg, new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm" }, CultureInfo.InvariantCulture, DateTimeStyles.None)
+                    : ulazniMail != null ? ulazniMail.Date.LocalDateTime
+                    : mt?["vreme"] != null ? DateTime.ParseExact((string)mt["vreme"], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
                     : fajlovi.Select(File.GetLastWriteTime).DefaultIfEmpty(DateTime.Today).Max();
+                // v2.9.0: upis posle obrade slučaja (kao u radu nad sandučetom: posle provere i izveštaja)
+                void Upisi(RezultatProvere rr)
+                {
+                    if (!upisArg || rr == null) return;
+                    try
+                    {
+                        upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp);
+                        var iu = upis.Upisi(new Baza.MailZaUpis
+                        {
+                            MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Sanduce = "validate", Posiljalac = posiljalac ?? "",
+                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
+                            Prilozi = prilozi, Provera = rr, Dosije = obrada.PoslednjaPosiljka,
+                        });
+                        log.Info("  " + ime + ": upis u bazu – " + iu);
+                        Console.WriteLine("Upis u bazu: " + iu);
+                    }
+                    catch (Exception ex) { log.Greska("  " + ime + ": upis u bazu nije uspeo (rollback)", ex); Console.WriteLine("Upis u bazu NIJE USPEO: " + ex.Message); }
+                }
+                var primaociLive = ulazniMail != null ? PrimaociLive.Iz(ulazniMail, cfg) : PrimaociLive.Iz(posiljalac, null, null, cfg.Nalog, cfg.ProsledjivanjeNaAgenti);
 
                 log.Info("=== " + ime + " (" + prilozi.Count + " fajlova, datum prijema " + datum.ToString("dd.MM.yyyy") + ", režim " + rezim + ")");
+                var oznakaPon = ime + " (" + datum.ToString("dd.MM. HH:mm") + ")";
+                if (ponavljanja?.IstiPrilozi(prilozi) is Ponavljanja.Zapis istiP)
+                {
+                    var t = "################ " + ime + Environment.NewLine + "BEZ ODGOVORA – isti prilog kao " + istiP.Oznaka + " (" + istiP.Ishod + ") – već obrađeno; ništa se ne šalje.";
+                    Console.WriteLine(t);
+                    if (izlaz != null) { Directory.CreateDirectory(izlaz); File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), t, Encoding.UTF8); }
+                    continue;
+                }
+                obrada.NaslovMaila = naslovMaila ?? ime;
+                // v2.8.4 (8): dosije pošiljke kroz niz validate poziva (isti folder stanja kao --stanje)
+                if (stanjePon != null)
+                {
+                    obrada.Dosije = Dosije.Ucitaj(stanjePon);
+                    obrada.MailDosijea = new MailZaDosije
+                    {
+                        Oznaka = oznakaPon, MessageId = ulazniMail?.MessageId ?? "", Naslov = naslovMaila ?? ime, Posiljalac = posiljalac ?? "", Vreme = datum,
+                        Prethodni = ulazniMail == null ? new List<string>() : ulazniMail.References.Concat(string.IsNullOrEmpty(ulazniMail.InReplyTo) ? new string[0] : new[] { ulazniMail.InReplyTo }).Distinct().ToList(),
+                    };
+                }
                 var ishod = obrada.Proveri(prilozi, posiljalac, posiljalac != null && cfg.JeInterni(posiljalac), datum, en, rezim);
-                var r = ishod.Provera;
+                var rPuni = ishod.Provera;
+                if (Environment.GetEnvironmentVariable("CIMPROVERA_DBG") == "1")
+                    foreach (var l in rPuni.Listovi.Where(x => x.Cim != null))
+                        Console.WriteLine("[dbg] ključ " + Ponavljanja.KljucLista(l.Cim) + " otisak " + Ponavljanja.Otisak(l.Cim) + "\n" + Ponavljanja.SadrzajOtiska(l.Cim));
+                if (ponavljanja != null && rPuni.ImaTovarniList && ponavljanja.IstiListovi(rPuni) is Ponavljanja.ZapisLista istiL)
+                {
+                    var t = "################ " + ime + Environment.NewLine + "Dokumenti:" + Environment.NewLine + Izvestaj.Dokumenti(rPuni.Dokumenti) + Environment.NewLine
+                            + "BEZ NOVOG IZVEŠTAJA – isti tovarni list kao " + istiL.Oznaka + ", sadržaj rubrika nepromenjen – već prijavljeno.";
+                    Console.WriteLine(t);
+                    if (izlaz != null) { Directory.CreateDirectory(izlaz); File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), t, Encoding.UTF8); }
+                    ponavljanja.ZapamtiPriloge(prilozi, oznakaPon, "isti tovarni list kao " + istiL.Oznaka, datum); ponavljanja.Sacuvaj();
+                    obrada.ZapamtiUDosije(rPuni);
+                    Upisi(rPuni);
+                    continue;
+                }
+                if (ponavljanja != null)
+                {
+                    var bez = !rPuni.ImaTovarniList;
+                    ponavljanja.ZapamtiPriloge(prilozi, oznakaPon, bez ? (ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0 ? "prilozi nisu pročitani – interna ručna provera" : "nema CIM/CUV – bez odgovora") : "izveštaj poslat", datum);
+                    if (!bez) ponavljanja.ZapamtiListove(rPuni, oznakaPon, datum);
+                    obrada.ZapamtiUDosije(rPuni);
+                    ponavljanja.Sacuvaj();
+                }
+                // v2.8: isto kao u radu nad sandučetom – interni izveštaj (KP tovarni list / ručna provera) ili izveštaj za pošiljaoca bez nalaza „samo interno“
+                var razlogInt = Izvestaj.RazlogInternog(rPuni, pravila);
+                var r = razlogInt == null ? Izvestaj.ZaPosiljaoca(rPuni, cfg.Rezim, posiljalac != null && cfg.JeInterni(posiljalac)) : rPuni;
+                var uvodV = razlogInt != null ? Izvestaj.UvodInternogKratak(razlogInt, rPuni, posiljalac, naslovMaila ?? ime, datum) : null;
+                var en0 = en; en = razlogInt != null ? false : en;
 
                 var sb = new StringBuilder();
                 sb.AppendLine("################ " + ime);
+                // v2.8.4 (10): primaoci u Live režimu (samo priprema; Test šalje samo na IzvestajAdresa)
+                if (obrada.PoslednjaPosiljka != null) sb.AppendLine("Dosije pošiljke: " + string.Join(", ", obrada.PoslednjaPosiljka.Mailovi) + " (" + obrada.RazlogVeze + ")");
+                sb.AppendLine("Primaoci u Live režimu: " + (razlogInt != null ? "samo interno (" + string.Join(", ", cfg.KopijaNa.DefaultIfEmpty(cfg.UpozorenjaNa)) + ")" : primaociLive.Opis()) + (razlogInt == null && naslovMaila != null ? "; naslov: " + PrimaociLive.Naslov(naslovMaila, en, r.BrojGresaka > 0) : ""));
                 sb.AppendLine("Dokumenti:");
                 sb.AppendLine(Izvestaj.Dokumenti(r.Dokumenti));
                 foreach (var x in ishod.Preskoceno) sb.AppendLine("  (preskočeno) " + x);
                 foreach (var x in ishod.NisuProcitani) sb.AppendLine("  (NIJE PROČITANO) " + x);
                 sb.AppendLine();
-                if (!r.ImaTovarniList && ishod.NisuProcitani.Count > 0)
-                    sb.AppendLine("Tovarni list nije pronađen među pročitanim prilozima, ali " + ishod.NisuProcitani.Count + " priloga nije pročitano – rezultat nije konačan (ručna provera).");
-                else if (!r.ImaTovarniList) sb.AppendLine(Izvestaj.NemaTovarnogLista(pravila, en));
+                if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0)
+                    sb.AppendLine("Tovarni list nije pronađen među pročitanim prilozima, ali prilozi nisu pouzdano pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + ") – rezultat nije konačan (interna ručna provera, ništa pošiljaocu).");
+                // v2.8.4 (1): mail bez tovarnog lista – nikakav odgovor (ni interni), samo red u logu
+                else if (!r.ImaTovarniList) sb.AppendLine("BEZ ODGOVORA – " + Izvestaj.LogBezTovarnogLista(r.Dokumenti));
                 else
                 {
                     sb.AppendLine("Režim KP: " + string.Join(", ", r.Listovi.Select(l => l.KpRezim ? "da" : "ne").Distinct()));
-                    sb.AppendLine("Predmet: " + Izvestaj.NaslovMaila(ime, Izvestaj.FajloviListova(r), en, r));
+                    sb.AppendLine("Predmet: " + Izvestaj.Naslov(r, pravila, en));
                     sb.AppendLine();
-                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, null, ishod.NisuProcitani));
+                    sb.AppendLine(Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, null, razlogInt != null));
                 }
                 if (r.GreskePravila.Count > 0) sb.AppendLine("Pravila sa greškom u izvršavanju: " + string.Join("; ", r.GreskePravila));
+                // v2.8.1: CIT 7 – poseban interni izveštaj
+                string cit7Tekst = null;
+                if (rPuni.Cit7.Count > 0)
+                {
+                    cit7Tekst = Cit7Provera.Tekst(rPuni.Cit7, pravila, "[TEST] Interni izveštaj – ne ide pošiljaocu" + (posiljalac != null ? " (" + posiljalac + ")" : "") + ".");
+                    sb.AppendLine().AppendLine("================ " + Cit7Provera.Naslov(rPuni.Cit7, naslovMaila ?? ime)).AppendLine(cit7Tekst);
+                }
                 Console.WriteLine(sb.ToString());
+                Upisi(rPuni);
                 ukupnoGresaka += r.BrojGresaka;
 
                 if (izlaz != null)
@@ -260,15 +428,52 @@ namespace Saobracaj.Agent.CimProvera
                     Directory.CreateDirectory(izlaz);
                     File.WriteAllText(Path.Combine(izlaz, ime + ".txt"), sb.ToString(), Encoding.UTF8);
                     if (r.ImaTovarniList)
-                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.NaslovMaila(ime, Izvestaj.FajloviListova(r), en, r))
-                            + "</title>" + Izvestaj.Html(r, pravila, en, null, ishod.NisuProcitani), Encoding.UTF8);
+                    {
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, null, razlogInt != null), Encoding.UTF8);
+                        // PDF primer (B2) + slike strana (PNG, 150 dpi) u izlaz\primeri
+                        var primer = r.BrojGresaka + r.BrojUpozorenja > 0 ? PrimerPdf.Napravi(r, pravila, en, prilozi) : null;
+                        if (primer != null)
+                        {
+                            var pd = Path.Combine(izlaz, "primeri"); Directory.CreateDirectory(pd);
+                            if (primer.Napravljen)
+                            {
+                                File.WriteAllBytes(Path.Combine(pd, primer.Ime), primer.Pdf);
+                                for (int si = 0; si < primer.Strane.Count; si++)
+                                    File.WriteAllBytes(Path.Combine(pd, Path.GetFileNameWithoutExtension(primer.Ime) + "_str" + (si + 1) + ".png"), primer.Strane[si]);
+                                // v2.8.1: šta je upisano u koju rubriku (provera izgleda)
+                                File.WriteAllLines(Path.Combine(pd, Path.GetFileNameWithoutExtension(primer.Ime) + "_upisi.txt"), primer.Upisi.Select(x => x.ToString()), Encoding.UTF8);
+                            }
+                            Console.WriteLine("PDF primer: " + (primer.Napravljen ? primer.Ime + " (" + primer.Pdf.Length / 1024 + " KB, strana " + primer.Strane.Count + "; "
+                                + string.Join("; ", primer.PoListu.Select(x => x.list + ": ispravki " + x.ispravki + ", napomena " + x.napomena + ", bez rubrike na strani " + x.bezRubrike)) + ")"
+                                : "nije napravljen – " + primer.Razlog + (primer.Greska != null ? " (" + primer.Greska + ")" : "")));
+                        }
+                        // isti mail kao što ga agent šalje (multipart/alternative, UTF-8; sa PDF primerom kao prilogom) – otvara se u Outlook-u (.eml)
+                        var pasus = Izvestaj.PasusPrimera(primer, en, razlogInt != null);
+                        var mail = Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Izvestaj.Naslov(r, pravila, en),
+                            Izvestaj.Telo(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null), html: Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null));
+                        if (primer?.Napravljen == true) Slanje.DodajPrilog(mail, primer.Ime, primer.Pdf);
+                        mail.WriteTo(Path.Combine(izlaz, ime + ".eml"));
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".html"), "<!doctype html><meta charset=\"utf-8\"><title>" + System.Net.WebUtility.HtmlEncode(Izvestaj.Naslov(r, pravila, en))
+                            + "</title>" + Izvestaj.Html(r, pravila, en, uvodV, ishod.NisuProcitani, pasus, razlogInt != null), Encoding.UTF8);
+                    }
+                    if (cit7Tekst != null)
+                    {
+                        var uvodC = "[TEST] Interni izveštaj – ne ide pošiljaocu" + (posiljalac != null ? " (" + posiljalac + ")" : "") + ".";
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".cit7.txt"), cit7Tekst, Encoding.UTF8);
+                        var html7 = Cit7Provera.Html(rPuni.Cit7, pravila, uvodC);
+                        File.WriteAllText(Path.Combine(izlaz, ime + ".cit7.html"), "<!doctype html><meta charset=\"utf-8\"><title>CIT 7</title>" + html7, Encoding.UTF8);
+                        Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, Cit7Provera.Naslov(rPuni.Cit7, naslovMaila ?? ime), Cit7Provera.Tekst(rPuni.Cit7, pravila, uvodC), html: html7)
+                            .WriteTo(Path.Combine(izlaz, ime + ".cit7.eml"));
+                    }
                     File.WriteAllText(Path.Combine(izlaz, ime + ".json"), Json.U(new
                     {
                         slucaj = ime, datum, rezim, dokumenti = r.Dokumenti,
-                        nalazi = r.Listovi.Select(l => new { list = l.Oznaka, kp = l.KpRezim, rucno = l.ZaRucnuProveru, nalazi = l.Nalazi }),
+                        interno = razlogInt, primaoci_live = razlogInt != null ? "samo interno" : primaociLive.Opis(), nalazi = rPuni.Listovi.Select(l => new { list = l.Oznaka, kp = l.KpRezim, rucno = l.ZaRucnuProveru, nalazi = l.Nalazi }),
                         preskoceno = ishod.Preskoceno, nisu_procitani = ishod.NisuProcitani,
                     }), Encoding.UTF8);
                 }
+                en = en0;
             }
             var ni = Motor.NijeImplementirano(pravila);
             Console.WriteLine("Pravila iz JSON-a koja nisu implementirana (ne izvršavaju se): " + (ni.Count == 0 ? "nema" : string.Join(", ", ni)));
@@ -329,6 +534,8 @@ namespace Saobracaj.Agent.CimProvera
                         throw new InvalidOperationException("OCR radi, ali nije pročitao probni tekst (\"" + procitano + "\").");
                 }
             });
+            // nije greška testa: bez ključa agent radi, samo Word prilozi idu na ručnu proveru
+            Console.WriteLine((Prilozi.WordUPdf.KljucUcitan ? "OK    " : "PAŽNJA ") + "Syncfusion ključ (Word → PDF): " + Prilozi.WordUPdf.StanjeKljuca);
             Korak("IMAP " + cfg.ImapHost + ":" + cfg.ImapPort, () =>
             {
                 using (var s = new Sanduce(cfg))
@@ -348,6 +555,25 @@ namespace Saobracaj.Agent.CimProvera
                     smtp.Disconnect(true);
                 }
             });
+            // v2.9.0: upis u bazu – nije greška testa (provera i izveštaji rade i bez njega); konekcija se ne ispisuje
+            if (cfg.UpisUBazu)
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(cfg.Konekcija)) throw new InvalidOperationException("konekcija nije podešena" + (AgentConfig.OtvorenaKonekcija ? " (ključ Konekcija u otvorenom tekstu se ne koristi – samo Konekcija.dpapi)" : ""));
+                    using (var c = Baza.UpisUBazu.Otvori(cfg.Konekcija))
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(@"SELECT SUSER_SNAME(), DB_NAME(),
+  HAS_PERMS_BY_NAME('planiranje.tmpJobs','OBJECT','INSERT') + HAS_PERMS_BY_NAME('planiranje.tmpTeretnicaStavke','OBJECT','DELETE') + HAS_PERMS_BY_NAME('dbo.stanice','OBJECT','SELECT') + HAS_PERMS_BY_NAME('dbo.Partnerji','OBJECT','SELECT') + HAS_PERMS_BY_NAME('dbo.NHM','OBJECT','SELECT')", c))
+                    using (var r = cmd.ExecuteReader())
+                    {
+                        r.Read();
+                        var prava = r.IsDBNull(2) ? 0 : r.GetInt32(2);
+                        Console.WriteLine((prava == 5 ? "OK    " : "PAŽNJA ") + "upis u bazu: nalog " + r.GetString(0) + ", baza " + r.GetString(1) + (prava == 5 ? ", prava na tmp tabele i šifarnike postoje" : ", nedostaju prava (pokrenuti OP_913_tmp_Prava.sql)"));
+                    }
+                }
+                catch (Exception ex) { Console.WriteLine("PAŽNJA upis u bazu: " + ex.Message); }
+            }
+            else Console.WriteLine("      upis u bazu: isključen (UpisUBazu = false)");
             return greske == 0 ? 0 : 1;
         }
     }

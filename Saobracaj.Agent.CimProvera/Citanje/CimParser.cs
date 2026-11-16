@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -31,10 +31,24 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             ["austrija"] = "AT", ["austria"] = "AT", ["österreich"] = "AT", ["nemacka"] = "DE", ["nemačka"] = "DE", ["germany"] = "DE", ["deutschland"] = "DE",
             ["ceska"] = "CZ", ["češka"] = "CZ", ["czech"] = "CZ", ["tschechien"] = "CZ", ["slovacka"] = "SK", ["slovakia"] = "SK", ["slowakei"] = "SK",
             ["italija"] = "IT", ["italy"] = "IT", ["italien"] = "IT", ["italia"] = "IT", ["poljska"] = "PL", ["poland"] = "PL", ["polen"] = "PL",
+            // rečnik zemalja za r1, r4, r10 (oblici na jezicima CIT obrazaca)
+            ["italie"] = "IT", ["olaszország"] = "IT", ["italien"] = "IT", ["românia"] = "RO", ["roumanie"] = "RO", ["románia"] = "RO", ["rumunjska"] = "RO", ["rumunsko"] = "RO", ["rumänien"] = "RO",
+            ["görögország"] = "GR", ["grèce"] = "GR", ["grecia"] = "GR", ["grčija"] = "GR", ["ελλάδα"] = "GR", ["гърция"] = "GR",
+            ["szerbia"] = "RS", ["serbija"] = "RS", ["srbsko"] = "RS", ["sırbistan"] = "RS", ["сърбия"] = "RS",
+            ["magyarország"] = "HU", ["ungheria"] = "HU", ["maďarsko"] = "HU", ["madžarska"] = "HU", ["ungaria"] = "HU", ["унгария"] = "HU",
+            ["bulgarie"] = "BG", ["bulharsko"] = "BG", ["bulgária"] = "BG", ["българия"] = "BG", ["bugaristan"] = "BG",
+            ["croatie"] = "HR", ["croazia"] = "HR", ["horvátország"] = "HR", ["chorvatsko"] = "HR", ["hırvatistan"] = "HR",
+            ["slovénie"] = "SI", ["slovenien"] = "SI", ["szlovénia"] = "SI", ["slovinsko"] = "SI", ["slovenija"] = "SI",
+            ["autriche"] = "AT", ["ausztria"] = "AT", ["rakousko"] = "AT", ["allemagne"] = "DE", ["germania"] = "DE", ["németország"] = "DE", ["německo"] = "DE",
+            ["république tchèque"] = "CZ", ["csehország"] = "CZ", ["česko"] = "CZ", ["slovaquie"] = "SK", ["szlovákia"] = "SK", ["slovensko"] = "SK",
+            ["turquie"] = "TR", ["turchia"] = "TR", ["törökország"] = "TR", ["turecko"] = "TR", ["türkiye cumhuriyeti"] = "TR",
+            ["macédoine du nord"] = "MK", ["north macedonia"] = "MK", ["severna makedonija"] = "MK", ["bosnia"] = "BA", ["bosna i hercegovina"] = "BA",
+            ["pologne"] = "PL", ["polonia"] = "PL", ["lengyelország"] = "PL", ["polsko"] = "PL",
         };
 
         private static readonly Regex Datum = new Regex(@"\b(?<d>[0-3]?\d)\s?[./-]\s?(?<m>[01]?\d)\s?[./-]\s?(?<g>(?:20)?\d{2})\b", RegexOptions.Compiled);
         private static readonly Regex DatumIso = new Regex(@"\b(?<g>20\d{2})-(?<m>[01]\d)-(?<d>[0-3]\d)\b", RegexOptions.Compiled);
+        private static readonly Regex DatumGmd = new Regex(@"\b(?<g>20\d{2})\s?[./]\s?(?<m>[01]?\d)\s?[./]\s?(?<d>[0-3]?\d)\b", RegexOptions.Compiled);
         private static readonly Regex MrnRx = new Regex(@"(?<p>\b(?:EXS|ENS|TS|E|T)\s*-?\s*MRN|\bMRN)?[\s:.\-]*\b(?<n>\d{2}[A-Z]{2}[A-Z0-9]{14})\b", RegexOptions.Compiled);
         private static readonly Regex UtiRx = new Regex(@"\b[A-Z]{3}[UJZ]\s?-?\d{6}\s?-?\d\b", RegexOptions.Compiled);
         private static readonly Regex KolaRx = new Regex(@"(?<!\d)(\d[\d \-]{10,17}\d)(?!\d)", RegexOptions.Compiled);
@@ -142,6 +156,13 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             poz = -1; duz = 0;
             var m = DatumIso.Match(t ?? "");
             if (m.Success) { poz = m.Index; duz = m.Length; return m.Value; }
+            // v2.8.4 (4.4): godina-mesec-dan sa tačkama („2026.10.26“, Lukavac r29)
+            m = DatumGmd.Match(t ?? "");
+            if (m.Success)
+            {
+                int gg = int.Parse(m.Groups["g"].Value), mm = int.Parse(m.Groups["m"].Value), dd = int.Parse(m.Groups["d"].Value);
+                if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) { poz = m.Index; duz = m.Length; return gg.ToString("0000") + "-" + mm.ToString("00") + "-" + dd.ToString("00"); }
+            }
             m = Datum.Match(t ?? "");
             if (!m.Success) return "";
             int d = int.Parse(m.Groups["d"].Value), mes = int.Parse(m.Groups["m"].Value), g = int.Parse(m.Groups["g"].Value);
@@ -207,10 +228,28 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return spojene;
         }
 
+        /// <summary>
+        /// Podaci iz tekstualnog sloja (Excel/Word tabela, Word okviri pretvoreni u PDF) su pouzdani: nema „nečitljivih“ rubrika.
+        /// Rubrika sa tekstom je popunjena, bez teksta prazna (mastilo iz susedne rubrike nije nečitljiv upis).
+        /// </summary>
+        internal static void BezNecitljivih(CimList cim)
+        {
+            foreach (var p in typeof(CimList).GetProperties().Where(x => typeof(Rubrika).IsAssignableFrom(x.PropertyType)))
+                if (p.GetValue(cim) is Rubrika r && r.Status == StatusRubrike.Necitljivo)
+                {
+                    r.Status = string.IsNullOrWhiteSpace(r.Tekst) ? StatusRubrike.Prazno : StatusRubrike.Popunjeno;
+                    r.Pouzdanost = 1;
+                }
+            if (cim.R16.KuciceStanje == StatusRubrike.Necitljivo) cim.R16.KuciceStanje = StatusRubrike.Prazno;
+        }
+
         public static CimList Napravi(CimSablon.Rezultat r, Strana strana, Pragovi prag = null)
         {
             prag = prag ?? new Pragovi();
             var c = new CimList { RedniBroj = 1 };
+            foreach (var id in r.Rubrike.Keys) c.ReciRubrika[id] = r.Rubrika(id).ToList();
+            // v2.8.2: štampani natpisi po rubrikama (npr. redovi „T= / N= / G=“ u r25) – PDF primer upisuje vrednosti u redove obrasca
+            foreach (var gr in r.Dodela.Where(d => d.naziv && d.rubrika != null).GroupBy(d => d.rubrika)) c.NatpisiRubrika[gr.Key] = gr.Select(d => d.rec).ToList();
             var sve = strana.Tekst;
             var n = sve.ToLowerInvariant();
 
@@ -243,6 +282,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             c.R57 = Prevoznici(r.Rubrika("57"));
             c.R58a = Ugovorni(r.Rubrika("58a"));
             c.R62 = Identifikacija(r.Rubrika("62"));
+            if (r.IzWorda) R62PoKucicama(c.R62, r);
             c.R99 = Pop(new TekstRubrika(), r.Rubrika("99"));
 
             // Polja za označavanje: gustina mastila u kvadratiću iz šablona (oznaceno / prazno / nesigurno), ne OCR.
@@ -558,6 +598,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                         if (st.Length == 0 && m2.Success && Regex.IsMatch(m2.Groups[1].Value, @"\p{L}")) { deon = m2.Groups[1].Value; st = m2.Groups[2].Value; }
                         var naz = mc.Groups["n"].Value.Trim(' ', '-', '–', ',');
                         if (naz.Length == 0) naz = mc.Groups["pre"].Value.Trim(' ', '-', '–', ',');
+                        // naziv u posebnoj koloni (polja obrasca): „2179 | SZ - 2178 HZ CARGO | BUSCA“ – kratak naziv velikim slovima
+                        if (naz.Length == 0 && celije.Count >= 2 && Regex.IsMatch(celije[1], @"^\p{Lu}{2,}[\p{Lu}\d\s\-–./]{0,40}$") && !Regex.IsMatch(celije[1], @"\d{2}\s?\d{4,6}"))
+                        {
+                            naz = celije[1].Trim(' ', '-', '–', ',');
+                            deon = string.Join(" ", celije.Skip(2).Take(Math.Max(0, celije.Count - 2 - (st.Length > 0 ? 1 : 0))));
+                        }
                         r.Prevoznici.Add(new Prevoznik { Sifra = mc.Groups["s"].Value, Naziv = naz, Deonica = deon.Trim(' ', '-', '–'), StatusPrevoznika = st });
                         continue;
                     }
@@ -606,6 +652,26 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return r;
         }
 
+        /// <summary>
+        /// Word → PDF: delovi r62 po kućicama šablona (62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja) – svaka
+        /// reč ide u najbližu kućicu, pa prazna kućica ostaje prazna (npr. „Exp. №“ bez broja, a „5063“ je preduzeće, ne broj).
+        /// </summary>
+        private static void R62PoKucicama(Identifikacija id, CimSablon.Rezultat r)
+        {
+            var kucice = new[] { "62.1", "62.2", "62.3", "62.4" }.Select(k => (k, o: r.KucicaNaStrani(k))).Where(x => x.o != null).ToList();
+            var reci = r.Rubrika("62").Where(w => Regex.IsMatch(w.T, @"\d")).ToList();
+            if (kucice.Count < 4 || reci.Count == 0) return;
+            var delovi = kucice.ToDictionary(x => x.k, x => "");
+            foreach (var w in reci.OrderBy(w => w.X0))
+            {
+                var naj = kucice.OrderBy(x => Math.Abs(w.Cx - (x.o[0] + x.o[2]) / 2) / 2 + Math.Abs(w.Cy - (x.o[1] + x.o[3]) / 2)).First();
+                delovi[naj.k] += (delovi[naj.k].Length > 0 ? " " : "") + w.T.Trim();
+            }
+            string D(string k) => Regex.Replace(delovi[k], @"\s+", " ").Trim();
+            if (delovi.Values.Count(v => v.Length > 0) < 2) return;
+            id.Zemlja = Regex.Replace(D("62.1"), @"\s", ""); id.Stanica = Regex.Replace(D("62.2"), @"\s", ""); id.Preduzece = Regex.Replace(D("62.3"), @"\s", ""); id.Broj = D("62.4");
+        }
+
         internal static Identifikacija Identifikacija(List<Rec> reci)
         {
             // Odštampan broj rubrike "(62)" / "62)" nije podatak; cifre razdvojene zarezima ("1,6,2032") se spajaju.
@@ -615,7 +681,13 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }).ToList();
             var r = PopBroj(new Identifikacija(), ciste);
             if (!r.Popunjena) return r;
-            PopuniR62(r, Raspored.Linije(Ocisti(ciste)), ciste.All(w => string.IsNullOrEmpty(w.Font)));
+            var ocr = ciste.All(w => string.IsNullOrEmpty(w.Font));
+            PopuniR62(r, Raspored.Linije(Ocisti(ciste)), ocr);
+            // v2.8.1: na skenu – broj (2+ cifre, bez slova) niske pouzdanosti; OCR šum od slova i cifara („jj2“; „6350.1“ je u redu)
+            r.NepouzdanoCitanje = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}") && w.Pouzdanost < 0.55);
+            // v2.8.4: pouzdanost samih cifara (HOLCIM: 72 162032 3212 146100 sa 0,93–0,96 uz šum „+ gs“; YU DIN rukom: 0,69–0,75)
+            r.PouzdanostCifara = ocr ? ciste.Where(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}")).Select(w => w.Pouzdanost).DefaultIfEmpty(1).Min() : 1;
+            r.OcrSum = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\p{L}\p{L}?\d|\d\p{L}"));
             return r;
         }
 
@@ -636,16 +708,22 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     foreach (Match m in Regex.Matches(spojeno, @"\d+(?:-\d)?")) grupe.Add(m.Value);
                 }
             grupe = grupe.Where(g => g.Length >= 2).ToList();
-            if (grupe.Count >= 4)
+            // v2.8: delovi po OBLIKU, ne po redosledu: zemlja = 2 cifre, stanica = 5–7 cifara (i „16350-1“), preduzeće = 4 cifre,
+            // broj otpravljanja = 5–7 cifara posle preduzeća („12345-6“). Grupe od 3 cifre su OCR šum („(62)“ → „162“).
+            // „72 240036“ → zemlja + stanica (preduzeće i broj prazni); „3212“ sam → preduzeće; „72 163501 3212“ → bez broja.
+            string zemlja = "", stanica = "", preduzece = "", broj = "";
+            foreach (var g in grupe)
             {
-                r.Zemlja = grupe[0]; r.Stanica = grupe[1]; r.Preduzece = grupe[2]; r.Broj = grupe[3];
+                var cif = Regex.Replace(g, @"\D", "");
+                if (zemlja == "" && stanica == "" && preduzece == "" && cif.Length == 8 && !g.Contains("-")) { zemlja = cif.Substring(0, 2); stanica = cif.Substring(2); continue; }
+                if (zemlja == "" && stanica == "" && preduzece == "" && cif.Length == 2) { zemlja = cif; continue; }
+                // UIC šifra preduzeća ima 4 cifre; OCR levu ivicu kućice čita kao "1" ("13212" → "3212")
+                if (ocr && preduzece == "" && stanica != "" && cif.Length == 5 && cif[0] == '1' && broj == "" && grupe.Count >= 4) { preduzece = cif.Substring(1); continue; }
+                if (stanica == "" && preduzece == "" && cif.Length >= 5 && cif.Length <= 7) { stanica = g; continue; }
+                if (preduzece == "" && broj == "" && cif.Length == 4 && !g.Contains("-")) { preduzece = cif; continue; }
+                if (broj == "" && stanica != "" && cif.Length >= 5 && cif.Length <= 7) { broj = g; continue; }
             }
-            else if (grupe.Count == 3 && grupe[0].Length == 2) { r.Zemlja = grupe[0]; r.Stanica = grupe[1]; r.Broj = grupe[2]; }
-            else if (grupe.Count >= 1) r.Broj = grupe.Last();
-            // Ako je zemlja zalepljena za stanicu ("72163501"), razdvoj.
-            if (r.Zemlja.Length > 2 && r.Stanica.Length == 0) { r.Stanica = r.Zemlja.Substring(2); r.Zemlja = r.Zemlja.Substring(0, 2); }
-            // UIC šifra preduzeća ima 4 cifre; OCR levu ivicu kućice čita kao "1" ("13212" → "3212"). Kod PDF teksta ostaje kako piše (R62 prijavljuje).
-            if (ocr && r.Preduzece.Length == 5 && r.Preduzece[0] == '1') r.Preduzece = r.Preduzece.Substring(1);
+            r.Zemlja = zemlja; r.Stanica = stanica; r.Preduzece = preduzece; r.Broj = broj;
         }
     }
 }

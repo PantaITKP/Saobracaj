@@ -17,7 +17,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public JObject Json;
         public string Tezina => (string)Json["severity"] ?? "error";
         public string Polje => (string)Json["field"];
-        public bool PopunjavaPrevoznik => string.Equals((string)Json["filled_by"], "carrier", StringComparison.OrdinalIgnoreCase);
+        public bool PopunjavaPrevoznik => Popunjava == "prevoznik" || (Popunjava == null && string.Equals((string)Json["filled_by"], "carrier", StringComparison.OrdinalIgnoreCase));
+        /// <summary>v2.8.4 (9): ko popunjava rubriku prema GLV-CIM („pošiljalac“ / „prevoznik“); null kada nije utvrđeno (otvoreno pitanje).</summary>
+        public string Popunjava => (string)Json["popunjava"];
         public string Poruka(bool en) => (en ? (string)Json["message_en"] : null) ?? (string)Json["message"] ?? (string)Json["check"] ?? Id;
     }
 
@@ -158,6 +160,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         private HashSet<string> Lista(string kljuc) =>
             new HashSet<string>((Json["codelists"]?[kljuc] as JArray)?.Select(x => ((string)x).ToUpperInvariant()) ?? Enumerable.Empty<string>());
+
+        /// <summary>Naziv rubrike za tabelu u mailu (codelists.box_names / box_names_en): "16" → "Preuzimanje na prevoz".</summary>
+        public string NazivRubrike(string rubrika, bool en) =>
+            (string)((Json["codelists"]?[en ? "box_names_en" : "box_names"] as JObject)?[rubrika ?? ""]) ?? "";
 
         /// <summary>Sistemska poruka (system_messages u JSON-u), npr. necitljivo, nema_tovarnog_lista.</summary>
         public string Sistemska(string kljuc, bool en, string podrazumevano)

@@ -364,3 +364,6 @@ FodyWeavers.xsd
 # Lozinke aplikacije (Saobracaj/Lozinke.config) i test podaci telegrama sa ličnim podacima
 Lozinke.config
 **/TestData/
+
+# tajne agenata (DPAPI) - nikad u git
+*.dpapi

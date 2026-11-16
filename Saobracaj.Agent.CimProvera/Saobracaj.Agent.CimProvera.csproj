@@ -10,6 +10,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- verzija programa; v2.9.0: upis u planiranje.tmp* (pravila ostaju 2.8.4, meta.version u cim_validation_rules.json) -->
+    <Version>2.9.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,7 @@
     <None Include="tessdata\*.traineddata" CopyToOutputDirectory="PreserveNewest" />
     <None Include="tessdata\Preuzmi.ps1" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Instaliraj.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Reset-CimProvera.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +45,9 @@
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <PackageReference Include="MsgReader" Version="5.7.1" />
+    <!-- Word → PDF (DocIO, isti major 18.x kao aplikacija Saobracaj; ključ iz Syncfusion.dpapi, nikad u kodu) -->
+    <PackageReference Include="Syncfusion.DocToPDFConverter.WinForms" Version="18.4.0.34" />
+    <PackageReference Include="Syncfusion.Licensing" Version="18.4.0.34" />
   </ItemGroup>
 
   <ItemGroup>

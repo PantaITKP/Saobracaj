@@ -41,6 +41,18 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         public double VisinaNatpisa;
         /// <summary>Mastilo prazne rubrike (id) / kućice (#id) izmereno na uzorku: odštampani obrazac koji nije prepoznat kao natpis.</summary>
         public Dictionary<string, double> PraznoMastilo = new Dictionary<string, double>();
+        /// <summary>
+        /// Univerzalni CIT šablon: poravnanje po sidrima nezavisnim od jezika (brojevi rubrika iz teksta ili krugovi, linije okvira,
+        /// oznaka „© 200x CIT“); tekstualna sidra su samo dodatna. Koristi se kada nijedan nacionalni šablon nije pouzdan.
+        /// </summary>
+        public bool Univerzalni;
+        /// <summary>v2.8.3: natpisi obrasca (ključ, bez dijakritika) od kojih bar jedan mora biti na strani; prazno = bez uslova.</summary>
+        public List<string> Natpisi = new List<string>();
+        /// <summary>Položaj oznake „CIT“ (© 200x CIT) na uzorku, ako postoji.</summary>
+        public (double x, double y)? CitOznaka;
+
+        /// <summary>Broj rubrike iz ključa broja („71#2“ → „71“, „1#leg“ → „1“).</summary>
+        public static string OsnovaBroja(string kljuc) { var i = kljuc.IndexOf('#'); return i < 0 ? kljuc : kljuc.Substring(0, i); }
 
         public static ObrazacSablon Ucitaj(string putanja)
         {
@@ -74,6 +86,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             if (j["poledjina"] is JArray pol) s.Poledjina = pol.Select(x => Saobracaj.Common.Text.TekstUtil.Kljuc((string)x)).ToList();
             s.VisinaNatpisa = (double?)j["visina_natpisa"] ?? 0;
             if (j["prazno_mastilo"] is JObject pm) foreach (var p in pm.Properties()) s.PraznoMastilo[p.Name] = (double)p.Value;
+            s.Univerzalni = (bool?)j["univerzalni"] ?? false;
+            if (j["natpisi"] is JArray nat) s.Natpisi = nat.Select(x => Saobracaj.Common.Text.TekstUtil.Kljuc((string)x)).Where(x => x.Length > 0).Distinct().ToList();
+            if (j["cit_oznaka"] is JArray co && co.Count == 2) s.CitOznaka = ((double)co[0], (double)co[1]);
             return s;
         }
 
@@ -107,6 +122,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class Poravnanje
     {
         public string Obrazac;
+        public bool Univerzalni;
+        /// <summary>v2.8.3: šablon sa obaveznim natpisom obrasca (npr. TCDD „Taşıma Belgesi“) i natpis je na strani – ima prednost.</summary>
+        public bool PoNatpisu;
         public double[] X = { 1, 0, 0 }, Y = { 0, 1, 0 };
         public int Tekst, TekstKandidata, Brojevi, Linije;
         public int Ukupno => Tekst + Brojevi + Linije;
@@ -135,9 +153,17 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
         // ------------------------------------------------------------------------------------------- računanje
 
-        public static Poravnanje Izracunaj(ObrazacSablon s, List<Rec> reci, Raster raster, PragoviPoravnanja prag)
+        public static Poravnanje Izracunaj(ObrazacSablon s, List<Rec> reci, Raster raster, PragoviPoravnanja prag, List<Rec> sveReci = null)
         {
-            var p = new Poravnanje { Obrazac = s.Id };
+            sveReci = sveReci ?? reci; // brojevi rubrika i oznaka CIT se traže među svim rečima strane (nisu uvek u fontu naziva)
+            var p = new Poravnanje { Obrazac = s.Id, Univerzalni = s.Univerzalni };
+            // v2.8.3: šablon posebne štampe (TCDD 3370A) važi samo za stranu sa njegovim natpisom obrasca
+            if (s.Natpisi.Count > 0)
+            {
+                var tk = " " + Saobracaj.Common.Text.TekstUtil.Kljuc(string.Join(" ", sveReci.Select(r => r.T))) + " ";
+                if (!s.Natpisi.Any(n => tk.Contains(" " + n + " "))) { p.Razlog = "nema natpisa obrasca („" + string.Join("“, „", s.Natpisi) + "“)"; return p; }
+                p.PoNatpisu = true;
+            }
 
             // 1) Tekstualna sidra: reč koja se na strani javlja jednom i postoji u šablonu.
             var brojPojava = new Dictionary<string, int>();
@@ -153,29 +179,53 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
             // 2) Početna hipoteza: razmera i pomak po osi iz svakog para sidara; pobeđuje ona sa najviše saglasnih sidara.
             var krugovi = raster?.Krugovi() ?? new List<Oblik>();
-            var hipoteza = Hipoteza(tekst);
+            // Univerzalni šablon: brojevi rubrika (u PDF-u sa tekstom su i u tekstu, sitnim fontom) – ne zavise od jezika obrasca.
+            var brojReci = s.Univerzalni ? BrojeviRubrika(sveReci) : new List<Rec>();
+            var brojParovi = new List<ParSidra>();
+            foreach (var kv in s.Brojevi)
+            {
+                var osnova = ObrazacSablon.OsnovaBroja(kv.Key);
+                foreach (var w in brojReci.Where(w => w.T == osnova))
+                    brojParovi.Add(new ParSidra { Vrsta = "broj", Oznaka = kv.Key, Px = w.Cx, Py = w.Cy, Tx = kv.Value.x, Ty = kv.Value.y });
+            }
+            var hipoteza = s.Univerzalni ? Hipoteza(brojParovi, 400, 8) : null;
+            if (hipoteza == null) hipoteza = Hipoteza(tekst);
             if (hipoteza == null) hipoteza = HipotezaKrugovi(s, krugovi);
+            // v2.8.3: sken umanjen/uvećan (deo većeg skena, druga rezolucija) – razmera iz okvira obrasca, potvrđena krugovima brojeva
+            if (hipoteza == null) hipoteza = HipotezaOkvir(s, raster, krugovi);
             if (hipoteza == null) { p.Razlog = "nema dovoljno sidara za početno poravnanje"; return p; }
             p.X = new[] { hipoteza.Value.ax, 0, hipoteza.Value.bx }; p.Y = new[] { 0, hipoteza.Value.ay, hipoteza.Value.by };
 
             // 3) Dorada: sidra svih vrsta u sve užoj toleranciji, pa afino poravnanje najmanjim kvadratima.
             var vod = raster?.Vodoravne ?? new List<LinijaOkvira>();
             var usp = raster?.Uspravne ?? new List<LinijaOkvira>();
-            foreach (var tol in new[] { 0.02, 0.012, 0.008, 0.006, 0.006 })
+            // Univerzalni šablon: prvo samo brojevi rubrika (jednoznačni), pa tek onda linije – linije bi inače mogle da „uhvate“
+            // susedni red okvira (sve rubrike pomerene za jedan red).
+            if (s.Univerzalni && brojParovi.Count > 0)
+                foreach (var tol in new[] { 0.02, 0.012, 0.008, 0.006 })
+                {
+                    var samoBrojevi = Saglasni(p, s, new List<ParSidra>(), krugovi, new List<LinijaOkvira>(), new List<LinijaOkvira>(), tol, brojReci, sveReci);
+                    if (samoBrojevi.Count >= 8) Fit(p, samoBrojevi);
+                }
+            foreach (var tol in s.Univerzalni && brojParovi.Count > 0 ? new[] { 0.006, 0.006, 0.006 } : new[] { 0.02, 0.012, 0.008, 0.006, 0.006 })
             {
-                var parovi = Saglasni(p, s, tekst, krugovi, vod, usp, tol);
+                var parovi = Saglasni(p, s, tekst, krugovi, vod, usp, tol, brojReci, sveReci);
                 p.Parovi = parovi;
                 Fit(p, parovi);
             }
-            p.Parovi = Saglasni(p, s, tekst, krugovi, vod, usp, 0.006);
+            p.Parovi = Saglasni(p, s, tekst, krugovi, vod, usp, 0.006, brojReci, sveReci);
             Oceni(p, prag);
             return p;
         }
 
-        private static (double ax, double bx, double ay, double by)? Hipoteza(List<ParSidra> t)
+        /// <summary>Odštampani brojevi rubrika: 1–2 cifre, sitan font (PDF) ili OCR reč; ne vrednosti polja obrasca.</summary>
+        private static List<Rec> BrojeviRubrika(List<Rec> reci) =>
+            reci.Where(w => !w.JePodatak && System.Text.RegularExpressions.Regex.IsMatch(w.T, @"^\d{1,2}$") && (w.Velicina == 0 || w.Velicina < 6.5)).ToList();
+
+        private static (double ax, double bx, double ay, double by)? Hipoteza(List<ParSidra> t, int max = 120, int minSaglasnih = 3)
         {
             if (t.Count < 2) return null;
-            var parovi = t.Take(120).ToList();
+            var parovi = t.Take(max).ToList();
             (double ax, double bx, double ay, double by)? najbolja = null;
             int najvise = 0; double najmanje = double.MaxValue;
             void Proveri(double ax, double bx, double ay, double by)
@@ -201,10 +251,52 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     Proveri(ax, a.Tx - ax * a.Px, ay, a.Ty - ay * a.Py);
                 }
             }
-            return najvise >= 3 ? najbolja : null;
+            return najvise >= minSaglasnih ? najbolja : null;
         }
 
         /// <summary>Kada OCR ne pročita dovoljno teksta: pomak iz krugova brojeva rubrika (razmera 1).</summary>
+        /// <summary>
+        /// v2.8.3: početna hipoteza iz okvira obrasca – levi i desni dugi uspravni okvir daju razmeru i pomak po x (ista razmera po y),
+        /// pomak po y iz jedne od gornjih dugih vodoravnih linija. Prihvata se samo ako bar 6 krugova padne na brojeve rubrika šablona
+        /// (SET EXPORT str. 4: sken ~8 % manji, brojevi u crnim krugovima nisu pročitani – HipotezaKrugovi radi samo sa razmerom 1).
+        /// </summary>
+        internal static (double ax, double bx, double ay, double by)? HipotezaOkvir(ObrazacSablon s, Raster raster, List<Oblik> krugovi)
+        {
+            if (raster == null || krugovi.Count < 6 || s.Brojevi.Count < 6) return null;
+            return HipotezaOkvir(s, raster.Uspravne, raster.Vodoravne, krugovi) ?? HipotezaOkvir(s, raster.LinijeTamne().uspravne, raster.LinijeTamne().vodoravne, krugovi);
+        }
+
+        private static (double ax, double bx, double ay, double by)? HipotezaOkvir(ObrazacSablon s, List<LinijaOkvira> uspravne, List<LinijaOkvira> vodoravne, List<Oblik> krugovi)
+        {
+            // okvir skena je često isprekidan (šum, pečat) – dovoljni su delovi duži od 15 % strane; ivica skena (puna visina uz ivicu)
+            // nije okvir obrasca, zato se probaju svi parovi levih i desnih kandidata
+            var pu = uspravne.Where(l => l.B1 - l.B0 > 0.15).ToList();
+            var tu = s.Uspravne.Where(l => l.B1 - l.B0 > 0.3).ToList();
+            var pv = vodoravne.Where(l => l.B1 - l.B0 > 0.5).OrderBy(l => l.A).Take(4).ToList();
+            var tv = s.Vodoravne.Where(l => l.B1 - l.B0 > 0.6).OrderBy(l => l.A).Take(4).ToList();
+            if (tu.Count < 2 || pv.Count == 0 || tv.Count == 0) return null;
+            double tl = tu.Min(l => l.A), tr = tu.Max(l => l.A);
+            if (tr - tl < 0.5) return null;
+            var brojevi = s.Brojevi.Values.ToList();
+            (double, double, double, double)? najbolja = null; int najvise = 0;
+            foreach (var l in pu.Where(x => x.A < 0.35))
+                foreach (var d in pu.Where(x => x.A > 0.65 && x.A - l.A >= 0.5))
+                {
+                    var ax = (tr - tl) / (d.A - l.A);
+                    if (ax < 0.7 || ax > 1.45) continue;
+                    var bx = tl - ax * l.A;
+                    foreach (var a in pv)
+                        foreach (var t in tv)
+                        {
+                            var by = t.A - ax * a.A;
+                            if (Math.Abs(by) > 0.15) continue;
+                            var n = krugovi.Count(q => brojevi.Any(b => Math.Abs(ax * q.Cx + bx - b.x) < 0.012 && Math.Abs(ax * q.Cy + by - b.y) < 0.012));
+                            if (n > najvise) { najvise = n; najbolja = (ax, bx, ax, by); }
+                        }
+                }
+            return najvise >= 6 ? najbolja : null;
+        }
+
         private static (double ax, double bx, double ay, double by)? HipotezaKrugovi(ObrazacSablon s, List<Oblik> krugovi)
         {
             if (krugovi.Count < 5 || s.Brojevi.Count < 5) return null;
@@ -221,7 +313,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return najvise >= 6 ? najbolja : null;
         }
 
-        private static List<ParSidra> Saglasni(Poravnanje p, ObrazacSablon s, List<ParSidra> tekst, List<Oblik> krugovi, List<LinijaOkvira> vod, List<LinijaOkvira> usp, double tol)
+        private static List<ParSidra> Saglasni(Poravnanje p, ObrazacSablon s, List<ParSidra> tekst, List<Oblik> krugovi, List<LinijaOkvira> vod, List<LinijaOkvira> usp, double tol,
+            List<Rec> brojReci = null, List<Rec> reci = null)
         {
             var rez = new List<ParSidra>();
             foreach (var t in tekst)
@@ -230,9 +323,32 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 if (Math.Abs(x - t.Tx) < tol * 1.5 && Math.Abs(y - t.Ty) < tol * 1.5)
                     rez.Add(new ParSidra { Vrsta = t.Vrsta, Oznaka = t.Oznaka, Px = t.Px, Py = t.Py, Tx = t.Tx, Ty = t.Ty, Odstupanje = Math.Sqrt((x - t.Tx) * (x - t.Tx) + (y - t.Ty) * (y - t.Ty)) });
             }
+            // Oznaka „© 200x CIT“ (univerzalni šablon)
+            if (s.CitOznaka.HasValue && reci != null)
+            {
+                var (cx, cy) = p.NaStranu(s.CitOznaka.Value.x, s.CitOznaka.Value.y);
+                var w = reci.Where(r => r.T.IndexOf("CIT", StringComparison.Ordinal) >= 0).OrderBy(r => Math.Abs(r.Cx - cx) + Math.Abs(r.Cy - cy)).FirstOrDefault();
+                if (w != null && Math.Abs(w.Cx - cx) < tol * 2 && Math.Abs(w.Cy - cy) < tol * 2)
+                {
+                    var (x, y) = p.USablon(w.Cx, w.Cy);
+                    rez.Add(new ParSidra { Vrsta = "broj", Oznaka = "CIT", Px = w.Cx, Py = w.Cy, Tx = s.CitOznaka.Value.x, Ty = s.CitOznaka.Value.y, Odstupanje = Math.Sqrt(Math.Pow(x - s.CitOznaka.Value.x, 2) + Math.Pow(y - s.CitOznaka.Value.y, 2)) });
+                }
+            }
             foreach (var kv in s.Brojevi.OrderBy(k => k.Key, StringComparer.Ordinal))
             {
                 var (px, py) = p.NaStranu(kv.Value.x, kv.Value.y);
+                // broj rubrike iz teksta (univerzalni šablon) – ima prednost nad krugom
+                if (brojReci != null && brojReci.Count > 0)
+                {
+                    var osnova = ObrazacSablon.OsnovaBroja(kv.Key);
+                    var w = brojReci.Where(r => r.T == osnova).OrderBy(r => Math.Abs(r.Cx - px) + Math.Abs(r.Cy - py)).FirstOrDefault();
+                    if (w != null && Math.Sqrt((w.Cx - px) * (w.Cx - px) + (w.Cy - py) * (w.Cy - py)) < tol)
+                    {
+                        var (x, y) = p.USablon(w.Cx, w.Cy);
+                        rez.Add(new ParSidra { Vrsta = "broj", Oznaka = kv.Key, Px = w.Cx, Py = w.Cy, Tx = kv.Value.x, Ty = kv.Value.y, Odstupanje = Math.Sqrt((x - kv.Value.x) * (x - kv.Value.x) + (y - kv.Value.y) * (y - kv.Value.y)) });
+                        continue;
+                    }
+                }
                 Oblik naj = null; double d = double.MaxValue;
                 foreach (var k in krugovi)
                 {
@@ -362,7 +478,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             if (p.Ukupno < prag.MinSidara) razlozi.Add("sidara " + p.Ukupno + " < " + prag.MinSidara);
             if (p.PoTrecinama.Any(x => x < prag.MinPoTrecini)) razlozi.Add("trećina strane sa manje od " + prag.MinPoTrecini + " sidra");
             if (p.Odstupanje > prag.MaxOdstupanje) razlozi.Add("odstupanje " + p.Odstupanje.ToString("0.0000", CultureInfo.InvariantCulture) + " > " + prag.MaxOdstupanje.ToString("0.000", CultureInfo.InvariantCulture));
-            if (p.TekstKandidata >= 8 && p.Tekst < p.TekstKandidata * prag.MinUdeoTeksta)
+            // univerzalni šablon: tekstualna sidra su samo dodatna (drugi jezik/izdanje) – njihov udeo se ne ocenjuje
+            if (!p.Univerzalni && p.TekstKandidata >= 8 && p.Tekst < p.TekstKandidata * prag.MinUdeoTeksta)
                 razlozi.Add("sidra se ne slažu (" + p.Tekst + " od " + p.TekstKandidata + " tekstualnih) – druga grupa sidara daje drugo poravnanje");
             if (p.X[0] < 0.6 || p.X[0] > 1.6 || p.Y[1] < 0.6 || p.Y[1] > 1.6) razlozi.Add("razmera van granica");
             p.Pouzdano = razlozi.Count == 0;
@@ -385,10 +502,13 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return s;
         }
 
-        /// <summary>Svi obrasci, redom od najboljeg (najviše sidara, pa manje odstupanje, pa id).</summary>
-        public List<Poravnanje> Probaj(List<Rec> reci, Raster raster) =>
-            Sabloni.Select(s => Poravnanje.Izracunaj(s, reci, raster, Prag))
-                .OrderByDescending(p => p.Pouzdano).ThenByDescending(p => p.Ukupno).ThenBy(p => p.Odstupanje).ThenBy(p => p.Obrazac, StringComparer.Ordinal).ToList();
+        /// <summary>
+        /// Svi obrasci, redom od najboljeg: pouzdan nacionalni šablon (fino podešen) ima prednost nad univerzalnim CIT šablonom,
+        /// pa najviše sidara, manje odstupanje, id.
+        /// </summary>
+        public List<Poravnanje> Probaj(List<Rec> reci, Raster raster, List<Rec> sveReci = null) =>
+            Sabloni.Select(s => Poravnanje.Izracunaj(s, reci, raster, Prag, sveReci))
+                .OrderByDescending(p => p.Pouzdano).ThenByDescending(p => p.PoNatpisu).ThenBy(p => p.Univerzalni).ThenByDescending(p => p.Ukupno).ThenBy(p => p.Odstupanje).ThenBy(p => p.Obrazac, StringComparer.Ordinal).ToList();
 
         public ObrazacSablon Po(string id) => Sabloni.FirstOrDefault(s => s.Id == id);
 
@@ -402,6 +522,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         }
 
         private static readonly string[] OpstaPoledjina =
-            { "frachtberechnungsabschnitte", "racunski odsec", "рачунски одсец", "racunski odsjec", "sections de taxation", "charging sections", "berechnungsabschnitte" };
+            { "frachtberechnungsabschnitte", "racunski odsec", "рачунски одсец", "racunski odsjec", "sections de taxation", "charging sections", "berechnungsabschnitte",
+              "sezioni di tassazione", "sezioni tassazione", "fuvardijszamitasi szakasz", "useky vypoctu", "sectiuni de taxare", "tarifni odseki", "ucretlendirme bolumleri" };
     }
 }

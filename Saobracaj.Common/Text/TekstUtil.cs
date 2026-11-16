@@ -47,21 +47,82 @@ namespace Saobracaj.Common.Text
         public static string BezDijakritika(string s)
         {
             if (string.IsNullOrEmpty(s)) return s ?? "";
-            s = UZLatinicu(s);
+            s = UZLatinicu(Ocisti(s));
             var sb = new StringBuilder(s.Length);
-            foreach (var ch in s)
+            for (int i = 0; i < s.Length; i++)
             {
+                var ch = s[i];
+                // znak van osnovne ravni (emoji, matematička slova…) je par surogata: prepisuje se ceo, ne normalizuje se polovina
+                if (char.IsHighSurrogate(ch) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1])) { sb.Append(ch).Append(s[i + 1]); i++; continue; }
                 switch (ch)
                 {
                     case 'đ': sb.Append('d'); continue;
                     case 'Đ': sb.Append('D'); continue;
                 }
-                var d = ch.ToString().Normalize(NormalizationForm.FormD);
+                var d = Normalizuj(ch.ToString(), NormalizationForm.FormD);
                 foreach (var x in d)
                     if (CharUnicodeInfo.GetUnicodeCategory(x) != UnicodeCategory.NonSpacingMark)
                         sb.Append(x);
             }
-            return sb.ToString().Normalize(NormalizationForm.FormC);
+            return Normalizuj(sb.ToString(), NormalizationForm.FormC);
+        }
+
+        /// <summary>
+        /// Javlja se kada <see cref="Normalizuj"/> nije mogao da normalizuje tekst (tekst je vraćen bez normalizacije).
+        /// Aplikacija ga povezuje sa svojim logom; u poruci nema sadržaja teksta, samo dužina i razlog.
+        /// </summary>
+        public static Action<string> UpozorenjeNormalizacije;
+
+        /// <summary>
+        /// Neispravan UTF-16 tekst (usamljeni surogat – npr. pogrešno dekodiran naslov ili telo maila, PDF/OCR tekst)
+        /// postaje ispravan: usamljeni surogat se menja znakom U+FFFD. Ispravni parovi surogata (emoji) ostaju. Null → "".
+        /// </summary>
+        public static string Ocisti(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            StringBuilder sb = null;
+            for (int i = 0; i < s.Length; i++)
+            {
+                var ch = s[i];
+                bool ispravan;
+                if (char.IsHighSurrogate(ch)) ispravan = i + 1 < s.Length && char.IsLowSurrogate(s[i + 1]);
+                else if (char.IsLowSurrogate(ch)) ispravan = i > 0 && char.IsHighSurrogate(s[i - 1]);
+                else ispravan = true;
+                if (ispravan) { sb?.Append(ch); continue; }
+                if (sb == null) sb = new StringBuilder(s, 0, i, s.Length);
+                sb.Append('�');
+            }
+            return sb?.ToString() ?? s;
+        }
+
+        /// <summary>Broj usamljenih surogata u tekstu (dijagnostika: koliko je znakova <see cref="Ocisti"/> zamenio).</summary>
+        public static int BrojNeispravnih(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return 0;
+            int n = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                var ch = s[i];
+                if (char.IsHighSurrogate(ch)) { if (i + 1 < s.Length && char.IsLowSurrogate(s[i + 1])) i++; else n++; }
+                else if (char.IsLowSurrogate(ch)) n++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// String.Normalize koji ne baca izuzetak: tekst se prvo očisti (<see cref="Ocisti"/>); ako normalizacija ipak ne uspe,
+        /// vraća se očišćen tekst bez normalizacije i javlja <see cref="UpozorenjeNormalizacije"/>.
+        /// </summary>
+        public static string Normalizuj(string s, NormalizationForm forma)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            s = Ocisti(s);
+            try { return s.Normalize(forma); }
+            catch (ArgumentException ex)
+            {
+                try { UpozorenjeNormalizacije?.Invoke("normalizacija teksta (" + s.Length + " znakova) nije uspela, tekst se koristi bez normalizacije: " + ex.Message); } catch { }
+                return s;
+            }
         }
 
         /// <summary>

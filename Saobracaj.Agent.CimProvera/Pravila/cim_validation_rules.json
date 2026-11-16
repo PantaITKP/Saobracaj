@@ -26,8 +26,8 @@
       "RID tabela A, pogl. 3.2",
       "EWC katalog otpada (Odluka 2014/955/EU)"
     ],
-    "version": "2.5",
-    "updated": "2026-11-11",
+    "version": "2.8.4",
+    "updated": "2026-11-14",
     "company": {
       "name": "Kombinovani prevoz d.o.o.",
       "short": "KP",
@@ -109,6 +109,140 @@
           "Novo pravilo R21-MRN99 (upozorenje): MRN upisan samo u rubrici 99, a ne u rubrici 21.",
           "r9: stavka sa UN/EDIFACT šifrom (916 dodatni list, 380 faktura, 822 T2…) računa se samo kao taj dokument.",
           "Ostale težine nisu menjane."
+        ]
+      },
+      {
+        "date": "2026-11-12",
+        "version": "2.6",
+        "changes": [
+          "Novo pravilo R57-DEONICA (upozorenje): deonice prevoznika bez šifara stanica; deonica KP nije jasno dodeljena (više redova deonica nego prevoznika).",
+          "Novo pravilo X30 (upozorenje): broj kola u r21 razlikuje se od broja u nazivu fajla (npr. „30 kola“ / „31 wgs“).",
+          "G3: r9 prazna, a r18 upućuje na spisak kola („WAGON LIST“) – greška u r9 (nepriloženi spisak i dalje X26).",
+          "KP3: ne javlja se kada stavke 13.3 nema, a KP je naveden u drugoj stavci r13 (npr. 13.5).",
+          "Ostale težine nisu menjane."
+        ]
+      },
+      {
+        "date": "2026-11-12",
+        "version": "2.7",
+        "basis": "interna odluka KP 2026-11-12 (poslovne odluke o tome šta je greška)",
+        "changes": [
+          "r7: KP7 obrisan. Novo KP7-PLATILAC (greška): u r7 mora biti naveden platilac za deonicu kroz Srbiju (SRB, RS, Srbija, Serbia, Serbien, IŽS, ŽS, deonica KP / auf KP / für KP); platilac za ceo put bez deonica pokriva i Srbiju.",
+          "r7: novo KP7-NIJE-PLATILAC (greška): KP (KP, K prevoz, Kombinovani prevoz, КП, UIC 3212, 3212) naveden kao platilac za srpsku deonicu ili za ceo put. KP kao platilac za deonice van Srbije je dozvoljen; KP kao prevoznik nije greška; „platilac za deonicu KP“ znači da drugi plaća deonicu KP.",
+          "r7: novo KP7-NEJASNO (upozorenje): zapis bez reči platilac/prevoznik (npr. „16. IŽS: KP 3212“) – nije jasno da li je KP platilac ili prevoznik.",
+          "r7: novo KP7-INFO (informacija): „Platilac za deonicu kroz Srbiju: <naziv>“ kada je platilac pronađen i nije KP. KP5 ostaje upozorenje.",
+          "Naročita pošiljka: R22 i X5 su upozorenja.",
+          "r13: R13 se ne proverava (šifre i oznake tačaka nisu obavezne); G5 se ne odnosi na r13 ni r57; X15 (broj EDI sporazuma u 13.5) se ne proverava; preporuka „broj ponude/CIM 6 u r7 ili r13.5“ (REC2) obrisana. KP3 je greška: KP mora biti naveden u r13 kao prevoznik (bilo koji oblik, bilo koji deo r13, i dodatni list).",
+          "r14: R14 je upozorenje samo kada je r14 prazna („preporučujemo broj ponude KP“); provera prefiksa 1/2 obrisana. G2 i G11 se ne proveravaju.",
+          "r18: R18, R21-WAGON i X10 se ne proveravaju; X20 više ne traži spisak u r18; X26 važi samo za r9. Novo R18-SPISAK (upozorenje): r18 upućuje na spisak kola, a spisak nije priložen.",
+          "r24: greška samo kada NHM ima manje od 4 cifre ili je prazna; 4–5 cifara: preporuka R24-NHM6 (sa šifrom iz pratećeg dokumenta ako postoji). Isto za spisak kola: X29 greška ispod 4 cifre, X29-NHM6 preporuka za 4–5 cifara. Važi i za prazna kola (9921/9922).",
+          "R26, R28 i X12 su upozorenja; R27 nepromenjen.",
+          "r57: R57 i R57-DEONICA obrisani (deonica i status nisu obavezni). KP57 ostaje greška: KP se pominje u r57 ili r58a, u bilo kom obliku.",
+          "r58a: R58A – dovoljna je šifra preduzeća (UIC) ili prepoznatljiv naziv prevoznika; naziv, adresa i potpis nisu obavezni. KP2: u r58a 3212 ili naziv KP. Upozorenje za nečitljiv pečat ostaje.",
+          "Težine smanjene u odnosu na priručnik (R24, R57, R58A) imaju basis „interna odluka KP 2026-11-12“.",
+          "Poruke i primeri svih izmenjenih pravila usklađeni sa novim zahtevima; svako pravilo ima primer ispravnog upisa. Dodati nazivi rubrika (codelists.box_names) za tabelu u mailu.",
+          "Preporuke su objekti sa stalnim ID-em (REC1, REC3–REC8) i primerom.",
+          "Ispravljen zarez viška kod X27 (fajl je ispravan JSON).",
+          "Ostale težine nisu menjane."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.7.1",
+        "basis": "interna odluka KP 2026-11-12",
+        "changes": [
+          "A1: novo pravilo R25-MASA (zamenjuje R25): tovarena kola – r25 prazna je greška; prazna kola (NHM 9922, CUV u r30, „prazna kola / empty wagons / Leerwagen / üres kocsi / wagons vides / vagoni vuoti“ u r21/r24) – samo preporuka „poželjno je upisati masu (taru) praznih kola“; r25/r21 upućuje na priloženi spisak kola sa masom – bez nalaza; spisak naveden, a nije priložen – greška; nečitljiva r25 (OCR) – upozorenje o čitljivosti.",
+          "A2: jedan nalaz = jedan red u tabeli maila i u legendi PDF primera (različita pravila iste rubrike se više ne spajaju; nalazi različite težine nikad nisu u istom redu).",
+          "R29: kada je upisano mesto, a nedostaje datum, primer je „<mesto>, godina-mesec-dan“.",
+          "B: mail sa nalazima dobija PDF primer ispravnog tovarnog lista u prilogu i pasus o primeru (ili rečenicu da primer nije priložen jer obrazac nije prepoznat). Tekstovi i težine ostalih pravila nisu menjani."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.8",
+        "basis": "ispravke posle testa 2026-11-13 (Testni primeri: GK30, 55 16261, 1.CUV_257_1, 11132026Scan122207, 11132026Scan130104, SET EXPORT TREN SARE, CIM COAL 16, cuv za 1 vagon, GIPS)",
+        "changes": [
+          "r7 / KP7-PLATILAC: platilac se prepoznaje i sa greškama u kucanju (payer fo/on, OCR „Frachjzahjler“), „Serbian path/part/section/route“ = Srbija, nastavak „Payer for HU: A; SRB: B“ (i „, SRB: B“) do kraja rečenice, naziv platioca se završava na kraju rečenice ili novog reda (KP u „CIM 6: … KP/26“ nije platilac). KP7-NIJE-PLATILAC samo kada je KP sa desne strane.",
+          "G5 (oblik r7 „šifra + tekst“): samo upozorenje, nikad greška; primer „16. Platilac za deonicu SRB: <naziv>“.",
+          "R62 i R58A važe za svaki list (ne samo kada KP popunjava); r62 se čita po obliku (zemlja 2 cifre, stanica 5–7, preduzeće 4, broj 5–7); broj sa slovima („HER-SAD79“) se ne proverava po obliku 12345-6; kada je r62 = 3212, r58a proverava KP2; kada su r62 i r58a obe prazne – samo R62.",
+          "List koji je izdao KP (r62, preduzeće 3212) ili list na ručnoj proveri: izveštaj je samo interni („[INTERNO] KP tovarni list – …“ / „[INTERNO] Ručna provera – …“), uvek na srpskom, nikad pošiljaocu.",
+          "Sken niske pouzdanosti (OCR strane ispod 0,75): nalazi o sadržaju rubrika postaju interne napomene „rubrika nije pouzdano čitljiva – proveriti ručno“.",
+          "R4/R1: adresa po sadržaju cele rubrike; „adresa“ samo kada nema ni ulice ni mesta, „poštanski broj i mesto“ kada je upisana samo ulica; primer zemlje iz lista (r10/r12, r16).",
+          "R29: mesto mora imati bar dva slova („.“ nije mesto).",
+          "R25-MASA: priložen spisak kola sa masama, a r25 prazna – preporuka (bez obaveznog upućivanja u r25/r21).",
+          "R20-INCO na skenu: upozorenje (mesto je često u koloni „jusqu'à / bis“ koju OCR ne pročita).",
+          "R50: samo interna napomena (popunjava prevoznik), nikad greška pošiljaocu.",
+          "Obrisani (šum u izveštaju): REC3 (KP u propisanom obliku), KP6 (KP na spisku kola), REC6 (spisak i u Excelu). REC1 (r8) i REC8 (kontakt) – samo interno.",
+          "primer_en za sva pravila; spisak kola u primerima bez nepotvrđene šifre 271 („<šifra> Spisak kola“ – 271 je u UN/EDIFACT 1001 „packing list“, priručnik GLV-CIM šifru za spisak kola ne navodi)."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.8.2",
+        "basis": "dopune posle prihvatanja v2.8 (2026-11-13)",
+        "changes": [
+          "Prilog „<ime>.strane.json“ (već pročitane strane) prihvata se samo u testovima; u obradi maila se ignoriše i beleži u log kao „nedozvoljen tip priloga“.",
+          "R62 na skenu: ciljani OCR kućica čita i očišćen isečak (bez isprekidanih pregrada, proširen) i glasa sa opštim OCR-om; kada čitanje nije pouzdano (OCR šum „jj2“ uz nepotpunu r62, niska pouzdanost cifara, isečci daju različite brojeve) – interna napomena „r62 nečitljiva – proveriti ručno“, ne greška.",
+          "Jezik izveštaja za opšte mail domene (gmail.com, yahoo.com, outlook.com, hotmail.com, live.com, icloud.com…): po tekstu koji je pošiljalac sam napisao (naslov i telo bez citata i potpisa) – srpska slova, ćirilica ili srpske reči („poštovani“, „pozdrav“, „vagon“, „tovarni“, „izvoz“) → srpski, inače engleski.",
+          "R25-MASA: kada je priložen spisak kola bez mase robe, poruka navodi spisak (i da su sva kola na njemu označena kao prazna, a u r21 je roba). Kola označena „Empty / Leer / prazna / gol“ u Excel spisku su prazna kola.",
+          "CIT 7 (naknadni zahtev, GLV-CIM Prilog 7, čl. 18 i 19 CIM): čitaju se identifikacija, pošiljalac, primalac, mesto izdavanja, šifre zahteva, tražene izmene („Box 4: …“) i podnosilac; veza sa tovarnim listom iz istog maila ili iz ranije obrađenih (stanje\\listovi.json) po r62, broju kola, relaciji i stranama. Poseban interni izveštaj: šta se menja (stara → nova vrednost) i upozorenja – nije priložen duplikat lista sa istim izmenama, zahtev ne podnosi primalac a u r7 nema „Primalac nema pravo raspolaganja“ (ili šifre 7.1), pošiljka se deli, izmena menja carinsko područje („potreban pristanak carinarnice“). Ništa od toga se ne šalje pošiljaocu.",
+          "PDF primer (novi izgled): bez strane sa legendom i tabelom (tabela je u mailu) – samo strane lista (i spiska kola kada na njemu ima nalaza). U rubriku se upisuje kako ona treba da izgleda: upisani tekst ostaje vidljiv (najviše tanak okvir oko rubrike), crvenom se dopisuje samo ono što nedostaje, u prvi slobodan red ispod ili desno od postojećeg teksta, Arial 9 → 6 pt; pogrešan deo se precrtava tankom linijom, a ispravka se upisuje pored (npr. NHM „2520“ → „252010“).",
+          "Dopuna je prava vrednost kada se može odrediti iz dokumenata (zemlja iz mesta/r10/r12/r16, datum iz r29 ili maila, NHM iz JCI/T1, mesto iz r16, prevoznik iz r62/r57, 3212 KP, broj izvozne deklaracije), inače realan primer u istom obliku („Marko Marković“, „11-13-08“) – nikad opis formata.",
+          "Oznaka nalaza: krug sa ISTIM brojem kao u tabeli maila (ispravke crveno, napomene narandžasto), više nalaza u rubrici – brojevi jedan pored drugog, krugovi ne prekrivaju tekst. Napomene: narandžast okvir i broj, dopuna samo kada je predlog siguran. Nalazi „samo interno“ se ne prikazuju. Što ne staje ni sa 6 pt – na marginu strane, pored rubrike, sa istim brojem.",
+          "Excel/Word tovarni list: dopuna u istoj ćeliji, ispod postojećeg teksta, crveno; upisan tekst ostaje crn.",
+          "Pasus o prilogu u mailu (posle tabela): „…Podaci koje ste upisali su ostali isti, a crvenom bojom smo dopisali ono što nedostaje ili ispravili ono što nije dobro. Brojevi u krugovima odgovaraju brojevima u tabeli iznad…“ (i na engleskom)."
+        ]
+      },
+      {
+        "date": "2026-11-13",
+        "version": "2.8.2",
+        "basis": "dopune posle prihvatanja v2.8.1 (2026-11-13)",
+        "changes": [
+          "PDF primer: brojevi propisanog oblika se ne izmišljaju – kada nisu poznati iz dokumenata, upisuje se šablon sa X: broj otpravljanja „XXXXX-X“, šifra stanice „XX XXXXX-X“, broj kola „XX XX XXXX XXX-X“, MRN „26RSXXXXXXXXXXXXX“, šifra preduzeća „XXXX“. Datum iz dokumenta (r29 ili datum maila), nepoznat sat „XX“ („11-13-XX“). Ime, telefon i mail ostaju realan primer („Marko Marković“).",
+          "R25-MASA: u polje za masu upisano nešto što nije broj (natpis, tačkice, tekst – „T= ……“, „Netto: / Tare: / Brutto:“) je greška „Rubrika 25: masa nije upisana kao broj“. Dopuna u PDF primeru: „X kg“ u redove koje obrazac ima (T= / N= / G=, Netto / Tare / Brutto), inače „Tara: X kg, Neto: X kg, Bruto: X kg“; mase koje se mogu izračunati iz priloženog spiska kola (zbir kolona tara / neto / bruto) upisuju se kao prave vrednosti.",
+          "CIT 7: veza sa tovarnim listom samo po identifikaciji (r62) iz CIT 7, brojevima kola ili referenci pošiljaoca (r8); identifikacija bez broja otpravljanja samo kada je jedini takav list. Uputna, mesto isporuke i primalac nisu dokaz veze (CIT 7 ih menja). Bez pouzdane veze CIT 7 je „nepovezan“ i to piše u internom izveštaju.",
+          "R1 / R4 / R1-ISO / R4-ISO: zemlja se traži samo u redovima adrese, ne u nazivu firme („Louis Dreyfus Company Hungary Kft.“ nije zemlja – nedostaje zemlja, greška R1).",
+          "PDF primer: strana ostaje A4 (list se umanji); ono što ne staje u rubriku ide na donju marginu strane, sa brojem u krugu i brojem rubrike. Dopuna nikad ne ide u red štampanih natpisa obrasca na vrhu rubrike. Posebna .xlsx kopija primera se ne pravi.",
+          "PDF primer: r62 se upisuje po poljima obrasca (zemlja, stanica, preduzeće, broj otpravljanja – kućice 62.1–62.4); mase sa hiljadama odvojenim razmakom („703 000 kg“); broj u krugu uvek u gornjem desnom uglu SVOJE rubrike, nikad u susednoj ni u okviru druge rubrike unutar nje (r14 u r13, r2/r3 uz r1); datum samo iz dokumenta (r29, r16, spisak kola), nikad datum maila – nepoznat „XXXX-XX-XX“ / „MM-DD-XX“."
+        ]
+      },
+      {
+        "date": "2026-11-14",
+        "version": "2.8.3",
+        "basis": "ispravke posle testa sa 6 mailova (13–14.11.2026)",
+        "changes": [
+          "Naziv, adresa, platilac i primalac se u dopuni nikad ne izmišljaju: šablon „XXXXX, ulica i broj, poštanski broj mesto, XX“ i „Platilac za deonicu SRB: XXXXX“; realan primer ostaje samo za ime, telefon i mail kontakta. Na skenu se ne dopisuje ništa u rubriku koja nije pouzdano pročitana (samo okvir sa brojem).",
+          "Zemlja r1/r4: iz adrese (naziv zemlje, poštanski broj sa oznakom zemlje, poznato mesto – Herne → DE, Kiskőrös → HU, Ankara/Konya → TR, Lovosice → CZ, Poggio Rusco/Nonantola → IT), pa iz stanice te strane (r1 → r16/r17, r4 → r10/r12); nikad iz druge strane, r62 ni podrazumevano – nepoznata „XX“.",
+          "Interni nalazi (r49, r50, r8, kontakt…): u režimu Test u posebnom odeljku na dnu maila „INTERNO (ne ide pošiljaocu)“, odvojenom linijom; u režimu Live nikad u mailu ni u PDF primeru pošiljaocu. Primer za r8: „r8: broj voza ili referenca, npr. XXXXX“.",
+          "REC4 (preporuka za r57) obrisana; ostaje KP57.",
+          "Kolona „Kako treba da izgleda“ iz iste dopune kao PDF primer („+ DE (posle „44653 Herne“)“, „Preduzeće: 3212, Broj otpravljanja: XXXXX-X“); r58a predlog = preduzeće iz r62 (3127 HSL), 3212 samo kada je r62 = 3212; nepoznat NHM „XXXXXX“.",
+          "Najava/otkaz voza („Najava voza / Train announcement / Zuganmeldung“, „BROJ VOZA / TRAIN NUMBER“) je poseban dokument – ne proverava se („najava voza (ne proverava se)“); u log: broj voza, otpravna i uputna stanica, broj kola, težina, dužina, ETA. Bugarski „Натурен лист на влак“ je sastav voza.",
+          "TCDD 3370A (CIM Taşıma Belgesi): poseban šablon (raspored CIT, sitniji natpisi, r16 datum, r29, r62 na mestu TCDD štampe), bira se samo po natpisu obrasca; „FREIGHT PAYER FOR X AND KP3212 – Y“ u r7 (ili r15) → Y je platilac za deonicu kroz Srbiju.",
+          "CIT 2006 sa skena druge razmere (SET EXPORT str. 4): početno poravnanje po okviru obrasca, potvrđeno krugovima brojeva rubrika. Neprepoznat list je „tovarni list CIM“ (natpis „Wagenbrief CUV / kolski list“ je na svakom obrascu).",
+          "Interni izveštaj bez „Poštovani“, zahvalnice i potpisa – kratak uvod („INTERNO – ručna provera. Mail … Tovarni list CIM (fajl, str. N) nije proveren: obrazac nije prepoznat. Uradite ručnu proveru pre odgovora pošiljaocu.“), listovi grupisani po fajlu.",
+          "Sitnice: naslov bez „CIM CIM“; dopuna se ne smatra natpisom kada je odmah ispod natpisa rubrike (r29 „Wittenberg“); Excel sa oznakama tovarnih jedinica bez kola je „spisak tovarnih jedinica“; trajanje obrade svakog maila u log, a mail sa mnogo skenova obrađuje se posle ostalih u krugu (poslednji UID se ne pomera preko neobrađene poruke)."
+        ]
+      },
+      {
+        "date": "2026-11-14",
+        "version": "2.8.4",
+        "basis": "pravi saobraćaj 13–14.11.2026 (22 maila) i priprema za produkciju",
+        "changes": [
+          "Strana 2/2 spiska kola CIT 23 (zaglavlje kolona, red zbirova Σ) je nastavak spiska, nikad tovarni list; strana bez natpisa obrasca nije „neprepoznat CIM“. Mail bez tovarnog lista ne dobija nikakav odgovor, ni interni (samo red u logu „nema CIM/CUV – bez odgovora; dokumenti: …“) – ali samo kada je sigurno: strana koja liči na obrazac (8+ natpisa rubrika, delimičan natpis, okvir i brojevi rubrika) a nije pročitana ide na internu ručnu proveru.",
+          "Položeni skenovi: orijentacija strane (OSD, pa proba 90°/270°) ispod pouzdanosti 0,75; ugao se pamti po strani i važi za svako iscrtavanje (uzima u obzir /Rotate strane). Crno-beli sken: sivi tonovi, uvećanje, ispravljanje nagiba. Sken obrasca čiji natpisi nisu pročitani prepoznaje se po okviru i brojevima rubrika uz šifru stanice.",
+          "r7: tolerancija jednog slova za veznike (und/ist/für) i reči za platioca; nove reči (plaćanje, Zahlung, payment, paid by…); naziv do kraja reda; „SRB: KP 3212“ posle platioca za drugu prugu → upozorenje „nejasno ko plaća deonicu SRB“; šifra 16 je platilac samo u obliku 16 + prevoznici/deonice sa KP + ist/is/=/je + naziv; ponovni OCR isečka r7 (400 dpi, blok redova) kada platilac nije pročitan.",
+          "r58a i ostale rubrike: FreeText anotacije (pisaća mašina u Acrobat-u), samo vidljive i za štampu, čitaju se kao podatak na svom položaju (CIM SAD HER 79: „UIC: 3212“; GK30: r62 preduzeće 3212). Zemlja posle mesta/poštanskog broja u istom redu je zemlja; nepoznata reč na kraju adrese uz uputnu u inostranstvu → napomena „proverite zemlju (prema r10/r12: …)“; datum „2026.10.26“; X u kvadratiću prepoznat po obliku; K-505 kućica r24.",
+          "X19: identifikacija koja nije upisana na spisku kola je napomena, ne neslaganje.",
+          "Ponavljanja (stanje\\ponavljanja.json): isti prilog (heš) i isti tovarni list sa nepromenjenim rubrikama se ne proveravaju/prijavljuju ponovo; jedna interna poruka po mailu (staro upozorenje „neprocitano-…“ uklonjeno).",
+          "Dopune samo iz pouzdano pročitanih rubrika; bez dopune i sidra „posle …“ iz šuma OCR-a (mešano pismo, „jj“, kratke nepoznate reči).",
+          "Dosije pošiljke (stanje\\posiljke.json, 7 dana): veza po niti, naslovu, ključu lista, r8, kolima, pošiljaocu iz naslova; priloženost na celom dosijeu; „Ovo je nova verzija tovarnog lista od … Ispravljeno: … Ostalo neispravljeno: …“; skenirana i overena verzija proverenog digitalnog lista – samo pečat (r58a), r62, r29. Reset briše dosije.",
+          "Polje „popunjava“ i „popunjava_basis“ za svako pravilo (interna odluka KP 2026-11-14): r57 i r58a popunjava pošiljalac (GLV-CIM Prilog 2, str. 25: „ukoliko ne postoji poseban ugovor“) – KP57, R57, R58A su greške pošiljaoca; r62 pošiljalac upisuje ako zna – prazan ili nepotpun r62 je napomena za spoljnog pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz; r49 i r50 popunjava prevoznik – samo interno („popunjava prevoznik (KP pri prijemu)“); ostale rubrike 1–30 pošiljalac. Prazna r58a uz praznu r62 kod spoljnog pošiljaoca se prijavljuje (ranije samo R62).",
+          "„Nova verzija tovarnog lista“ navodi samo greške (napomene nisu „ostalo neispravljeno“). Naslov sa nepouzdanom r62: ime fajla umesto pročitanog broja i „r62 nečitljiva“.",
+          "Ciljani OCR kućica: kućica preslikana van strane se preskače (ranije GDI+ „Out of memory.“ za isečak van slike, ZIJIN C1-2298 str. 5), greška jedne kućice ne prekida ostale. Čitač L20.",
+          "Primaoci u Live režimu (samo priprema): From + To + Cc bez duplikata, bez agenti@ i prosleđivanja, KP adrese ostaju, više od 25 → samo interno; naslov „RE: … – CIM provera: potrebne ispravke“ u istoj niti; Test zaglavlje „U Live režimu išlo bi na: …“.",
+          "Interni izveštaji: „Primer ispravke je u prilogu.“ umesto rečenice za pošiljaoca; nepouzdano pročitane rubrike u jednom redu.",
+          "r62 na skenu sa nepouzdanim ciframa (rukom upisana) ne koristi se za odluke (KP tovarni list, ponavljanje, dosije) – „r62 nečitljiva – ručna provera“.",
+          "Zaštita režima Test u funkciji slanja: svaki primalac (To, Cc, Bcc) osim agenti@kprevoz.co.rs se uklanja pre slanja, u log „TEST: uklonjen primalac …“."
         ]
       }
     ]
@@ -319,21 +453,49 @@
       "3915",
       "7602",
       "7404"
-    ]
+    ],
+    "box_names": {
+      "1": "Pošiljalac", "2": "Korisnička šifra pošiljaoca", "3": "Šifra platioca franko troškova", "4": "Primalac",
+      "5": "Korisnička šifra primaoca", "6": "Šifra platioca upućenih troškova", "7": "Izjave pošiljaoca", "8": "Referenca pošiljaoca",
+      "9": "Prilozi", "10": "Mesto isporuke", "11": "Šifra mesta isporuke", "12": "Šifra uputne stanice", "13": "Komercijalni uslovi",
+      "14": "Broj sporazuma ili tarife", "15": "Obaveštenja primaocu", "16": "Preuzimanje na prevoz", "17": "Šifra mesta preuzimanja",
+      "18": "Broj kola", "19": "Fakturisanje tranzita", "20": "Plaćanje troškova", "21": "Naznačenje robe", "22": "Naročita pošiljka",
+      "23": "RID", "24": "NHM šifra", "25": "Masa", "26": "Izjava o vrednosti", "27": "Obezbeđenje uredne isporuke", "28": "Pouzeće",
+      "29": "Mesto i datum ispostavljanja", "30": "Oznaka dokumenta", "49": "Šifra frankiranja", "50": "Prevozni put",
+      "57": "Ostali prevoznici", "58a": "Ugovorni prevoznik", "62": "Identifikacija pošiljke", "99": "Carinske napomene",
+      "CIT 23": "Spisak kola (CIT 23)", "–": "Ceo dokument"
+    },
+    "box_names_en": {
+      "1": "Consignor", "2": "Customer code for the consignor", "3": "Customer code for the payer of prepaid charges", "4": "Consignee",
+      "5": "Customer code for the consignee", "6": "Customer code for the payer of non-prepaid charges", "7": "Consignor's declarations",
+      "8": "Consignor's reference", "9": "Documents attached", "10": "Delivery point", "11": "Code for the delivery point",
+      "12": "Code for the station serving the delivery point", "13": "Commercial conditions", "14": "Agreement or tariff number",
+      "15": "Information for the consignee", "16": "Taking over", "17": "Code for the place of taking over", "18": "Wagon No.",
+      "19": "Transit charging", "20": "Payment of charges", "21": "Description of the goods", "22": "Exceptional consignment",
+      "23": "RID", "24": "NHM code", "25": "Mass", "26": "Declaration of value", "27": "Interest in delivery", "28": "Cash on delivery",
+      "29": "Place and date made out", "30": "Document type", "49": "Prepayment code", "50": "Route", "57": "Other carriers",
+      "58a": "Contractual carrier", "62": "Consignment identification", "99": "Customs endorsements",
+      "CIT 23": "Wagon list (CIT 23)", "–": "Whole document"
+    }
   },
   "general_rules": [
     {
       "id": "G1",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Dokument je popunjen na najmanje jednom od jezika: nemacki, francuski ili engleski (osim ako je drugacije ugovoreno).",
       "message": "Tovarni list mora biti popunjen i na nemačkom, francuskom ili engleskom jeziku.",
       "ref": "Prilog 2, t. 1",
       "message_en": "The consignment note must be completed in German, French or English as well.",
-      "primer": "Podaci upisani i na engleskom ili nemačkom (npr. 'Ugalj / Coal')"
+      "primer": "Podaci upisani i na engleskom ili nemačkom (npr. 'Ugalj / Coal')",
+      "primer_en": "Data also entered in English or German (e.g. 'Ugalj / Coal')"
     },
     {
       "id": "G2",
-      "severity": "warning",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): pokriva ga upozorenje R14 (prazna r14)",
       "check": "Jedan tovarni list po kolima; više kola na jednom listu samo uz korisnički sporazum.",
       "message": "Na jednom tovarnom listu je više kola. Proverite da li postoji korisnički sporazum koji to dozvoljava.",
       "ref": "t. 4",
@@ -342,69 +504,95 @@
     },
     {
       "id": "G3",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Više kola ili >= 3 UTI na jednom listu => priložen Spisak kola i upisan u tovarni list.",
       "message": "Za više kola ili tri i više UTI potrebno je priložiti Spisak kola (Prilog 5) i navesti ga u rubrici 9.",
       "ref": "t. 10, Prilog 5",
       "message_en": "For several wagons or three or more ITUs a wagon list (Annex 5) must be attached and listed in box 9.",
-      "primer": "r9: 271 Spisak kola (CIT 23); r18: po spisku kola"
+      "primer": "r9: <šifra> Spisak kola (CIT 23)",
+      "primer_en": "box 9: <code> Wagon list (CIT 23)"
     },
     {
       "id": "G4",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Postoje dodatni listovi => u r9 napomena o dodatnim listovima; dodatni listovi sadrze broj pošiljke i datum preuzimanja.",
       "message": "Dodatni listovi moraju biti navedeni u rubrici 9 i sadržati broj pošiljke i datum preuzimanja.",
       "ref": "Prilog 2, t. 2",
       "message_en": "Additional sheets must be listed in box 9 and must contain the consignment number and the date of taking over.",
-      "primer": "r9: Dodatni list (2 lista); na dodatnom listu broj pošiljke i datum preuzimanja"
+      "primer": "r9: Dodatni list (2 lista); na dodatnom listu broj pošiljke i datum preuzimanja",
+      "primer_en": "box 9: Additional sheet (2 sheets); on the additional sheet the consignment number and the date of acceptance"
     },
     {
       "id": "G5",
-      "severity": "error",
-      "check": "Rubrike 7, 13, 14, 55, 56, 57 sadrze šifru (i tekst gde je propisano).",
-      "message": "Rubrika {field} mora biti popunjena u obliku šifre i propisanog teksta.",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "severity": "warning",
+      "basis": "v2.8 (test 2026-11-13): oblik r7 nikad nije greška; platioca proverava KP7-PLATILAC",
+      "check": "Rubrika 7 sadrži šifru (i tekst gde je propisano). Od v2.7 se ne odnosi na r13 i r57 (šifra i broj tačke nisu obavezni). Od v2.8 samo upozorenje.",
+      "message": "Rubrika 7: preporučujemo propisani oblik sa šifrom, npr. ‚16. Platilac za deonicu SRB: <naziv>‘.",
       "ref": "Prilog 2, t. 2",
-      "message_en": "Box {field} must be completed as a code with the prescribed text.",
-      "primer": "šifra + tekst, npr. 7.16 Platilac …"
+      "message_en": "Box 7: we recommend the prescribed form with the code, e.g. ‘16. Payer for the section SRB: <name>’.",
+      "primer": "16. Platilac za deonicu SRB: <naziv firme>",
+      "primer_en": "16. Payer for the section SRB: <company name>"
     },
     {
       "id": "G6",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Elektronski list: prilozi (r9) i dokumenti uz šifru 7.10 samo šifrom UN/EDIFACT 1001; papirni list: šifrom i rečima.",
       "message": "Prilozi u rubrici 9 navedeni su rečima, bez šifre UN/EDIFACT 1001 – dodati šifru (na papirnom listu šifra i reči).",
       "ref": "Prilog 2, rubr. 7 i 9",
       "message_en": "Documents in box 9 must be listed with their UN/EDIFACT 1001 code (on paper also in words).",
-      "primer": "šifra UN/EDIFACT 1001 + naziv, npr. 271 Spisak kola; 380 Faktura"
+      "primer": "šifra UN/EDIFACT 1001 + naziv, npr. <šifra> Spisak kola; 380 Faktura",
+      "primer_en": "UN/EDIFACT 1001 code + name, e.g. <code> Wagon list; 380 Invoice"
     },
     {
       "id": "G7",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Pošiljalac nije popunjavao rubrike 40-99 bez posebnog ugovora.",
       "message": "Rubrike 40-99 popunjava prevoznik/carina. Proverite da li ste ih popunili greškom.",
       "ref": "Prilog 2, t. 2",
-      "message_en": "Boxes 40-99 are completed by the carrier/customs. Check whether you completed them by mistake."
+      "message_en": "Boxes 40-99 are completed by the carrier/customs. Check whether you completed them by mistake.",
+      "primer": "rubrike 40–99 ostaviti prazne",
+      "primer_en": "leave boxes 40–99 empty"
     },
     {
       "id": "G9",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Ispis elektronskog lista ima na vrhu napomenu 'Ispis elektronskog tovarnog lista - GGGG-MM-DD - izdat od strane ...'.",
       "message": "Ispis elektronskog tovarnog lista nema propisanu napomenu o ispisu na vrhu dokumenta.",
       "ref": "Prilog 1, t. 4.1",
       "applies_if": "document_type == 'electronic_printout'",
       "message_en": "The printout of the electronic consignment note lacks the prescribed printout note at the top of the document.",
-      "primer": "Ispis elektronskog tovarnog lista - 2026-11-05 - izdat od strane ..."
+      "primer": "Ispis elektronskog tovarnog lista - 2026-11-05 - izdat od strane ...",
+      "primer_en": "Printout of the electronic consignment note - 2026-11-05 - issued by ..."
     },
     {
       "id": "G10",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "check": "Prelaz preko carinskog podrucja EU sa robom EU, robom van EU i praznim kolima => odvojeni spiskovi kola.",
       "message": "Za robu EU, robu van EU i prazna kola potrebni su odvojeni spiskovi kola.",
       "ref": "Prilog 1, t. 4.4; Prilog 5, t. 4.2",
-      "message_en": "Separate wagon lists are required for EU goods, non-EU goods and empty wagons."
+      "message_en": "Separate wagon lists are required for EU goods, non-EU goods and empty wagons.",
+      "primer": "poseban spisak kola za robu EU, za robu van EU i za prazna kola",
+      "primer_en": "a separate wagon list for EU goods, non-EU goods and empty wagons"
     },
     {
       "id": "G11",
-      "severity": "error",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): pokriva ga upozorenje R14 (prazna r14)",
       "check": "Jedan CIM pokriva više kola => mora postojati korisnički sporazum (r14 / r13.5 / CIM 6 broj ili ponuda). Bez reference na sporazum: upozorenje.",
       "message": "Jedan tovarni list za više kola dozvoljen je samo uz korisnički sporazum. Navedite broj sporazuma/ponude (rubrika 14 ili 13.5).",
       "ref": "t. 4",
@@ -414,6 +602,8 @@
     },
     {
       "id": "G12",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "check": "Zaglavlje dokumenta ima natpis informativnog ispisa (nije tovarni list). Proverava se i kada obrazac nije prepoznat.",
       "header_markers": [
@@ -424,12 +614,15 @@
       ],
       "message": "Dokument je informativni ispis podataka pošiljke, a ne tovarni list; za proveru je potreban ispis elektronskog tovarnog lista ili original.",
       "message_en": "The document is an information printout of the consignment data, not a consignment note; a printout of the electronic consignment note or the original is needed for the check.",
-      "primer": "ispis elektronskog tovarnog lista (e-CIM) ili original"
+      "primer": "ispis elektronskog tovarnog lista (e-CIM) ili original",
+      "primer_en": "printout of the electronic consignment note (e-CIM) or the original"
     }
   ],
   "field_rules": [
     {
       "id": "R1",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r1",
       "name": "Pošiljalac",
       "flag": "O",
@@ -451,16 +644,21 @@
     },
     {
       "id": "R1-VAT",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r1.vat",
       "flag": "U",
       "severity": "warning",
       "condition": "pošiljalac i primalac u drzavama clanicama EU",
       "message": "Rubrika 1: za razmenu robe unutar EU upisati PDV broj pošiljaoca, ako mu je dodeljen.",
       "message_en": "Box 1: for intra-EU trade enter the consignor's VAT number, if one has been assigned.",
-      "primer": "PDV/VAT broj sa šifrom zemlje"
+      "primer": "PDV/VAT broj sa šifrom zemlje",
+      "primer_en": "VAT number with the country code"
     },
     {
       "id": "R1-ISO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "1",
       "severity": "warning",
       "filled_by": "sender",
@@ -469,22 +667,29 @@
       "basis": "priručnik Prilog 2, rubr. 1",
       "message": "Rubrika 1: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. RS).",
       "message_en": "Box 1: the country is written in words – enter the ISO 3166 country code (e.g. RS).",
-      "primer": "…, 21000 Novi Sad, RS"
+      "primer": "…, 21000 Novi Sad, RS",
+      "primer_en": "…, 21000 Novi Sad, RS"
     },
     {
       "id": "R2",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r2",
       "name": "Korisnicka šifra pošiljaoca",
       "flag": "F"
     },
     {
       "id": "R3",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r3",
       "name": "Šifra platioca franko troškova",
       "flag": "F"
     },
     {
       "id": "R4",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r4",
       "name": "Primalac",
       "flag": "O",
@@ -505,16 +710,21 @@
     },
     {
       "id": "R4-VAT",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r4.vat",
       "flag": "U",
       "severity": "warning",
       "condition": "razmena robe između clanica EU i PDV broj primaoca poznat",
       "message": "Rubrika 4: za razmenu robe unutar EU upisati PDV broj primaoca.",
       "message_en": "Box 4: for intra-EU trade enter the consignee's VAT number.",
-      "primer": "PDV/VAT broj sa šifrom zemlje"
+      "primer": "PDV/VAT broj sa šifrom zemlje",
+      "primer_en": "VAT number with the country code"
     },
     {
       "id": "R4-ISO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "4",
       "severity": "warning",
       "filled_by": "sender",
@@ -523,22 +733,29 @@
       "basis": "priručnik Prilog 2, rubr. 4",
       "message": "Rubrika 4: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. IT).",
       "message_en": "Box 4: the country is written in words – enter the ISO 3166 country code (e.g. IT).",
-      "primer": "…, 44042 Cento, IT"
+      "primer": "…, 44042 Cento, IT",
+      "primer_en": "…, 44042 Cento, IT"
     },
     {
       "id": "R5",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r5",
       "name": "Korisnicka šifra primaoca",
       "flag": "F"
     },
     {
       "id": "R6",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r6",
       "name": "Šifra platioca upucenih troškova",
       "flag": "F"
     },
     {
       "id": "R7",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r7",
       "name": "Izjave pošiljaoca",
       "flag": "U",
@@ -546,16 +763,21 @@
       "format": "lista {šifra, tekst}; šifra iz codelists.r7; za šifre 1,2,6,7,8,24 tekst = značenje šifre; za ostale šifra + propisani podatak (codelists.r7[*].requires)",
       "message": "Rubrika 7: šifra {code} mora biti praćena propisanim podatkom: {requires}.",
       "message_en": "Box 7: code {code} must be followed by the prescribed information: {requires}.",
-      "primer": "šifra 7.x + propisani tekst, npr. 7.16 Platilac za deonicu …"
+      "primer": "šifra 7.x + propisani tekst, npr. 7.16 Platilac za deonicu …",
+      "primer_en": "code 7.x + prescribed text, e.g. 7.16 Payer for the section …"
     },
     {
       "id": "R8",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r8",
       "name": "Obavestenje/referenca pošiljaoca",
       "flag": "F"
     },
     {
       "id": "R9",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r9",
       "name": "Prilozi",
       "flag": "U",
@@ -564,10 +786,13 @@
       "format": "šifra UN/EDIFACT 1001 (+ reci na papirnom listu)",
       "message": "Rubrika 9: navesti sve prateće dokumente šifrom UN/EDIFACT 1001 (na papiru i rečima).",
       "message_en": "Box 9: list all accompanying documents with their UN/EDIFACT 1001 code (on paper also in words).",
-      "primer": "šifra UN/EDIFACT 1001 + naziv dokumenta, npr. 271 Spisak kola (CIT 23); 830 Izvozna deklaracija MRN …"
+      "primer": "šifra UN/EDIFACT 1001 + naziv dokumenta, npr. <šifra> Spisak kola (CIT 23); 830 Izvozna deklaracija MRN …",
+      "primer_en": "UN/EDIFACT 1001 code + document name, e.g. <code> Wagon list (CIT 23); 830 Export declaration MRN …"
     },
     {
       "id": "R10",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r10",
       "name": "Mesto isporuke",
       "flag": "O",
@@ -578,16 +803,21 @@
       ],
       "message": "Rubrika 10: upisati uputnu stanicu prema DIUM-u i zemlju prema UIC objavi 920-14.",
       "message_en": "Box 10: enter the destination station according to DIUM and the country according to UIC leaflet 920-14.",
-      "primer": "naziv stanice po DIUM-u i zemlja (UIC 920-14, npr. 72)"
+      "primer": "naziv stanice po DIUM-u i zemlja (UIC 920-14, npr. 72)",
+      "primer_en": "station name according to DIUM and country (UIC 920-14, e.g. 72)"
     },
     {
       "id": "R11",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r11",
       "name": "Šifra mesta isporuke",
       "flag": "F"
     },
     {
       "id": "R12",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r12",
       "name": "Šifra stanice koja opsluzuje mesto isporuke",
       "flag": "O",
@@ -596,14 +826,17 @@
       "note": "Ako nedostaje, prevoznik je mora upisati - zato upozorenje, ne blokada.",
       "message": "Rubrika 12: upisati međunarodnu šifru uputne stanice prema DIUM-u.",
       "message_en": "Box 12: enter the international code of the destination station according to DIUM.",
-      "primer": "šifra stanice po DIUM-u (6 cifara + kontrolna)"
+      "primer": "šifra stanice po DIUM-u (6 cifara + kontrolna)",
+      "primer_en": "station code according to DIUM (6 digits + check digit)"
     },
     {
       "id": "R13",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r13",
       "name": "Komercijalni uslovi",
       "flag": "U",
-      "severity": "error",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): šifra i broj tačke nisu obavezni; jedini zahtev za r13 je KP3 (KP naveden kao prevoznik)",
       "format": "šifra iz codelists.r13 + tekst",
       "condition": "ugovoren prevozni put, naročita pošiljka, elektronski list (broj EDI sporazuma) ili drugi uslovi",
       "message": "Rubrika 13: komercijalni uslov upisati šifrom (1-5) i odgovarajućim tekstom.",
@@ -612,24 +845,31 @@
     },
     {
       "id": "R14",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r14",
       "name": "Broj korisničkog sporazuma ili tarife",
       "flag": "U",
-      "severity": "error",
-      "pattern": "^[12]\\s*\\S+",
-      "condition": "prevoz po korisnickom sporazumu ili tarifi",
-      "message": "Rubrika 14: broj sporazuma/tarife mora počinjati sa '1' (korisnički sporazum) ili '2' (tarifa).",
-      "message_en": "Box 14: the agreement/tariff number must start with '1' (customer agreement) or '2' (tariff).",
-      "primer": "1… (korisnički sporazum) ili 2… (tarifa) – samo broj"
+      "severity": "warning",
+      "check": "r14 je prazna (bilo kakav upisan broj je dovoljan; prefiks 1/2 se ne proverava od v2.7)",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Rubrika 14: preporučujemo da upišete broj ponude Kombinovanog prevoza.",
+      "message_en": "Box 14: we recommend entering the Kombinovani prevoz offer number.",
+      "primer": "broj ponude KP, npr. KP 2026/123",
+      "primer_en": "KP offer number, e.g. KP 2026/123"
     },
     {
       "id": "R15",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r15",
       "name": "Obavestenja primaocu",
       "flag": "F"
     },
     {
       "id": "R16",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r16",
       "name": "Preuzimanje na prevoz",
       "flag": "O",
@@ -649,16 +889,20 @@
     },
     {
       "id": "R17",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r17",
       "name": "Šifra mesta preuzimanja",
       "flag": "F"
     },
     {
       "id": "R18",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r18",
       "name": "Broj kola",
       "flag": "U",
-      "severity": "error",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): broj kola, 12 cifara i poziv na spisak se ne traže; jedini nalaz za r18 je R18-SPISAK",
       "pattern": "^\\d{12}$",
       "condition": "kolska pošiljka",
       "message": "Rubrika 18: za kolsku pošiljku upisati 12-cifreni broj kola.",
@@ -666,7 +910,24 @@
       "primer": "12-cifreni broj kola (npr. 31 78 6656 001-5) ili „po spisku kola“"
     },
     {
+      "id": "R18-SPISAK",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "r18",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "r18 upućuje na spisak kola (Wagon list, CIT 23, Wagenliste, Spisak kola, siehe Wagenliste, Vidi spisak kola…)",
+      "then": "spisak kola priložen u mailu",
+      "basis": "interna odluka KP 2026-11-12 (jedini nalaz za r18)",
+      "message": "Rubrika 18 upućuje na spisak kola (CIT 23), a on nije priložen uz mail.",
+      "message_en": "Box 18 refers to a wagon list (CIT 23), but it is not attached to the mail.",
+      "primer": "Priložite spisak kola (CIT 23) uz mail.",
+      "primer_en": "Attach the wagon list (CIT 23) to the mail."
+    },
+    {
       "id": "R19",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r19",
       "name": "Fakturisanje tranzita",
       "flag": "U",
@@ -674,10 +935,14 @@
       "condition": "deo relacije fakturiše prevoznik koji nije otpravni ni uputni",
       "format": "levo: šifra prevoznika (CIT) ili šifra zemlje (UIC 920-14); desno: šifra prevoznika koji fakturiše",
       "message": "Rubrika 19: navesti deo relacije (šifra prevoznika ili zemlje) i šifru prevoznika koji fakturiše.",
-      "message_en": "Box 19: enter the part of the route (carrier or country code) and the code of the invoicing carrier."
+      "message_en": "Box 19: enter the part of the route (carrier or country code) and the code of the invoicing carrier.",
+      "primer": "šifra prevoznika ili zemlje deonice – šifra prevoznika koji fakturiše, npr. 72 – 3212",
+      "primer_en": "code of the carrier or country of the section – code of the invoicing carrier, e.g. 72 – 3212"
     },
     {
       "id": "R20",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "name": "Plaćanje troškova",
       "flag": "U",
@@ -686,10 +951,13 @@
       "if_missing": "Svi troskovi padaju na pošiljaoca (t. 5.2).",
       "message": "Rubrika 20: nije navedeno plaćanje troškova - sve troškove snosi pošiljalac. Potvrdite ili upišite napomenu (npr. 'DAP <mesto>').",
       "message_en": "Box 20: payment of charges is not stated - all charges are borne by the consignor. Confirm or enter a note (e.g. 'DAP <place>').",
-      "primer": "Franko prevoznina … ili Incoterms + mesto"
+      "primer": "Franko prevoznina … ili Incoterms + mesto",
+      "primer_en": "Carriage paid … or Incoterms + place"
     },
     {
       "id": "R20-INCO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "error",
@@ -697,10 +965,13 @@
       "check": "šifra je iz liste i navedeno je mesto",
       "message": "Rubrika 20: uz Incoterms šifru {code} mora biti navedeno mesto.",
       "message_en": "Box 20: the Incoterms code {code} must be followed by a named place.",
-      "primer": "Incoterms + mesto, npr. DAP <mesto>"
+      "primer": "Incoterms + mesto, npr. DAP <mesto>",
+      "primer_en": "Incoterms + place, e.g. DAP <place>"
     },
     {
       "id": "R20-INCO-ZASTARELO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "warning",
@@ -709,10 +980,13 @@
       "message": "Rubrika 20: {problem}. Upisati važeću Incoterms 2020 šifru i mesto nazivom (stanica ili granični prelaz).",
       "message_en": "Box 20: {problem}. Enter a valid Incoterms 2020 code and the named place (station or border point).",
       "basis": "Incoterms 2020; codelists.r20_payment: DAF/DDU samo prelazno. Priručnik t. 5.2 – Incoterms se odnosi samo na plaćanje troškova, zato upozorenje.",
-      "primer": "DAP <mesto>, npr. DAP Kelebia gr."
+      "primer": "DAP <mesto>, npr. DAP Kelebia gr.",
+      "primer_en": "DAP <place>, e.g. DAP Kelebia gr."
     },
     {
       "id": "R20-RUTA",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r20",
       "flag": "U",
       "severity": "warning",
@@ -721,31 +995,41 @@
       "basis": "Priručnik t. 5.2: Incoterms u tovarnom listu odnosi se samo na plaćanje troškova i nema drugih pravnih posledica - zato upozorenje, ne greška. Dodato 2026-11-10 (v2.1).",
       "message": "Rubrika 20: mesto '{place}' uz {code} nije među stanicama prevoznog puta navedenim na listu (rubrike 10, 13, 16, 50, 57). Proverite mesto.",
       "message_en": "Box 20: the place '{place}' given with {code} is not among the stations of the route on the consignment note (boxes 10, 13, 16, 50, 57). Check the place.",
-      "primer": "DAP <stanica na prevoznom putu, npr. Vršac gr.>"
+      "primer": "DAP <stanica na prevoznom putu, npr. Vršac gr.>",
+      "primer_en": "DAP <station on the route, e.g. Vršac gr.>"
     },
     {
       "id": "R21",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r21",
       "name": "Naznačenje robe",
       "flag": "O",
       "severity": "error",
       "message": "Rubrika 21: nedostaje naznačenje robe.",
       "message_en": "Box 21: the description of the goods is missing.",
-      "primer": "naziv robe, količina, način pakovanja"
+      "primer": "naziv robe, količina, način pakovanja",
+      "primer_en": "description of the goods, quantity, type of packaging"
     },
     {
       "id": "R22",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r22",
       "name": "Naročita pošiljka",
       "flag": "U",
-      "severity": "error",
+      "severity": "warning",
+      "basis": "interna odluka KP 2026-11-12 (naročita pošiljka – samo upozorenja)",
       "condition": "pošiljka je naročita (vanredna)",
-      "message": "Rubrika 22: naročita pošiljka zahteva šifru 7.11 sa brojevima odobrenja (vidi X5).",
-      "message_en": "Box 22: an exceptional consignment requires code 7.11 with the authorisation numbers (see X5).",
-      "primer": "X i 7.11 Odobrenje br. ..."
+      "message": "Rubrika 22: označena je naročita pošiljka – proverite da li je u rubrici 7 upisana šifra 11 sa brojevima odobrenja.",
+      "message_en": "Box 22: an exceptional consignment is marked – check that code 11 with the authorisation numbers is entered in box 7.",
+      "primer": "7.11 Odobrenje br. 123/2026 (svi prevoznici)",
+      "primer_en": "7.11 Authorisation no. 123/2026 (all carriers)"
     },
     {
       "id": "R23",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r23",
       "name": "RID",
       "flag": "U",
@@ -754,26 +1038,46 @@
       "condition": "roba podleže RID-u",
       "message": "Rubrika 23: roba podleže RID-u - upisati 'X'.",
       "message_en": "Box 23: the goods are subject to RID - enter 'X'.",
-      "primer": "X"
+      "primer": "X",
+      "primer_en": "X"
     },
     {
       "id": "R24",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r24",
       "name": "NHM šifra",
       "flag": "O",
       "severity": "error",
-      "pattern": "^\\d{6}$",
-      "message": "Rubrika 24: upisati 6-cifrenu NHM šifru robe.",
-      "message_en": "Box 24: enter the 6-digit NHM code of the goods.",
-      "primer": "6 cifara NHM",
-      "primer_en": "6-digit NHM code"
+      "pattern": "^\\d{4,}$",
+      "check": "greška samo kada je NHM prazna ili ima manje od 4 cifre; 4–5 cifara: preporuka R24-NHM6",
+      "basis": "interna odluka KP 2026-11-12 (priručnik traži 6 cifara)",
+      "message": "Rubrika 24: upisati NHM šifru robe (najmanje 4 cifre).",
+      "message_en": "Box 24: enter the NHM code of the goods (at least 4 digits).",
+      "primer": "NHM šifra sa 6 cifara: XXXXXX",
+      "primer_en": "6-digit NHM code: XXXXXX"
+    },
+    {
+      "id": "R24-NHM6",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "r24",
+      "severity": "recommendation",
+      "check": "NHM u r24 ima 4 ili 5 cifara (i za prazna kola: 9922 je ispravno, 992200 poželjno)",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Rubrika 24: poželjno je upisati NHM šifru sa 6 cifara{izvor}.",
+      "message_en": "Box 24: a 6-digit NHM code is preferred{izvor}.",
+      "primer": "NHM šifra sa 6 cifara: XXXXXX",
+      "primer_en": "6-digit NHM code: XXXXXX"
     },
     {
       "id": "R25",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r25",
       "name": "Masa",
       "flag": "O",
-      "severity": "error",
+      "ne_proverava_se": "od v2.7.1 zamenjeno pravilom R25-MASA (interna odluka KP 2026-11-12)",
       "required_parts_cim": [
         "bruto_masa_po_nhm",
         "tara_uti_pribora_uredjaja_ako_postoje",
@@ -789,19 +1093,46 @@
       "primer": "bruto masa po NHM šifri, tara, ukupna masa (kg)"
     },
     {
+      "id": "R25-MASA",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "r25",
+      "name": "Masa",
+      "flag": "O",
+      "severity": "error",
+      "filled_by": "sender",
+      "check": "tovarena kola: r25 obavezna (greška); prazna kola (NHM 9922, CUV u r30, ili „prazna kola / empty wagons / Leerwagen / üres kocsi / wagons vides / vagoni vuoti“ u r21/r24): preporuka; r25 prazna a r25/r21 upućuje na priloženi spisak kola sa masom: bez nalaza; nečitljiva r25 (OCR): upozorenje o čitljivosti",
+      "basis": "interna odluka KP 2026-11-12 (zamenjuje R25)",
+      "message": "Rubrika 25: nije upisana masa robe.",
+      "message_en": "Box 25: the mass of the goods is not entered.",
+      "primer": "bruto masa u kg, npr. 25 400 kg",
+      "primer_en": "gross mass in kg, e.g. 25 400 kg",
+      "severity_prazna_kola": "recommendation",
+      "message_prazna": "Rubrika 25: poželjno je upisati masu (taru) praznih kola.",
+      "message_prazna_en": "Box 25: it is recommended to enter the mass (tare) of the empty wagons.",
+      "primer_prazna": "Tara: 24 500 kg",
+      "primer_prazna_en": "Tare: 24 500 kg"
+    },
+    {
       "id": "R26",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r26",
       "name": "Izjava o vrednosti",
       "flag": "U",
-      "severity": "error",
+      "severity": "warning",
+      "basis": "interna odluka KP 2026-11-12",
       "format": "iznos + šifra valute iz codelists.currencies",
       "condition": "vrednost veca od granice iz cl. 30 par. 2 CIM",
       "message": "Rubrika 26: uz iznos upisati važeću šifru valute (Prilog 10).",
       "message_en": "Box 26: enter the amount with a valid currency code (Annex 10).",
-      "primer": "iznos + šifra valute (npr. EUR)"
+      "primer": "iznos + šifra valute (npr. EUR)",
+      "primer_en": "amount + currency code (e.g. EUR)"
     },
     {
       "id": "R27",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r27",
       "name": "Obezbeđenje uredne isporuke",
       "flag": "U",
@@ -809,21 +1140,28 @@
       "format": "iznos + šifra valute",
       "message": "Rubrika 27: uz iznos upisati važeću šifru valute.",
       "message_en": "Box 27: enter the amount with a valid currency code.",
-      "primer": "iznos + šifra valute (npr. EUR)"
+      "primer": "iznos + šifra valute (npr. EUR)",
+      "primer_en": "amount + currency code (e.g. EUR)"
     },
     {
       "id": "R28",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r28",
       "name": "Pouzeće",
       "flag": "U",
-      "severity": "error",
+      "severity": "warning",
+      "basis": "interna odluka KP 2026-11-12",
       "format": "iznos + šifra valute iz codelists.currencies",
       "message": "Rubrika 28: uz iznos upisati važeću šifru valute (Prilog 10).",
       "message_en": "Box 28: enter the amount with a valid currency code (Annex 10).",
-      "primer": "iznos + šifra valute (npr. EUR)"
+      "primer": "iznos + šifra valute (npr. EUR)",
+      "primer_en": "amount + currency code (e.g. EUR)"
     },
     {
       "id": "R29",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r29",
       "name": "Mesto i datum ispostavljanja",
       "flag": "O",
@@ -845,6 +1183,8 @@
     },
     {
       "id": "R30",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "r30",
       "name": "Oznaka dokumenta",
       "flag": "O",
@@ -852,31 +1192,37 @@
       "check": "'X' u polju CIM (CUV samo za prazna kola po pravilima CUV)",
       "message": "Rubrika 30: označiti 'X' u polju CIM.",
       "message_en": "Box 30: mark 'X' in the CIM field.",
-      "primer": "X u polju CIM"
+      "primer": "X u polju CIM",
+      "primer_en": "X in the CIM box"
     },
     {
       "id": "R58A",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "r58a",
       "name": "Ugovorni prevoznik",
       "flag": "O",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "severity": "error",
       "required_parts": [
-        "šifra_preduzeća_CIT",
-        "naziv",
-        "adresa",
-        "potpis_ili_r62"
+        "šifra_preduzeća_UIC ili prepoznatljiv naziv prevoznika"
       ],
-      "message": "Rubrika 58a: upisati šifru preduzeća, naziv, adresu i potpis ugovornog prevoznika (samo šifra ili pečat nije dovoljno).",
-      "message_en": "Box 58a: enter the company code, name, address and signature of the contractual carrier (a code or stamp alone is not sufficient).",
-      "primer": "3212 Kombinovani prevoz d.o.o., <adresa>, potpis"
+      "check": "greška samo kada u r58a nema ni šifre preduzeća (UIC) ni prepoznatljivog naziva prevoznika; naziv, adresa i potpis nisu obavezni",
+      "basis": "interna odluka KP 2026-11-12 (priručnik traži šifru, naziv, adresu i potpis)",
+      "message": "Rubrika 58a: upisati šifru preduzeća (UIC) ugovornog prevoznika.",
+      "message_en": "Box 58a: enter the company code (UIC) of the contractual carrier.",
+      "primer": "3212",
+      "primer_en": "3212"
     },
     {
       "id": "R62",
+      "severity_spoljni": "warning",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – r62 pošiljalac upisuje ako ga zna; prazan ili nepotpun r62 je napomena za pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz (GLV-CIM, Prilog 2, str. 34)",
       "field": "r62",
       "name": "Identifikacija pošiljke",
       "flag": "O",
-      "filled_by": "carrier",
+      "filled_by": "sender",
       "severity": "error",
       "required_parts": [
         "šifra_zemlje_uic920_14",
@@ -887,15 +1233,19 @@
       "pattern_broj_otpravljanja": "^\\d{5}-?\\d$|^\\d{6}$",
       "message": "Rubrika 62: upisati zemlju, stanicu, šifru preduzeća i broj otpravljanja (5 cifara + kontrolna).",
       "message_en": "Box 62: enter the country, station, company code and consignment number (5 digits + check digit).",
-      "primer": "zemlja, stanica, preduzeće, broj otpravljanja (5 cifara + kontrolna)"
+      "primer": "zemlja, stanica, preduzeće, broj otpravljanja (5 cifara + kontrolna)",
+      "primer_en": "country, station, company, consignment number (5 digits + check digit)"
     },
     {
       "id": "R57",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "r57",
       "name": "Ostali prevoznici",
       "flag": "U",
-      "filled_by": "carrier",
-      "severity": "error",
+      "filled_by": "sender",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): dovoljno je da su navedeni KP (KP57) i ostali prevoznici; deonica i status nisu obavezni",
+      "basis": "interna odluka KP 2026-11-12",
       "condition": "u prevozu učestvuje više prevoznika",
       "required_parts": [
         "šifra_preduzeća",
@@ -903,12 +1253,27 @@
         "deonica",
         "status_1_ili_2"
       ],
-      "message": "Rubrika 57: za svakog prevoznika navesti šifru, naziv, deonicu i status (1 uzastopni / 2 izvršni).",
-      "message_en": "Box 57: for each carrier enter the code, name, section and status (1 successive / 2 substitute).",
-      "primer": "šifra, naziv, deonica (stanice), status 1/2, npr. 3212 KP - Kombinovani prevoz d.o.o., <od - do>, 1"
+      "message": "Rubrika 57: navesti ostale prevoznike (šifra ili naziv).",
+      "message_en": "Box 57: list the other carriers (code or name).",
+      "primer": "3212 KP – Kombinovani prevoz d.o.o.; 3414 PSP RO"
+    },
+    {
+      "id": "R57-DEONICA",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
+      "field": "r57",
+      "flag": "U",
+      "ne_proverava_se": "obrisano u v2.7 (interna odluka KP 2026-11-12): deonica nije obavezna",
+      "condition": "u rubrici 57 su navedeni prevoznici sa deonicama",
+      "check": "deonica svakog prevoznika sa šiframa stanica (od–do); deonica KP jednoznačno dodeljena (redova deonica koliko i prevoznika)",
+      "message": "Rubrika 57: {problem}. Upisati deonicu svakog prevoznika šiframa stanica (od – do), u istom redu sa prevoznikom.",
+      "message_en": "Box 57: {problem}. Enter each carrier's section with station codes (from – to), on the same line as the carrier.",
+      "primer": "3212 KP - Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1"
     },
     {
       "id": "R49",
+      "popunjava": "prevoznik",
+      "popunjava_basis": "GLV-CIM, Prilog 2, str. 25: r57 i rubrike od 40 popunjava prevoznik („ukoliko ne postoji poseban ugovor između pošiljaoca i prevoznika“) – samo interno",
       "field": "r49",
       "flag": "O",
       "filled_by": "carrier",
@@ -917,33 +1282,44 @@
       "message": "Rubrika 49 (šifra plaćanja / šifra frankiranja): šifra po UIC 920-7 kojom prevoznik označava koje troškove plaća pošiljalac (franko), izvedena iz rubrike 20. Popunjava je prevoznik (KP), nije greška pošiljaoca.",
       "message_en": "Box 49 (prepayment code / Frankaturcode): UIC 920-7 code by which the carrier marks the charges paid by the consignor (franco), derived from box 20. Filled in by the carrier (KP), not a consignor error.",
       "note": "Priručnik: obavezna (O), popunjava prevoznik. Privremeno upozorenje; šalje se samo u internoj kopiji izveštaja (samo_interno). Težina čeka odluku KP.",
-      "primer": "šifra frankiranja po UIC 920-7 (popunjava KP)"
+      "primer": "šifra frankiranja po UIC 920-7 (popunjava KP)",
+      "primer_en": "franking code according to UIC 920-7 (completed by KP)"
     },
     {
       "id": "R50",
+      "popunjava": "prevoznik",
+      "popunjava_basis": "GLV-CIM, Prilog 2, str. 25: r57 i rubrike od 40 popunjava prevoznik („ukoliko ne postoji poseban ugovor između pošiljaoca i prevoznika“) – samo interno",
       "field": "r50",
       "flag": "O",
       "filled_by": "carrier",
-      "severity": "error",
+      "severity": "warning",
+      "samo_interno": true,
+      "basis_v2_8": "test 2026-11-13: r50 popunjava prevoznik – samo interna napomena, nikad greška pošiljaocu",
       "message": "Rubrika 50: stvarni prevozni put sa šiframa po IRS 40428-1.",
       "message_en": "Box 50: actual route with codes according to IRS 40428-1.",
-      "primer": "šifre stanica prevoznog puta po IRS 40428-1"
+      "primer": "šifre stanica prevoznog puta po IRS 40428-1",
+      "primer_en": "codes of the stations on the route according to IRS 40428-1"
     }
   ],
   "r21_subrules": [
     {
       "id": "R21-DESC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "O",
       "severity": "error",
       "check": "postoji opis robe; za opasnu robu po RID 5.4.1 (UN broj, naziv, klasa, grupa pakovanja...)",
       "message": "Rubrika 21: upisati naznačenje robe; za opasnu robu po RID 5.4.1 (UN broj, naziv, klasa, grupa pakovanja).",
       "message_en": "Box 21: enter the description of the goods; for dangerous goods according to RID 5.4.1 (UN number, name, class, packing group).",
-      "primer": "za opasnu robu: UN broj, naziv, klasa, grupa pakovanja"
+      "primer": "za opasnu robu: UN broj, naziv, klasa, grupa pakovanja",
+      "primer_en": "for dangerous goods: UN number, name, class, packing group"
     },
     {
       "id": "R21-WAGON",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): r18 se ne proverava",
       "flag": "U",
-      "severity": "error",
       "condition": "kola predata kao roba",
       "check": "12-cifreni broj kola u r21 i u r18",
       "message": "Rubrika 21: kola predata kao roba - 12-cifreni broj kola upisati u rubrike 21 i 18.",
@@ -952,63 +1328,87 @@
     },
     {
       "id": "R21-UTI",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "prevoz UTI",
       "check": "količina i oznaka UTI; kod kombinovanog: broj, šifra tipa, duzina, neto masa, tara UTI",
       "message": "Rubrika 21: upisati količinu i oznaku UTI; kod kombinovanog saobraćaja broj, šifru tipa, dužinu, neto masu i taru UTI.",
       "message_en": "Box 21: enter the number and marking of the ITUs; for combined transport number, type code, length, net mass and tare of the ITU.",
-      "primer": "broj UTI, šifra tipa, dužina, neto masa, tara"
+      "primer": "broj UTI, šifra tipa, dužina, neto masa, tara",
+      "primer_en": "ITU number, type code, length, net weight, tare"
     },
     {
       "id": "R21-PIECES",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "komadna pošiljka",
       "check": "broj komada, oznake i brojevi",
       "message": "Rubrika 21: za komadnu pošiljku upisati broj komada, oznake i brojeve.",
-      "message_en": "Box 21: for a part-load consignment enter the number of packages, marks and numbers."
+      "message_en": "Box 21: for a part-load consignment enter the number of packages, marks and numbers.",
+      "primer": "broj komada, oznake i brojevi, npr. 12 paleta, oznaka ABC 1–12",
+      "primer_en": "number of packages, marks and numbers, e.g. 12 pallets, marks ABC 1–12"
     },
     {
       "id": "R21-PACK",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "upakovana roba",
       "check": "vrsta ambalaže šifrom UNECE rec. 21 (na papiru može opisno)",
       "message": "Rubrika 21: upisati vrstu ambalaže šifrom UNECE preporuke 21 (na papiru može opisno).",
-      "message_en": "Box 21: enter the type of packaging with the UNECE Recommendation 21 code (on paper it may be described)."
+      "message_en": "Box 21: enter the type of packaging with the UNECE Recommendation 21 code (on paper it may be described).",
+      "primer": "vrsta ambalaže sa šifrom UNECE 21, npr. PX (palete)",
+      "primer_en": "type of packaging with the UNECE 21 code, e.g. PX (pallets)"
     },
     {
       "id": "R21-IMDG",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "opasna roba + pomorska deonica",
       "check": "izjava IMDG 5.4.1.6; MARINE POLLUTANT za P materije; tačka paljenja <= 60 C u zagradi (c.c.); LTD QTY za ogranicene kolicine",
       "message": "Rubrika 21: opasna roba sa pomorskom deonicom - upisati izjavu po IMDG 5.4.1.6 (MARINE POLLUTANT, tačka paljenja, LTD QTY gde je potrebno).",
       "message_en": "Box 21: dangerous goods with a sea leg - enter the declaration according to IMDG 5.4.1.6 (MARINE POLLUTANT, flash point, LTD QTY where applicable).",
-      "primer": "IMDG 5.4.1.6 izjava; MARINE POLLUTANT; (c.c. 23 C)"
+      "primer": "IMDG 5.4.1.6 izjava; MARINE POLLUTANT; (c.c. 23 C)",
+      "primer_en": "IMDG 5.4.1.6 declaration; MARINE POLLUTANT; (c.c. 23 C)"
     },
     {
       "id": "R21-HS",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "trazi carinski propis",
       "check": "šifra robe po Harmonizovanoj nomenklaturi",
       "message": "Rubrika 21: upisati šifru robe po Harmonizovanoj nomenklaturi kada to traže carinski propisi.",
-      "message_en": "Box 21: enter the Harmonized System code when required by customs regulations."
+      "message_en": "Box 21: enter the Harmonized System code when required by customs regulations.",
+      "primer": "HS XXXXXX",
+      "primer_en": "HS XXXXXX"
     },
     {
       "id": "R21-SEALS",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "trazi Carinski zakon",
       "check": "količina i oznake plombi ili drugih sredstava identifikacije",
       "note": "Kod CPC 03 zavisi od tehničke izvodljivosti",
       "message": "Rubrika 21: upisati količinu i oznake plombi (ili drugih sredstava identifikacije).",
-      "message_en": "Box 21: enter the number and marks of the seals (or other means of identification)."
+      "message_en": "Box 21: enter the number and marks of the seals (or other means of identification).",
+      "primer": "plombe: 2 kom., br. 123456, 123457",
+      "primer_en": "seals: 2 pcs, no. 123456, 123457"
     },
     {
       "id": "R21-MRN",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "warning",
       "condition": "trazi carinski zakon",
@@ -1021,6 +1421,8 @@
     },
     {
       "id": "R21-MRN99",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "warning",
       "condition": "MRN je upisan u rubrici 99 (carinske napomene), a rubrika 21 nema MRN",
@@ -1028,10 +1430,13 @@
       "message": "Rubrika 21: MRN {mrn} je upisan samo u rubrici 99 (carinske napomene), a ne u rubrici 21. Upisati MRN sa prefiksom u rubriku 21.",
       "message_en": "Box 21: MRN {mrn} is entered only in box 99 (customs endorsements), not in box 21. Enter the MRN with its prefix in box 21.",
       "basis": "Prilog 2, rubr. 21: MRN se upisuje u rubriku 21; rubrika 99 je za carinske organe.",
-      "primer": "T MRN <broj> (u rubrici 21)"
+      "primer": "T MRN <broj> (u rubrici 21)",
+      "primer_en": "T MRN <number> (in box 21)"
     },
     {
       "id": "R21-ARC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "akcizna roba",
@@ -1041,6 +1446,8 @@
     },
     {
       "id": "R21-EXPORT",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "izvozno carinjenje završeno u carinarnici nadležnoj za mesto preuzimanja (cl. 329 t. 7 UP (EU) 2015/2447)",
@@ -1050,16 +1457,21 @@
     },
     {
       "id": "R21-EWC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "pošiljka otpada",
       "check": "EWC šifra po Odluci 2014/955/EU",
       "message": "Rubrika 21: roba je otpad – upisati EWC šifru (indeksni broj otpada, Odluka 2014/955/EU), kako je navedena u dozvoli za kretanje otpada.",
       "message_en": "Box 21: for a waste consignment enter the EWC code (Decision 2014/955/EU).",
-      "primer": "EWC 12 01 01 (indeksni broj iz dozvole)"
+      "primer": "EWC 12 01 01 (indeksni broj iz dozvole)",
+      "primer_en": "EWC 12 01 01 (index number from the permit)"
     },
     {
       "id": "R21-CPC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "F",
       "severity": "info",
       "condition": "dogovoreno sa prevoznikom",
@@ -1069,100 +1481,133 @@
     },
     {
       "id": "R21-CUV",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "flag": "U",
       "severity": "error",
       "condition": "roba po CIM i prazna kola po CUV na istom listu",
       "check": "napomena da list CIM ima snagu kolskog lista CUV za kola NHM 9921.xx/9922.xx u Spisku kola",
       "message": "Rubrika 21: roba po CIM i prazna kola po CUV na istom listu - upisati napomenu da list CIM ima snagu kolskog lista CUV za kola NHM 9921/9922 sa Spiska kola.",
       "message_en": "Box 21: goods under CIM and empty wagons under CUV on the same note - enter the note that the CIM consignment note has the effect of a CUV wagon note for the NHM 9921/9922 wagons on the wagon list.",
-      "primer": "Ovaj list CIM ima snagu kolskog lista CUV za prazna kola NHM 9921 sa Spiska kola"
+      "primer": "Ovaj list CIM ima snagu kolskog lista CUV za prazna kola NHM 9921 sa Spiska kola",
+      "primer_en": "This CIM consignment note has the effect of a CUV wagon note for the empty wagons NHM 9921 on the wagon list"
     }
   ],
   "cross_rules": [
     {
       "id": "X1",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r21 sadrzi UN broj ili RID klasu",
       "then": "r23 == 'X' i opis po RID 5.4.1",
       "message": "U rubrici 21 je opasna roba, a u rubrici 23 nije označen RID ('X').",
       "message_en": "Box 21 contains dangerous goods, but RID is not marked in box 23 ('X').",
-      "primer": "r23: X"
+      "primer": "r23: X",
+      "primer_en": "box 23: X"
     },
     {
       "id": "X2",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "r23 == 'X'",
       "then": "r21 ima RID naznačenje; preporucena šifra 7.5",
       "message": "Roba podleže RID-u: proverite RID naznačenje u rubrici 21 i dodajte telefon za hitne slučajeve (šifra 7.5).",
       "message_en": "The goods are subject to RID: check the RID description in box 21 and add the emergency telephone number (code 7.5).",
-      "primer": "r21: UN broj …; 7.5 telefon za hitne slučajeve"
+      "primer": "r21: UN broj …; 7.5 telefon za hitne slučajeve",
+      "primer_en": "box 21: UN number …; 7.5 emergency telephone number"
     },
     {
       "id": "X3",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "RID + pomorska deonica",
       "then": "IMDG izjava u r21 i sertifikat o pakovanju (RID 5.4.2) u r9",
       "message": "Za opasnu robu sa pomorskom deonicom potrebni su IMDG izjava (rubr. 21) i sertifikat o pakovanju (rubr. 9).",
       "message_en": "Dangerous goods with a sea leg require the IMDG declaration (box 21) and the container packing certificate (box 9).",
-      "primer": "r21: IMDG izjava; r9: Sertifikat o pakovanju (RID 5.4.2)"
+      "primer": "r21: IMDG izjava; r9: Sertifikat o pakovanju (RID 5.4.2)",
+      "primer_en": "box 21: IMDG declaration; box 9: packing certificate (RID 5.4.2)"
     },
     {
       "id": "X4",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r21 sadrzi E MRN, T MRN, TS MRN ili ARC",
       "then": "odgovarajuci prateći dokument u r9",
       "message": "U rubrici 21 je naveden {mrn_type}, a prateći dokument nije naveden u rubrici 9.",
       "message_en": "{mrn_type} is entered in box 21, but the accompanying document is not listed in box 9.",
-      "primer": "r9: 830 Izvozna deklaracija / 820 T1"
+      "primer": "r9: 830 Izvozna deklaracija / 820 T1",
+      "primer_en": "box 9: 830 Export declaration / 820 T1"
     },
     {
       "id": "X5",
-      "severity": "error",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "severity": "warning",
+      "basis": "interna odluka KP 2026-11-12 (naročita pošiljka – samo upozorenja)",
       "if": "r22 označena",
       "then": "r7 šifra 11 sa brojevima odobrenja",
-      "message": "Naročita pošiljka: u rubrici 7 upisati šifru 11 sa brojevima odobrenja svih prevoznika.",
-      "message_en": "Exceptional consignment: enter code 11 in box 7 with the authorisation numbers of all carriers.",
-      "primer": "7.11 Odobrenje br. ..."
+      "message": "Naročita pošiljka: u rubrici 7 nema šifre 11 sa brojevima odobrenja – proverite.",
+      "message_en": "Exceptional consignment: box 7 has no code 11 with the authorisation numbers – please check.",
+      "primer": "7.11 Odobrenje br. 123/2026 (svi prevoznici)",
+      "primer_en": "7.11 Authorisation no. 123/2026 (all carriers)"
     },
     {
       "id": "X6",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "roba je otpad: NHM iz codelists.waste_nhm, reči otpad/otpaci/ostaci/scrap/Abfall/rifiuti/waste u r21, Annex VII u r9, dozvola za otpad u mailu ili šifra 7.26",
       "then": "EWC šifra u r21",
       "message": "Pošiljka otpada: upisati EWC šifru u rubriku 21 (indeksni broj iz dozvole za kretanje otpada).",
       "message_en": "For a waste consignment enter the EWC code in box 21.",
-      "primer": "r21: EWC 12 01 01"
+      "primer": "r21: EWC 12 01 01",
+      "primer_en": "box 21: EWC 12 01 01"
     },
     {
       "id": "X7",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r7 sadrzi šifru 3",
       "then": "prezime i ime pratioca",
       "message": "Rubrika 7, šifra 3: upisati prezime i ime pratioca.",
       "message_en": "Box 7, code 3: enter the surname and first name of the attendant.",
-      "primer": "7.3 prezime i ime pratioca"
+      "primer": "7.3 prezime i ime pratioca",
+      "primer_en": "7.3 surname and name of the attendant"
     },
     {
       "id": "X8",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r7 sadrzi šifru 42",
       "then": "naziv/šifra prevoznika i mesto/carinarnica",
       "message": "Rubrika 7, šifra 42: navesti prevoznika i mesto/carinarnicu za NCTS.",
       "message_en": "Box 7, code 42: enter the carrier and the place/customs office for NCTS.",
-      "primer": "7.42 <prevoznik>, carinarnica …"
+      "primer": "7.42 <prevoznik>, carinarnica …",
+      "primer_en": "7.42 <carrier>, customs office …"
     },
     {
       "id": "X9",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "više kola ili >= 3 UTI",
       "then": "Spisak kola priložen i naveden u r9",
       "message": "Priložite Spisak kola i navedite ga u rubrici 9.",
       "message_en": "Attach the wagon list and list it in box 9.",
-      "primer": "r9: 271 Spisak kola"
+      "primer": "r9: <šifra> Spisak kola",
+      "primer_en": "box 9: <code> Wagon list"
     },
     {
       "id": "X10",
-      "severity": "error",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): r18 se ne proverava",
       "if": "broj kola u r21 (kola kao roba)",
       "then": "isti broj u r18; NHM 9921.xx ili 9922.xx",
       "message": "Kola predata kao roba: isti 12-cifreni broj mora biti u rubrikama 18 i 21.",
@@ -1171,43 +1616,58 @@
     },
     {
       "id": "X11",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "na listu i roba po CIM i prazna kola po CUV",
       "then": "'X' u CIM polju r30 + CUV napomena u r21",
       "message": "Označite 'X' u polju CIM i dodajte u rubriku 21 napomenu o snazi kolskog lista CUV.",
       "message_en": "Mark 'X' in the CIM field and add the note on the CUV wagon note effect in box 21.",
-      "primer": "r30: X u CIM; r21: napomena o snazi kolskog lista CUV"
+      "primer": "r30: X u CIM; r21: napomena o snazi kolskog lista CUV",
+      "primer_en": "box 30: X in CIM; box 21: note on the effect of a CUV wagon note"
     },
     {
       "id": "X12",
-      "severity": "error",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "severity": "warning",
+      "basis": "interna odluka KP 2026-11-12 (r26 i r28 su upozorenja; r27 ostaje greška kroz R27)",
       "if": "popunjena r26, r27 ili r28",
       "then": "iznos + valuta iz codelists.currencies",
       "message": "Rubrika {field}: uz iznos upisati važeću šifru valute (Prilog 10).",
       "message_en": "Box {field}: enter a valid currency code with the amount (Annex 10).",
-      "primer": "iznos + šifra valute"
+      "primer": "iznos + šifra valute",
+      "primer_en": "amount + currency code"
     },
     {
       "id": "X13",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r25 popunjena",
       "then": "zbir masa po NHM == ukupna masa; broj masa == broj NHM sifara u r24",
       "message": "Rubrika 25: zbir pojedinačnih masa ({sum}) ne odgovara ukupnoj masi ({total}).",
       "message_en": "Box 25: the sum of the individual masses ({sum}) does not match the total mass ({total}).",
-      "primer": "zbir masa po NHM = ukupna masa"
+      "primer": "zbir masa po NHM = ukupna masa",
+      "primer_en": "sum of the weights per NHM = total weight"
     },
     {
       "id": "X14",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "r29 i r16 popunjene",
       "then": "datum r29 <= datum r16",
       "message": "Datum ispostavljanja (rubr. 29) je posle datuma preuzimanja (rubr. 16).",
       "message_en": "The date of issue (box 29) is after the date of taking over (box 16).",
-      "primer": "datum u r29 nije posle datuma u r16"
+      "primer": "datum u r29 nije posle datuma u r16",
+      "primer_en": "the date in box 29 is not later than the date in box 16"
     },
     {
       "id": "X15",
-      "severity": "warning",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "od v2.7 (interna odluka KP 2026-11-12): broj sporazuma u 13.5 nije potreban",
       "if": "elektronski tovarni list",
       "then": "r13 šifra 5 sa brojem EDI sporazuma",
       "message": "Elektronski tovarni list: u rubrici 13 (šifra 5) navesti broj EDI sporazuma.",
@@ -1216,107 +1676,143 @@
     },
     {
       "id": "X16",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "pošiljalac i primalac u EU",
       "then": "PDV brojevi u r1 i r4",
       "message": "Razmena unutar EU: upišite PDV brojeve pošiljaoca i primaoca.",
       "message_en": "Intra-EU trade: enter the VAT numbers of the consignor and the consignee.",
-      "primer": "r1 i r4: PDV broj sa šifrom zemlje"
+      "primer": "r1 i r4: PDV broj sa šifrom zemlje",
+      "primer_en": "boxes 1 and 4: VAT number with the country code"
     },
     {
       "id": "X17",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "valuta == 'HRK'",
       "then": "upozorenje",
       "message": "Valuta HRK više nije u upotrebi (Hrvatska koristi EUR). Proverite valutu.",
       "message_en": "The currency HRK is no longer in use (Croatia uses EUR). Check the currency.",
-      "primer": "EUR"
+      "primer": "EUR",
+      "primer_en": "EUR"
     },
     {
       "id": "X18",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r20 sadrzi troškove sa šifrom iz cost_codes_not_payable_by_consignor na teret pošiljaoca",
       "then": "nije dozvoljeno",
       "message": "Naknadu sa šifrom {code} ne sme preuzeti pošiljalac (Prilog 3).",
-      "message_en": "The charge with code {code} must not be borne by the consignor (Annex 3)."
+      "message_en": "The charge with code {code} must not be borne by the consignor (Annex 3).",
+      "primer": "šifru troška koju sme da preuzme pošiljalac (Prilog 3)",
+      "primer_en": "cost code that the consignor may take over (Annex 3)"
     },
     {
       "id": "X19",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – r62 pošiljalac upisuje ako ga zna; prazan ili nepotpun r62 je napomena za pošiljaoca, kod KP tovarnog lista (r62 = 3212) interni nalaz (GLV-CIM, Prilog 2, str. 34)",
       "severity": "error",
       "if": "postoji spisak kola",
       "then": "identifikacija pošiljke na spisku (zemlja, stanica, preduzece, broj) == r62 na CIM-u",
       "message": "Identifikacija pošiljke na spisku kola ({list_value}) ne odgovara rubrici 62 tovarnog lista ({cim_value}).",
       "message_en": "The consignment identification on the wagon list ({list_value}) does not match box 62 of the consignment note ({cim_value}).",
-      "primer": "ista identifikacija pošiljke na spisku kola i u r62"
+      "primer": "ista identifikacija pošiljke na spisku kola i u r62",
+      "primer_en": "the same consignment identification on the wagon list and in box 62"
     },
     {
       "id": "X20",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "CIM pokriva više kola ili >= 3 UTI",
-      "then": "spisak kola priložen I naveden u r9 i r18",
-      "message": "Za više kola / 3+ UTI spisak kola mora biti priložen i naveden u rubrikama 9 i 18.",
-      "message_en": "For several wagons / 3+ ITUs the wagon list must be attached and referred to in boxes 9 and 18.",
-      "primer": "r9: 271 Spisak kola; r18: po spisku kola"
+      "then": "spisak kola priložen i naveden u r9 (od v2.7 se ne traži u r18)",
+      "message": "Za više kola / 3+ UTI spisak kola mora biti priložen i naveden u rubrici 9.",
+      "message_en": "For several wagons / 3+ ITUs the wagon list must be attached and listed in box 9.",
+      "primer": "r9: <šifra> Spisak kola (CIT 23)",
+      "primer_en": "box 9: <code> Wagon list (CIT 23)"
     },
     {
       "id": "X21",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "RID oznaka na spisku kola",
       "then": "r23 na CIM-u == 'X' (i obrnuto)",
       "message": "RID oznaka na spisku kola i u rubrici 23 se ne slažu.",
       "message_en": "The RID marking on the wagon list and in box 23 do not match.",
-      "primer": "r23: X i RID oznaka na spisku kola (ili nijedno)"
+      "primer": "r23: X i RID oznaka na spisku kola (ili nijedno)",
+      "primer_en": "box 23: X and RID marking on the wagon list (or neither)"
     },
     {
       "id": "X22",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "u mailu ili u r21 postoji carinski dokument (deklaracija, T1, VDD/EX, MRN)",
       "then": "dokument naveden u r9 ILI r7 šifra 10 sa mestom dostupnosti",
       "message": "Priložen je carinski dokument ({doc}), a nije naveden u rubrici 9 (ili u rubrici 7, šifra 10).",
       "message_en": "A customs document is attached ({doc}), but it is not listed in box 9 (or in box 7, code 10).",
-      "primer": "r9: 830 Izvozna deklaracija MRN … ili 7.10 … dostupna kod …"
+      "primer": "r9: 830 Izvozna deklaracija MRN … ili 7.10 … dostupna kod …",
+      "primer_en": "box 9: 830 Export declaration MRN … or 7.10 … available at …"
     },
     {
       "id": "X23",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "warning",
       "if": "u mailu EUR.1 / uverenje o poreklu / sertifikat / faktura za carinu",
       "then": "naveden u r9 ako putuje uz pošiljku",
       "message": "U mailu je priloženo: {doc}. Dokumenti koji putuju uz pošiljku navode se u rubrici 9.",
       "message_en": "The mail contains: {doc}. Documents travelling with the consignment must be listed in box 9.",
-      "primer": "r9: šifra + naziv dokumenta, npr. 865 EUR.1 br. …; 380 Faktura br. …"
+      "primer": "r9: šifra + naziv dokumenta, npr. 865 EUR.1 br. …; 380 Faktura br. …",
+      "primer_en": "box 9: code + document name, e.g. 865 EUR.1 no. …; 380 Invoice no. …"
     },
     {
       "id": "X24",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "postoji MRN po kontejneru/kolima (npr. tabela MRN)",
       "then": "MRN upisan u r21 (ili na spisku kola uz odgovarajuca kola/UTI)",
       "message": "MRN {mrn} za {uti} nije upisan u rubriku 21 ni na spisak kola.",
       "message_en": "MRN {mrn} for {uti} is not entered in box 21 or on the wagon list.",
-      "primer": "r21: E MRN <broj> (<UTI>)"
+      "primer": "r21: E MRN <broj> (<UTI>)",
+      "primer_en": "box 21: E MRN <number> (<ITU>)"
     },
     {
       "id": "X25",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
       "if": "r29 datum",
       "then": "nije posle datuma prijema maila",
       "message": "Datum ispostavljanja ({date}) je u budućnosti.",
       "message_en": "The date of issue ({date}) is in the future.",
-      "primer": "datum ispostavljanja <= datum slanja"
+      "primer": "datum ispostavljanja <= datum slanja",
+      "primer_en": "date of issue <= date of dispatch"
     },
     {
       "id": "X26",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "9",
       "severity": "error",
       "filled_by": "sender",
-      "if": "spisak kola naveden u r9 ili r18 (Wagon list, Wagenliste, Spisak kola, CIT 23, siehe Wagenliste, Vidi spisak kola)",
+      "if": "spisak kola naveden u r9 (Wagon list, Wagenliste, Spisak kola, CIT 23, 271…); za r18 od v2.7 važi R18-SPISAK (upozorenje)",
       "then": "spisak kola priložen u mailu",
-      "basis": "priručnik Prilog 2, rubr. 9 i 18; Prilog 5",
-      "message": "Spisak kola je naveden u rubrici {field}, a nije priložen u mailu. Priložite spisak kola (CIT 23).",
-      "message_en": "The wagon list is referred to in box {field}, but it is not attached to the mail. Please attach the wagon list (CIT 23).",
-      "primer": "spisak kola (CIT 23) kao prilog u istom mailu"
+      "basis": "priručnik Prilog 2, rubr. 9; Prilog 5",
+      "message": "Spisak kola je naveden u rubrici 9, a nije priložen u mailu. Priložite spisak kola (CIT 23).",
+      "message_en": "The wagon list is listed in box 9, but it is not attached to the mail. Please attach the wagon list (CIT 23).",
+      "primer": "Priložite spisak kola (CIT 23) uz mail.",
+      "primer_en": "Attach the wagon list (CIT 23) to the mail."
     },
     {
       "id": "X27",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "9",
       "severity": "warning",
       "filled_by": "sender",
@@ -1325,9 +1821,13 @@
       "basis": "priručnik Prilog 2, rubr. 9",
       "message": "U rubrici 9 je naveden prilog ({doc}), a nije priložen u mailu. Proverite da li putuje uz pošiljku ili ga priložite.",
       "message_en": "Box 9 lists an attachment ({doc}) that is not attached to the mail. Check whether it travels with the consignment or attach it.",
+      "primer": "Priložite navedeni dokument uz mail ili ga uklonite iz rubrike 9 ako ne putuje uz pošiljku.",
+      "primer_en": "Attach the listed document to the mail, or remove it from box 9 if it does not travel with the consignment."
     },
     {
       "id": "X28",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "20",
       "severity": "warning",
       "filled_by": "sender",
@@ -1335,26 +1835,60 @@
       "then": "r20 u skladu sa uslovom isporuke",
       "basis": "priručnik t. 5.2 (Incoterms se u tovarnom listu odnosi na plaćanje troškova)",
       "message": "Rubrika 20 ({cim}) se ne slaže sa uslovom isporuke {inco} iz dokumenta: {doc}. Proverite plaćanje troškova.",
-      "message_en": "Box 20 ({cim}) does not match the delivery term {inco} in: {doc}. Please check the payment of charges."
+      "message_en": "Box 20 ({cim}) does not match the delivery term {inco} in: {doc}. Please check the payment of charges.",
+      "primer": "Potvrdite koji uslov važi (npr. DAP Verona).",
+      "primer_en": "Confirm which term applies (e.g. DAP Verona)."
     },
     {
       "id": "X29",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "CIT 23",
       "severity": "error",
       "filled_by": "sender",
       "if": "NHM šifra na spisku kola",
-      "then": "6 cifara (kao r24)",
-      "basis": "priručnik Prilog 5 (spisak kola) i rubr. 24",
-      "message": "NHM šifra na spisku kola ({nhm}) nema 6 cifara.",
-      "message_en": "The NHM code on the wagon list ({nhm}) does not have 6 digits.",
-      "primer": "6 cifara NHM u svakom redu spiska"
+      "then": "najmanje 4 cifre (kao r24); 4–5 cifara: preporuka X29-NHM6",
+      "basis": "interna odluka KP 2026-11-12 (priručnik traži 6 cifara)",
+      "message": "NHM šifra na spisku kola ({nhm}) ima manje od 4 cifre.",
+      "message_en": "The NHM code on the wagon list ({nhm}) has fewer than 4 digits.",
+      "primer": "NHM šifra sa 6 cifara u svakom redu spiska: XXXXXX",
+      "primer_en": "6-digit NHM code in every row of the list: XXXXXX"
+    },
+    {
+      "id": "X29-NHM6",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "CIT 23",
+      "severity": "recommendation",
+      "filled_by": "sender",
+      "if": "NHM šifra na spisku kola ima 4 ili 5 cifara",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Spisak kola: poželjno je upisati NHM šifru sa 6 cifara{izvor}.",
+      "message_en": "Wagon list: a 6-digit NHM code is preferred{izvor}.",
+      "primer": "NHM šifra sa 6 cifara u svakom redu spiska: XXXXXX",
+      "primer_en": "6-digit NHM code in every row of the list: XXXXXX"
+    },
+    {
+      "id": "X30",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "r21",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "broj kola naveden u r21 (npr. „30 kola“, „30 empty wagons“) i u nazivu fajla (npr. „31 wgs“)",
+      "then": "isti broj kola",
+      "message": "Rubrika 21: broj kola ({r21}) razlikuje se od broja u nazivu fajla „{fajl}“ ({broj}). Proverite broj kola u pošiljci.",
+      "message_en": "Box 21: the number of wagons ({r21}) differs from the number in the file name „{fajl}“ ({broj}). Check the number of wagons in the consignment.",
+      "primer": "isti broj kola u r21, na spisku kola i u nazivu dokumenta",
+      "primer_en": "the same wagon number in box 21, on the wagon list and in the document name"
     }
   ],
   "response_template": {
-    "subject": "Tovarni list CIM {shipment_ref} - {status}",
+    "subject": "Tovarni list {form} {shipment_ref}{sender_ref} – {status}",
     "status_values": {
       "ok": "ispravan",
-      "errors": "potrebne ispravke ({n_errors} grešaka, {n_warnings} upozorenja)"
+      "warnings": "napomene",
+      "errors": "potrebne ispravke"
     },
     "item_format": "Rubrika {field} - {problem}\n   {instruction}",
     "footer": "Izvor pravila: Priručnik GLV-CIM (Spt 51.01), Prilog 2.",
@@ -1407,78 +1941,166 @@
   "company_rules": [
     {
       "id": "KP7",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "obrisano u v2.7 (interna odluka KP 2026-11-12); zamenjuju ga KP7-PLATILAC, KP7-NIJE-PLATILAC, KP7-NEJASNO i KP7-INFO",
+      "field": "7"
+    },
+    {
+      "id": "KP7-PLATILAC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "field": "7",
       "severity": "error",
       "filled_by": "sender",
-      "if": "svaki CIM/CUV (na priprema@ stižu samo pošiljke u kojima KP učestvuje)",
-      "then": "KP naveden u r7 kao platilac ili prevoznik za RS deonicu (KP, K-prevoz, Kombinovani prevoz, КП, KP UIC 3212, IŽS: KP… ili 3212 uz UIC/Frachtzahler)",
-      "basis": "odluka KP 2026-11-11 (zamenjuje KP4)",
-      "message": "Rubrika 7: navesti Kombinovani prevoz (KP / UIC 3212) kao platioca ili prevoznika za deonicu kroz Srbiju.",
-      "message_en": "Box 7: enter Kombinovani prevoz (KP / UIC 3212) as the payer or carrier for the section through Serbia.",
-      "primer": "16. Prevoznik za deonicu SRB: KP – Kombinovani prevoz d.o.o., UIC 3212 (platilac ostaje kako je upisan)"
+      "if": "svaki CIM/CUV",
+      "then": "u r7 naveden platilac za deonicu kroz Srbiju, ili platilac za ceo put (bez deonica)",
+      "payer_words": ["platilac", "platioca", "Frachtzahler", "Zahler", "payer", "freight payer", "payeur", "payeur du fret", "Költségviselő"],
+      "serbia_markers": ["SRB", "RS", "Srbija", "Serbia", "Serbien", "IŽS", "ŽS", "deonica KP", "auf KP", "für KP", "fuer KP"],
+      "basis": "interna odluka KP 2026-11-12 (zamenjuje KP7)",
+      "message": "Rubrika 7: nije naveden platilac za deonicu kroz Srbiju. Upišite npr. ‚16. Platilac za deonicu SRB: <naziv firme>‘.",
+      "message_en": "Box 7: no payer is stated for the section through Serbia. Enter e.g. ‘16. Payer for SRB: <company name>’.",
+      "primer": "16. Platilac za deonicu SRB: <naziv firme koja plaća prevoz>",
+      "primer_en": "16. Payer for SRB: <name of the company paying the carriage>"
+    },
+    {
+      "id": "KP7-NIJE-PLATILAC",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "7",
+      "severity": "error",
+      "filled_by": "sender",
+      "if": "KP (KP, K prevoz, Kombinovani prevoz, КП, UIC 3212, 3212) naveden kao platilac za srpsku deonicu (i zajedno sa drugim deonicama) ili za ceo put bez deonica",
+      "then": "za deonicu kroz Srbiju platilac je druga firma; KP kao platilac za deonice van Srbije je dozvoljen, KP kao prevoznik nije greška, „platilac za deonicu KP“ znači da drugi plaća deonicu KP",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Rubrika 7: Kombinovani prevoz je naveden kao platilac za deonicu kroz Srbiju. Za tu deonicu upišite firmu koja plaća prevoz (Kombinovani prevoz može biti platilac samo za deonice van Srbije).",
+      "message_en": "Box 7: Kombinovani prevoz is stated as the payer for the section through Serbia. For that section enter the company paying the carriage (Kombinovani prevoz can be the payer only for sections outside Serbia).",
+      "primer": "16. Platilac za deonicu SRB: <naziv firme koja plaća prevoz>",
+      "primer_en": "16. Payer for SRB: <name of the company paying the carriage>"
+    },
+    {
+      "id": "KP7-NEJASNO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "7",
+      "severity": "warning",
+      "filled_by": "sender",
+      "if": "KP naveden uz oznaku srpske deonice bez reči platilac/prevoznik (npr. „16. IŽS: KP 3212“)",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Rubrika 7: nije jasno da li je KP naveden kao platilac ili kao prevoznik – proverite.",
+      "message_en": "Box 7: it is not clear whether KP is stated as the payer or as the carrier – please check.",
+      "primer": "16. Prevoznik za deonicu SRB: KP 3212; Platilac za deonicu SRB: <naziv firme>",
+      "primer_en": "16. Carrier for SRB: KP 3212; Payer for SRB: <company name>"
+    },
+    {
+      "id": "KP7-INFO",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "field": "7",
+      "severity": "info",
+      "filled_by": "sender",
+      "if": "platilac za deonicu kroz Srbiju pronađen i nije KP",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Platilac za deonicu kroz Srbiju: {payer}.",
+      "message_en": "Payer for the section through Serbia: {payer}."
     },
     {
       "id": "KP57",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "field": "57",
       "severity": "error",
       "filled_by": "sender",
-      "if": "svaki CIM/CUV; ispunjeno i kada je KP ugovorni prevoznik naveden u r58a",
-      "then": "KP naveden u r57 (naziv u bilo kom obliku ili samo šifra 3212)",
-      "basis": "odluka KP 2026-11-11 (zamenjuje KP1)",
-      "message": "Rubrika 57: navesti Kombinovani prevoz (KP / UIC 3212) sa deonicom kroz Srbiju.",
-      "message_en": "Box 57: enter Kombinovani prevoz (KP / UIC 3212) with its section through Serbia.",
-      "primer": "3212 KP - Kombinovani prevoz d.o.o., <od - do>, 1"
+      "if": "svaki CIM/CUV",
+      "then": "KP se pominje u r57 ili r58a, u bilo kom obliku (KP, Kombinovani prevoz, 3212…); deonica i status se ne traže, ostali prevoznici se ne proveravaju",
+      "basis": "odluka KP 2026-11-11 (zamenjuje KP1); pojednostavljeno interna odluka KP 2026-11-12",
+      "message": "Rubrika 57: navesti Kombinovani prevoz (KP / UIC 3212) među prevoznicima.",
+      "message_en": "Box 57: list Kombinovani prevoz (KP / UIC 3212) among the carriers.",
+      "primer": "3212 KP – Kombinovani prevoz d.o.o.",
+      "primer_en": "3212 KP – Kombinovani prevoz d.o.o."
     },
     {
       "id": "KP2",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "severity": "error",
       "if": "r62 šifra preduzeća == 3212 (KP ugovorni prevoznik)",
-      "then": "r58a = KP: šifra 3212, naziv, adresa, potpis",
-      "basis": "priručnik r58a",
-      "message": "Rubrika 58a: KP je ugovorni prevoznik - upisati 3212, Kombinovani prevoz d.o.o., adresu i potpis.",
-      "message_en": "Box 58a: KP is the contractual carrier - enter 3212, Kombinovani prevoz d.o.o., address and signature.",
-      "primer": "58a: 3212 Kombinovani prevoz d.o.o., <adresa>, potpis"
+      "then": "u r58a 3212 ili bilo koji oblik naziva KP; adresa i potpis se ne traže",
+      "basis": "priručnik r58a; interna odluka KP 2026-11-12",
+      "message": "Rubrika 58a: KP je ugovorni prevoznik – upisati 3212 (ili naziv Kombinovani prevoz).",
+      "message_en": "Box 58a: KP is the contractual carrier – enter 3212 (or the name Kombinovani prevoz).",
+      "primer": "3212 Kombinovani prevoz d.o.o.",
+      "primer_en": "3212 Kombinovani prevoz d.o.o."
     },
     {
       "id": "KP3",
-      "severity": "warning",
-      "if": "r13.3 popunjen ili su navedeni prevoznici",
-      "then": "KP naveden u r13.3 (i r13.5 ako postoji sporazum/tarifa KP)",
-      "basis": "interno + r13",
-      "message": "Rubrika 13 (tačka 3): navedite Kombinovani prevoz, UIC 3212, kao prevoznika na deonici kroz Srbiju.",
-      "message_en": "Box 13 (point 3): enter Kombinovani prevoz, UIC 3212, as the carrier for the section through Serbia.",
-      "primer": "13.3 KP - Kombinovani prevoz d.o.o., UIC 3212, <deonica>"
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "severity": "error",
+      "if": "svaki CIM/CUV",
+      "then": "KP naveden u r13 kao prevoznik na bar jednoj relaciji: bilo koji oblik (KP, K prevoz, Kombinovani prevoz, КП, UIC 3212, samo 3212), bilo koji deo r13 (i dodatni list); deonica i broj tačke nisu potrebni",
+      "basis": "interna odluka KP 2026-11-12",
+      "message": "Rubrika 13: navedite Kombinovani prevoz (KP, UIC 3212) kao prevoznika.",
+      "message_en": "Box 13: state Kombinovani prevoz (KP, UIC 3212) as a carrier.",
+      "primer": "3. SRB: KP UIC 3212 (ili samo KP 3212)",
+      "primer_en": "3. SRB: KP UIC 3212 (or just KP 3212)"
     },
     {
       "id": "KP5",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)",
       "severity": "warning",
       "if": "uz šifru 3212 stoji drugi naziv",
       "then": "naziv = Kombinovani prevoz",
       "basis": "interno",
       "message": "Uz UIC 3212 upisan je naziv '{name}' - šifra 3212 pripada Kombinovanom prevozu.",
       "message_en": "The name '{name}' is entered with UIC 3212 - code 3212 belongs to Kombinovani prevoz.",
-      "primer": "3212 Kombinovani prevoz d.o.o."
+      "primer": "3212 Kombinovani prevoz d.o.o.",
+      "primer_en": "3212 Kombinovani prevoz d.o.o."
     },
     {
       "id": "KP6",
-      "severity": "recommendation",
+      "popunjava": "pošiljalac",
+      "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
+      "ne_proverava_se": "obrisano u v2.8 (test 2026-11-13): KP se ne traži na spisku kola",
       "if": "postoji spisak kola",
       "then": "KP naveden u zaglavlju/polju prevoznika",
       "basis": "interno (nije u Prilogu 5)",
       "message": "Preporuka: navedite Kombinovani prevoz (UIC 3212) i na spisku kola.",
       "message_en": "Recommendation: also state Kombinovani prevoz (UIC 3212) on the wagon list.",
-      "primer": "zaglavlje spiska: KP - Kombinovani prevoz d.o.o., UIC 3212"
+      "primer": "zaglavlje spiska: KP - Kombinovani prevoz d.o.o., UIC 3212",
+      "primer_en": "wagon list header: KP - Kombinovani prevoz d.o.o., UIC 3212"
     }
   ],
   "recommendations": [
-    "r8: broj voza / ID najave (npr. 004NISBAR26) - kljuc za povezivanje sa najavom",
-    "broj ponude KP i broj CIM 6 ugovora (pun broj) u r7 ili r13.5",
-    "KP uvek u obliku 'KP - Kombinovani prevoz d.o.o., UIC 3212'",
-    "r57: deonica KP šiframa stanica + status",
-    "spisak kola: broj osovina, tara/neto/bruto po kolima, tovaren/prazan, NHM 6 cifara, UTI broj/tip/tara, plombe, MRN po kolima/UTI, duzina preko odbojnika",
-    "spisak kola i u Excel formatu uz PDF",
-    "elektronski PDF sa tekstom; skenovi >= 300 dpi, cela strana",
-    "kontakt (telefon, e-mail) u r1 i r4; korisnicke šifre r2/r3/r5/r6"
+    { "id": "REC1", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r8", "samo_interno": true,
+      "message": "Preporuka: r8: broj voza ili referenca (ključ za povezivanje sa najavom).",
+      "message_en": "Recommendation: box 8: train number or reference (key for linking with the announcement).",
+      "primer": "r8: broj voza ili referenca, npr. XXXXX", "primer_en": "box 8: train number or reference, e.g. XXXXX" },
+    { "id": "REC3", "ne_proverava_se": "obrisano u v2.8 (test 2026-11-13): KP se prihvata u bilo kom obliku (v2.7) – stavka je samo šum u izveštaju",
+      "message": "Preporuka: KP uvek u obliku „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
+      "message_en": "Recommendation: always write KP as „KP – Kombinovani prevoz d.o.o., UIC 3212“.",
+      "primer": "KP – Kombinovani prevoz d.o.o., UIC 3212", "primer_en": "KP – Kombinovani prevoz d.o.o., UIC 3212" },
+    { "id": "REC4", "popunjava": "pošiljalac", "popunjava_basis": "interna odluka KP 2026-11-14 – pošiljalac popunjava r57 i r58a (GLV-CIM, Prilog 2, str. 25: ‚ukoliko ne postoji poseban ugovor‘)", "field": "r57", "ne_proverava_se": "obrisano u v2.8.3 (test 2026-11-14): status i deonica u r57 se ne traže od v2.7; za r57 važi samo KP57",
+      "message": "Preporuka: r57: deonica KP šiframa stanica i status (nije obavezno).",
+      "message_en": "Recommendation: box 57: KP section with station codes and status (not mandatory).",
+      "primer": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1", "primer_en": "3212 KP – Kombinovani prevoz d.o.o., 78 554 Tovarnik gr. – 72 0661 Vršac gr., 1" },
+    { "id": "REC5", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
+      "message": "Preporuka: spisak kola: broj osovina, tara/neto/bruto po kolima, tovaren/prazan, NHM 6 cifara, UTI broj/tip/tara, plombe, MRN po kolima/UTI, dužina preko odbojnika.",
+      "message_en": "Recommendation: wagon list: number of axles, tare/net/gross per wagon, loaded/empty, 6-digit NHM, ITU number/type/tare, seals, MRN per wagon/ITU, length over buffers.",
+      "primer": "kolone spiska: broj kola, osovine, tara, neto, bruto, NHM (6 cifara), plombe", "primer_en": "list columns: wagon no., axles, tare, net, gross, NHM (6 digits), seals" },
+    { "id": "REC6", "ne_proverava_se": "obrisano u v2.8 (test 2026-11-13): ne pomaže pošiljaocu",
+      "message": "Preporuka: spisak kola i u Excel formatu uz PDF.",
+      "message_en": "Recommendation: wagon list also in Excel format together with the PDF.",
+      "primer": "spisak_kola.xlsx uz PDF", "primer_en": "wagon_list.xlsx together with the PDF" },
+    { "id": "REC7", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation",
+      "message": "Preporuka: elektronski PDF sa tekstom; skenovi najmanje 300 dpi, cela strana.",
+      "message_en": "Recommendation: electronic PDF with text; scans at least 300 dpi, full page.",
+      "primer": "PDF sa tekstom ili sken 300 dpi", "primer_en": "PDF with text or a 300 dpi scan" },
+    { "id": "REC8", "popunjava": "pošiljalac", "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)", "severity": "recommendation", "field": "r1", "samo_interno": true,
+      "message": "Preporuka: kontakt (telefon, e-mail) u r1 i r4; korisničke šifre r2/r3/r5/r6.",
+      "message_en": "Recommendation: contact (telephone, e-mail) in boxes 1 and 4; customer codes in boxes 2/3/5/6.",
+      "primer": "Tel. +381 11 123 4567, e-mail: otprema@firma.rs", "primer_en": "Tel. +381 11 123 4567, e-mail: dispatch@company.com" }
   ],
   "system_messages": {
     "necitljivo": {
@@ -1501,21 +2123,13 @@
     }
   },
   "response_template_en": {
-    "subject": "Consignment note CIM {shipment_ref} - {status}",
+    "subject": "Consignment note {form} {shipment_ref}{sender_ref} – {status}",
     "status_values": {
       "ok": "correct",
-      "errors": "corrections required ({n_errors} errors, {n_warnings} warnings)"
+      "warnings": "remarks",
+      "errors": "corrections required"
     },
     "footer": "Source of rules: CIT manual GLV-CIM (Spt 51.01), Annex 2."
   },
-  "recommendations_en": [
-    "box 8: train number / announcement ID (e.g. 004NISBAR26) - key for linking with the announcement",
-    "KP offer number and the full CIM 6 contract number in box 7 or 13.5",
-    "always write KP as 'KP - Kombinovani prevoz d.o.o., UIC 3212'",
-    "box 57: KP section with station codes + status",
-    "wagon list: number of axles, tare/net/gross per wagon, loaded/empty, 6-digit NHM, ITU number/type/tare, seals, MRN per wagon/ITU, length over buffers",
-    "wagon list also in Excel format together with the PDF",
-    "electronic PDF with text; scans >= 300 dpi, full page",
-    "contact (telephone, e-mail) in boxes 1 and 4; customer codes in boxes 2/3/5/6"
-  ]
+  "recommendations_en_note": "Od v2.7 su preporuke objekti sa message_en (lista recommendations_en više ne postoji)."
 }

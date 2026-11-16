@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Saobracaj.Agent.CimProvera.Model
 {
@@ -177,6 +179,14 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Šifra stanice (DIUM).")] public string Stanica { get; set; } = "";
         [Opis("Šifra preduzeća (4 cifre).")] public string Preduzece { get; set; } = "";
         [Opis("Broj otpravljanja (npr. 12345-6).")] public string Broj { get; set; } = "";
+        /// <summary>v2.8.1: sken – cifre r62 niske pouzdanosti (i kada ciljani OCR isečaka kućica daje različite brojeve): proverava čovek.</summary>
+        [Interni] public bool NepouzdanoCitanje { get; set; }
+        /// <summary>v2.8.4: sken – najmanja pouzdanost grupa cifara r62 (šum oko njih se ne računa); 1 za tekst PDF-a.</summary>
+        [Interni] public double PouzdanostCifara { get; set; } = 1;
+        /// <summary>v2.8.4: r62 na skenu nije pouzdano pročitana – ne koristi se za odluke (KP tovarni list, ponavljanje, dosije).</summary>
+        [Interni] public bool NepouzdanaZaOdluke { get; set; }
+        /// <summary>v2.8.1: sken – u rubrici je OCR šum od slova i cifara („jj2“) – razlog za ručnu proveru samo kada neki deo r62 nije pročitan.</summary>
+        [Interni] public bool OcrSum { get; set; }
     }
 
     /// <summary>Jedan tovarni list CIM ili kolski list CUV (jedan list, ne ceo PDF).</summary>
@@ -194,10 +204,22 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je na listu navedena pomorska deonica (luka, brod, IMDG).")] public bool PomorskaDeonica { get; set; }
         /// <summary>Šablon obrasca po kom su rubrike pročitane (K-504, K-505, ZS-EUROLOG…).</summary>
         [Interni] public string Sablon { get; set; } = "";
+        /// <summary>Okviri rubrika na strani lista (normalizovano 0–1: x0, y0, x1, y1) po poravnatom šablonu – za PDF primer.</summary>
+        [Interni] public Dictionary<string, double[]> Okviri { get; set; } = new Dictionary<string, double[]>();
+        /// <summary>v2.8.2: kućice šablona na strani (62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja…), normalizovano 0–1.</summary>
+        [Interni] public Dictionary<string, double[]> KuciceOkviri { get; set; } = new Dictionary<string, double[]>();
+        /// <summary>Strana originalnog priloga na kojoj je list (prva strana lista).</summary>
+        [Interni] public int StranaLista { get; set; }
         /// <summary>Ako obrazac nije prepoznat ili poravnanje nije pouzdano: opis (rubrike se tada ne proveravaju – ručna provera).</summary>
         [Interni] public string NeprepoznatObrazac { get; set; } = "";
         /// <summary>Tekst zaglavlja strane (gornjih ~9 %): natpisi kao „Nem fuvarlevél / Kein Frachtbrief“ (G12).</summary>
         [Interni] public string Zaglavlje { get; set; } = "";
+        /// <summary>Prosečna pouzdanost OCR-a strane lista (0 = tekst iz PDF-a). Ispod 0,75: nalazi o sadržaju su interne napomene (v2.8).</summary>
+        [Interni] public double PouzdanostStrane { get; set; }
+        /// <summary>v2.8.1: upisane reči po rubrikama (koordinate na strani, 0–1) – PDF primer precrtava pogrešan deo upisa. Ne serijalizuje se.</summary>
+        [Newtonsoft.Json.JsonIgnore] public Dictionary<string, List<Citanje.Rec>> ReciRubrika = new Dictionary<string, List<Citanje.Rec>>();
+        /// <summary>v2.8.2: štampani natpisi obrasca po rubrikama (npr. „T= / N= / G=“ u r25). Ne serijalizuje se.</summary>
+        [Newtonsoft.Json.JsonIgnore] public Dictionary<string, List<Citanje.Rec>> NatpisiRubrika = new Dictionary<string, List<Citanje.Rec>>();
 
         [Opis("Rubrika 1 - Pošiljalac.")] public Strana R1 { get; set; } = new Strana();
         [Opis("Rubrika 4 - Primalac.")] public Strana R4 { get; set; } = new Strana();
@@ -246,6 +268,23 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je za ta kola označen RID.")] public bool Rid { get; set; }
         [Opis("MRN brojevi upisani uz ta kola/UTI.")] public List<string> Mrn { get; set; } = new List<string>();
         [Opis("Da li su kola prazna.")] public bool Prazna { get; set; }
+        // v2.9.0: vrednosti po kolima za upis teretnice (tmpTeretnicaStavke); null = kolona nije na spisku ili je prazna
+        /// <summary>Redni broj sa spiska (0 = nije upisan).</summary>
+        [Interni] public int Rb { get; set; }
+        [Interni] public double? TaraKg { get; set; }
+        [Interni] public double? NetoKg { get; set; }
+        [Interni] public double? BrutoKg { get; set; }
+        [Interni] public int? Osovine { get; set; }
+        /// <summary>Dužina preko odbojnika u metrima.</summary>
+        [Interni] public double? DuzinaM { get; set; }
+        /// <summary>Odakle je dužina: „spisak“ ili „istorija“ (poslednja dužina istih kola u dbo.TeretnicaStavke); prazno = nema dužine.</summary>
+        [Interni] public string DuzinaIzvor { get; set; } = "";
+        /// <summary>Serija / slovna oznaka sa spiska (Sgns, Eanos…), prazno ako nije upisana.</summary>
+        [Interni] public string Serija { get; set; } = "";
+        /// <summary>Napomena sa spiska za ta kola (kolona napomena/primedba).</summary>
+        [Interni] public string Napomena { get; set; } = "";
+        /// <summary>Kemler/UN za ta kola („80/1824“), prazno ako nije upisano.</summary>
+        [Interni] public string KemlerUn { get; set; } = "";
     }
 
     /// <summary>Spisak kola (CIT 23 / Prilog 5).</summary>
@@ -257,6 +296,19 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li je na spisku negde označen RID.")] public bool RidOznaka { get; set; }
         [Interni] public List<string> UnBrojevi { get; set; } = new List<string>();
         [Opis("Datum na spisku YYYY-MM-DD, ako postoji.")] public string Datum { get; set; } = "";
+        /// <summary>Na spisku je upisana masa kola (bruto/neto/tara) – r25 tada može da uputi na spisak (R25-MASA).</summary>
+        [Interni] public bool MasaUpisana { get; set; }
+        /// <summary>v2.8.2: zbir masa sa spiska (kg) po koloni tara / neto / bruto; null kada kolone nema ili nije popunjena.</summary>
+        [Interni] public double? TaraKg { get; set; }
+        [Interni] public double? NetoKg { get; set; }
+        [Interni] public double? BrutoKg { get; set; }
+        // v2.9.0: podaci iz zaglavlja spiska (CIT 23 u Excel-u: „Train nr. 256“, „Otpravna stanica | PANČEVO GLAVNA … 72 21001-3“)
+        /// <summary>Broj voza sa spiska („256“), prazno ako nije naveden.</summary>
+        [Interni] public string BrojVoza { get; set; } = "";
+        [Interni] public string OtpravnaTekst { get; set; } = "";
+        [Interni] public string UputnaTekst { get; set; } = "";
+        /// <summary>NHM iz zaglavlja spiska („1001.00“ → „100100“), prazno ako nije naveden.</summary>
+        [Interni] public string NhmZaglavlje { get; set; } = "";
         [Opis("Kola na spisku.")] public List<KolaNaSpisku> Kola { get; set; } = new List<KolaNaSpisku>();
     }
 
@@ -285,6 +337,49 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Opis("Da li dodatni list sadrži datum preuzimanja.")] public bool DatumPreuzimanja { get; set; }
     }
 
+    /// <summary>
+    /// CIT 7 – naknadni zahtev (GLV-CIM, Prilog 7; čl. 18 i 19 CIM): podaci pročitani sa obrasca. Polja su prazna kada nisu upisana.
+    /// </summary>
+    internal sealed class Cit7Zahtev
+    {
+        /// <summary>Zahtev se odnosi na kolski list CUV (inače tovarni list CIM).</summary>
+        public bool Cuv { get; set; }
+        public string Posiljalac { get; set; } = "";
+        public string Primalac { get; set; } = "";
+        /// <summary>Mesto izdavanja (uputna) kako je navedeno u zaglavlju CIT 7 – važeće pre izmene.</summary>
+        public string MestoIzdavanja { get; set; } = "";
+        /// <summary>Uputna stanica (šifra i zemlja) iz zaglavlja CIT 7, npr. „72 16503-5 Serbia“.</summary>
+        public string StanicaIzdavanja { get; set; } = "";
+        public string Preuzimanje { get; set; } = "";
+        public string Kola { get; set; } = "";
+        public List<string> BrojeviKola { get; set; } = new List<string>();
+        public string Zemlja { get; set; } = "";
+        public string Stanica { get; set; } = "";
+        public string Preduzece { get; set; } = "";
+        public string Broj { get; set; } = "";
+        /// <summary>Označene šifre zahteva (1 zaustaviti, 2 odložiti izdavanje, 3 izdati drugom primaocu, 4 otpremiti u drugo mesto, 5 carinske formalnosti, 6 ostale izmene).</summary>
+        public List<int> Sifre { get; set; } = new List<int>();
+        /// <summary>Tražene izmene po rubrikama tovarnog lista: („4“, „GRANEXPORT D.O.O., Luka Dunav br.5, 26000 Pančevo, Srbija“).</summary>
+        public List<Cit7Izmena> Izmene { get; set; } = new List<Cit7Izmena>();
+        public string Napomene { get; set; } = "";
+        /// <summary>Označeno „Nije neophodno obavestiti otpravnu carinu“.</summary>
+        public bool BezCarine { get; set; }
+        /// <summary>Označeno „Odobrenje otpravne carine“.</summary>
+        public bool OdobrenjeCarine { get; set; }
+        /// <summary>Ko je potpisao zahtev (polje „Potpis pošiljaoca / primaoca“), i mesto/datum.</summary>
+        public string Podnosilac { get; set; } = "";
+        public string Datum { get; set; } = "";
+        /// <summary>Sav upisan tekst obrasca (za referencu pošiljaoca, v2.8.2).</summary>
+        public string Tekst { get; set; } = "";
+        public string Identifikacija => Regex.Replace(string.Join(" ", new[] { Zemlja, Stanica, Preduzece, Broj }.Where(x => !string.IsNullOrWhiteSpace(x))), @"\s+", " ").Trim();
+    }
+
+    internal sealed class Cit7Izmena
+    {
+        public string Rubrika { get; set; } = "";
+        public string Vrednost { get; set; } = "";
+    }
+
     internal static class TipDokumenta
     {
         public const string Cim = "cim";
@@ -309,6 +404,14 @@ namespace Saobracaj.Agent.CimProvera.Model
         /// <summary>Dokument o kretanju otpada (Annex VII / Prilog VII).</summary>
         public const string AnnexVii = "annex_vii";
         public const string IzvestajRadioloski = "izvestaj_radioloski";
+        /// <summary>Izveštaj o sastavu voza / tehnički spisak voza (MÁV VTK, Zugvorbereitung, Meldezettel) – nije prateći dokument pošiljke, ne proverava se.</summary>
+        public const string SastavVoza = "sastav_voza";
+        /// <summary>Kopija ili poleđina tovarnog lista (natpisi rubrika bez naslova obrasca): pripaja se listu, nije prilog za r9.</summary>
+        public const string KopijaLista = "kopija_lista";
+        /// <summary>CIT 7 – naknadni nalog / izmena ugovora o prevozu: poseban dokument, ne proverava se po rubrikama CIM-a.</summary>
+        public const string Cit7 = "cit7";
+        /// <summary>v2.8.3: spisak tovarnih jedinica (UTI: kontejneri, poluprikolice – „LKWA 0509677“) bez brojeva kola; ne proverava se.</summary>
+        public const string SpisakJedinica = "spisak_jedinica";
         public const string Ostalo = "ostalo";
 
         public static readonly string[] Sve =
@@ -343,7 +446,12 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string Fajl { get; set; } = "";
         /// <summary>Uslov isporuke iz fakture / deklaracije (npr. "DAP Alesd").</summary>
         [Interni] public string Incoterms { get; set; } = "";
+        /// <summary>v2.8.4 (8): prateći dokument iz ranijeg maila iste pošiljke (dosije) – priloženost na celom dosijeu.</summary>
+        [Interni] public bool IzDosijea { get; set; }
+        [Interni] public string IzMaila { get; set; } = "";
         [Interni] public string Izvor { get; set; } = "claude"; // claude | excel
+        /// <summary>Za cit7: pročitan naknadni zahtev (v2.8.1).</summary>
+        [Interni] public Cit7Zahtev Cit7 { get; set; }
     }
 
     /// <summary>Odgovor Claude-a za jedan prilog.</summary>
@@ -358,5 +466,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public int NeprocitaneStrane { get; set; }
         /// <summary>Za log: vrsta svake strane, natpisi po kojima je prepoznata i pouzdanost, npr. "str.6 spisak_kola (spisak kola, CIT-23; 0,90)".</summary>
         [Interni] public List<string> StraneOpis { get; set; } = new List<string>();
+        /// <summary>Strane skena sa niskom pouzdanošću OCR-a (ispod 0,75) koje nisu tovarni list: ako u mailu nema tovarnog lista,
+        /// to nije dokaz da ga nema – ručna provera (v2.8).</summary>
+        [Interni] public List<int> NisaPouzdanost { get; set; } = new List<int>();
     }
 }
