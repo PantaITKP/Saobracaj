@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -206,6 +206,21 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var g = zapisi.GroupBy(z => z.Grupa).Select(x => x.ToList()).ToList();
             var prva = g.Where(x => !x[0].Prazna).OrderByDescending(x => x.Sum(z => z.BrojKola)).FirstOrDefault() ?? g.OrderByDescending(x => x.Sum(z => z.BrojKola)).FirstOrDefault();
             if (prva == null) return new List<List<ZapisTl>>();
+            // v2.9.2 (3a.2, voz 005NISBAR26): grupa bez kola čije su mase iste kao mase grupe 1 (ili ih nema) nema sopstveni dokument
+            // za mase – ne pravi se (grupa 2 dobija mase samo iz svojih dokumenata)
+            double? Z(List<ZapisTl> x, Func<ZapisTl, double?> f) => x.Any(z => f(z) > 0) ? x.Sum(z => f(z) ?? 0) : (double?)null;
+            bool IsteKaoPrva(List<ZapisTl> x)
+            {
+                var bez = !x.Any(z => z.Neto > 0 || z.Tara > 0 || z.Bruto > 0);
+                if (bez) return true;
+                foreach (var f in new Func<ZapisTl, double?>[] { z => z.Neto, z => z.Tara, z => z.Bruto })
+                {
+                    var a = Z(x, f); var b = Z(prva, f);
+                    if (a.HasValue != b.HasValue || (a.HasValue && Math.Abs(a.Value - b.Value) > 0.005 * Math.Max(a.Value, b.Value))) return false;
+                }
+                return true;
+            }
+            g = g.Where(x => x == prva || !(x.All(z => z.BrojKola == 0 && z.Kola.Count == 0) && IsteKaoPrva(x))).ToList();
             return new[] { prva }.Concat(g.Where(x => x != prva).OrderByDescending(x => x[0].Prazna).ThenByDescending(x => x.Sum(z => z.BrojKola))).ToList();
         }
 
@@ -291,6 +306,142 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             return null;
         }
 
+        /// <summary>„ID 1602“, „ID 1602 + 1496“, „ID1657“ iz naslova maila → brojevi (3–5 cifara).</summary>
+        internal static HashSet<string> IdIzNaslova(string naslov)
+        {
+            var s = new HashSet<string>();
+            foreach (Match m in Regex.Matches(naslov ?? "", @"(?<![\p{L}\d])ID\s*[:#.]?\s*(?<b>\d{3,5})(?<dalje>(?:\s*[+,/&i]\s*\d{3,5}(?!\d))*)"))
+            {
+                s.Add(m.Groups["b"].Value);
+                foreach (Match d in Regex.Matches(m.Groups["dalje"].Value, @"\d{3,5}")) s.Add(d.Value);
+            }
+            return s;
+        }
+
+        private sealed class ZnaciPosla
+        {
+            public int Id; public int? O, U; public int PouzdO, PouzdU; public string Referenca = ""; public string Kljuc = "";
+            public HashSet<string> Ids = new HashSet<string>(); public DateTime? Primljeno; public HashSet<string> Kola = new HashSet<string>();
+            public List<ZapisTl> Tl = new List<ZapisTl>(); public bool Nit;
+        }
+
+        /// <summary>
+        /// v2.9.2 (3a.1): postojeći posao kada r62 nije pouzdan ključ (nečitljiva ili pogrešno pročitana – „12“ umesto „72“) – zbir znakova:
+        /// isti „ID nnnn“ u naslovu maila ili ista prepiska (dosije); ista referenca r8; ista Otpravna i Uputna (relacija); isti NHM;
+        /// kola ≥ 50 % (samo brojevi sa ispravnom kontrolnom cifrom UIC); mase ± 1 %; datum ± 5 dana. Dovoljno je: (ID iz naslova ili r8)
+        /// + relacija, ili kola ≥ 50 % + relacija; uz to – ista prepiska + relacija + isti NHM + iste mase (Prahovo 05, skenovi bez kola i
+        /// r8). Različite reference r8 (Coal 16 / Coal 17) nikad nisu isti voz, osim kada su kola ista. Relacija: ista uputna i ista
+        /// otpravna – ili otpravna nepouzdano pročitana na jednoj strani (OCR šum u r16), i obrnuto.
+        /// </summary>
+        private (int? id, string opis) PosaoPoZnacima(VozListova voz, MailZaUpis m)
+        {
+            var l0 = voz.Listovi.OrderByDescending(x => !x.P.Prazna).ThenByDescending(x => x.BrojKola).First();
+            int Pouzd(ListPosla l, string kol) => l.P.Poreklo.FirstOrDefault(po => po.Kolona == kol)?.Pouzdanost ?? 0;
+            var o = l0.Otpravna; var u = l0.Uputna; var po0 = Pouzd(l0, "OtpravnaID"); var pu0 = Pouzd(l0, "UputnaID");
+            if (!o.HasValue && !u.HasValue) return (null, null);
+            string N(object x) => Regex.Replace(Slicnost.Osnovno(x as string ?? ""), @"\s", "");
+            var ref0 = voz.Listovi.Select(x => N(x.P.V.TryGetValue("Referenca", out var v) ? v : null)).FirstOrDefault(x => x.Length > 0) ?? "";
+            var ids0 = IdIzNaslova(m.Naslov);
+            // kola voza: listovi + spiskovi kola istog maila; samo brojevi sa ispravnom kontrolnom cifrom
+            var kola0 = new HashSet<string>(voz.Listovi.SelectMany(x => x.P.Kola).Concat((m.Provera?.Dokumenti ?? new List<Model.Dokument>())
+                .Where(d => d.Tip == Model.TipDokumenta.SpisakKola && !d.IzDosijea).SelectMany(d => d.Spisak).SelectMany(s => s.Kola).Select(k => k.Broj))
+                .Select(BrojKolaUic.Cifre).Where(BrojKolaUic.KontrolnaIspravna));
+            var zapisi0 = voz.Listovi.Select(ZapisTl.Iz).ToList();
+            var nit = new HashSet<int>();
+            if (m.Dosije != null)
+                foreach (var oz in m.Dosije.Mailovi)
+                {
+                    var uu = Regex.Match(oz ?? "", @"^UID (\d+)$");
+                    if (!uu.Success) continue;
+                    foreach (var j in Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", long.Parse(uu.Groups[1].Value), "@s", N0(m.Sanduce, 200)))
+                        if (int.TryParse(j, out var ji)) nit.Add(ji);
+                }
+
+            // kandidati: poslovi poslednjih dana (datum prijema dokumenata ± 5 dana od maila)
+            var kand = new Dictionary<int, ZnaciPosla>();
+            using (var cmd = Komanda(@"SELECT j.ID, j.OtpravnaID, j.UputnaID, ISNULL(j.Referenca, ''), ISNULL(j.KljucPosiljke, ''),
+    ISNULL((SELECT TOP 1 p.Pouzdanost FROM planiranje.tmpJobsPolje p WHERE p.JobID = j.ID AND p.TeretnicaID IS NULL AND p.Kolona = 'OtpravnaID' ORDER BY p.ID DESC), 0),
+    ISNULL((SELECT TOP 1 p.Pouzdanost FROM planiranje.tmpJobsPolje p WHERE p.JobID = j.ID AND p.TeretnicaID IS NULL AND p.Kolona = 'UputnaID' ORDER BY p.ID DESC), 0),
+    (SELECT MAX(d.Primljeno) FROM planiranje.tmpDokument d WHERE d.JobID = j.ID)
+FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME())", "@dana", DanaZaVezu))
+            using (var r = cmd.ExecuteReader())
+                while (r.Read())
+                    kand[r.GetInt32(0)] = new ZnaciPosla
+                    {
+                        Id = r.GetInt32(0), O = r.IsDBNull(1) ? (int?)null : r.GetInt32(1), U = r.IsDBNull(2) ? (int?)null : r.GetInt32(2), Referenca = N(r.GetString(3)), Kljuc = r.GetString(4),
+                        PouzdO = Convert.ToInt32(r.GetValue(5)), PouzdU = Convert.ToInt32(r.GetValue(6)), Primljeno = r.IsDBNull(7) ? (DateTime?)null : r.GetDateTime(7),
+                    };
+            if (kand.Count == 0) return (null, null);
+            using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL"))
+            using (var r = cmd.ExecuteReader())
+                while (r.Read()) if (kand.TryGetValue(r.GetInt32(0), out var z)) foreach (var x in IdIzNaslova(r.GetString(1))) z.Ids.Add(x);
+            using (var cmd = Komanda("SELECT JobID, TekstIzDokumenta FROM planiranje.tmpJobsPolje WHERE TeretnicaID IS NULL AND Kolona LIKE 'TL:%' AND JobID IS NOT NULL"))
+            using (var r = cmd.ExecuteReader())
+                while (r.Read())
+                {
+                    if (!kand.TryGetValue(r.GetInt32(0), out var z)) continue;
+                    try { var t = JsonConvert.DeserializeObject<ZapisTl>(r.IsDBNull(1) ? "" : r.GetString(1)); if (t != null) { z.Tl.Add(t); foreach (var k in t.Kola) z.Kola.Add(BrojKolaUic.Cifre(k)); } } catch { }
+                }
+            using (var cmd = Komanda("SELECT t.JobID, s.BrojKola FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.BrojTeretnice WHERE t.JobID IS NOT NULL"))
+            using (var r = cmd.ExecuteReader())
+                while (r.Read()) if (kand.TryGetValue(r.GetInt32(0), out var z)) z.Kola.Add(BrojKolaUic.Cifre(r.IsDBNull(1) ? "" : r.GetString(1)));
+            foreach (var j in nit) if (kand.TryGetValue(j, out var z)) z.Nit = true;
+
+            bool Rel(ZnaciPosla z)
+            {
+                const int Pouzdano = 95;
+                var istaO = o.HasValue && z.O == o; var istaU = u.HasValue && z.U == u;
+                var nepO = !o.HasValue || !z.O.HasValue || po0 < Pouzdano || z.PouzdO < Pouzdano;
+                var nepU = !u.HasValue || !z.U.HasValue || pu0 < Pouzdano || z.PouzdU < Pouzdano;
+                return (istaO && istaU) || (istaU && nepO && o != z.U) || (istaO && nepU && u != z.O);
+            }
+            bool IsteMase(ZnaciPosla z) => z.Tl.Any(t => zapisi0.Any(x =>
+            {
+                int iste = 0, razl = 0;
+                foreach (var (a, b) in new[] { (t.Neto, x.Neto), (t.Tara, x.Tara), (t.Bruto, x.Bruto) })
+                    if (a > 0 && b > 0) { if (Math.Abs(a.Value - b.Value) <= 0.01 * Math.Max(a.Value, b.Value)) iste++; else razl++; }
+                return iste >= 1 && razl == 0;
+            }));
+            bool IstiNhm(ZnaciPosla z) => z.Tl.Any(t => zapisi0.Any(x => x.Grupa.Length > 0 && t.Grupa == x.Grupa));
+            // isti r62 osim oznake zemlje („12 16201-6 3212 16390-0“ = „72 16201-6 3212 16390-0“)
+            string BezZemlje(string k) => Regex.Match(k ?? "", @"^r62x?:\d{2}-(.+)$").Groups[1].Value;
+            var r62bz = voz.Listovi.Select(x => BezZemlje(x.P.KljucPosiljke)).FirstOrDefault(x => x.Length > 0) ?? "";
+
+            var izbor = new List<(ZnaciPosla z, int poeni, string opis)>();
+            foreach (var z in kand.Values)
+            {
+                if (z.Primljeno.HasValue && Math.Abs((z.Primljeno.Value - m.Primljeno).TotalDays) > 5) continue;
+                if (!Rel(z)) continue;
+                var istiKola = kola0.Count > 0 && z.Kola.Count > 0 ? kola0.Intersect(z.Kola).Count() : 0;
+                var kola50 = istiKola > 0 && istiKola >= 0.5 * Math.Min(kola0.Count, z.Kola.Count);
+                var refIsta = ref0.Length > 0 && z.Referenca.Length > 0 && ref0 == z.Referenca;
+                var refRazl = ref0.Length > 0 && z.Referenca.Length > 0 && ref0 != z.Referenca;
+                if (refRazl && !kola50) continue;   // Coal 16 / Coal 17 – različiti vozovi iste relacije
+                var idIsti = ids0.Count > 0 && z.Ids.Overlaps(ids0);
+                var r62Isti = r62bz.Length > 0 && BezZemlje(z.Kljuc) == r62bz;
+                // dve ispravne, različite r62 su dve pošiljke – isti voz samo uz isti ID iz naslova ili r8 (voz od više listova)
+                var dveR62 = (z.Kljuc ?? "").StartsWith("r62:", StringComparison.Ordinal) && voz.Listovi.Any(x => (x.P.KljucPosiljke ?? "").StartsWith("r62:", StringComparison.Ordinal))
+                             && !voz.Listovi.Any(x => x.P.KljucPosiljke == z.Kljuc);
+                if (dveR62 && !idIsti && !refIsta) continue;
+                var opis = new List<string>();
+                if (idIsti) opis.Add("ID " + string.Join("/", ids0.Intersect(z.Ids)) + " iz naslova");
+                if (refIsta) opis.Add("r8");
+                if (kola50) opis.Add("kola " + istiKola + "/" + Math.Min(kola0.Count, z.Kola.Count));
+                if (r62Isti) opis.Add("r62 osim oznake zemlje");
+                var dovoljno = idIsti || refIsta || kola50 || r62Isti;
+                if (!dovoljno && z.Nit && IstiNhm(z) && IsteMase(z)) { dovoljno = true; opis.Add("ista prepiska, NHM i mase ± 1 %"); }
+                if (!dovoljno) continue;
+                opis.Add("relacija");
+                var poeni = (kola50 ? 4 : 0) + (r62Isti ? 4 : 0) + (refIsta ? 3 : 0) + (idIsti ? 3 : 0) + (z.Nit ? 1 : 0) + (IstiNhm(z) ? 1 : 0) + (IsteMase(z) ? 1 : 0);
+                izbor.Add((z, poeni, string.Join(", ", opis)));
+            }
+            if (izbor.Count == 0) return (null, null);
+            var naj = izbor.OrderByDescending(x => x.poeni).ThenBy(x => x.z.Id).First();
+            return (naj.z.Id, "znaci: " + naj.opis);
+        }
+
+        private static string N0(string s, int n) => string.IsNullOrEmpty(s) ? "" : s.Length <= n ? s : s.Substring(0, n);
+
         /// <summary>Dva zapisa TL su isti tovarni list (kopija iz drugog maila sa drugim ključem): ista kola (≥ 80 %) ili iste mase (bar dve, nijedna različita).</summary>
         internal static bool IstiZapis(ZapisTl a, ZapisTl b)
         {
@@ -322,6 +473,8 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
                 var isti = NedavniPoslovi().Where(j => ExcelCitac.BrojVoza(j.Referenca) == glavni0.P.BrojVoza && j.Otpravna == o0 && j.Uputna == u0).OrderByDescending(j => j.Id).FirstOrDefault();
                 if (isti != null) { id = isti.Id; veza = "isti voz " + glavni0.P.BrojVoza + " i relacija"; }
             }
+            // v2.9.2 (3a.1): r62 nije pouzdan ključ – posao po zbiru znakova (ID iz naslova / r8 / kola + relacija, …)
+            if (id == null && PosaoPoZnacima(voz, m) is var zn && zn.id.HasValue) { id = zn.id; veza = zn.opis; }
             if (id == null && PosaoIzDosijeaIsteDeonice(m, voz) is int jd) { id = jd; veza = "isti dosije i deonica KP"; }
             var povratak = false;
             if (id == null && voz.SvaPrazna && PovratakPraznih(voz) is int jp) { id = jp; povratak = true; veza = "povratak praznih kola uz posao " + jp; }
@@ -417,7 +570,7 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             if (jobId == null) jobId = PosaoIzDosijea(m);
             if (jobId == null) { ishod.Napomene.Add("CIT 7 (" + c7.Fajl + "): posao nije pronađen – samo tmpDokument"); return; }
             var j = jobId.Value;
-            if (dokId.HasValue) Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j WHERE ID = @d", "@j", j, "@d", dokId.Value);
+            if (dokId.HasValue) Izvrsi("UPDATE planiranje.tmpDokument SET JobID = ISNULL(JobID, @j) WHERE ID = @d", "@j", j, "@d", dokId.Value);   // v2.9.2 (3a.7)
             var datum = z.Datum.Length > 0 ? z.Datum : m.Primljeno.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
             var izvor = "CIT 7 (" + System.IO.Path.GetFileName(c7.Fajl) + ", " + datum + ")";
             var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", j);
@@ -516,7 +669,7 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             var ids = new List<int>();
             foreach (var f in fajlovi.GroupBy(x => x.Hes).Select(g => g.First()))
             {
-                if (Raspakivanje.Ukras(f) != null) continue;
+                if (Raspakivanje.Ukras(f) != null || Raspakivanje.SopstveniPrimer(f) != null) continue;
                 ids.Add(UpisiDokument(m, f, new List<Model.Dokument>()));
                 ishod.Dokumenata++;
             }
@@ -572,11 +725,14 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             // grupa teretnice: po kolima u zapisima TL posla; spisak samo praznih kola → grupa praznih
             var gr = Grupe(ZapisiTl(jobId).Values);
             var grupa = 1;
+            // v2.9.2: spisak praznih kola uz posao natovarenih kola (povratak praznih – Zmajevo soy → Zmajevo–Kelebia) je grupa 2
+            if (p.Grupe.Count == 1 && p.Grupe[0].prazna && gr.Count >= 1 && !gr[0][0].Prazna) grupa = 2;
             if (p.Grupe.Count == 1 && gr.Count > 1)
             {
                 var kola = new HashSet<string>(p.Grupe[0].kola);
                 var preklop = gr.Select((g, i) => (i, n: g.SelectMany(z => z.Kola).Count(kola.Contains))).OrderByDescending(x => x.n).First();
-                if (preklop.n > 0) grupa = preklop.i + 1;
+                // spisak praznih kola sa istim kolima kao natovarena grupa je povratak praznih – ne gazi natovarenu grupu
+                if (preklop.n > 0 && !(p.Grupe[0].prazna && !gr[preklop.i][0].Prazna)) grupa = preklop.i + 1;
                 else if (p.Grupe[0].prazna && gr.FindIndex(g => g[0].Prazna) is int ip && ip >= 0) grupa = ip + 1;
                 grupa = Math.Min(grupa, 2);
             }
@@ -605,6 +761,32 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
                 ishod.Napomene.Add(nap);
                 var po = p.Poreklo.FirstOrDefault(x => x.Kolona == "BrojKola" + g0);
                 if (po != null) po.Kandidati = nap;
+            }
+            // v2.9.2 (3a.2): masa sa spiska jednaka DRUGOJ masi iz tovarnog lista (Coal 16: „neto“ spiska 2 425,806 = bruto r25; Prahovo 05:
+            // „tara“ spiska 924,4 = neto r25) – kolona spiska je pogrešno pročitana: ta vrednost se ne upisuje + „proveriti kolone spiska“
+            if (gr.Count >= grupa)
+            {
+                double? TlZbir(Func<ZapisTl, double?> f) { var g = gr[grupa - 1]; return g.Any(z => f(z) > 0) ? g.Sum(z => f(z) ?? 0) : (double?)null; }
+                var tlMase = new Dictionary<string, double?> { ["Neto"] = TlZbir(z => z.Neto), ["Tara"] = TlZbir(z => z.Tara), ["Bruto"] = TlZbir(z => z.Bruto) };
+                var uklonjeno = new List<string>();
+                foreach (var kol in new[] { "Neto", "Tara", "Bruto" })
+                {
+                    if (!(p.V.TryGetValue(kol + g0, out var sv0) && sv0 is decimal sd && sd > 0)) continue;
+                    var kg = (double)sd * 1000;
+                    bool Isto(double? a) => a > 0 && Math.Abs(a.Value - kg) <= 0.001 * kg;
+                    var druga = tlMase.Where(kv => kv.Key != kol && Isto(kv.Value)).Select(kv => kv.Key).FirstOrDefault();
+                    if (druga == null || Isto(tlMase[kol])) continue;
+                    p.V.Remove(kol + g0);
+                    uklonjeno.Add(kol.ToLowerInvariant() + " sa spiska " + (kg / 1000).ToString("N3", CultureInfo.GetCultureInfo("sr-Latn-RS")) + " t = " + druga.ToLowerInvariant() + " iz tovarnog lista");
+                }
+                if (uklonjeno.Count > 0)
+                {
+                    // vrednosti izračunate iz pogrešne kolone („bruto izračunat (neto + tara)“) se takođe ne upisuju
+                    foreach (var po in p.Poreklo.Where(x => x.Kolona.EndsWith(g0) && (x.Tekst ?? "").Contains("izračunat")).ToList()) p.V.Remove(po.Kolona);
+                    var t = "Spisak kola: proveriti kolone spiska – " + string.Join("; ", uklonjeno) + " (nije upisano)";
+                    p.Napomene.Add(t);
+                    Istorija(jobId, tid, null, null, null, dokId, razlog, PodaciPosla.Skrati(t, 400));
+                }
             }
             // neto r25 ↔ spisak > 1 % (5.1): interna napomena u poreklu i istoriji
             var r25 = gr.Count >= grupa ? gr[grupa - 1].Where(z => z.Neto.HasValue).Sum(z => z.Neto.Value) : 0;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -54,6 +54,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public bool DopunaUzOznake;
         /// <summary>v2.8.2: dopuna po poljima obrasca (r62: „62.3“ → „3212“, „62.4“ → „XXXXX-X“); null = jedan tekst.</summary>
         public Dictionary<string, string> DopunaPoPoljima;
+        /// <summary>v2.9.2 (2): dopuna samo u novom redu ispod teksta rubrike (ne desno od reda – r57: nikad uz stranu deonicu).</summary>
+        public bool DopunaIspod;
+        /// <summary>v2.9.2 (2): red rubrike uz koji ide dopuna (r57: srpska deonica „Subotica br. – Bor Teretna“); null = posle poslednjeg reda.</summary>
+        public string DopunaUz;
 
         public override string ToString() => Tezina + " " + Pravilo + " r" + Rubrika + ": " + Tekst;
     }
@@ -278,6 +282,23 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     }
                 }
                 rl.Nalazi = SpojiPoRubrici(rl.Nalazi);
+                // v2.9.2 (1): ponuda nije proverena (baza nedostupna) – pošiljaocu ništa dok se platilac ne proveri
+                if (rl.Nalazi.Any(x => x.Kljuc == "ponuda-baza")) rl.ZaRucnuProveru = true;
+                // v2.9.2 (3.5): kontrola pre slanja – svaka reč koju PDF primer dopisuje mora biti iz dokumenta, X šablon ili iz rečnika
+                // primera; inače se dopuna ne upisuje, a izveštaj ide samo INTERNO (ručna provera)
+                foreach (var n in rl.Nalazi.Where(x => !x.SamoInterno && !string.IsNullOrEmpty(x.Dopuna)).ToList())
+                {
+                    List<string> strane;
+                    try { strane = Dopune.NepoznateReci(n, k); }
+                    catch (Exception ex) { log?.Upozorenje("Kontrola dopune (" + n.Pravilo + ") nije izvršena: " + ex.Message); continue; }
+                    if (strane.Count == 0) continue;
+                    var tekst = "PDF primer: dopuna u r" + n.Rubrika + " „" + n.Dopuna + "“ sadrži reči kojih nema u dokumentu ni u rečniku primera ("
+                                + string.Join(", ", strane) + ") – nije upisana; ručna provera pre odgovora pošiljaocu.";
+                    log?.Upozorenje(tekst);
+                    n.Dopuna = ""; n.Pogresno = ""; n.DopunaRedovi = null; n.DopunaPoPoljima = null; n.DopunaSigurna = false;
+                    rl.Nalazi.Add(new Nalaz { Pravilo = "PRIMER-KONTROLA", Rubrika = n.Rubrika, Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tekst, Uputstvo = tekst, SamoInterno = true, Kljuc = "primer-kontrola|" + n.Rubrika + "|" + n.Pravilo });
+                    rl.ZaRucnuProveru = true;
+                }
                 rez.Listovi.Add(rl);
             }
             return rez;

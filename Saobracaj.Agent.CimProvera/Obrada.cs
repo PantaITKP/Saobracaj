@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -67,6 +67,13 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     log?.Info("  prilog " + f.Naziv + " – slika iz potpisa/logo, ne proverava se: " + ukras);
                     ishod.OpisPriloga.Add(System.IO.Path.GetFileName(f.Naziv.Split('/').Last()) + " – slika iz potpisa/logo (ne proverava se)");
+                    continue;
+                }
+                // v2.9.2 (3.1c): sopstveni PDF primer agenta (vraćen u prepisci) se ne proverava i ne upisuje
+                if (Raspakivanje.SopstveniPrimer(f) is string primer)
+                {
+                    log?.Info("  prilog " + f.Naziv + " – " + primer + ", preskočeno (ne proverava se i ne upisuje).");
+                    ishod.Preskoceno.Add(System.IO.Path.GetFileName(f.Naziv.Split('/').Last()) + " – sopstveni PDF primer (Primer ispravnog popunjavanja – Kombinovani prevoz)");
                     continue;
                 }
                 try
@@ -158,6 +165,19 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { log?.Upozorenje("  napomena o broju kola nije dodata: " + ex.Message); }
             return ishod;
         }
+
+        /// <summary>
+        /// v2.9.2 (3.2): nepročitan prilog može biti tovarni list – strana liči na CIM/CUV (natpisi rubrika na nepouzdanom skenu) ili naslov /
+        /// tekst maila pominje CIM, CUV, tovarni list, teretnicu ili Frachtbrief. Inače nepročitan prilog ne traži internu poruku.
+        /// </summary>
+        internal static bool MozdaCim(Ishod ishod, string naslov, string telo)
+        {
+            if (ishod.NisuProcitani.Any(x => x.IndexOf("liči na CIM", StringComparison.OrdinalIgnoreCase) >= 0 || x.IndexOf("liči na obrazac CIM", StringComparison.OrdinalIgnoreCase) >= 0)) return true;
+            if (ishod.Neprepoznati.Concat(ishod.NisuProcitani).Any(x => PominjeCim.IsMatch(System.IO.Path.GetFileName((x ?? "").Split(':')[0])))) return true;
+            return PominjeCim.IsMatch((naslov ?? "") + " " + (telo ?? ""));
+        }
+
+        private static readonly Regex PominjeCim = new Regex(@"(?i)(?<![\p{L}])(cim|cuv|tovarn\p{L}*\s+list\p{L}*|teretnic\p{L}*|frachtbrief\p{L}*|consignment\s+note|wagon\s+note|lettre\s+de\s+voiture|товарн\p{L}*\s+лист\p{L}*|теретниц\p{L}*)(?![\p{L}])", RegexOptions.Compiled);
 
         /// <summary>
         /// v2.9.0 (7a.3): kada se broj kola u r21 (ili r18) razlikuje od broja kola na spisku kola istog maila / dosijea, u izveštaj ide

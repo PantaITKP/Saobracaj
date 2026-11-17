@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using MimeKit;
 
 namespace Saobracaj.Agent.CimProvera.Prilozi
@@ -171,6 +172,31 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         /// manja od 15 KB; manje od 250 000 piksela (npr. 500×500); traka/baner (odnos stranica ≥ 3, kraća strana &lt; 500 px);
         /// ime logo/potpis/ikona društvene mreže i manje od 1,5 Mpx.
         /// </summary>
+        /// <summary>
+        /// v2.9.2 (3.1c): sopstveni PDF primer agenta („PRIMER_…pdf“ ili prosleđen pod drugim imenom – „Untitled attachment 00093.pdf“,
+        /// ID 1654): metapodaci PDF-a (Title „Primer ispravnog tovarnog lista“, Producer „CimProvera – Kombinovani prevoz d.o.o.“).
+        /// Takav fajl se preskače – ne proverava se i ne upisuje. null = nije PRIMER.
+        /// </summary>
+        public static string SopstveniPrimer(Prilog p)
+        {
+            if (p?.Vrsta != VrstaPriloga.Pdf || p.Sadrzaj == null) return null;
+            try
+            {
+                // metapodaci su u Info rečniku (na kraju fajla) – dovoljan je tekstualni pregled bez parsiranja celog PDF-a
+                var n = Math.Min(p.Sadrzaj.Length, 64 * 1024);
+                var kraj = System.Text.Encoding.ASCII.GetString(p.Sadrzaj, p.Sadrzaj.Length - n, n);
+                var poc = System.Text.Encoding.ASCII.GetString(p.Sadrzaj, 0, Math.Min(p.Sadrzaj.Length, 4096));
+                foreach (var t in new[] { kraj, poc })
+                {
+                    if (t.Contains("/Title (Primer ispravnog tovarnog lista)")) return "PDF primer agenta (naslov „Primer ispravnog tovarnog lista“)";
+                    // Producer kao UTF-16 („\376\377\000C\000i\000m…“) ili ASCII
+                    if (Regex.IsMatch(t, @"/Producer\s*\((?:CimProvera|\\376\\377\\000C\\000i\\000m\\000P\\000r\\000o\\000v\\000e\\000r\\000a)")) return "PDF primer agenta (proizvođač CimProvera)";
+                }
+            }
+            catch { }
+            return null;
+        }
+
         public static string Ukras(Prilog p)
         {
             if (p?.Vrsta != VrstaPriloga.Slika || p.Sadrzaj == null) return null;

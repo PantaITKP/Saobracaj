@@ -4,14 +4,15 @@
     <OutputType>Exe</OutputType>
     <!-- net462 kao TelegramiImport (SQL Server 2008 R2 / TLS 1.0 na serveru). -->
     <TargetFramework>net462</TargetFramework>
-    <PlatformTarget>x86</PlatformTarget>
+    <!-- v2.9.2 (3a.6): podrazumevano x86; x64: dotnet build -c Release -p:PlatformTarget=x64 -p:OutputPath=bin\Release-x64\ -p:IntermediateOutputPath=obj\Release-x64\ -->
+    <PlatformTarget Condition="'$(PlatformTarget)' == ''">x86</PlatformTarget>
     <RootNamespace>Saobracaj.Agent.CimProvera</RootNamespace>
     <AssemblyName>Saobracaj.Agent.CimProvera</AssemblyName>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <!-- verzija programa; v2.9.0: upis u planiranje.tmp* (pravila ostaju 2.8.4, meta.version u cim_validation_rules.json) -->
-    <Version>2.9.1</Version>
+    <Version>2.9.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,6 +39,7 @@
     <PackageReference Include="MailKit" Version="4.15.1" />
     <PackageReference Include="PdfiumViewer" Version="2.13.0" />
     <PackageReference Include="PdfiumViewer.Native.x86.v8-xfa" Version="2018.4.8.256" />
+    <PackageReference Include="PdfiumViewer.Native.x86_64.v8-xfa" Version="2018.4.8.256" />
     <PackageReference Include="PdfPig" Version="0.1.11" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

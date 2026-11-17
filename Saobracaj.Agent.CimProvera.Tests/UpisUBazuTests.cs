@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,6 +65,11 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Nh(370, "15120000", 4, "Ulje od semena suncokreta");
             // sinonimi kao u bazi (OP_914_tmp_Sinonimi.sql)
             s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "PANSPED", CiljniId = 1969 });
+            // v2.9.2: odluka 17.11. (Budamar) – najduži sinonim ima prednost, pravna forma ostaje u sinonimu
+            s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR SOUTH SRO", CiljniId = 3355 });
+            s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR SOUTH", CiljniId = 3143 });
+            s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR LOGISTICS", CiljniId = 1580 });
+            s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR", CiljniId = 3143 });
             s.Sinonimi.Add(new SinonimZapis { Tip = "STANICA", Tekst = "PANCEVO", CiljniId = 246 });
             s.Sinonimi.Add(new SinonimZapis { Tip = "STANICA", Tekst = "PANCEVO GLAVNA", CiljniId = 246 });
             return s.Pripremi();
@@ -90,7 +95,6 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataTestMethod]
         [DataRow("Rail Cargo Hungaria")]          // u šifarniku je samo Rail Cargo Austria – ne sme da je izabere
         [DataRow("Rail Cargo Carrier - Serbia")]  // RCL Serbia nije isto što i RCC Serbia
-        [DataRow("Budamar")]                      // tri Budamar partnera – ne pogađa
         [DataRow("Evro Trans doo")]
         public void Partner_ispod_praga_NULL_sa_kandidatima(string tekst)
         {
@@ -112,13 +116,22 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Dva_bliska_kandidata_NULL_i_kandidati()
         {
-            // 3355 „BUDAMAR SOUTH, s.r.o.“ i 3143 „BUDAMAR SOUTH D.O.O. BEOGRAD“ imaju isti naziv posle normalizacije (razlika < 0,05)
-            var p = Pk().Partner("Budamar South, s.r.o.");
+            // 3355 „BUDAMAR SOUTH, s.r.o.“ i 3143 „BUDAMAR SOUTH D.O.O. BEOGRAD“ imaju isti naziv posle normalizacije (razlika < 0,05).
+            // v2.9.2 (3a.3, odluka 17.11.): bez sinonima – pravna forma je znak zemlje (s.r.o. → SK/CZ) → 3355; bez pravne forme i bez
+            // zemlje u dokumentu → NULL i kandidati
+            var bezSin = Sif(); bezSin.Sinonimi.RemoveAll(x => x.Tekst.StartsWith("BUDAMAR"));
+            var pk0 = new Poklapanje(bezSin);
+            var p1 = pk0.Partner("Budamar South, s.r.o.");
+            Assert.AreEqual(3355, p1.Id, p1 + " | " + p1.Napomena);
+            StringAssert.Contains(p1.Napomena, "pravnoj formi");
+            var p = pk0.Partner("Budamar South");
             Assert.IsNull(p.Id, p.ToString());
             StringAssert.Contains(p.Kandidati, "3355"); StringAssert.Contains(p.Kandidati, "3143");
             StringAssert.Contains(p.Napomena, "dva bliska kandidata");
+            // zemlja iz adrese u dokumentu (bez pravne forme) bira jednog
+            Assert.AreEqual(3143, pk0.Partner("Budamar South", null, new[] { "SRB" }).Id);
             // izuzetak: naziv iz tmpSinonimi
-            var s = Sif(); s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR SOUTH", CiljniId = 3355 });
+            var s = Sif(); s.Sinonimi.RemoveAll(x => x.Tekst.StartsWith("BUDAMAR")); s.Sinonimi.Add(new SinonimZapis { Tip = "PARTNER", Tekst = "BUDAMAR SOUTH", CiljniId = 3355 });
             Assert.AreEqual(3355, new Poklapanje(s).Partner("Budamar South, s.r.o.").Id);
             // Panšped: sinonim → 1969 (odluka 14.11.)
             Assert.AreEqual(1969, Pk().Partner("Panšped").Id);

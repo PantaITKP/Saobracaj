@@ -299,6 +299,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 if (!poRubrici.TryGetValue(id, out var l)) poRubrici[id] = l = new List<(Rec, Rec, VrstaReci)>();
                 l.Add((r, new Rec { T = r.T, X0 = x0, Y0 = y0, X1 = x1, Y1 = y1, Velicina = r.Velicina, Font = r.Font }, vrsta));
             }
+            PrelivanjeR57(obrazac, naj, poRubrici, rez, potpisi);
             // red natpisa: reči na istom redu sa približnim natpisima (npr. "(e) Ugovor gri Vertraghéner Betarcerer-") bez cifara → natpis
             var naziviPoRedu = rez.Dodela.Where(d => d.naziv && pribliznoNatpisi.Contains(d.rec)).Select(d => d.rec).ToList();
             foreach (var kv in poRubrici)
@@ -354,6 +355,79 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 }
             }
             return rez;
+        }
+
+        /// <summary>
+        /// v2.9.2 (2): redovi r57 (prevoznik / deonica) koji na skenu prelaze donju liniju rubrike („CIM - overen“: „5059 Fortrack
+        /// Rail Kft“, „3212 Kombinovani Prevoz“ i „Subotica br. – Bor Teretna“ ispod linije, u r59/r60/r62 ili između rubrika)
+        /// pripadaju r57. Uzimaju se samo segmenti u pojasu od dva reda odmah ispod r57, poravnati sa početkom kolone prevoznika ili
+        /// deonice u r57, i samo kada bar jedan segment počinje šifrom prevoznika (4 cifre) ili sadrži oznaku stanice („br.“, „gr.“).
+        /// </summary>
+        private void PrelivanjeR57(ObrazacSablon obrazac, Poravnanje naj, Dictionary<string, List<(Rec r, Rec t, VrstaReci v)>> poRubrici, Rezultat rez, HashSet<string> potpisi)
+        {
+            if (!obrazac.Rubrike.TryGetValue("57", out var b) || !poRubrici.TryGetValue("57", out var l57) || l57.Count == 0) return;
+            var linije57 = Raspored.Linije(l57.Where(x => x.v != VrstaReci.Naziv).Select(x => x.t)).Where(l => Regex.IsMatch(l.Tekst, @"^\s*\d{4}\s+\p{L}")).ToList();
+            if (linije57.Count == 0) return;
+            var visina = linije57.SelectMany(l => l.Reci).Average(w => w.Visina);
+            // početci kolona u r57: prva reč reda (šifra prevoznika) i prva reč posle širokog razmaka (deonica)
+            var poceci = new List<double>();
+            foreach (var l in linije57)
+            {
+                poceci.Add(l.Reci[0].X0);
+                for (int i = 1; i < l.Reci.Count; i++) if (l.Reci[i].X0 - l.Reci[i - 1].X1 > Math.Max(visina, 0.006) * 1.6) poceci.Add(l.Reci[i].X0);
+            }
+            var kandidati = new List<(Rec r, Rec t, string izId)>();
+            // samo iz rubrika ispod r57 u kojima prevoznik ne upisuje ništa pre prevoza (59–61) i reči van rubrika – nikad iz r58a/r58b
+            // (ugovorni prevoznik, pečat), r62 ni r29
+            foreach (var kv in poRubrici.Where(k => k.Key == "59" || k.Key == "60" || k.Key == "61"))
+                foreach (var x in kv.Value.Where(x => x.v != VrstaReci.Naziv)) kandidati.Add((x.r, x.t, kv.Key));
+            foreach (var d in rez.Dodela.Where(d => d.rubrika == null && !d.naziv))
+            {
+                var (x0, y0) = naj.USablon(d.rec.X0, d.rec.Y0); var (x1, y1) = naj.USablon(d.rec.X1, d.rec.Y1);
+                kandidati.Add((d.rec, new Rec { T = d.rec.T, X0 = x0, Y0 = y0, X1 = x1, Y1 = y1, Velicina = d.rec.Velicina, Font = d.rec.Font }, null));
+            }
+            var pojas = Math.Max(0.012, visina * 2.6);
+            // reči van rubrika (između linija r57 i ispod nje) i reči susednih rubrika samo ispod donje linije r57
+            var ispod = kandidati.Where(x => (x.izId == null ? x.t.Cy > b[1] : x.t.Cy > b[3]) && x.t.Cy < b[3] + pojas && x.t.X0 >= b[0] - 0.005 && x.t.X1 <= b[2] + 0.01).ToList();
+            if (ispod.Count == 0) return;
+            var mapa = ispod.ToDictionary(x => x.t, x => x);
+            var preuzeti = new List<(Rec r, Rec t, string izId)>();
+            bool imaPrevoznika = false;
+            foreach (var l in Raspored.Linije(ispod.Select(x => x.t)))
+            {
+                var segmenti = new List<List<Rec>>();
+                Rec preth = null;
+                foreach (var w in l.Reci)
+                {
+                    if (preth == null || w.X0 - preth.X1 > Math.Max(visina, 0.006) * 1.6) segmenti.Add(new List<Rec>());
+                    segmenti[segmenti.Count - 1].Add(w);
+                    preth = w;
+                }
+                // red koji počinje šifrom prevoznika u koloni prevoznika ide ceo („5059 Fortrack   Kft   Szob br. – Kelebia br.“)
+                var prvi = string.Join(" ", segmenti[0].Select(w => w.T));
+                if (poceci.Any(p => Math.Abs(p - segmenti[0][0].X0) < 0.02) && Regex.IsMatch(prvi, @"^\s*\d{4}\s+\p{L}{2,}"))
+                {
+                    imaPrevoznika = true;
+                    preuzeti.AddRange(l.Reci.Select(w => mapa[w]));
+                    continue;
+                }
+                foreach (var seg in segmenti)
+                {
+                    if (!poceci.Any(p => Math.Abs(p - seg[0].X0) < 0.02)) continue;
+                    var tekst = string.Join(" ", seg.Select(w => w.T));
+                    if (!Regex.IsMatch(tekst, @"\p{L}{2,}")) continue;
+                    if (Regex.IsMatch(tekst, @"^\s*\d{4}\s+\p{L}")) imaPrevoznika = true;
+                    else if (!Regex.IsMatch(tekst, @"(?i)(?<!\p{L})(br|gr|gr\.st|granica|grenze|border)\.?(?!\p{L})|\p{L}{3,}\s*[-–]\s*\p{L}{3,}")) continue;
+                    preuzeti.AddRange(seg.Select(w => mapa[w]));
+                }
+            }
+            if (!imaPrevoznika) return;
+            foreach (var x in preuzeti)
+            {
+                if (x.izId != null) poRubrici[x.izId].RemoveAll(y => ReferenceEquals(y.r, x.r));
+                else rez.Dodela.RemoveAll(d => ReferenceEquals(d.rec, x.r));
+                l57.Add((x.r, x.t, VrstaReci.Podatak));
+            }
         }
 
         /// <summary>

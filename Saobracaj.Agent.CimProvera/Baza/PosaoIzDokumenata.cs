@@ -261,6 +261,19 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var pl = a?.ZaSrbiju.FirstOrDefault(x => !x.Kp);
             if (pl != null) { var pp = pk.Partner(pl.Naziv, null, null, "platilac"); pp.Tekst = PodaciPosla.Skrati(pl.Zapis, 400) + " → „" + pl.Naziv + "“"; p.Postavi("PlatilacID", pp, "r7", fajl); }
             else p.Postavi("PlatilacID", null, PodaciPosla.Skrati(r7, 400), "r7", 0, a?.ZaSrbiju.Any(x => x.Kp) == true ? "KP je naveden kao platilac – nije upisano" : "platilac za deonicu KP nije pronađen u r7", fajl);
+            // v2.9.2 (1): broj ponude (r7, pa r13, pa r14) određuje platioca deonice KP – ponuda ima prednost nad firmom iz r7
+            var pon = Provere.PonudaLista0(c);
+            if (pon.Oznaka != null && p.V["BrojPonude"] == null) p.Postavi("BrojPonude", pon.Oznaka, pon.Zapis, pon.Rubrika, 90, pon.Broj.HasValue ? "" : "nije ceo broj – ne traži se u tabeli ponuda", fajl);
+            if (pon.Stanje == Ponude.Stanje.Nadjena)
+            {
+                var r7Firma = pl != null && !Provere.IstiPartner(pl.Naziv, pon.Naziv) ? " (r7 navodi „" + pl.Naziv + "“ – ponuda ima prednost)" : "";
+                p.Postavi("PlatilacID", pon.PartnerId, "ponuda " + pon.Broj + " → " + pon.PartnerId + " " + pon.Naziv + r7Firma + "; " + pon.Zapis, pon.Rubrika, 100, "", fajl);
+                p.Postavi("BrojPonude", pon.Broj.Value.ToString(CultureInfo.InvariantCulture), pon.Zapis, pon.Rubrika, 100, "", fajl);
+            }
+            else if (pon.Stanje == Ponude.Stanje.NijeNadjena && pl == null)
+                p.Postavi("PlatilacID", null, PodaciPosla.Skrati(r7, 400), pon.Rubrika, 0, "ponuda " + pon.Broj + " nije pronađena u sistemu KP", fajl);
+            else if (pon.Stanje == Ponude.Stanje.Nedostupna && pl == null)
+                p.Postavi("PlatilacID", null, PodaciPosla.Skrati(r7, 400), pon.Rubrika, 0, "ponuda " + pon.Broj + " nije proverena – baza nedostupna", fajl);
 
             // roba (v2.9.1, tačka 3.1): šifra iz r24, pa r21; bez šifre – naziv robe; više NHM u istom listu → najčešća grupa (Kod4)
             var nhm = NhmSifre(c);
@@ -318,10 +331,54 @@ namespace Saobracaj.Agent.CimProvera.Baza
         internal static string Kljuc(CimList c, string referenca, int? otpravna, int? uputna)
         {
             var k = Ponavljanja.KljucLista(c);
-            if (k != null && k.StartsWith("r62:", StringComparison.Ordinal)) return k;
+            // v2.9.2 (3a.1): r62 je ključ samo kada je ispravna (važeći UIC kod zemlje, kontrolna cifra stanice); inače „r62x:“ (ne vezuje
+            // poslove – posao se traži po znacima: ID iz naslova, r8, relacija, kola, mase, datum)
+            if (k != null && k.StartsWith("r62:", StringComparison.Ordinal))
+            {
+                if (R62Ispravna(c.R62)) return k;
+                if (referenca != null && (otpravna.HasValue || uputna.HasValue))
+                    return "ref:" + Regex.Replace(Slicnost.Osnovno(referenca), @"\s", "") + "|" + (otpravna?.ToString() ?? "") + "|" + (uputna?.ToString() ?? "");
+                return "r62x:" + k.Substring(4);
+            }
             if (referenca != null && (otpravna.HasValue || uputna.HasValue))
                 return "ref:" + Regex.Replace(Slicnost.Osnovno(referenca), @"\s", "") + "|" + (otpravna?.ToString() ?? "") + "|" + (uputna?.ToString() ?? "");
             return k;
+        }
+
+        /// <summary>UIC kodovi zemalja (UIC 920-14) – r62 sa drugom oznakom zemlje nije ključ („12 16201-6“ umesto „72“).</summary>
+        internal static readonly HashSet<string> UicKodoviZemalja = new HashSet<string>
+        {
+            "10", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "40", "41", "42", "43", "44", "49", "50", "51", "52", "53", "54", "55",
+            "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "70", "71", "72", "73", "74", "75", "76", "78", "79", "80", "81", "82", "83", "84",
+            "85", "86", "87", "88", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99",
+        };
+
+        /// <summary>
+        /// v2.9.2 (3a.1): r62 je ispravna – važeći UIC kod zemlje, i kontrolna cifra šifre stanice (5 cifara + kontrolna, Luhn kao
+        /// u UIC 920-2) se slaže kada je navedena. Broj otpravljanja nema proverljivu kontrolnu cifru.
+        /// </summary>
+        internal static bool R62Ispravna(Identifikacija r)
+        {
+            if (r == null) return false;
+            var z = Regex.Replace(r.Zemlja ?? "", @"\D", "");
+            if (z.Length != 2 || !UicKodoviZemalja.Contains(z)) return false;
+            var st = Regex.Replace(r.Stanica ?? "", @"\D", "");
+            if (st.Length == 6 && !KontrolnaStanice(st.Substring(0, 5), st[5])) return false;
+            return true;
+        }
+
+        /// <summary>Kontrolna cifra šifre stanice (5 cifara): Luhn – s desna, svaka druga cifra ×2 počev od poslednje.</summary>
+        internal static bool KontrolnaStanice(string pet, char kontrolna)
+        {
+            if (pet.Length != 5 || !char.IsDigit(kontrolna)) return false;
+            int zbir = 0;
+            for (int i = 0; i < 5; i++)
+            {
+                var d = pet[4 - i] - '0';
+                var x = i % 2 == 0 ? d * 2 : d;
+                zbir += x / 10 + x % 10;
+            }
+            return (10 - zbir % 10) % 10 == kontrolna - '0';
         }
 
         /// <summary>
@@ -684,6 +741,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
         /// Neto 0, Bruto 0. Red „Ukupno / Insgesamt“ (zbir sa spiska): zbir stavki mora da se slaže (± 0,5 %), inače se koristi „Ukupno“, a
         /// stavke se označavaju za ručnu proveru (napomena). Dužina: zbir dužina kola, ili dužina voza sa spiska.
         /// </summary>
+        /// <summary>Broj kola za napomenu: „335649932019“ → „3356 4993 201-9“.</summary>
+        internal static string BrojZaNapomenu(string broj)
+        {
+            var c = BrojKolaUic.Cifre(broj);
+            return c.Length == 12 ? c.Substring(0, 4) + " " + c.Substring(4, 4) + " " + c.Substring(8, 3) + "-" + c.Substring(11) : (broj ?? "").Trim();
+        }
+
         internal static PodaciPosla IzSpiska(SpisakKola s, Poklapanje pk, string nhmPosla, string fajl)
         {
             var p = new PodaciPosla();
@@ -709,6 +773,10 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 int bk = g.Kola.Count;
                 double? Zbir(Func<KolaNaSpisku, double?> f, double udeo) => g.Kola.Count(k => f(k).HasValue) >= udeo * bk && g.Kola.Any(k => f(k).HasValue) ? g.Kola.Sum(k => f(k) ?? 0) : (double?)null;
                 double? tara = Zbir(k => k.TaraKg, 0.9);
+                // v2.9.2 (3.3): spisak kome fali tara za neka kola – napomena sa brojevima tih kola (prvi spisak SAD-HER 80: 3356 4993 201-9)
+                var bezTare = g.Kola.Where(k => !k.TaraKg.HasValue && !k.Prazna).Select(k => BrojZaNapomenu(k.Broj)).ToList();
+                if (bezTare.Count > 0 && bezTare.Count < bk && g.Kola.Any(k => k.TaraKg.HasValue))
+                    p.Napomene.Add("Spisak kola: nedostaje tara: kola " + string.Join(", ", bezTare.Take(10)) + (bezTare.Count > 10 ? " (+" + (bezTare.Count - 10) + ")" : ""));
                 double? neto = Zbir(k => k.NetoKg, 0.0001);
                 double? bruto = Zbir(k => k.BrutoKg ?? (k.TaraKg.HasValue && k.NetoKg.HasValue ? k.TaraKg + k.NetoKg : null), 0.9);
                 // prazna kola (Bor – Zabrze, CIT 23 praznih kola): jedina masa na spisku je tara kola
@@ -735,7 +803,15 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 // nelogične mase (kolone spiska pogrešno pročitane): bruto manji od neta ili tare → bruto se ne koristi; tara = neto kod
                 // natovarenih kola → tara se ne koristi (ista kolona pročitana dvaput)
                 if (bruto.HasValue && ((neto ?? 0) > bruto + 1 || (tara ?? 0) > bruto + 1)) { opis.Add("bruto sa spiska manji od neta/tare – nije upisan (ručna provera)"); p.Napomene.Add("Spisak kola: " + opis.Last()); bruto = null; }
-                if (!prazna && tara.HasValue && neto.HasValue && neto > 0 && Math.Abs(tara.Value - neto.Value) < 1) { opis.Add("tara jednaka netu – tara nije upisana (ručna provera)"); p.Napomene.Add("Spisak kola: " + opis.Last()); tara = null; }
+                if (!prazna && tara.HasValue && neto.HasValue && neto > 0 && Math.Abs(tara.Value - neto.Value) < 1) { opis.Add("tara jednaka netu – tara nije upisana (proveriti kolone spiska)"); p.Napomene.Add("Spisak kola: " + opis.Last()); tara = null; }
+                // v2.9.2 (3a.2): dve kolone sa istim zbirom (natovarena kola) – jedna je pogrešno pročitana: nijedna se ne upisuje
+                // (prazna kola: tara = bruto je ispravno)
+                if (!prazna)
+                {
+                    bool Iste(double? x, double? y) => x > 0 && y > 0 && Math.Abs(x.Value - y.Value) <= 0.001 * Math.Max(x.Value, y.Value);
+                    if (Iste(neto, bruto)) { opis.Add("neto i bruto sa istim zbirom – nisu upisani (proveriti kolone spiska)"); p.Napomene.Add("Spisak kola: " + opis.Last()); neto = null; bruto = null; }
+                    else if (Iste(tara, bruto)) { opis.Add("tara i bruto sa istim zbirom – nisu upisani (proveriti kolone spiska)"); p.Napomene.Add("Spisak kola: " + opis.Last()); tara = null; bruto = null; }
+                }
                 if (bruto == null && tara.HasValue && neto.HasValue) { bruto = tara + neto; opis.Add("bruto izračunat (neto + tara)"); }
                 else if (neto == null && tara.HasValue && bruto.HasValue && bruto >= tara) { neto = bruto - tara; opis.Add("neto izračunat (bruto − tara)"); }
                 else if (tara == null && neto.HasValue && bruto.HasValue && bruto >= neto) { tara = bruto - neto; opis.Add("tara izračunata (bruto − neto)"); }

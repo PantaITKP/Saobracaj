@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -452,6 +452,9 @@ namespace Saobracaj.Agent.CimProvera
             var posle = n.Vrednost.Length <= 140 ? redovi.LastOrDefault(x => Regex.Matches(x, @"[\p{L}\d]").Count >= 3) : null;
             // v2.8.4 (7): sidro „posle …“ samo od pouzdano pročitanog reda – ne od šuma OCR-a („jj 20“, „044j202j6;ı 03/26“)
             if (posle != null && Pravila.Dopune.SumOcr(posle)) posle = null;
+            // v2.9.2 (2): r57 – uz srpsku deonicu, nikad uz stranu
+            if (!string.IsNullOrEmpty(n.DopunaUz)) return "+ " + n.Dopuna + " (" + (en ? "for the section" : "uz deonicu") + " „" + n.DopunaUz + "“)";
+            if (n.DopunaIspod) return "+ " + n.Dopuna + " (" + (en ? "on a new line" : "u novom redu") + ")";
             return "+ " + n.Dopuna + (posle != null ? " (" + (en ? "after" : "posle") + " „" + posle + "“)" : "");
         }
 

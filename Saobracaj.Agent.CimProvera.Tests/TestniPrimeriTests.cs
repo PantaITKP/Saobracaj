@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -627,9 +627,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual("11-13-XX", Nalazi(Mail("55_16261", "filep.veronika@rthkft.hu")).Single(n => n.Pravilo == "R16").Dopuna);
             Assert.AreEqual("XXXXX-X", Pravila.Sablon.BrojOtpravljanja); Assert.AreEqual("XX XXXXX-X", Pravila.Sablon.Stanica);
             Assert.AreEqual("XX XX XXXX XXX-X", Pravila.Sablon.BrojKola); Assert.AreEqual("26RSXXXXXXXXXXXXX", Pravila.Sablon.Mrn);
-            // GIPS r1: „RS, Marko Marković“ (zemlja iz „21000 Novi Sad“, kontakt kao primer); r24: „2520“ precrtano, „252010“ pored
+            // GIPS r1: „RS, XXXX“ (zemlja iz „21000 Novi Sad“; v2.9.2 (3.5): kontakt nikad izmišljeno ime); r24: „2520“ precrtano, „252010“ pored
             var g = Mail("GIPS", "bosstradezonasabac@gmail.com", original: true, naslov: "IZVOZ");
-            Assert.AreEqual("RS, Marko Marković", Nalazi(g).Single(n => n.Pravilo == "R1").Dopuna);
+            Assert.AreEqual("RS, XXXX", Nalazi(g).Single(n => n.Pravilo == "R1").Dopuna);
             var nhm = Nalazi(g).Single(n => n.Pravilo == "R24-NHM6");
             Assert.AreEqual("252010", nhm.Dopuna); Assert.AreEqual("2520", nhm.Pogresno); Assert.IsTrue(nhm.DopunaSigurna);
             // opis formata se nikad ne upisuje

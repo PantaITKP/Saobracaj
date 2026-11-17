@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -41,13 +41,15 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public const string PostanskiMesto = "poštanski broj mesto";
         public const string MestoEn = "postcode town";
         public const string Nhm = "XXXXXX";
+        /// <summary>v2.9.2 (3.5): kontakt osoba – nikad izmišljeno ime.</summary>
+        public const string Kontakt = "XXXX";
     }
 
     internal static class Dopune
     {
         public static void Popuni(Nalaz n, Pogodak pg, Kontekst k)
         {
-            n.Dopuna = ""; n.Pogresno = ""; n.DopunaSigurna = false; n.DopunaRedovi = null; n.DopunaUzOznake = false; n.DopunaPoPoljima = null;
+            n.Dopuna = ""; n.Pogresno = ""; n.DopunaSigurna = false; n.DopunaRedovi = null; n.DopunaUzOznake = false; n.DopunaPoPoljima = null; n.DopunaIspod = false; n.DopunaUz = null;
             if (n.SamoInterno || n.Tezina == Tezina.Info) return;
             // v2.8.3: na skenu se ništa ne dopisuje u rubriku koja nije pouzdano pročitana (nečitljiva, ispod praga) ni u „praznu“ –
             // agent ne zna šta stvarno piše (TCDD r4: OCR nije pročitao primaoca); ostaje samo okvir sa brojem
@@ -130,7 +132,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     else if (Fali("poštanski broj i mesto", "postcode and place")) delovi.Add(en ? Sablon.MestoEn : Sablon.PostanskiMesto);
                     if (prazna || Fali("zemlja", "country")) delovi.Add(iso ?? Sablon.Zemlja);
                     // kontakt pošiljaoca (primer GIPS r1: „RS, Marko Marković“) – kada u rubrici nema telefona ni e-maila
-                    if (broj == "1" && Prazno(st.Telefon) && Prazno(st.Email)) delovi.Add(en ? "John Smith" : "Marko Marković");
+                    // v2.9.2 (3.5): ime kontakt osobe se ne izmišlja („Marko Marković“, „John Smith“) – šablon „XXXX“
+                    if (broj == "1" && Prazno(st.Telefon) && Prazno(st.Email)) delovi.Add(Sablon.Kontakt);
                     return (string.Join(", ", delovi.Where(x => !Prazno(x))), null, false);
                 }
                 case "R1-ISO":
@@ -208,7 +211,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     return (k.P.Kp.Uic + " " + k.P.Kp.Naziv, pogresno, false);
                 }
                 case "KP3":
+                    return (k.P.Kp.Uic + " KP", null, false);
                 case "KP57":
+                    // v2.9.2 (2): KP vozi samo unutar Srbije – dopuna u novom redu, uz srpsku deonicu ako je ima; nikad pored strane deonice
+                    n.DopunaIspod = true;
+                    n.DopunaUz = Provere.SrpskaDeonicaR57(k.C.R57);
                     return (k.P.Kp.Uic + " KP", null, false);
                 case "KP7-PLATILAC":
                     return (en ? "Payer for SRB: " + Sablon.Naziv : "Platilac za deonicu SRB: " + Sablon.Naziv, null, false);
@@ -296,6 +303,60 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             return rez;
         }
 
+        // ------------------------------------------------------------------------------------------- kontrola pre slanja
+
+        /// <summary>
+        /// v2.9.2 (3.5): reči koje PDF primer sme da dopiše, a nisu iz dokumenta – oznake zemalja, šabloni, oznake masa, nazivi
+        /// dokumenata u r9, „Platilac za deonicu SRB“, KP. Sve ostale reči dopune moraju biti iz dokumenata maila.
+        /// </summary>
+        private static readonly HashSet<string> RecnikPrimera = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "platilac", "za", "deonicu", "deonica", "srb", "payer", "for", "ulica", "i", "broj", "postanski", "mesto", "street", "and", "number", "postcode",
+            "town", "kp", "kombinovani", "prevoz", "doo", "d", "o", "uic", "tara", "neto", "bruto", "netto", "tare", "brutto", "gross", "net", "kg", "t", "n", "g",
+            "mrn", "e", "odobrenje", "br", "approval", "no", "spisak", "kola", "wagon", "list", "faktura", "invoice", "izvozna", "deklaracija", "export", "declaration",
+            "carinski", "dokument", "customs", "document", "uverenje", "o", "poreklu", "certificate", "of", "origin", "sertifikat", "dodatni", "additional", "sheet",
+            "eur", "x", "cim", "cuv", "cit", "nhm", "un", "rid", "adr", "svi", "prevoznici", "all", "carriers", "franko", "nefranko", "dap", "ddp", "fca", "exw", "cpt", "cip",
+            "kombinovani", "prevoz", "d.o.o",
+        };
+
+        /// <summary>v2.9.2 (3.5): reči dopune (sa slovima) koje nisu iz dokumenata maila, X šablon ni iz rečnika primera; prazno = dopuna je ispravna.</summary>
+        internal static List<string> NepoznateReci(Nalaz n, Kontekst k)
+        {
+            var tekst = n.DopunaPoPoljima != null && n.DopunaPoPoljima.Count > 0 ? string.Join(" ", n.DopunaPoPoljima.Values)
+                : n.DopunaRedovi != null ? string.Join(" ", n.DopunaRedovi) : n.Dopuna ?? "";
+            var rez = new List<string>();
+            if (tekst.Length == 0) return rez;
+            // navod izvora u zagradi („(indeksni brojevi iz dozvole, ruma.pdf str. 8, 9)“, „(u T1: 262190)“) nije dopisan podatak lista
+            tekst = Regex.Replace(tekst, @"\([^()]*(?:\.\w{3,4}\b|\bstr\.|\bpage\b|\bu T1\b|\biz\b)[^()]*\)", " ");
+            var dok = ReciDokumenata(k);
+            foreach (Match m in Regex.Matches(tekst, @"[\p{L}\d][\p{L}\d]*"))
+            {
+                var w = m.Value;
+                if (!Regex.IsMatch(w, @"\p{L}")) continue;                       // brojevi (mase, datumi, šifre) – oblik proverava pravilo
+                if (Regex.IsMatch(w, @"^(?:\d*[A-Z]{0,2}\d*X+\d*|X+)$")) continue;    // šablon sa X („XXXXX“, „26RSXXXX…“, „XX“)
+                var nw = Norm(w);
+                if (nw.Length == 0 || RecnikPrimera.Contains(nw) || Regex.IsMatch(w, @"^[A-Z]{2}$") || dok.Contains(nw)) continue;
+                rez.Add(w);
+            }
+            return rez.Distinct().ToList();
+        }
+
+        private static string Norm(string s) => Regex.Replace(Saobracaj.Common.Text.TekstUtil.BezDijakritika(s ?? "").ToLowerInvariant(), @"[^a-z0-9]", "");
+
+        /// <summary>Sve reči iz pročitanih dokumenata maila (rubrike, spiskovi, carinski…), normalizovane.</summary>
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Kontekst, HashSet<string>> reciKonteksta = new System.Runtime.CompilerServices.ConditionalWeakTable<Kontekst, HashSet<string>>();
+
+        private static HashSet<string> ReciDokumenata(Kontekst k) => reciKonteksta.GetValue(k, ReciDokumenata0);
+
+        private static HashSet<string> ReciDokumenata0(Kontekst k)
+        {
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(k.SviSaDosijeom, new Newtonsoft.Json.JsonSerializerSettings { ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore });
+            var s = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Match m in Regex.Matches(json, @"[\p{L}\d]+")) s.Add(Norm(m.Value));
+            foreach (var w in Regex.Matches(k.P.Kp.Naziv ?? "", @"\p{L}+").Cast<Match>()) s.Add(Norm(w.Value));
+            return s;
+        }
+
         // ------------------------------------------------------------------------------------------- vrednosti iz lista
 
         private static string Kratko(string tip, bool en)
@@ -347,6 +408,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var norm = " " + Regex.Replace(Saobracaj.Common.Text.TekstUtil.BezDijakritika(tekst).ToLowerInvariant(), @"[^a-z0-9]+", " ") + " ";
             foreach (var kv in Gradovi.OrderByDescending(x => x.Key.Length))
                 if (norm.Contains(" " + kv.Key + " ")) return kv.Value;
+            // v2.9.2 (3.4): poljski poštanski broj „41-800“ (jedini oblik NN-NNN u Evropi) i PDV broj sa oznakom zemlje („PL6292256576“)
+            if (Regex.IsMatch(tekst, @"(?<![\d\-/.])\d{2}-\d{3}(?![\d\-/.])")) return "PL";
+            var pdv = Regex.Match(tekst, @"(?<![A-Z])(PL|SK|CZ|HU|DE|AT|RO|BG|HR|SI|IT|TR|GR|NL|BE|FR|ATU)\s?(\d{8,12})(?!\d)");
+            if (pdv.Success) return pdv.Groups[1].Value == "ATU" ? "AT" : pdv.Groups[1].Value;
             return null;
         }
 
@@ -365,6 +430,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             // CZ, SK, PL, AT
             ["lovosice"] = "CZ", ["praha"] = "CZ", ["prague"] = "CZ", ["ostrava"] = "CZ", ["brno"] = "CZ", ["decin"] = "CZ", ["svetec"] = "CZ", ["usti nad labem"] = "CZ",
             ["bratislava"] = "SK", ["kosice"] = "SK", ["dunajska streda"] = "SK", ["gdansk"] = "PL", ["warszawa"] = "PL", ["katowice"] = "PL",
+            // v2.9.2 (3.4): CIT 18 koks (Zabrze 41-800 → PL)
+            ["zabrze"] = "PL", ["gliwice"] = "PL", ["krakow"] = "PL", ["wroclaw"] = "PL", ["poznan"] = "PL", ["sosnowiec"] = "PL", ["slawkow"] = "PL", ["dabrowa gornicza"] = "PL",
+            ["chalupki"] = "PL", ["rybnik"] = "PL", ["jastrzebie zdroj"] = "PL", ["zilina"] = "SK", ["trnava"] = "SK", ["nitra"] = "SK", ["presov"] = "SK", ["sturovo"] = "SK",
+            ["cadca"] = "SK", ["bohumin"] = "CZ", ["plzen"] = "CZ", ["olomouc"] = "CZ",
             ["wien"] = "AT", ["vienna"] = "AT", ["linz"] = "AT", ["graz"] = "AT", ["villach"] = "AT", ["salzburg"] = "AT", ["enns"] = "AT",
             // IT, SI, HR
             ["poggio rusco"] = "IT", ["nonantola"] = "IT", ["milano"] = "IT", ["verona"] = "IT", ["trieste"] = "IT", ["bologna"] = "IT", ["padova"] = "IT", ["busca"] = "IT", ["san zeno"] = "IT",

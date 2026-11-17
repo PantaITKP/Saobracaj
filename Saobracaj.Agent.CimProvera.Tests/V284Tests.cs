@@ -90,9 +90,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 var s = StranaIzTeksta(t, 1);
                 var rez = c.Klasifikuj(new Prilozi.Prilog { Naziv = "Dokumentacija 1637.pdf" }, new List<Strana> { s });
                 Assert.IsFalse(rez.Dokumenti.Any(d => TipDokumenta.JeTovarniList(d.Tip)), string.Join("; ", rez.StraneOpis));
-                // ali liči na obrazac (12 natpisa rubrika) i nije pročitana kao list → ručna provera, nikad „bez odgovora“
-                Assert.IsTrue(rez.NeprocitaneStrane > 0, "strana koja liči na obrazac ide na ručnu proveru: " + rez.Napomena);
-                StringAssert.Contains(rez.Napomena, "liči na obrazac CIM/CUV");
+                // v2.9.2 (3.1b): CIM se prepoznaje po mreži rubrika i naslovu obrasca, ne po rečima – 12 reči koje liče na natpise
+                // (bez naslova obrasca i bez mreže) nisu „liči na obrazac“ (opšti uslovi Imerys); interna poruka samo ako mail pominje CIM
+                Assert.AreEqual(0, rez.NeprocitaneStrane, rez.Napomena);
                 // ime fajla „CIM …“: oprez – i dalje tovarni list (ručna provera ako obrazac nije prepoznat)
                 var rez2 = c.Klasifikuj(new Prilozi.Prilog { Naziv = "CIM 256F.pdf" }, new List<Strana> { StranaIzTeksta(t, 1) });
                 Assert.IsTrue(rez2.Dokumenti.Any(d => TipDokumenta.JeTovarniList(d.Tip)), string.Join("; ", rez2.StraneOpis));

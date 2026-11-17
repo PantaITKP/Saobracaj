@@ -86,6 +86,42 @@ namespace Saobracaj.Agent.CimProvera.Tests
 
         private static CimList List(Ishod i) => i.Provera.Listovi.Single().Cim;
 
+        // ------------------------------------------------------------------------------------------- v2.9.2 (17.11.)
+
+        /// <summary>v2.9.2: „CIM - overen.pdf“ (koks Zabrze → Bor Teretna): Ponuda 8957 → platilac (bez greške r7), KP u r57 (redovi ispod linije), bez izmišljenih imena.</summary>
+        [TestMethod, TestCategory("Regresija")]
+        public void V292_CIM_overen_ponuda_r57_bez_imena()
+        {
+            Baza.Ponude.Zamena = b => b == 8957 ? new Baza.Ponude.Rezultat { Stanje = Baza.Ponude.Stanje.Nadjena, Broj = b, PartnerId = 1574, Naziv = "VTG RAIL LOGISTICS AUSTRIA GMBH" } : new Baza.Ponude.Rezultat { Stanje = Baza.Ponude.Stanje.NijeNadjena, Broj = b };
+            try
+            {
+                var i = Proveri(@"nezavisni\2026-11-17\CIM - overen.pdf");
+                NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NEJASNO");
+                Assert.IsFalse(Svi(i).Any(n => n.Pravilo == "KP57" && n.Tezina == Tezina.Greska), Opis(i));
+                Assert.IsFalse(Svi(i).Any(n => (n.Dopuna ?? "").Contains("Marko") || (n.Dopuna ?? "").Contains("John") || (n.Dopuna ?? "").Contains("Platilac za deonicu SRB")), Opis(i));
+                StringAssert.Contains(List(i).R57.Tekst, "3212 Kombinovani Prevoz");
+                Assert.IsTrue(Svi(i).Any(n => n.Kljuc == "ponuda" && n.SamoInterno), Opis(i));
+            }
+            finally { Baza.Ponude.Zamena = null; }
+        }
+
+        /// <summary>v2.9.2: VOZ 16.11.2026 (gips Ostružnica – Visonta): „3212 KP“ u r57 i pečat „UIC CODE KP 3212“ preko r58 – ni r57 ni r58a nisu greška.</summary>
+        [TestMethod, TestCategory("Regresija")]
+        public void V292_VOZ_16_11_r57_i_r58a_nisu_greska()
+        {
+            var i = Proveri(@"nezavisni\2026-11-17\16.11.2026. - VOZ.pdf");
+            Assert.IsFalse(Svi(i).Any(n => (n.Pravilo == "KP57" || n.Pravilo == "KP2") && n.Tezina == Tezina.Greska), Opis(i));
+        }
+
+        /// <summary>v2.9.2 (3.4): CIT 18 koks – zemlja pošiljaoca iz adrese (Zabrze 41-800 → PL), ne iz r62 (SK).</summary>
+        [TestMethod, TestCategory("Regresija")]
+        public void V292_CIT18_koks_zemlja_posiljaoca_iz_adrese()
+        {
+            var i = Proveri(@"nezavisni\2026-11-17\CIT 18 31555958441-4.pdf");
+            var r1 = Svi(i).Where(n => n.Rubrika == "1" && !string.IsNullOrEmpty(n.Dopuna)).ToList();
+            Assert.IsTrue(r1.Count > 0 && r1.All(n => n.Dopuna.StartsWith("PL")), Opis(i));
+        }
+
         // ------------------------------------------------------------------------------------------- HOLCIM
 
         [TestMethod, TestCategory("Regresija")]
@@ -451,7 +487,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 c.R57.Tekst = "3212   ŠID (U.M. KUKUJEVCI)-ŠID/TOVARNIK"; c.R57.Prevoznici = new List<Prevoznik> { new Prevoznik { Sifra = "3212", Naziv = "", Deonica = "ŠID (U.M. KUKUJEVCI)-ŠID/TOVARNIK" } };
                 c.R58a = new UgovorniPrevoznik(); c.R62 = new Identifikacija();
             });
-            Assert.IsFalse(r.Listovi.SelectMany(l => l.Nalazi).SelectMany(n => new[] { n }.Concat(n.Takodje)).Any(n => n.Pravilo == "KP57"));
+            // v2.9.2 (odluka 17.11.): samo UIC bez naziva – upozorenje „dopisati naziv“, nikad greška
+            Assert.IsFalse(r.Listovi.SelectMany(l => l.Nalazi).SelectMany(n => new[] { n }.Concat(n.Takodje)).Any(n => n.Pravilo == "KP57" && n.Tezina == Tezina.Greska));
         }
 
         // ------------------------------------------------------------------------------------------- snimak nalaza (pre/posle izmene pravila)

@@ -33,10 +33,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
     {
         public int Dokumenata, NovihPoslova, IzmenjenihPoslova, IstihPoslova, Teretnica, Stavki, Povezano;
         public List<string> Napomene = new List<string>();
+        /// <summary>v2.9.2 (3.3): izmene postojećih poslova u ovom mailu („posao 297: Tara1 632.400 → 666.700“) – za kratku internu poruku.</summary>
+        public List<string> Promene = new List<string>();
         public override string ToString() =>
             "dokumenata " + Dokumenata + ", poslova novih " + NovihPoslova + " / izmenjenih " + IzmenjenihPoslova + " / istih " + IstihPoslova
             + ", teretnica " + Teretnica + " (stavki " + Stavki + ")" + (Povezano > 0 ? ", naknadno povezano " + Povezano : "")
-            + (Napomene.Count > 0 ? "; " + string.Join("; ", Napomene) : "");
+            + (Napomene.Count > 0 ? "; " + string.Join("; ", Napomene) : "")
+            + (Promene.Count > 0 ? "; izmene: " + string.Join("; ", Promene.Take(12)) + (Promene.Count > 12 ? " (+" + (Promene.Count - 12) + ")" : "") : "");
     }
 
     /// <summary>
@@ -101,6 +104,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
         public IshodUpisa Upisi(MailZaUpis m, SqlTransaction spoljna)
         {
             var ishod = new IshodUpisa();
+            promeneMaila = ishod.Promene;
             var svoja = spoljna == null;
             c = svoja ? Otvori(konekcija) : spoljna.Connection;
             try
@@ -141,6 +145,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             foreach (var f in fajlovi.GroupBy(x => x.Hes).Select(g => g.First()))
             {
                 if (Raspakivanje.Ukras(f) != null) continue;
+                if (Raspakivanje.SopstveniPrimer(f) != null) continue;   // v2.9.2 (3.1c): sopstveni PDF primer se ne upisuje
                 var docs = dokumenti.Where(d => IstiFajl(d.Fajl, f.Naziv)).ToList();
                 dokId[f.Naziv] = UpisiDokument(m, f, docs);
                 ishod.Dokumenata++;
@@ -166,7 +171,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 {
                     posloviMaila.Add((id, l.P));
                     foreach (var did in l.SviDokumenti.Distinct())
-                        Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j, KljucPosiljke = ISNULL(KljucPosiljke, @k) WHERE ID = @d", "@j", id, "@k", PodaciPosla.Skrati(l.P.KljucPosiljke, 200), "@d", did);
+                        // v2.9.2 (3a.7): isti fajl primljen ponovo ne „odvaja“ raniji posao od dokumenta – JobID se ne prepisuje
+                        Izvrsi("UPDATE planiranje.tmpDokument SET JobID = ISNULL(JobID, @j), KljucPosiljke = ISNULL(KljucPosiljke, @k) WHERE ID = @d", "@j", id, "@k", PodaciPosla.Skrati(l.P.KljucPosiljke, 200), "@d", did);
                 }
             }
 
@@ -403,6 +409,9 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
             }
         }
 
+        /// <summary>v2.9.2 (3.3): izmene poslova u mailu koji se trenutno upisuje.</summary>
+        private List<string> promeneMaila = new List<string>();
+
         private void PrimeniPromene(int jid, IDictionary<string, object> stari, PodaciPosla p, List<string> promene, List<string> rucno, int? dokId, string razlog, string napomena)
         {
             var menja = promene.Where(k => !rucno.Contains(k, StringComparer.OrdinalIgnoreCase)).ToList();
@@ -422,6 +431,7 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
             foreach (var k in menja)
             {
                 Istorija(jid, null, k, Tekst(stari[k]), Tekst(p.V[k]), dokId, razlog, null);
+                if (stari[k] != null && !(stari[k] is DBNull)) promeneMaila.Add("posao " + jid + ": " + k + " " + Tekst(stari[k]) + " → " + Tekst(p.V[k]) + " (" + razlog + ")");
                 var po = p.Poreklo.FirstOrDefault(x => string.Equals(x.Kolona, k, StringComparison.OrdinalIgnoreCase));
                 if (po != null) UpisiPoreklo(jid, null, po, dokId);
             }
@@ -490,7 +500,9 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 var istiVoz = nedavni.Where(j => ExcelCitac.BrojVoza(j.Referenca) == voz || ExcelCitac.BrojVoza(j.Naslovi) == voz).OrderByDescending(j => j.Id).ToList();
                 if (istiVoz.Count >= 1) return istiVoz[0].Id;
             }
-            var tKola = TeretnicaIstihKola(kola, true);
+            // v2.9.2: natovaren spisak ne ide uz posao praznih istih kola (exLDC7 → LDC8); spisak praznih kola sme uz natovaren posao
+            // (povratak praznih kola – grupa 2)
+            var tKola = TeretnicaIstihKola(kola, true, Natovaren(s) == true ? true : (bool?)null);
             if (tKola?.jobId != null) return tKola.Value.jobId;
             return PosaoIzDosijea(m);
         }
@@ -514,7 +526,19 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         }
 
         /// <summary>Teretnica sa bar 60 % istih kola (poslednjih 10 dana); samoSaPoslom = samo teretnice povezane sa poslom.</summary>
-        private (int id, int? jobId)? TeretnicaIstihKola(List<string> kola, bool samoSaPoslom)
+        /// <summary>
+        /// v2.9.2 (3a.2): spisak natovarenih kola (neto na kolima koja nisu prazna) – true; spisak praznih kola – false; bez masa – null.
+        /// Ista kola u suprotnom stanju su drugi voz (exLDC7 prazan Kiskőrös → Šid, pa LDC8 natovaren Šid → Hamm).
+        /// </summary>
+        internal static bool? Natovaren(SpisakKola s)
+        {
+            if (s == null || s.Kola.Count == 0) return null;
+            if (s.Kola.Any(k => !k.Prazna && (k.NetoKg ?? 0) > 0) || (s.UkupnoNetoKg ?? 0) > 0 && !s.Kola.All(k => k.Prazna)) return true;
+            if (s.Kola.All(k => k.Prazna) || s.Kola.Any(k => k.TaraKg > 0) && s.Kola.All(k => (k.NetoKg ?? 0) == 0)) return false;
+            return null;
+        }
+
+        private (int id, int? jobId)? TeretnicaIstihKola(List<string> kola, bool samoSaPoslom, bool? natovaren = null)
         {
             if (kola.Count == 0) return null;
             var brojevi = kola.Select(BrojKolaUic.ZaTeretnicu).ToList();
@@ -522,9 +546,12 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var imena = new List<string>();
             for (int i = 0; i < brojevi.Count && i < 200; i++) { imena.Add("@k" + i); parametri.Add("@k" + i); parametri.Add(brojevi[i]); }
             parametri.Add("@dana"); parametri.Add(DanaZaVezu);
+            parametri.Add("@nat"); parametri.Add(natovaren.HasValue ? (object)(natovaren.Value ? 1 : 0) : DBNull.Value);
             var sql = @"SELECT TOP 1 t.ID, t.JobID, COUNT(*) AS n, (SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke x WHERE x.BrojTeretnice = t.ID) AS ukupno
 FROM planiranje.tmpTeretnica t JOIN planiranje.tmpTeretnicaStavke s ON s.BrojTeretnice = t.ID
 WHERE s.BrojKola IN (" + string.Join(", ", imena) + ") AND t.Kreirano >= DATEADD(day, -@dana, SYSDATETIME())" + (samoSaPoslom ? " AND t.JobID IS NOT NULL" : "") + @"
+  AND (@nat IS NULL OR NOT EXISTS (SELECT 1 FROM planiranje.tmpTeretnicaStavke y WHERE y.BrojTeretnice = t.ID) OR
+       (CASE WHEN EXISTS (SELECT 1 FROM planiranje.tmpTeretnicaStavke x WHERE x.BrojTeretnice = t.ID AND x.Neto > 0) THEN 1 ELSE 0 END) = @nat)
 GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             using (var cmd = Komanda(sql, parametri.ToArray()))
             using (var r = cmd.ExecuteReader())
@@ -594,7 +621,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             var nove = Stavke(s, nhmPosla);
             var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
             int? tid = postoji == null ? (int?)null : Convert.ToInt32(postoji);
-            if (tid == null && TeretnicaIstihKola(s.Kola.Select(k => k.Broj).ToList(), false) is var tk && tk != null && (jobId == null || tk.Value.jobId == null || tk.Value.jobId == jobId)) tid = tk.Value.id;
+            if (tid == null && TeretnicaIstihKola(s.Kola.Select(k => k.Broj).ToList(), false, Natovaren(s)) is var tk && tk != null && (jobId == null || tk.Value.jobId == null || tk.Value.jobId == jobId)) tid = tk.Value.id;
             var napomena = N(System.IO.Path.GetFileName(d?.Fajl ?? "") + (d?.Strane.Count > 0 ? ", str. " + (d.Strane.Count == 1 ? d.Strane[0].ToString() : d.Strane.Min() + "–" + d.Strane.Max()) : ""), 512);
             var brojTer = s.R62.Broj.Length > 0 ? N(string.Join(" ", new[] { s.R62.Zemlja, s.R62.Stanica, s.R62.Preduzece, s.R62.Broj }.Where(x => !string.IsNullOrEmpty(x))), 100) : (object)DBNull.Value;
             var referenca = N(BrojVozaSpiska(s, d, m) is var v && v.Length > 0 ? "voz " + v : m.Naslov, 100);

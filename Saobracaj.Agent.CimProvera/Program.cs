@@ -55,6 +55,7 @@ namespace Saobracaj.Agent.CimProvera
             var log = new Log(cfg.LogFolder, cfg.LogDana);
             Slanje.Dnevnik = log;   // v2.8.4: zaštita režima Test upisuje uklonjene primaoce u log
             Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
+            Baza.Ponude.Konekcija = cfg.Konekcija;   // v2.9.2: platilac preko broja ponude (samo čitanje dbo.Ponudba)
             // Syncfusion ključ (Word → PDF) iz Syncfusion.dpapi; greška se upisuje tek kada Word prilog treba pretvoriti
             try { Prilozi.WordUPdf.UcitajKljuc(); } catch { }
 
@@ -288,6 +289,9 @@ namespace Saobracaj.Agent.CimProvera
             {
                 try { using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT TOP 1 ID FROM planiranje.tmpNHM", k)) cmd.ExecuteScalar(); }
                 catch (System.Data.SqlClient.SqlException ex) { log.Upozorenje("Ponovna obrada čeka: nema pristupa planiranje.tmpNHM (pokrenuti OP_913_tmp_Prava.sql) – " + ex.Message); return 2; }
+                // v2.9.2: bez prava na dbo.Ponudba (OP_913) platilac preko broja ponude bi ostao NULL – obrada čeka
+                try { using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT TOP 0 PonStPon, PonPart FROM dbo.Ponudba", k)) cmd.ExecuteScalar(); }
+                catch (System.Data.SqlClient.SqlException ex) { log.Upozorenje("Ponovna obrada čeka: nema pristupa dbo.Ponudba (pokrenuti OP_913_tmp_Prava.sql) – " + ex.Message); return 2; }
                 // --obrisi-podatke: samo PODACI iz tmp tabela (kao OP_915_tmp_BrisanjePodataka.sql); tmpSinonimi i tmpNHM ostaju
                 if (a.Contains("--obrisi-podatke"))
                 {
@@ -534,7 +538,10 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
                 foreach (var x in ishod.Preskoceno) sb.AppendLine("  (preskočeno) " + x);
                 foreach (var x in ishod.NisuProcitani) sb.AppendLine("  (NIJE PROČITANO) " + x);
                 sb.AppendLine();
-                if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0)
+                var teloV = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "";
+                if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0 && !Obrada.MozdaCim(ishod, naslovMaila, teloV))
+                    sb.AppendLine("BEZ ODGOVORA (v2.9.2, 3.2) – prilozi nisu pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + "), a ni strana ne liči na CIM/CUV ni mail ne pominje CIM/CUV/tovarni list – samo log i tmpDokument.");
+                else if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0)
                     sb.AppendLine("Tovarni list nije pronađen među pročitanim prilozima, ali prilozi nisu pouzdano pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + ") – rezultat nije konačan (interna ručna provera, ništa pošiljaocu).");
                 // v2.8.4 (1): mail bez tovarnog lista – nikakav odgovor (ni interni), samo red u logu
                 else if (!r.ImaTovarniList) sb.AppendLine("BEZ ODGOVORA – " + Izvestaj.LogBezTovarnogLista(r.Dokumenti));

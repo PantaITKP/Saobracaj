@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -318,14 +318,18 @@ namespace Saobracaj.Agent.CimProvera
                     }
                     catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": " + Ponavljanja.Ime + " nije upisan: " + ex.Message); }
                     // v2.9.0: upis u privremene tabele – posle provere i izveštaja; greška ne menja ni jedno ni drugo
-                    UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, rr, prilozi, obrada.PoslednjaPosiljka);
+                    var iu = UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, rr, prilozi, obrada.PoslednjaPosiljka);
+                    // v2.9.2 (3.3): mail bez novog izveštaja (isti tovarni list, nova verzija spiska) koji je ažurirao posao – u režimu Test
+                    // kratka interna poruka šta je ažurirano (pošiljaocu ništa)
+                    if (!prijavljeno && iu != null && iu.Promene.Count > 0) PosaljiInternoAzurirano(m, iu);
                 }
                 var istiPrilog = ponavljanja.IstiPrilozi(prilozi);
                 if (istiPrilog != null)
                 {
                     log.Info("  UID " + uid.Id + ": isti prilog kao " + istiPrilog.Oznaka + " (" + istiPrilog.Vreme.ToString("dd.MM. HH:mm") + ", " + istiPrilog.Ishod + ") – već obrađeno; ništa se ne šalje.");
                     // v2.9.1 (5.7): prijem se ipak beleži u tmpDokument, a tekst maila ide u Napomenu posla
-                    UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, null, prilozi, null);
+                    var iu0 = UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, null, prilozi, null);
+                    if (iu0 != null && iu0.Promene.Count > 0) PosaljiInternoAzurirano(m, iu0);
                     ps.Status = "IstiPrilog"; return Korak.Gotova;
                 }
 
@@ -386,6 +390,16 @@ namespace Saobracaj.Agent.CimProvera
                 if (r.ImaTovarniList && !dryRun)
                     try { IstorijaListova.Dodaj(cfg.StanjeFolder, r.Listovi.Where(l => l.Cim != null && string.IsNullOrEmpty(l.Cim.NeprepoznatObrazac)).Select(l => IstorijaListova.Iz(l, r.Dokumenti, datum, Regex(m.Subject)))); }
                     catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": istorija listova nije upisana: " + ex.Message); }
+                if (!r.ImaTovarniList && (ishod.NisuProcitani.Count > 0 || ishod.Neprepoznati.Count > 0 || ishod.NisaPouzdanost.Count > 0)
+                    && !Obrada.MozdaCim(ishod, m.Subject, TeloMaila(m)))
+                {
+                    // v2.9.2 (3.2): nepročitan prilog, a ni strana ne liči na CIM/CUV ni mail ne pominje CIM, CUV, tovarni list, teretnicu
+                    // ili Frachtbrief („Spisak za dan 17.11.“ – rukom pisana lista, „za NT-ove“, „Sporna dokumentacija“) – samo log i tmpDokument
+                    log.Info("  UID " + uid.Id + ": prilozi nisu pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.Neprepoznati).Concat(ishod.NisaPouzdanost)) + "), a mail ne pominje CIM/CUV/tovarni list – bez interne poruke.");
+                    ps.Status = "NeprocitanoBezCim";
+                    Zapamti("prilozi nisu pročitani – mail ne pominje CIM, bez poruke", r, false);
+                    return Korak.Gotova;
+                }
                 if (!r.ImaTovarniList && (ishod.NisuProcitani.Count > 0 || ishod.Neprepoznati.Count > 0 || ishod.NisaPouzdanost.Count > 0))
                 {
                     // Ne sme se zaključiti "nema CIM-a" ako neki prilog nije ni pročitan ni prepoznat: samo interna poruka, ne pošiljaocu.
@@ -418,6 +432,15 @@ namespace Saobracaj.Agent.CimProvera
                     return Korak.Gotova;
                 }
 
+                // v2.9.2 (1): broj ponude nije proveren (baza nedostupna) – ništa se ne šalje, ponavlja se u sledećem prolazu; posle
+                // poslednjeg pokušaja izveštaj ide samo INTERNO (list je na ručnoj proveri)
+                if (r.Listovi.SelectMany(l => l.Nalazi).Any(x => x.Kljuc == "ponuda-baza") && ps.Pokusaja < cfg.MaxPokusaja - 1)
+                {
+                    log.Upozorenje("  UID " + uid.Id + ": ponuda nije proverena – baza nedostupna; ponovo u sledećem prolazu.");
+                    Upozori(stanje, "ponuda-baza", "Broj ponude iz tovarnog lista nije proveren u dbo.Ponudba (baza nedostupna ili nalog svc_cimprovera nema pravo čitanja – pokrenuti OP_913_tmp_Prava.sql). Mailovi sa brojem ponude se ponavljaju u sledećem prolazu.", 24);
+                    ps.PoslednjaGreska = "ponuda nije proverena – baza nedostupna";
+                    return Korak.PrivremenaGreska;
+                }
                 ps.Greske = r.BrojGresaka; ps.Upozorenja = r.BrojUpozorenja;
                 ps.Status = r.BrojGresaka > 0 ? "Greske" : "Ispravan";
                 log.Info("  UID " + uid.Id + ": " + Izvestaj.OpisListova(r, false) + ", grešaka " + r.BrojGresaka + ", upozorenja " + r.BrojUpozorenja
@@ -448,14 +471,30 @@ namespace Saobracaj.Agent.CimProvera
         /// v2.9.0: upis obrađenog maila u planiranje.tmp* (UpisUBazu = true). Jedan mail = jedna transakcija; greška → rollback, log i
         /// jedno interno obaveštenje (najviše jednom na 6 h). Provera i izveštaj su već završeni i ne menjaju se.
         /// </summary>
-        private void UpisiUBazu(Stanje stanje, PravilaSkup pravila, MimeMessage m, long uid, string folder, RezultatProvere r, List<(string ime, byte[] sadrzaj)> prilozi, Dosije.Posiljka dosije)
+        /// <summary>v2.9.2 (3.3): kratka interna poruka (samo režim Test) – mail bez novog izveštaja je ažurirao posao (nova verzija spiska kola).</summary>
+        private void PosaljiInternoAzurirano(MimeMessage m, Baza.IshodUpisa iu)
         {
-            if (!cfg.UpisUBazu || dryRun) return;   // r == null: ponovljeni mail (isti prilozi) – samo prijem i Napomena
+            if (dryRun || cfg.Rezim != Rezim.Test) return;
+            try
+            {
+                var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
+                var telo = "INTERNO – ažuriran posao (pošiljaocu ništa). Mail „" + m.Subject + "“ (" + od + ", " + m.Date.LocalDateTime.ToString("dd.MM. HH:mm") + "): tovarni list je isti kao ranije, nova verzija priloga je ažurirala posao:"
+                           + Environment.NewLine + string.Join(Environment.NewLine, iu.Promene.Take(30).Select(x => "  - " + x))
+                           + (iu.Napomene.Count > 0 ? Environment.NewLine + Environment.NewLine + "Napomene: " + string.Join("; ", iu.Napomene.Distinct().Take(10)) : "");
+                Slanje.Posalji(cfg, Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, "[INTERNO] Ažuriran posao – " + m.Subject, telo));
+                log.Info("  interna poruka o ažuriranom poslu poslata (" + iu.Promene.Count + " izmena).");
+            }
+            catch (Exception ex) { log.Greska("  interna poruka o ažuriranom poslu nije poslata: " + ex.Message); }
+        }
+
+        private Baza.IshodUpisa UpisiUBazu(Stanje stanje, PravilaSkup pravila, MimeMessage m, long uid, string folder, RezultatProvere r, List<(string ime, byte[] sadrzaj)> prilozi, Dosije.Posiljka dosije)
+        {
+            if (!cfg.UpisUBazu || dryRun) return null;   // r == null: ponovljeni mail (isti prilozi) – samo prijem i Napomena
             if (string.IsNullOrEmpty(cfg.Konekcija))
             {
                 log.Upozorenje("  UID " + uid + ": upis u bazu je uključen, ali konekcija nije podešena" + (AgentConfig.OtvorenaKonekcija ? " (ključ Konekcija u otvorenom tekstu se ne koristi – samo Konekcija.dpapi)" : "") + " – preskočeno.");
                 Upozori(stanje, "upis-baza", "Upis u bazu (UpisUBazu = true) nije podešen: nema konekcije (Konekcija / Konekcija.dpapi / CIMPROVERA_KONEKCIJA). Provera i izveštaji rade normalno.", 24);
-                return;
+                return null;
             }
             try
             {
@@ -467,12 +506,14 @@ namespace Saobracaj.Agent.CimProvera
                     Prilozi = prilozi, Provera = r, Dosije = dosije,
                 });
                 log.Info("  UID " + uid + ": upis u bazu – " + ishod);
+                return ishod;
             }
             catch (Exception ex)
             {
                 log.Greska("  UID " + uid + ": upis u bazu nije uspeo (rollback) – provera i izveštaj nisu promenjeni", ex);
                 Upozori(stanje, "upis-baza", "Upis u privremene tabele (planiranje.tmp*) nije uspeo za mail UID " + uid + " „" + m.Subject + "“: " + ex.Message
                     + Environment.NewLine + "Transakcija je vraćena (rollback). Provera i izveštaj su poslati normalno. Detalji su u logu.", 6);
+                return null;
             }
         }
 

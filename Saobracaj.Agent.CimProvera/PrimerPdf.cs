@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -493,7 +493,7 @@ namespace Saobracaj.Agent.CimProvera
                             tekst = string.Join(" ", ostalo);
                         }
                         if (n.DopunaRedovi != null) tekst = string.Join("\n", n.DopunaRedovi);
-                        var (mesto, pt, ostatak, gde) = Smesti(g, tinta, o, tekst, zauzeto, precrtano, dnoTeksta, redoviTeksta, dnoNatpisa);
+                        var (mesto, pt, ostatak, gde) = Smesti(g, tinta, o, tekst, zauzeto, precrtano, dnoTeksta, redoviTeksta, dnoNatpisa, n.DopunaIspod);
                         if (mesto != null)
                         {
                             var deo = ostatak == null ? tekst : tekst.Substring(0, tekst.Length - ostatak.Length).TrimEnd(' ', ',');
@@ -576,7 +576,7 @@ namespace Saobracaj.Agent.CimProvera
         /// prvi slobodan red ispod postojećeg teksta (sleva); bilo gde u praznom prostoru rubrike (prvo ispod, pa desno od teksta).
         /// Font 9 → 6 pt. Ako ni sa 6 pt ne staje ceo tekst – koliko staje, ostatak se vraća za marginu.
         /// </summary>
-        private static (RectangleF? mesto, float pt, string ostatak, string gde) Smesti(Graphics g, Tinta t, RectangleF o, string tekst, List<RectangleF> zauzeto, RectangleF? precrtano, float dnoTeksta, List<RectangleF> redoviTeksta, float dnoNatpisa)
+        private static (RectangleF? mesto, float pt, string ostatak, string gde) Smesti(Graphics g, Tinta t, RectangleF o, string tekst, List<RectangleF> zauzeto, RectangleF? precrtano, float dnoTeksta, List<RectangleF> redoviTeksta, float dnoNatpisa, bool samoIspod = false)
         {
             float ivica = Px(1.8f);
             int x0 = (int)(o.X + ivica), x1 = (int)(o.Right - ivica), y0 = (int)Math.Max(o.Y + ivica, dnoNatpisa + Px(1)), y1 = (int)(o.Bottom - ivica);
@@ -617,14 +617,15 @@ namespace Saobracaj.Agent.CimProvera
                     var mesto = Trazi(w, h, dno + 1, y1);
                     if (mesto != null) return (mesto, pt, null, dnoTeksta > 0 ? "ispod teksta" : "u praznom redu");
                     // 3. desno od reda upisanog teksta (od poslednjeg reda naviše), u istoj visini
-                    foreach (var red in (redoviTeksta ?? new List<RectangleF>()).OrderByDescending(r => r.Bottom))
+                    // (v2.9.2: ne za dopunu koja ide samo u novi red – r57 „3212 KP“ nikad pored strane deonice)
+                    foreach (var red in (samoIspod ? new List<RectangleF>() : redoviTeksta ?? new List<RectangleF>()).OrderByDescending(r => r.Bottom))
                     {
                         var k = new RectangleF(red.Right + Px(2.5f), red.Y + red.Height / 2 - jedan.Height / 2, jedan.Width, jedan.Height);
                         if (Slobodno(k)) return (k, pt, null, "desno od teksta");
                     }
                 }
             // 4. bilo gde u praznom prostoru rubrike (od 9 do 6 pt)
-            for (var pt = NajveciPt; pt >= NajmanjiPt; pt -= 0.5f)
+            for (var pt = NajveciPt; pt >= NajmanjiPt && !samoIspod; pt -= 0.5f)
                 using (var f = new Font("Arial", Px(pt), FontStyle.Regular, GraphicsUnit.Pixel))
                 {
                     var jedan = g.MeasureString(tekst, f);

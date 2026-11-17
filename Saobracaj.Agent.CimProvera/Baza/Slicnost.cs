@@ -74,18 +74,38 @@ namespace Saobracaj.Agent.CimProvera.Baza
             return string.Join(" ", reci);
         }
 
-        /// <summary>Pravni oblik iz naziva → verovatne države (šifre kao u dbo.Partnerji.PaSifDrzave).</summary>
+        /// <summary>
+        /// Pravni oblik iz naziva → verovatne države (šifre kao u dbo.Partnerji.PaSifDrzave). v2.9.2 (3a.3, odluka 17.11.): s.r.o. / a.s. →
+        /// SK, CZ; d.o.o. → SRB, HR, SI, BA; Kft. / Zrt. → HU; GmbH → DE, AT; Sp. z o.o. / S.A. → PL; S.R.L. → RO, IT; A.Ş. → TR.
+        /// </summary>
         public static string[] DrzaveIzPravnogOblika(string s)
         {
+            // A.Ş. (turski) pre normalizacije – posle nje je isto što i a.s.
+            if (Regex.IsMatch(s ?? "", @"(?<!\p{L})A\.?\s?Ş\.?(?!\p{L})")) return new[] { "TR" };
             var t = " " + Osnovno(s) + " ";
+            if (Regex.IsMatch(t, @" (SP Z O O|SP ZOO|SPZOO|S A) ")) return new[] { "PL" };
             if (Regex.IsMatch(t, @" (S R O|SRO|A S) ")) return new[] { "SK", "CZ" };
             if (Regex.IsMatch(t, @" (KFT|ZRT|NYRT|K F T|Z R T) ")) return new[] { "HU" };
             if (Regex.IsMatch(t, @" (SRL|S R L) ")) return new[] { "RO", "IT" };
-            if (Regex.IsMatch(t, @" (GMBH) ")) return new[] { "AT", "DE" };
+            if (Regex.IsMatch(t, @" (GMBH) ")) return new[] { "DE", "AT" };
             if (Regex.IsMatch(t, @" (EOOD|OOD|E O O D|O O D) ")) return new[] { "BG" };
-            if (Regex.IsMatch(t, @" (SP Z O O|SP ZOO|SPZOO) ")) return new[] { "PL" };
-            if (Regex.IsMatch(t, @" (D O O|DOO) ")) return new[] { "SRB", "HR", "SI", "BA", "MNE" };
+            if (Regex.IsMatch(t, @" (D O O|DOO) ")) return new[] { "SRB", "HR", "SI", "BA" };
             return new string[0];
+        }
+
+        /// <summary>
+        /// v2.9.2 (3a.3): naziv za poređenje sa sinonimom partnera (tmpSinonimi.TekstNormalizovan) – osnovno, bez delova u zagradama,
+        /// pravna forma OSTAJE kao jedna reč („Budamar South, s.r.o.“ → „BUDAMAR SOUTH SRO“, „Budamar South d.o.o. Beograd“ →
+        /// „BUDAMAR SOUTH DOO BEOGRAD“). Sinonim važi kada je ceo (reč po reč) sadržan u nazivu; najduži sinonim ima prednost.
+        /// </summary>
+        public static string SinonimPartnera(string s)
+        {
+            var bez = Regex.Replace(s ?? "", @"\([^)]*\)|\[[^\]]*\]", " ");
+            var reci = Osnovno(bez).Split(' ').Where(x => x.Length > 0).ToList();
+            foreach (var niz in PravniNizovi.Where(n => n.Length > 1).OrderByDescending(n => n.Length))
+                for (int i = 0; i + niz.Length <= reci.Count; i++)
+                    if (Enumerable.Range(0, niz.Length).All(j => reci[i + j] == niz[j])) { reci.RemoveRange(i, niz.Length); reci.Insert(i, string.Concat(niz)); }
+            return string.Join(" ", reci);
         }
 
         /// <summary>Naziv stanice za poređenje: osnovno, bez delova u zagradama („PANČEVO GLAVNA (U.M. PANČEVO VAROŠ)“ → „PANCEVO GLAVNA“).</summary>

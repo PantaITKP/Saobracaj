@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L20";   // v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
+        public const string VerzijaCitaca = "L21";   // v2.9.2: prelivanje r57, ponovni OCR r57/r58a, klasifikacija (Wagenliste, mreža obrasca); L20 v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L18";   // v2.8.4: orijentacija skena ispod 0,75 (OSD + proba 90°/270°), crno-beli sken, FreeText anotacije
 
@@ -222,6 +222,26 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return null;
         }
 
+        /// <summary>v2.9.2 (3a.8): broj oznaka sadržaja tovarnog lista u tekstu strane (normalizovan tekst sa razmacima na krajevima).</summary>
+        internal static int SadrzajTovarnogLista(string t)
+        {
+            var n = 0;
+            if (Regex.IsMatch(t, @" (frachtzahler|frachtzaler|frachwshler|payer|platilac|zahler) ")) n++;
+            if (Regex.IsMatch(t, @" cim ?6 ")) n++;
+            if (Regex.IsMatch(t, @" 13 ?[34] ")) n++;
+            if (Regex.IsMatch(t, @" (cit ?23|list of wagons|wagenliste|spisak kola) ")) n++;
+            if (Regex.IsMatch(t, @" (tara|netto|brutto|nhm) ")) n++;
+            if (Regex.IsMatch(t, @" (absender|empfanger|consignor|consignee|posiljalac|primalac) ")) n++;
+            return n;
+        }
+
+        /// <summary>v2.9.2 (3.1b): strana ima mrežu obrasca CIM/CUV – šablon je pouzdano poravnat (natpisi, brojevi rubrika i linije).</summary>
+        private bool MrezaObrasca(Strana s)
+        {
+            try { return sablon.Rasporedi(s.Reci, s.Raster).Poravnato; }
+            catch { return true; }   // u sumnji – kao ranije (obrazac), nikad „nema CIM-a“
+        }
+
         private static readonly string[] SpisakNaslov = { "kocsijegyzek", "wagenliste", "wagen liste", "spisak kola", "списак кола", "wagon list", "liste des wagons", "lista de vagoane", "vykaz vozu" };
 
         private static readonly string[] DodatniNaslov = { "potlap", "zusatzblatt", "erganzungsblatt", "ergaenzungsblatt", "dodatni list", "додатни лист", "additional sheet", "feuille complementaire" };
@@ -257,6 +277,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // Spisak kola po NASLOVU na vrhu strane („Kocsijegyzék / Wagenliste“) – i kada ima mnogo natpisa polja kao obrazac
             if (SpisakNaslov.Any(k => naslov.Contains(TekstUtil.Kljuc(k))) && !CimKljucevi.Any(k => naslov.Contains(TekstUtil.Kljuc(k))))
             { nadjeno.Add("naslov spiska kola"); return Vrati(TipDokumenta.SpisakKola); }
+            // v2.9.2 (3.1a): „Wagen Liste / Wagenliste / Lista de vagoane / CIT 23“ u naslovu je spisak kola i kada naslov pominje
+            // Frachtbrief / tovarni list („Wagenliste zum Frachtbrief“, CIT 23 Zmajevo-CR.pdf, ID 1655) – osim pravog obrasca CIM/CUV sa
+            // mnogo natpisa rubrika (r18 „siehe Wagenliste“ nije u naslovu)
+            var naslovSire = " " + TekstUtil.Kljuc(string.Join(" ", s.Reci.Where(w => w.Cy < 0.12).Select(w => w.T))) + " ";
+            if ((SpisakNaslov.Any(k => naslovSire.Contains(TekstUtil.Kljuc(k))) || Regex.IsMatch(naslovSire, @" cit\s?-?\s?23 ")) && sidara < 20)
+            { nadjeno.Add("naslov spiska kola (i uz pomen tovarnog lista)"); return Vrati(TipDokumenta.SpisakKola); }
             // v2.8.4 (1): nastavak spiska kola CIT 23 (strana 2/2: zaglavlje kolona „Kola br. – Wagen Nr.“, „Code NHM“, „Tara kola“,
             // „Bruto masa“ i red zbirova „Σ“) – nikad tovarni list, ni kada ima 8 natpisa koji liče na rubrike
             if (!formaCim && sidara < 20 && NastavakSpiska(s.Tekst, out var opisNastavka)) { nadjeno.Add(opisNastavka); return Vrati(TipDokumenta.SpisakKola); }
@@ -268,7 +294,16 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
             // Sadržaj strane ima prednost nad imenom fajla ("JCI and CIM….pdf", "WAGON 11.pdf"): obrazac CIM/CUV se prepoznaje
             // po naslovu obrasca ili po velikom broju odštampanih naziva rubrika.
-            if ((formaCim && sidara >= 8) || (sidara >= 20 && !naslovSpiska)) { nadjeno.Add(sidara + " naziva rubrika"); return Vrati(TipDokumenta.Cim); }
+            if (formaCim && sidara >= 8) { nadjeno.Add(sidara + " naziva rubrika"); return Vrati(TipDokumenta.Cim); }
+            // v2.9.2 (3.1b): bez naslova obrasca CIM se prepoznaje po mreži rubrika (šablon poravnat: natpisi, brojevi i linije na
+            // očekivanim mestima), ne po rečima u tekstu – opšti uslovi prodaje (Imerys, str. 6 u 11162026Scan150312.pdf) imaju reči
+            // „consignor / consignee / carrier“, ali ne i mrežu obrasca
+            if (sidara >= 20 && !naslovSpiska)
+            {
+                if (sidara >= 40 || MrezaObrasca(s)) { nadjeno.Add(sidara + " naziva rubrika"); return Vrati(TipDokumenta.Cim); }
+                nadjeno.Add(sidara + " reči kao nazivi rubrika, bez mreže obrasca – nije tovarni list");
+                return Vrati(TipDokumenta.Ostalo);
+            }
             // Spisak kola (CIT 23) po naslovu – pre carinskih (spisak navodi i MRN / carinski dokument)
             if (naslovSpiska && Ima("cit-23", "cit 23", "cit23", "spisak kola", "списак кола", "wagenliste") && sidara < 20) return Vrati(TipDokumenta.SpisakKola);
 
@@ -310,6 +345,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // Natpisi rubrika bez naslova obrasca: kopija lista („Duplikat“, list 2/3, „Feuille …“) ili poleđina – ne faktura
             // („Frankaturrechnung“ je natpis rubrike 52, ne faktura)
             if (sidara >= 8 && !naslovSpiska) { nadjeno.Add(sidara + " naziva rubrika bez naslova – kopija ili poleđina lista"); return Vrati(TipDokumenta.KopijaLista); }
+            // v2.9.2 (3a.8): ime fajla kaže CIM, a strana ima sadržaj tovarnog lista (platilac „Frachtzahler …“, „CIM 6: …“, 13.3 prevoznici,
+            // „List of wagons CIT 23“, „Tara:“) – sken čiji natpisi obrasca nisu pročitani („CIM za voz br. 262 ….pdf“: crno-beli sken, 2 natpisa)
+            // je tovarni list, ne faktura (r9 navodi „Faktura/invoice“)
+            if (ImeIma(CimImena) && !naslovSpiska && SadrzajTovarnogLista(t) >= 3) { nadjeno.Add("ime fajla i sadržaj tovarnog lista"); return Vrati(TipDokumenta.Cim); }
             // Faktura pre EUR.1: "Invoice / Purchase Contract / Total" je faktura i kada sadrži "EUR" i broj; reči samo kao cele reči
             var fakturaZnaci = new[] { "purchase contract", "shipment method", "payment terms", "total", "amount", "price" }.Count(x => t.Contains(" " + x));
             if (Rec("invoice", "inovice", "faktura", "rechnung", "facture", "factura", "proforma") || Ima("racun br", "commercial invoice") || fakturaZnaci >= 2)
@@ -362,7 +401,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         private string LiciNaObrazac(Strana s)
         {
             var sidara = sablon.BrojSidara(s.Reci);
-            if (sidara >= 8) return sidara + " natpisa rubrika";
+            // v2.9.2 (3.1b): reči koje liče na natpise rubrika nisu dovoljne (opšti uslovi prodaje, carinske strane) – potreban je
+            // natpis obrasca, mreža rubrika (šablon) ili vrlo mnogo natpisa
+            if (sidara >= 40) return sidara + " natpisa rubrika";
             var t = " " + TekstUtil.Kljuc(s.Tekst) + " ";
             if (CimKljucevi.Any(k => t.Contains(" " + TekstUtil.Kljuc(k) + " "))) return "natpis obrasca";
             var natpis = Regex.Matches(t, @"\p{L}{8,}").Cast<Match>().Select(m => m.Value)
@@ -536,6 +577,16 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     if (PonoviNecitljive(p, s, raspored, cim) is CimSablon.Rezultat bolji) { raspored = bolji; cim = CimParser.Napravi(raspored, s, Pragovi); }
                     // v2.8.4 (3): r7 skena bez platioca za Srbiju (opšti OCR: „p / i / GPR, SŽ-TP ij is Beograd.“) – isečak r7 se ponovo čita
                     if (PonoviR7(p, s, raspored, cim) is CimSablon.Rezultat boljiR7) { raspored = boljiR7; cim = CimParser.Napravi(raspored, s, Pragovi); }
+                    // v2.9.2 (2): r57 / r58a skena bez KP (OCR: „32 / 04 jKARPAT“ umesto „3212 KP / 3404 H-KÁRPÁT“; pečat „UIC CODE KP 3212“
+                    // preko r58) – isečak se ponovo čita; novo čitanje se prihvata samo kada u njemu ima KP (naziv ili 3212)
+                    if (kp != null)
+                    {
+                        if (PonoviRubriku(p, s, raspored, cim, "57", c0 => { var (n, u) = Provere.KpUR57(c0.R57, kp); return n || u; },
+                                c0 => { var (n, u) = Provere.KpUR57(c0.R57, kp); return (n ? 1 : 0) + (u ? 1 : 0); }) is CimSablon.Rezultat bolji57)
+                        { raspored = bolji57; cim = CimParser.Napravi(raspored, s, Pragovi); }
+                        if (PonoviRubriku(p, s, raspored, cim, "58a", c0 => kp.JeKpSifra(c0.R58a.Sifra) || kp.JeKp(c0.R58a.Tekst), c0 => kp.JeKpSifra(c0.R58a.Sifra) || kp.JeKp(c0.R58a.Tekst) ? 1 : 0) is CimSablon.Rezultat bolji58)
+                        { raspored = bolji58; cim = CimParser.Napravi(raspored, s, Pragovi); }
+                    }
                     // Word → PDF: vrednosti su tekstualni sloj (bez OCR-a) – nema nečitljivih rubrika
                     // PDF sa poljima obrasca (AcroForm, npr. GK30): vrednosti su u poljima – štampane tačkice u r25 nisu nečitljiv upis
                     if (raspored.IzWorda || s.Reci.Any(w => w.Font == "AcroForm")) CimParser.BezNecitljivih(cim);
@@ -1060,6 +1111,89 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 return null;
             }
             catch (Exception ex) { log?.Upozorenje("Ponovni OCR r7 nije uspeo (str. " + s.Broj + "): " + ex.Message); return null; }
+        }
+
+        /// <summary>
+        /// v2.9.2 (2): rubrika skena (r57, r58a) u kojoj prvo čitanje ne daje traženi podatak (KP) – pravougaonik rubrike (proširen naniže
+        /// za red koji prelazi liniju) se iscrta sa 400 dpi i ponovo čita (deu + srp_latn + eng; retke reči, pa blok redova). Novo čitanje
+        /// se prihvata samo kada je bolje po oceni (<paramref name="ocena"/>). null ako nema poboljšanja.
+        /// </summary>
+        private CimSablon.Rezultat PonoviRubriku(Prilog p, Strana s, CimSablon.Rezultat r, CimList c, string id, Func<CimList, bool> dovoljno, Func<CimList, int> ocena)
+        {
+            if (ocr == null || s.Izvor != IzvorTeksta.Ocr || p?.Sadrzaj == null || r.Obrazac == null || !r.Obrazac.Rubrike.ContainsKey(id)) return null;
+            if (ocena(c) >= 2 || (id == "58a" && dovoljno(c))) return null;
+            var pre = ocena(c);
+            try
+            {
+                var o = r.NaStrani(r.Obrazac.Rubrike[id]);
+                if (o == null) return null;
+                var o3 = o[3];   // bez proširenja: red koji prelazi liniju pokriva CimSablon.PrelivanjeR57 (ispod r57 je na nekim obrascima r58a)
+                byte[] png; int a, b, w, h, sw, sh;
+                using (var slika = Slike.Ucitaj(p.Vrsta == VrstaPriloga.Pdf ? PdfCrtac.StranaUPng(p.Sadrzaj, s.Broj, 400) : PdfCrtac.SlikaOkrenuta(p.Sadrzaj)))
+                {
+                    sw = slika.Width; sh = slika.Height;
+                    a = Math.Max(0, (int)(o[0] * sw)); b = Math.Max(0, (int)(o[1] * sh));
+                    w = Math.Min(sw - a, (int)((o[2] - o[0]) * sw)); h = Math.Min(sh - b, (int)((o3 - o[1]) * sh));
+                    if (w < 20 || h < 10) return null;
+                    using (var isecak = slika.Clone(new System.Drawing.Rectangle(a, b, w, h), System.Drawing.Imaging.PixelFormat.Format24bppRgb))
+                    using (var ms = new MemoryStream()) { isecak.SetResolution(400, 400); isecak.Save(ms, System.Drawing.Imaging.ImageFormat.Png); png = ms.ToArray(); }
+                }
+                foreach (var (nacin, citaj) in new (string, Func<List<Rec>>)[]
+                {
+                    ("isečak 400 dpi", () => ocr.PrepoznajJezicima(png, "deu+srp_latn+eng", 400)),
+                    ("isečak 400 dpi, blok redova", () => ocr.PrepoznajBlok(png, "deu+srp_latn+eng", 400).Where(x => x.Pouzdanost >= 0.1).ToList()),
+                })
+                {
+                    var nove = citaj().Select(x => new Rec { T = x.T, Pouzdanost = x.Pouzdanost, X0 = a / (double)sw + x.X0 * w / sw, X1 = a / (double)sw + x.X1 * w / sw,
+                                                             Y0 = b / (double)sh + x.Y0 * h / sh, Y1 = b / (double)sh + x.Y1 * h / sh }).ToList();
+                    if (nove.Count == 0) continue;
+                    var reci = (reciPonovljene ?? s.Reci).ToList();
+                    reci.RemoveAll(x => x.Cx >= o[0] && x.Cx <= o[2] && x.Cy >= o[1] && x.Cy <= o3);
+                    reci.AddRange(nove);
+                    var r2 = sablon.Rasporedi(reci, s.Raster);
+                    if (!r2.Poravnato) continue;
+                    CiljaniOcr(p, s, r2);
+                    var c2 = CimParser.Napravi(r2, s, Pragovi);
+                    if (Environment.GetEnvironmentVariable("CIMPROVERA_DBG") == "1") log?.Info("  [dbg] r" + id + " ponovo (" + nacin + "): „" + (Motor.RubrikaLista(c2, id)?.Tekst ?? "").Replace("\n", " / ") + "“");
+                    if (!dovoljno(c2) || ocena(c2) <= pre || Motor.RubrikaLista(c2, id)?.Status == StatusRubrike.Necitljivo) continue;
+                    s.Napomena += (s.Napomena.Length > 0 ? "; " : "") + "r" + id + " ponovo pročitana (" + nacin + ")";
+                    reciPonovljene = reci;
+                    return r2;
+                }
+                // r57: kolona prevozilaca (leva polovina) samo velikim slovima i ciframa – gusti redovi „3212 KP / 3404 H-KÁRPÁT“ koje opšti OCR
+                // spoji u jedan („32 04 jKARPAT“); pročitani red sa KP se dodaje rubrici kao poseban red
+                if (id == "57" && kp != null)
+                {
+                    byte[] pngL; int wl;
+                    using (var slika = Slike.Ucitaj(p.Vrsta == VrstaPriloga.Pdf ? PdfCrtac.StranaUPng(p.Sadrzaj, s.Broj, 400) : PdfCrtac.SlikaOkrenuta(p.Sadrzaj)))
+                    {
+                        wl = Math.Max(20, w * 45 / 100);
+                        using (var isecak = slika.Clone(new System.Drawing.Rectangle(a, b, wl, h), System.Drawing.Imaging.PixelFormat.Format24bppRgb))
+                        using (var ms = new MemoryStream()) { isecak.SetResolution(400, 400); isecak.Save(ms, System.Drawing.Imaging.ImageFormat.Png); pngL = ms.ToArray(); }
+                    }
+                    var tekst = ocr.Alfanum(pngL) ?? "";
+                    if (Environment.GetEnvironmentVariable("CIMPROVERA_DBG") == "1") log?.Info("  [dbg] r57 kolona prevozilaca: „" + tekst.Replace("\n", " / ") + "“");
+                    var redovi = tekst.Split('\n').Select(x => Regex.Replace(x, @"\s+", " ").Trim()).Where(x => Regex.IsMatch(kp.OcrIspravka(x), @"(?<!\d)" + kp.Uic + @"(?!\d)") && Regex.IsMatch(x, @"\p{L}{2,}")).ToList();
+                    if (redovi.Count == 0) return null;
+                    var r2 = sablon.Rasporedi((reciPonovljene ?? s.Reci).ToList(), s.Raster);
+                    if (!r2.Poravnato) return null;
+                    CiljaniOcr(p, s, r2);
+                    if (!r2.Rubrike.TryGetValue("57", out var l57)) r2.Rubrike["57"] = l57 = new List<Rec>();
+                    var y = o[1] + 0.004;
+                    foreach (var red in redovi)
+                    {
+                        var nova = new Rec { T = red, X0 = o[0] + 0.004, X1 = o[0] + 0.004 + (o[2] - o[0]) * 0.3, Y0 = y - 0.003, Y1 = y + 0.003, Pouzdanost = 0.8 };
+                        l57.Add(nova); r2.Dodela.Add((nova, "57", false));
+                        y += 0.007;
+                    }
+                    var c2 = CimParser.Napravi(r2, s, Pragovi);
+                    if (!dovoljno(c2) || ocena(c2) <= pre) return null;
+                    s.Napomena += (s.Napomena.Length > 0 ? "; " : "") + "r57 ponovo pročitana (kolona prevozilaca, velika slova i cifre)";
+                    return r2;
+                }
+                return null;
+            }
+            catch (Exception ex) { log?.Upozorenje("Ponovni OCR r" + id + " nije uspeo (str. " + s.Broj + "): " + ex.Message); return null; }
         }
 
         /// <summary>Očekivan broj cifara u kućicama: 16 mesec–dan(–čas), 12 šifra stanice, 24 NHM, 62.1 zemlja, 62.2 stanica, 62.3 preduzeće, 62.4 broj otpravljanja.</summary>

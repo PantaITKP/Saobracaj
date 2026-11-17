@@ -176,6 +176,17 @@ WHERE ID IS NOT NULL GROUP BY ID";
             foreach (var d in Regex.Split(t, @"\s*(?:/|\r?\n|\s-\s|\s–\s|;)\s*")) if (d.Trim().Length >= 2 && d.Trim() != t) yield return d.Trim();
         }
 
+        /// <summary>
+        /// v2.9.2 (3a.5): šifra stanice upisana u tekstu – UIC oznaka zemlje (2 cifre) + 5 cifara stanice (+ kontrolna), razdvojeni kosom
+        /// crtom, crticom, tačkom ili razmakom („72/12601“, „72/12601 1“, „72 12601-1“). Samo cifre (bez „72/“ i ostalih znakova); null = nema.
+        /// </summary>
+        internal static string SifraIzTeksta(string tekst)
+        {
+            var m = Regex.Match(tekst ?? "", @"(?<![\d/.,])(?<z>\d{2})(?:\s?[/\-.]\s?|\s)(?<s>\d{5})(?:\s?-?\s?(?<k>\d)(?![\d/.,]))?(?![\d/.,])");
+            if (!m.Success || !UicZemlje.ContainsKey(m.Groups["z"].Value)) return null;
+            return m.Groups["z"].Value + m.Groups["s"].Value + m.Groups["k"].Value;
+        }
+
         /// <summary>Šifra stanice iz dokumenta („83 03200-3“, „83032003“, „72 16509-2“) se poklapa sa Kod iz šifarnika (razni zapisi).</summary>
         internal static bool KodPoklapa(string sifraDokumenta, string kodCifre)
         {
@@ -209,6 +220,8 @@ WHERE ID IS NOT NULL GROUP BY ID";
         public Pogodak Stanica(string tekst, string sifra = null, string zemlja = null, bool granicna = false, string[] drzavePrednost = null, string[] samoDrzave = null)
         {
             var p = new Pogodak { Tekst = (tekst ?? "").Trim() };
+            // v2.9.2 (3a.5): šifra stanice u tekstu sa kosom crtom ili razmakom („72/12601“, „72 12601-1“) – normalizovana pre traženja po Kod
+            if (string.IsNullOrWhiteSpace(sifra)) sifra = SifraIzTeksta(tekst);
             bool Dozvoljena(StanicaZapis z) => samoDrzave == null || samoDrzave.Length == 0 || z.Drzava.Length == 0 || samoDrzave.Contains(z.Drzava);
             var drzave = Drzave(zemlja).Concat(Drzave(sifra)).Concat(drzavePrednost ?? new string[0]).Distinct().ToList();
             var ocene = new Dictionary<int, double>();
@@ -361,11 +374,17 @@ WHERE ID IS NOT NULL GROUP BY ID";
             var p = new Pogodak { Tekst = (naziv ?? "").Trim() };
             var n = Slicnost.Partner(naziv);
             var u = Regex.Replace(uic ?? "", @"\D", "");
-            var dr = (drzave ?? new string[0]).Concat(Slicnost.DrzaveIzPravnogOblika(naziv)).Distinct().ToList();
+            var drOblik = Slicnost.DrzaveIzPravnogOblika(naziv).ToList();
+            var dr = (drzave ?? new string[0]).Concat(drOblik).Distinct().ToList();
             if (n.Length > 0)
             {
-                var sin = s.Sinonimi.FirstOrDefault(x => x.Tip == "PARTNER" && x.Tekst == n && s.Partneri.Any(z => z.PaSifra == x.CiljniId));
-                if (sin != null) { p.Id = sin.CiljniId; p.Pouzdanost = 100; p.Napomena = "sinonim (tmpSinonimi)"; return p; }
+                // v2.9.2 (3a.3): sinonim ima prednost nad poređenjem po nazivu; sinonim je ceo sadržan u nazivu (pravna forma ostaje),
+                // najduži prvi: „BUDAMAR SOUTH SRO“ → 3355, „BUDAMAR SOUTH“ → 3143, „BUDAMAR LOGISTICS“ → 1580, „BUDAMAR“ → 3143
+                var ns = " " + Slicnost.SinonimPartnera(naziv) + " ";
+                var sin = s.Sinonimi.Where(x => x.Tip == "PARTNER" && !string.IsNullOrEmpty(x.Tekst) && s.Partneri.Any(z => z.PaSifra == x.CiljniId))
+                    .Where(x => x.Tekst == n || ns.Contains(" " + Slicnost.SinonimPartnera(x.Tekst) + " "))
+                    .OrderByDescending(x => Slicnost.SinonimPartnera(x.Tekst).Length).FirstOrDefault();
+                if (sin != null) { p.Id = sin.CiljniId; p.Pouzdanost = 100; p.Napomena = "sinonim (tmpSinonimi: „" + sin.Tekst + "“)"; return p; }
             }
             bool Uloga(PartnerZapis z) => uloga == "prevoznik" ? z.Prevoznik : uloga == "posiljalac" ? z.Posiljalac : uloga == "primalac" ? z.Primalac : true;
             double Ocena(PartnerZapis z) => Math.Max(Slicnost.Ocena(n, z.Norm1), Slicnost.Ocena(n, z.Norm2));
@@ -447,14 +466,21 @@ WHERE ID IS NOT NULL GROUP BY ID";
             var bliski = lista.Where(x => izbor.o - x.o < RazlikaKandidata).ToList();
             if (bliski.Count > 1)
             {
-                var drDok = (drzave ?? new string[0]).ToList();   // samo zemlja navedena u dokumentu (pravni oblik nije dovoljan)
-                var poZemlji = drDok.Count > 0 ? bliski.Where(x => drDok.Contains(x.z.Drzava)).ToList() : bliski;
+                // v2.9.2 (3a.3, odluka 17.11.): pravna forma je znak zemlje (s.r.o. → SK/CZ, d.o.o. → SRB/HR/SI/BA…), zatim zemlja iz adrese
+                // u dokumentu; ako ni tada nema jednog kandidata → NULL i kandidati
+                var drDok = (drzave ?? new string[0]).ToList();
+                var poObliku = drOblik.Count > 0 ? bliski.Where(x => drOblik.Contains(x.z.Drzava)).ToList() : bliski;
+                if (poObliku.Count == 0) poObliku = bliski;
+                var poZemlji = drDok.Count > 0 ? poObliku.Where(x => drDok.Contains(x.z.Drzava)).ToList() : poObliku;
+                if (poZemlji.Count == 0) poZemlji = poObliku;
                 var poUlozi = poZemlji.Where(x => Uloga(x.z)).ToList();
                 var jedan = poZemlji.Count == 1 ? poZemlji[0] : poUlozi.Count == 1 && poZemlji.Count > 1 ? poUlozi[0] : ((PartnerZapis z, double o)?)null;
                 if (jedan != null && jedan.Value.o >= PragPartnera)
                 {
                     p.Id = jedan.Value.z.PaSifra; p.Pouzdanost = (int)Math.Round(jedan.Value.o * 85);
-                    p.Napomena += "bliski kandidati – izabran po " + (poZemlji.Count == 1 && drDok.Count > 0 ? "zemlji (" + string.Join("/", drDok) + ")" : "oznaci uloge (" + uloga + ")");
+                    p.Napomena += "bliski kandidati – izabran po " + (poObliku.Count == 1 && drOblik.Count > 0 && poObliku.Count < bliski.Count ? "pravnoj formi (" + string.Join("/", drOblik) + ")"
+                        : poZemlji.Count == 1 && drDok.Count > 0 ? "zemlji iz dokumenta (" + string.Join("/", drDok) + ")" : "oznaci uloge (" + uloga + ")");
+                    p.Kandidati = string.Join("; ", bliski.Take(3).Select(x => Opis(x.z, x.o)));
                     return p;
                 }
                 p.Napomena += "dva bliska kandidata (" + bliski[0].z.PaSifra + " " + bliski[0].o.ToString("0.00", CultureInfo.InvariantCulture) + ", " + bliski[1].z.PaSifra + " "

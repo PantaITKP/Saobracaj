@@ -547,7 +547,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var s = new Scenario(); s.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "3212", Deonica = "Šid - Dobova", StatusPrevoznika = "1" } } }, "3212   Šid - Dobova   1");
             s.C.R58a = new UgovorniPrevoznik(); s.C.R62.Preduzece = "2154";
-            Assert.IsFalse(Ima(Proveri(s), "KP57"));
+            // v2.9.2 (odluka 17.11.): samo UIC 3212 bez naziva – upozorenje „dopisati naziv“, nikad greška
+            Assert.IsFalse(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57" && n.Tezina == Tezina.Greska));
+            StringAssert.Contains(Prvi(Proveri(s), "KP57").Tekst, "dopisati naziv");
             var t = new Scenario(); t.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "2179", Naziv = "SŽ", Deonica = "tel. 0113212555" } } }, "2179 SŽ tel. 0113212555");
             t.C.R58a = new UgovorniPrevoznik(); t.C.R62.Preduzece = "2154";
             Assert.IsTrue(Ima(Proveri(t), "KP57"));

@@ -493,6 +493,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var r = k.C.R14;
             if (r.Popunjena || r.Status == StatusRubrike.Necitljivo) yield break;
+            // v2.9.2 (1): broj ponude KP je već naveden u r7 ili r13 („KP Ponuda 8957“) – preporuka nije potrebna
+            if (PonudaKonteksta(k).Broj.HasValue) yield break;
             yield return P("14", "r14");
         }
 
@@ -1515,6 +1517,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     break;
                 }
             }
+            // v2.9.2 (1): oznaka ponude nije deo naziva platioca („Panšped doo, offer nr 5856“ → „Panšped doo“)
+            foreach (var p in a.Platioci)
+            {
+                var bez = PonudaRx.Replace(p.Naziv ?? "", " ");
+                for (var pre = ""; pre != bez;) { pre = bez; bez = System.Text.RegularExpressions.Regex.Replace(bez, @"(?i)(?<!\p{L})(according|acc|to|po|prema|za)[\s.,;]*$", "").Trim(' ', ',', ';', '-', '–'); }
+                bez = bez.Trim(' ', ',', ';', '-', '–');
+                if (bez.Length >= 2 && bez != p.Naziv) p.Naziv = bez;
+            }
             return a;
         }
 
@@ -1558,10 +1568,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (r.Popunjena && !k.Citljivo(r, "7")) yield break;
             var a = R7Analiza(k);
             if (a.ZaSrbiju.Any() || a.Nejasni.Count > 0) yield break;
+            // v2.9.2 (1): broj ponude KP određuje platioca deonice KP – nađena ponuda (ili baza nedostupna) → nema greške
+            var pon = PonudaKonteksta(k);
+            if (pon.Stanje == Baza.Ponude.Stanje.Nadjena || pon.Stanje == Baza.Ponude.Stanje.Nedostupna) yield break;
             var ostali = a.Platioci.Where(p => p.Naziv.Length > 0).Select(p => p.Zapis).ToList();
-            yield return P("7", "kp7-platilac").D(!r.Popunjena ? (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")
+            yield return P("7", "kp7-platilac").D((!r.Popunjena ? (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")
                 : ostali.Count > 0 ? (k.U.Engleski ? "No payer is stated for the section through Serbia; entered only: „" : "Nije naveden platilac za deonicu kroz Srbiju; upisano je samo: „") + string.Join("“; „", ostali) + "“."
-                : (k.U.Engleski ? "No payer for the section through Serbia is stated in box 7." : "U rubrici 7 nije naveden platilac za deonicu kroz Srbiju."));
+                : (k.U.Engleski ? "No payer for the section through Serbia is stated in box 7." : "U rubrici 7 nije naveden platilac za deonicu kroz Srbiju.")) + PonudaNijeNadjena(pon, k.U.Engleski));
         }
 
         /// <summary>KP7-NIJE-PLATILAC (greška): KP je naveden kao platilac za srpsku deonicu ili za ceo put.</summary>
@@ -1570,8 +1583,12 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var r = k.C.R7;
             if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
             var kp = R7Analiza(k).ZaSrbiju.Where(p => p.Kp).ToList();
-            if (kp.Count > 0) yield return P("7", "kp7-nije-platilac").D((k.U.Engleski ? "Kombinovani prevoz is stated as the payer for the section through Serbia: „" : "Kombinovani prevoz je naveden kao platilac za deonicu kroz Srbiju: „")
-                + string.Join("“; „", kp.Select(p => p.Zapis)) + (k.U.Engleski ? "“. KP can be the payer only for sections outside Serbia." : "“. KP može biti platilac samo za deonice van Srbije."));
+            if (kp.Count == 0) yield break;
+            // v2.9.2 (1): „SRB: KP UIC 3212, KP Ponuda 8957“ – nađena ponuda određuje platioca (nema greške); baza nedostupna – interno
+            var pon = PonudaKonteksta(k);
+            if (pon.Stanje == Baza.Ponude.Stanje.Nadjena || pon.Stanje == Baza.Ponude.Stanje.Nedostupna) yield break;
+            yield return P("7", "kp7-nije-platilac").D((k.U.Engleski ? "Kombinovani prevoz is stated as the payer for the section through Serbia: „" : "Kombinovani prevoz je naveden kao platilac za deonicu kroz Srbiju: „")
+                + string.Join("“; „", kp.Select(p => p.Zapis)) + (k.U.Engleski ? "“. KP can be the payer only for sections outside Serbia." : "“. KP može biti platilac samo za deonice van Srbije.") + PonudaNijeNadjena(pon, k.U.Engleski));
         }
 
         /// <summary>KP7-NEJASNO (upozorenje): „16. IŽS: KP 3212“ – nije jasno da li je KP platilac ili prevoznik.</summary>
@@ -1580,37 +1597,191 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var r = k.C.R7;
             if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
             var a = R7Analiza(k);
+            var pon = PonudaKonteksta(k);
+            if (pon.Stanje == Baza.Ponude.Stanje.Nadjena || pon.Stanje == Baza.Ponude.Stanje.Nedostupna) yield break;   // v2.9.2 (1)
             // v2.8.4 (3): „nije jasno ko plaća deonicu SRB – proverite“
             if (a.Nejasni.Count > 0 && !a.ZaSrbiju.Any()) yield return P("7", "kp7-nejasno").D((k.U.Engleski
                     ? "It is not clear who pays for the section through Serbia (SRB) – after „SRB:“ KP is stated (a carrier), not the payer: „"
                     : "Nije jasno ko plaća deonicu kroz Srbiju (SRB) – posle „SRB:“ je naveden KP (prevoznik), a ne platilac: „")
-                + string.Join("“; „", a.Nejasni) + (k.U.Engleski ? "“. Please check." : "“. Proverite."));
+                + string.Join("“; „", a.Nejasni) + (k.U.Engleski ? "“. Please check." : "“. Proverite.") + PonudaNijeNadjena(pon, k.U.Engleski));
         }
 
         /// <summary>KP7-INFO (informacija): platilac za deonicu kroz Srbiju (nije KP).</summary>
         private static IEnumerable<Pogodak> KP7Info(Kontekst k)
         {
             var r = k.C.R7;
+            var pon = PonudaKonteksta(k);
+            var za0 = r.Popunjena && r.Status != StatusRubrike.Necitljivo ? R7Analiza(k).ZaSrbiju.ToList() : new List<PlatilacR7>();
+            // v2.9.2 (1): broj ponude – samo interno (pošiljaocu ništa)
+            if (pon.Stanje == Baza.Ponude.Stanje.Nedostupna)
+            {
+                var pg = P("7", "ponuda-baza");
+                pg.Tezina = Tezina.Upozorenje; pg.SamoInterno = true;
+                pg.Poruka = "Ponuda " + pon.Broj + " nije proverena – baza nedostupna (platilac za deonicu SRB nije proveren; ponavlja se u sledećem prolazu).";
+                yield return pg;
+            }
+            else if (pon.Stanje == Baza.Ponude.Stanje.Nadjena)
+            {
+                var x = za0.Where(p => !p.Kp).Select(p => p.Naziv).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n));
+                var pg = P("7", "ponuda");
+                pg.SamoInterno = true;
+                if (x != null && !IstiPartner(x, pon.Naziv))
+                {
+                    pg.Tezina = Tezina.Upozorenje;
+                    pg.Poruka = "r7 navodi " + x + ", ponuda " + pon.Broj + " glasi na " + pon.Naziv + " (šifra " + pon.PartnerId + ") – za platioca deonice SRB uzima se ponuda.";
+                }
+                else pg.Poruka = "Platilac za deonicu SRB preko ponude " + pon.Broj + ": " + pon.Naziv + " (šifra " + pon.PartnerId + ").";
+                yield return pg;
+                yield break;
+            }
             if (!r.Popunjena || !k.Citljivo(r, "7")) yield break;
-            var za = R7Analiza(k).ZaSrbiju.ToList();
+            var za = za0;
             if (za.Count == 0 || za.Any(p => p.Kp)) yield break;
             var p0 = za.FirstOrDefault(p => p.Srbija) ?? za[0];
             yield return P("7", "kp7-info").S("payer", p0.Naziv);
         }
 
+        // ------------------------------------------------------------------ v2.9.2 (1): platilac deonice KP preko broja ponude
+
+        /// <summary>Broj ponude KP pročitan iz r7, r13 ili r14 i rezultat provere u bazi (dbo.Ponudba).</summary>
+        internal sealed class PonudaLista
+        {
+            /// <summary>Oznaka kako je upisana („8957“, „42-0003-26“); null = nema broja ponude.</summary>
+            public string Oznaka;
+            /// <summary>Ceo broj (1–6 cifara) – samo on se traži u tabeli ponuda.</summary>
+            public int? Broj;
+            public string Rubrika = "";
+            public string Zapis = "";
+            public Baza.Ponude.Stanje? Stanje;
+            public int? PartnerId;
+            public string Naziv = "";
+        }
+
+        /// <summary>„Ponuda 8957“, „Ponuda8957“, „Ponuda br. 8957“, „ponuda: 8957“, „KP Ponuda 8957“, „po ponudi 8926“, „prema ponudi …“, „Offer 8957“,
+        /// „offer nr 5856“, „according offer nr …“, „acc. to offer no. …“, „Angebot (Nr.) 8957“, „Ajánlat 8957“.</summary>
+        internal static readonly Regex PonudaRx = new Regex(
+            @"(?<![\p{L}])(?:ponud\p{L}*|offer|angebot\p{L}*|aj[aá]nlat\p{L}*)(?:\s+KP)?(?:\s*\(?\s*(?:br|no|nr|num|number|nummer|n°|#)\s*\.?\s*\)?)?\s*[:.#]?\s*(?<b>\d[\d\-/]*(?<=\d)(?:[A-Za-z]{1,3}(?![\p{L}]))?)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex OznakaSrbije = new Regex(@"(?<![\p{L}])(?:SRB|RS|KP|Srbij\p{L}*|Serbi\p{L}*)(?![\p{L}])|(?<!\d)3212(?!\d)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>Broj ponude iz teksta: kada ih ima više – najbliži oznaci SRB / KP / 3212.</summary>
+        internal static (string oznaka, int? broj, string zapis) BrojPonude(string tekst)
+        {
+            if (string.IsNullOrWhiteSpace(tekst)) return (null, null, "");
+            var pogodci = PonudaRx.Matches(tekst).Cast<Match>().ToList();
+            if (pogodci.Count == 0) return (null, null, "");
+            var oznake = OznakaSrbije.Matches(tekst).Cast<Match>().Select(m => m.Index).ToList();
+            var m0 = pogodci.OrderBy(m => oznake.Count == 0 ? 0 : oznake.Min(o => Math.Abs(o - m.Index))).First();
+            var o0 = m0.Groups["b"].Value.TrimEnd('-', '/');
+            int? broj = Regex.IsMatch(o0, @"^\d{1,6}$") && int.TryParse(o0, out var b) && b > 0 ? b : (int?)null;
+            return (o0, broj, Regex.Replace(m0.Value, @"\s+", " ").Trim());
+        }
+
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<CimList, PonudaLista> ponudeListova = new System.Runtime.CompilerServices.ConditionalWeakTable<CimList, PonudaLista>();
+
+        /// <summary>Broj ponude lista (r7, pa r13, pa r14) i platilac iz baze – jednom po listu.</summary>
+        internal static PonudaLista PonudaKonteksta(Kontekst k) => k.C == null ? new PonudaLista() : PonudaLista0(k.C);
+
+        /// <summary>Broj ponude lista i platilac iz baze (keš po listu – provera i upis koriste isti rezultat).</summary>
+        internal static PonudaLista PonudaLista0(CimList c) => ponudeListova.GetValue(c, x => PonudaZaList(x));
+
+        internal static PonudaLista PonudaZaList(CimList c)
+        {
+            var p = new PonudaLista();
+            var izvori = new[] { ("r7", c.R7 == null ? "" : Tekst(c.R7)), ("r13", c.R13 == null ? "" : Tekst(c.R13)), ("r14", c.R14?.Tekst ?? "") };
+            foreach (var (rub, t) in izvori)
+            {
+                var (o, b, z) = BrojPonude(t);
+                if (o == null) continue;
+                p.Oznaka = o; p.Broj = b; p.Rubrika = rub; p.Zapis = z;
+                break;
+            }
+            if (p.Broj.HasValue)
+            {
+                var r = Baza.Ponude.Nadji(p.Broj.Value);
+                p.Stanje = r.Stanje; p.PartnerId = r.PartnerId; p.Naziv = r.Naziv ?? "";
+            }
+            return p;
+        }
+
+        private static string PonudaNijeNadjena(PonudaLista p, bool en) => p.Stanje == Baza.Ponude.Stanje.NijeNadjena
+            ? (en ? " Offer " + p.Broj + " was not found in the KP system." : " Ponuda " + p.Broj + " nije pronađena u sistemu KP.") : "";
+
+        /// <summary>Isti partner po nazivu (bez pravne forme): „VTG Rail Logistics Austria GmbH“ = „VTG RAIL LOGISTICS AUSTRIA GMBH“.</summary>
+        internal static bool IstiPartner(string a, string b)
+        {
+            var x = Baza.Slicnost.Osnovno(a ?? ""); var y = Baza.Slicnost.Osnovno(b ?? "");
+            if (x.Length == 0 || y.Length == 0) return false;
+            if (x == y || x.Contains(y) || y.Contains(x)) return true;
+            var rx = x.Split(' ').Where(w => w.Length >= 3).ToList(); var ry = y.Split(' ').Where(w => w.Length >= 3).ToList();
+            return rx.Count > 0 && ry.Count > 0 && rx.Intersect(ry).Count() >= Math.Min(rx.Count, ry.Count) * 0.6;
+        }
+
         /// <summary>
-        /// KP57: u r57 mora biti naveden KP (naziv u bilo kom obliku ili samo šifra 3212 kao šifra prevoznika). Ako je KP
-        /// ugovorni prevoznik naveden u r58a, uslov je ispunjen. Važi za svaki CIM/CUV.
+        /// KP57 (v2.9.2, odluka korisnika 17.11.): KP u r57 u bilo kom obliku („3212“, „3212 KP“, „KP 3212“, „RS: 3212 KP“, „SRB: KP UIC
+        /// 3212“, „3212 Kombinovani Prevoz“, „Kombinovani prevoz d.o.o.“). Naziv i UIC – ispravno; samo naziv – upozorenje „dopisati UIC
+        /// 3212“; samo UIC – upozorenje „dopisati naziv“; ni naziv ni UIC – greška. Ako je KP ugovorni prevoznik u r58a, uslov je
+        /// ispunjen. Važi za svaki CIM/CUV.
         /// </summary>
         private static IEnumerable<Pogodak> KP57(Kontekst k)
         {
             var r = k.C.R57;
             if (r.Popunjena && !k.Citljivo(r, "57")) yield break;
-            if (r.Prevoznici.Any(x => k.P.Kp.JeKpSifra(x.Sifra) || k.P.Kp.PominjeNaziv(x.Naziv)) || k.P.Kp.PominjeNaziv(r.Tekst)) yield break;
-            if (Regex.IsMatch(k.P.Kp.OcrIspravka(r.Tekst ?? ""), @"(?<![\d.,/\-])" + k.P.Kp.Uic + @"(?![\d.,/\-])")) yield break; // samo „3212“ kao šifra prevoznika
+            var (naziv, uic) = KpUR57(r, k.P.Kp);
+            if (naziv && uic) yield break;
+            var en = k.U.Engleski;
+            if (naziv || uic)
+            {
+                var pg = P("57", naziv ? "kp57-uic" : "kp57-naziv");
+                pg.Tezina = Tezina.Upozorenje;
+                pg.Poruka = naziv
+                    ? (en ? "Box 57: Kombinovani prevoz is listed without the UIC code – please add UIC 3212." : "Rubrika 57: Kombinovani prevoz je naveden bez UIC šifre – dopisati UIC 3212.")
+                    : (en ? "Box 57: only the code 3212 is listed for KP – please add the name (Kombinovani prevoz)." : "Rubrika 57: za KP je navedena samo šifra 3212 – dopisati naziv (Kombinovani prevoz).");
+                yield return pg;
+                yield break;
+            }
             if (k.P.Kp.JeKpSifra(k.C.R58a.Sifra) || k.P.Kp.PominjeNaziv(k.C.R58a.Tekst)) yield break;
-            yield return P("57", "kp57").D(r.Popunjena ? (k.U.Engleski ? "KP is not listed among the carriers in box 57." : "U rubrici 57 KP nije naveden među prevoznicima.") : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"));
+            // v2.9.2 (2): sken – srpska deonica u r57 sa ostatkom šifre KP („32   Ostružnica – Subotica br.“: OCR ne čita „3212 KP“) ili
+            // KP sa 3212 u r13 – nije greška pošiljaocu, nego interna napomena za ručnu proveru
+            var srb = SrpskaDeonicaR57(r);
+            var deoSifre = srb != null && (r.Tekst ?? "").Split('\n').Any(red => red.Contains(srb.Split(new[] { "   " }, StringSplitOptions.None).Last().Trim()) && Regex.IsMatch(red, @"^\s*(32|321|212|3212?|3Z1Z)\b"));
+            var r13Kp = k.C.R13 != null && k.P.Kp.PominjeNaziv(Tekst(k.C.R13)) && Regex.IsMatch(k.P.Kp.OcrIspravka(Tekst(k.C.R13)), @"(?<!\d)" + k.P.Kp.Uic + @"(?!\d)");
+            if (k.Ocr && r.Popunjena && (deoSifre || (srb != null && r13Kp)))
+            {
+                var pg = P("57", "kp57-sken");
+                pg.Tezina = Tezina.Info; pg.SamoInterno = true;
+                pg.Poruka = "r57: KP nije pouzdano pročitan na skenu (pročitano: „" + Regex.Replace(r.Tekst ?? "", @"\s*\n\s*", " / ") + "“" + (srb != null ? "; srpska deonica „" + srb + "“" : "")
+                            + (r13Kp ? "; KP sa UIC 3212 naveden u r13" : "") + ") – proveriti ručno.";
+                yield return pg;
+                yield break;
+            }
+            yield return P("57", "kp57").D(r.Popunjena ? (en ? "KP is not listed among the carriers in box 57." : "U rubrici 57 KP nije naveden među prevoznicima.") : (en ? "(box is empty)" : "(rubrika je prazna)"));
         }
+
+        /// <summary>v2.9.2 (2): da li r57 sadrži naziv KP (KP, Kombinovani prevoz…) i UIC šifru 3212 – bilo gde u rubrici, bilo kojim redom.</summary>
+        internal static (bool naziv, bool uic) KpUR57(PrevozniciRubrika r, PraviloKp kp)
+        {
+            var tekst = kp.OcrIspravka(string.Join(Environment.NewLine, new[] { r.Tekst ?? "" }.Concat(r.Prevoznici.Select(x => (x.Sifra + " " + x.Naziv).Trim()))));
+            var uic = r.Prevoznici.Any(x => kp.JeKpSifra(x.Sifra)) || Regex.IsMatch(tekst, @"(?<![\d.,/\-])" + Regex.Escape(kp.Uic) + @"(?![\d.,/\-])");
+            var bezSifre = Regex.Replace(tekst, @"(?<!\d)" + Regex.Escape(kp.Uic) + @"(?!\d)", " ");
+            var naziv = kp.PominjeNaziv(bezSifre);
+            return (naziv, uic);
+        }
+
+        /// <summary>
+        /// v2.9.2 (2): deonica KP u r57 – red sa srpskom stanicom („Subotica br. – Bor Teretna“); KP vozi samo unutar Srbije. null =
+        /// u r57 nema srpske deonice.
+        /// </summary>
+        internal static string SrpskaDeonicaR57(PrevozniciRubrika r)
+        {
+            foreach (var red in r.Prevoznici.Select(x => x.Deonica).Concat((r.Tekst ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)))
+                if (!string.IsNullOrWhiteSpace(red) && SrpskaStanica.IsMatch(PraviloKp.Normalizuj(red))) return red.Trim();
+            return null;
+        }
+
+        /// <summary>Srpske stanice i granični prelazi koji se javljaju u deonicama (normalizovano, bez dijakritika).</summary>
+        internal static readonly Regex SrpskaStanica = new Regex(@"(?<![a-z])(subotica|sid|dimitrovgrad|presevo|vrsac|kikinda|bogojevo|bor|prahovo|zajecar|nis|beograd|ruma|sabac|novi sad|pancevo|zmajevo|ostruznica|batajnica|vreoci|lazarevac|futog|smederevo|pozarevac|kraljevo|cacak|uzice|priboj|lapovo|jagodina|cuprija|paracin|vrbas|sombor|senta|zrenjanin|indjija|stara pazova|sremska mitrovica|mladenovac|valjevo|loznica|majdanpek|negotin|vrsac|prokuplje|leskovac|vranje|kragujevac|resnik|rakovica|topcider|zemun|krnjaca|surcin|pancevo varos|bukovacki salasi|novi beograd|srb|rs)(?![a-z])", RegexOptions.Compiled);
 
         private static IEnumerable<Pogodak> KP2(Kontekst k)
         {
@@ -1631,7 +1802,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         }
 
         /// <summary>Skenirani pečat r58a koji OCR ne čita (nema ni jedne reči od 4+ slova): nesigurno čitanje – upozorenje, ne greška.</summary>
-        private static bool PecatNecitljiv(Kontekst k, Rubrika r) => k.Ocr && Regex.Matches(r.Tekst ?? "", @"\p{L}{4,}").Count == 0;
+        private static bool PecatNecitljiv(Kontekst k, Rubrika r) => k.Ocr && (Regex.Matches(r.Tekst ?? "", @"\p{L}{4,}").Count == 0
+            // v2.9.2 (2): pečat preko r58 („UIC CODE KP 3212“, VOZ 16.11.2026) koji OCR čita kao „janjc, 7 p, / signa“ – nema šifre (4 cifre)
+            // ni naziva prevoznika: čitanje nije pouzdano
+            || (!Regex.IsMatch(r.Tekst ?? "", @"(?<!\d)\d{4}(?!\d)") && !Regex.IsMatch(r.Tekst ?? "", @"(?i)cargo|rail|prevoz|transport|bahn|vasut|vasút|zeleznic|železnic|uic|code")));
 
         /// <summary>
         /// KP3 (greška, v2.7): KP mora biti naveden u r13 kao prevoznik – bilo koji oblik (KP, K prevoz, Kombinovani prevoz, КП,

@@ -15,6 +15,12 @@
      - PARTNER „CINKOTURK LOJISTIK“      → 2531 CINKOTURK LTD
      - potvrđeni prelazi: BA / Zvornik → 417 Brasina gr., MNE / Bijelo Polje → 1365 Prijepolje gr., Erdut / Dalj → 51 Bogojevo gr.
      - HR samo po zemlji se NE pogađa (Šid gr. – Tovarnik i Bogojevo gr. – Erdut): red „HR“ se briše, upisuje se NULL i kandidati.
+   Odluke 17.11.2026 (v2.9.2, tačka 3a.3–3a.4) – partner Budamar; sinonim važi kada je ceo sadržan u nazivu, najduži ima prednost:
+     - PARTNER „Budamar South s.r.o.“ (sa pravnom formom) → 3355 BUDAMAR SOUTH, s.r.o. (SK)
+     - PARTNER „Budamar South“ (bez pravne forme)         → 3143 BUDAMAR SOUTH D.O.O. BEOGRAD
+     - PARTNER „Budamar Logistics“ (i „… a.s.“)          → 1580 BUDAMAR LOGISTICS, a.s. (ostaje)
+     - PARTNER „Budamar“ (samo)                           → 3143 BUDAMAR SOUTH D.O.O. BEOGRAD
+     Pravna forma u sinonimu je jedna reč („s.r.o.“ → SRO, „d.o.o.“ → DOO), kao u agentu (Slicnost.SinonimPartnera).
    TekstNormalizovan je kao u agentu (velika slova, bez kvačica i interpunkcije; partner bez pravnog oblika i grada).
    - Menja samo planiranje.tmpSinonimi; može da se pokrene više puta (postojeći red se ažurira).
    - Briše se sa tmp tabelama (OP_911_tmp_Brisanje.sql).
@@ -50,6 +56,11 @@ INSERT @s VALUES ('GRANICA', N'BIJELO POLJE',     1365, N'odluka 16.11.2026 (Bij
 INSERT @s VALUES ('GRANICA', N'ERDUT',            51,  N'odluka 16.11.2026 (Erdut → Bogojevo gr.)');
 INSERT @s VALUES ('GRANICA', N'DALJ',             51,  N'odluka 16.11.2026 (Dalj → Bogojevo gr.)');
 INSERT @s VALUES ('PARTNER', N'CINKOTURK LOJISTIK', 2531, N'odluka 16.11.2026 (CINKOTURK LOJISTIK → 2531 CINKOTURK LTD)');
+-- v2.9.2: odluke 17.11.2026 (Budamar)
+INSERT @s VALUES ('PARTNER', N'BUDAMAR SOUTH SRO',  3355, N'odluka 17.11.2026 (Budamar South s.r.o. → 3355 BUDAMAR SOUTH, s.r.o.)');
+INSERT @s VALUES ('PARTNER', N'BUDAMAR SOUTH',      3143, N'odluka 17.11.2026 (Budamar South bez pravne forme → 3143)');
+INSERT @s VALUES ('PARTNER', N'BUDAMAR LOGISTICS',  1580, N'odluka 17.11.2026 (Budamar Logistics a.s. → 1580)');
+INSERT @s VALUES ('PARTNER', N'BUDAMAR',            3143, N'odluka 17.11.2026 (samo Budamar → 3143)');
 
 BEGIN TRANSACTION;
 -- odluka 16.11.2026: HR samo po zemlji se ne pogađa (dva prelaza)
