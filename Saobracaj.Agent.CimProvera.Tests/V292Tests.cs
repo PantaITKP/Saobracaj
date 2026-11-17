@@ -406,6 +406,17 @@ namespace Saobracaj.Agent.CimProvera.Tests
             return new ListPosla { P = p };
         }
 
+        [DataTestMethod]
+        [DataRow("1.848,150", 1848150.0)]   // LDC8 „Netto: 1.848,150“ – tone sa tri decimale
+        [DataRow("2.499,750", 2499750.0)]
+        [DataRow("651,600", 651600.0)]
+        [DataRow("2.090,52", 2090.52)]
+        [DataRow("1627,580 t", 1627580.0)]
+        public void Masa_tone_sa_tri_decimale(string tekst, double kg)
+        {
+            Assert.AreEqual(kg, PosaoIzDokumenata.Kg(tekst).Value, 0.01, tekst);
+        }
+
         [TestMethod]
         public void Kopije_lista_sa_jednom_masom_su_isti_list()
         {

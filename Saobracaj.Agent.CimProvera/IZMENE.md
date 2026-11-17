@@ -15,7 +15,7 @@
 - **Šifra stanice sa kosom crtom** („72/12601“) se normalizuje pre traženja po `Kod`.
 - **tmpDokument**: ponovo primljen fajl ne prepisuje `JobID` (raniji posao ostaje vezan za dokument).
 - **x64 build** (`bin\Release-x64`, na serveru `rezerva-x64-2.9.2`): radi i obrađuje 230 mailova u jednom procesu bez nedostatka memorije, ali 64-bitni Tesseract na nekim skenovima čita drugačije (Drenik UID 533: 15 umesto 201 natpisa, gube se otpravna i uputna) – glavni ostaje 32-bitni build sa obradom u delovima od po 20 mailova.
-- **Posle probe**: kopije skena sa jednom masom (Prahovo 05) su isti list (mase se ne sabiraju); ključ spiska „kola:“ razlikuje prazna i natovarena ista kola; isti posao i po istoj ponudi + NHM + broju kola (Bor ID 1657); CUV bez kola sa masama CIM-a istog maila je isti voz (005NISBAR26); list bez obe tačke deonice ide u voz istog maila sa istom stanicom ili robom („12 е въглища.pdf“); ponovo pročitana r7 se ne gubi pri ponovnom čitanju r57/r58a.
+- **Posle probe**: kopije skena sa jednom masom (Prahovo 05) su isti list (mase se ne sabiraju); ključ spiska „kola:“ razlikuje prazna i natovarena ista kola; isti posao i po istoj ponudi + NHM + broju kola (Bor ID 1657); CUV bez kola sa masama CIM-a istog maila je isti voz (005NISBAR26); list bez obe tačke deonice ide u voz istog maila sa istom stanicom ili robom („12 е въглища.pdf“); ponovo pročitana r7 se ne gubi pri ponovnom čitanju r57/r58a. Masa „1.848,150“ (hiljade + tri decimale) su tone; natovaren spisak ne ide uz posao praznih kola ni iz dosijea; teretnica istog spiska prelazi na posao čiji je tovarni list u istom mailu (LDC8).
 
 ## 2026-11-16 – v2.9.1: ispravke upisa poslova (tmp tabele) posle testova 15. i 16.11. (pravila ostaju 2.8.4)
 

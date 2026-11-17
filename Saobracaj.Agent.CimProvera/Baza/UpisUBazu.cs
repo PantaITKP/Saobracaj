@@ -190,6 +190,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 var glavni = g[0];
                 var spisak = Spoji(g);
                 var jobId = PoveziSpisak(spisak, glavni, posloviMaila, m);
+                posloviMailaZaSpisak = new HashSet<int>(posloviMaila.Select(x => x.id));
                 var tid = UpisiTeretnicu(spisak, glavni, jobId, g.Select(x => DokId(x.Fajl)).FirstOrDefault(x => x.HasValue), m, ishod);
                 foreach (var d in g) if (DokId(d.Fajl) is int di) Izvrsi("UPDATE planiranje.tmpDokument SET TeretnicaID = @t, JobID = ISNULL(JobID, @j) WHERE ID = @d", "@t", tid, "@j", (object)jobId ?? DBNull.Value, "@d", di);
                 if (jobId.HasValue) { Stanica2IzSpiska(jobId.Value, g.Select(x => x.Spisak[0].OtpravnaTekst).Concat(g.Select(x => System.IO.Path.GetFileNameWithoutExtension(x.Fajl ?? ""))).Concat(new[] { m.Naslov }).ToList(), DokId(glavni.Fajl)); PosaoIzTeretnice(jobId.Value, tid, DokId(glavni.Fajl), "SPISAK_KOLA", ishod, spisak); }
@@ -201,6 +202,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
             // 4. CIT 7 povezan sa poslom
             foreach (var c7 in r.Cit7) PrimeniCit7(c7, DokId(c7.Fajl), m, ishod);
         }
+
+        /// <summary>v2.9.2: poslovi tovarnih listova maila koji se upisuje (za prebacivanje teretnice istog spiska).</summary>
+        private HashSet<int> posloviMailaZaSpisak;
 
         private static bool IstiFajl(string a, string b)
         {
@@ -491,20 +495,30 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 var po = posloviMaila.OrderByDescending(x => x.p.Kola.Intersect(kola).Count()).First();
                 return po.id;
             }
+            // v2.9.2: natovaren spisak ne ide uz posao praznih kola (exLDC7 prazan, pa LDC8 natovaren – ista kola, isti dosije)
+            var nat = Natovaren(s) == true;
+            int? Dozvoljen(int? j) => j.HasValue && nat && PosaoPraznih(j.Value) ? null : j;
             var r62 = R62Kljuc(s.R62);
-            if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", r62) is object o) return Convert.ToInt32(o);
+            if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", r62) is object o && Dozvoljen(Convert.ToInt32(o)) is int j62) return j62;
             var voz = BrojVozaSpiska(s, d, m);
             var nedavni = NedavniPoslovi();
             if (voz.Length > 0)
             {
                 var istiVoz = nedavni.Where(j => ExcelCitac.BrojVoza(j.Referenca) == voz || ExcelCitac.BrojVoza(j.Naslovi) == voz).OrderByDescending(j => j.Id).ToList();
-                if (istiVoz.Count >= 1) return istiVoz[0].Id;
+                if (istiVoz.Count >= 1 && Dozvoljen(istiVoz[0].Id) is int jv) return jv;
             }
             // v2.9.2: natovaren spisak ne ide uz posao praznih istih kola (exLDC7 → LDC8); spisak praznih kola sme uz natovaren posao
             // (povratak praznih kola – grupa 2)
             var tKola = TeretnicaIstihKola(kola, true, Natovaren(s) == true ? true : (bool?)null);
-            if (tKola?.jobId != null) return tKola.Value.jobId;
-            return PosaoIzDosijea(m);
+            if (Dozvoljen(tKola?.jobId) is int jk) return jk;
+            return Dozvoljen(PosaoIzDosijea(m));
+        }
+
+        /// <summary>v2.9.2: posao samo praznih kola (NHM 9921/9922, CUV) – svi zapisi tovarnih listova su prazna kola.</summary>
+        private bool PosaoPraznih(int jobId)
+        {
+            var tl = ZapisiTl(jobId).Values.ToList();
+            return tl.Count > 0 && tl.All(z => z.Prazna);
         }
 
         /// <summary>Broj voza za spisak: zaglavlje spiska, ime fajla, naslov maila.</summary>
@@ -623,6 +637,15 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             var nove = Stavke(s, nhmPosla);
             var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
             int? tid = postoji == null ? (int?)null : Convert.ToInt32(postoji);
+            // v2.9.2: teretnica istog spiska vezana za drugi posao, a u ovom mailu je tovarni list tog voza – teretnica prelazi na posao maila
+            if (tid != null && jobId.HasValue && (posloviMailaZaSpisak?.Contains(jobId.Value) ?? false)
+                && Skalar("SELECT JobID FROM planiranje.tmpTeretnica WHERE ID = @t", "@t", tid.Value) is int stariJob && stariJob != jobId.Value)
+            {
+                Izvrsi("UPDATE planiranje.tmpTeretnica SET JobID = @j WHERE ID = @t", "@j", jobId.Value, "@t", tid.Value);
+                Izvrsi("UPDATE planiranje.tmpDokument SET JobID = @j WHERE TeretnicaID = @t AND JobID = @s", "@j", jobId.Value, "@t", tid.Value, "@s", stariJob);
+                Istorija(jobId, tid, null, null, null, dokId, "SPISAK_KOLA", "teretnica prebačena sa posla " + stariJob + " (tovarni list voza je u ovom mailu)");
+                ishod.Napomene.Add("teretnica " + tid + " prebačena sa posla " + stariJob + " na posao " + jobId);
+            }
             if (tid == null && TeretnicaIstihKola(s.Kola.Select(k => k.Broj).ToList(), false, Natovaren(s)) is var tk && tk != null && (jobId == null || tk.Value.jobId == null || tk.Value.jobId == jobId)) tid = tk.Value.id;
             var napomena = N(System.IO.Path.GetFileName(d?.Fajl ?? "") + (d?.Strane.Count > 0 ? ", str. " + (d.Strane.Count == 1 ? d.Strane[0].ToString() : d.Strane.Min() + "–" + d.Strane.Max()) : ""), 512);
             var brojTer = s.R62.Broj.Length > 0 ? N(string.Join(" ", new[] { s.R62.Zemlja, s.R62.Stanica, s.R62.Preduzece, s.R62.Broj }.Where(x => !string.IsNullOrEmpty(x))), 100) : (object)DBNull.Value;

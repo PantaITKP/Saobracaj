@@ -614,7 +614,12 @@ namespace Saobracaj.Agent.CimProvera.Baza
             t = Regex.Replace(t, @"(?i)\s*(kg|t|to|tona|tone|tons?)\.?\s*$", "");
             t = Regex.Replace(t, @"(?<=\d)\s+(?=\d)", "");   // „2 234 533“, OCR „2 234533“
             // oba razdvajača („2.090,52“, „2,090.52“): poslednji je decimalni
-            if (t.Contains(".") && t.Contains(",")) t = t.LastIndexOf(',') > t.LastIndexOf('.') ? t.Replace(".", "") : t.Replace(",", "");
+            if (t.Contains(".") && t.Contains(","))
+            {
+                t = t.LastIndexOf(',') > t.LastIndexOf('.') ? t.Replace(".", "") : t.Replace(",", "");
+                // v2.9.2 (LDC8 „Netto: 1.848,150 / Bruto: 2.499,750“): hiljade + tačno 3 decimale = tone sa kilogramima
+                if (Regex.IsMatch(t, @"^\d{1,4}[.,]\d{3}$")) tone = true;
+            }
             if (Regex.IsMatch(t, @"^\d{1,3}([.,]\d{3})+$") && !tone) t = Regex.Replace(t, @"[.,]", "");
             // više od 3 decimale u masi nije tona nego kg sa izgubljenim razdvajanjem hiljada (OCR „2.234533“ = 2 234 533 kg)
             else if (Regex.IsMatch(t, @"^\d{1,3}[.,]\d{4,}$") && !tone) t = Regex.Replace(t, @"[.,]", "");
