@@ -224,6 +224,35 @@ namespace Saobracaj.Agent.CimProvera.Baza
             return d;
         }
 
+        /// <summary>
+        /// v3.0 (0a.3): NHM za kola spiska (kada ga spisak nema) samo iz grupe posla čija su to kola – nikad iz druge grupe (ID 1654: IBC
+        /// spisak je dobio NHM uglja iz grupe 1). Posao bez zapisa TL: NHM posla (kao ranije). Kola se ne poklapaju ni sa jednom grupom
+        /// (a grupe imaju brojeve kola) → prazno (NULL).
+        /// </summary>
+        internal string NhmZaKola(int jobId, IEnumerable<string> kolaSpiska)
+        {
+            var gr = Grupe(ZapisiTl(jobId).Values);
+            if (gr.Count == 0) return NhmPosla(jobId);
+            return NhmGrupeZaKola(gr, kolaSpiska, id => sif.Nhm.FirstOrDefault(z => z.Id == id)?.Kod8);
+        }
+
+        internal static string NhmGrupeZaKola(List<List<ZapisTl>> gr, IEnumerable<string> kolaSpiska, Func<int, string> kod8)
+        {
+            string NhmGrupe(List<ZapisTl> g)
+            {
+                if (g[0].Prazna) return "992200";
+                var ids = g.Select(z => z.NhmId).Where(x => x.HasValue).Distinct().ToList();
+                if (ids.Count == 1 && kod8(ids[0].Value) is string k && k.Length > 0) return k;
+                return g.Select(z => z.Nhm4).FirstOrDefault(x => !string.IsNullOrEmpty(x)) ?? "";
+            }
+            var kola = new HashSet<string>((kolaSpiska ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0));
+            var preklop = gr.Select(g => (g, n: g.SelectMany(z => z.Kola).Select(BrojKolaUic.Cifre).Distinct().Count(kola.Contains))).OrderByDescending(x => x.n).First();
+            if (preklop.n > 0) return NhmGrupe(preklop.g);
+            // tovarni listovi bez brojeva kola: samo kada je posao jedna grupa
+            if (gr.Count == 1 && !gr[0].Any(z => z.Kola.Count > 0)) return NhmGrupe(gr[0]);
+            return "";
+        }
+
         /// <summary>Grupe posla iz zapisa TL: grupa 1 = natovarena kola sa najviše kola (ako ih nema – prazna), pa ostale po broju kola.</summary>
         internal static List<List<ZapisTl>> Grupe(IEnumerable<ZapisTl> zapisi)
         {
@@ -263,7 +292,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             p.Postavi("BrojKola" + s, bk, opis, "tovarni listovi", bk > 0 ? 80 : 0);
             double? Zbir(Func<ZapisTl, double?> f) => g.Any(z => f(z).HasValue) ? g.Sum(z => f(z) ?? 0) : (double?)null;
             var ne = Zbir(z => z.Neto); var ta = Zbir(z => z.Tara); var br = Zbir(z => z.Bruto);
-            decimal Tn(double? kg) => Math.Round((decimal)(kg ?? 0) / 1000m, 3);
+            decimal Tn(double? kg) => PosaoIzDokumenata.Tone(kg ?? 0);
             p.Postavi("Neto" + s, Tn(ne), opis, "r25/r21", ne.HasValue ? 90 : 0);
             p.Postavi("Tara" + s, Tn(ta), opis, "r25/r21", ta.HasValue ? 90 : 0);
             p.Postavi("Bruto" + s, Tn(br), opis, "r25/r21", br.HasValue ? 90 : 0);
@@ -309,6 +338,44 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
                 if (suprotno) return kv.Key;
             }
             return null;
+        }
+
+        /// <summary>Oznake voza iz teksta (r8, naslov): reči sa slovima i ciframa, 5+ znakova („SBGT26_SRB04“, „LDC8-HAMMNOV1“), normalizovane.</summary>
+        internal static HashSet<string> OznakeVoza(params string[] tekstovi)
+        {
+            var s = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var t in tekstovi.Where(x => !string.IsNullOrWhiteSpace(x)))
+                foreach (Match m in Regex.Matches(t, @"(?<![\p{L}\d])[\p{L}\d][\p{L}\d_\-/\.]{3,30}[\p{L}\d](?![\p{L}\d])"))
+                {
+                    var n = NormOznaka(m.Value);
+                    if (n.Length >= 5 && Regex.IsMatch(n, @"\d") && Regex.IsMatch(n, @"[A-Z]") && !Regex.IsMatch(n, @"^\d+[A-Z]?$")) s.Add(n);
+                }
+            return s;
+        }
+
+        internal static string NormOznaka(string x) => Regex.Replace((x ?? "").ToUpperInvariant(), @"[^A-Z0-9]", "");
+
+        /// <summary>
+        /// v3.0 (0a.2, Zmajevo SBGT26_SRB04): prazna kola sa istom oznakom voza ili referencom (r8 lista, naslov maila) kao natovaren posao
+        /// u suprotnom smeru – povratak praznih (grupa 2 istog posla), i kada se brojevi kola ne poklapaju.
+        /// </summary>
+        private (int? id, string opis) PovratakPraznihPoOznaci(VozListova voz, MailZaUpis m)
+        {
+            var oznake = OznakeVoza(voz.Listovi.Select(x => x.P.V.TryGetValue("Referenca", out var v) ? v as string : null).Concat(new[] { m.Naslov }).ToArray());
+            if (oznake.Count == 0) return (null, "");
+            var l0 = voz.Listovi[0];
+            foreach (var k in NedavniPoslovi().OrderByDescending(x => x.Id))
+            {
+                var nadjena = OznakeVoza(k.Referenca, k.Naslovi).FirstOrDefault(oznake.Contains);
+                if (nadjena == null || PosaoPraznih(k.Id)) continue;
+                var j = Red("SELECT OtpravnaID, UputnaID, Stanica1ID, Stanica3ID, Referenca FROM planiranje.tmpJobs WHERE ID = @id", "@id", k.Id);
+                bool Isto(object a, int? b) => a is int x && b.HasValue && x == b.Value;
+                var suprotno = Isto(j["UputnaID"], l0.Otpravna) || Isto(j["OtpravnaID"], l0.Uputna) || Isto(j["Stanica3ID"], l0.Stanica1) || Isto(j["Stanica1ID"], l0.Stanica3);
+                if (!suprotno) continue;
+                var pune = ZapisiTl(k.Id).Values.Where(z => !z.Prazna).SelectMany(z => z.Kola);
+                return (k.Id, OpisPovratka(j["Referenca"] as string ?? nadjena, pune, voz.Listovi.SelectMany(x => x.P.Kola)));
+            }
+            return (null, "");
         }
 
         /// <summary>Posao iz dosijea pošiljke sa istom deonicom KP (Stanica1 i Stanica3) – drugi tovarni list istog voza iz iste prepiske.</summary>
@@ -508,6 +575,8 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             if (id == null && PosaoIzDosijeaIsteDeonice(m, voz) is int jd) { id = jd; veza = "isti dosije i deonica KP"; }
             var povratak = false;
             if (id == null && voz.SvaPrazna && PovratakPraznih(voz) is int jp) { id = jp; povratak = true; veza = "povratak praznih kola uz posao " + jp; }
+            // v3.0 (0a.2): drugi, nezavisan način – ista oznaka voza ili referenca (r8, naslov) + suprotan smer + prazna kola
+            if (id == null && voz.SvaPrazna && PovratakPraznihPoOznaci(voz, m) is var poOzn && poOzn.id.HasValue) { id = poOzn.id; povratak = true; veza = poOzn.opis + " (posao " + poOzn.id + ")"; }
             if (veza.Length > 0 && !veza.StartsWith("ključ", StringComparison.Ordinal)) ishod.Napomene.Add(voz.Listovi.Count + " tovarnih listova → posao " + id + " (" + veza + ")");
 
             // zapisi TL: postojeći + listovi ovog maila
@@ -616,7 +685,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 var kg = PosaoIzDokumenata.Kg(vr);
                 if (kg == null) continue;
                 iz.Vrednost = vr;
-                var t = Math.Round((decimal)kg.Value / 1000m, 3);
+                var t = PosaoIzDokumenata.Tone(kg.Value);
                 var izSpiska = Skalar("SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = 'Neto1'", "@j", j) as string == "spisak";
                 if (izSpiska)
                 {
@@ -721,6 +790,30 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
 
         private static readonly string[] KoloneGrupe = { "NHM", "Bruto", "BrojKola", "Duzina", "Neto", "Tara", "OMBroj", "SerijaKola" };
 
+        /// <summary>v3.0 (0a.2): poreklo povratka praznih – „povratak praznih po oznaci voza SBGT26_SRB04, kola se ne poklapaju“.</summary>
+        internal static string OpisPovratka(string oznakaVoza, IEnumerable<string> kolaPunih, IEnumerable<string> kolaPraznih)
+        {
+            var pune = new HashSet<string>((kolaPunih ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0));
+            var prazna = (kolaPraznih ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0).Distinct().ToList();
+            var istih = prazna.Count(pune.Contains);
+            var oznaka = string.IsNullOrWhiteSpace(oznakaVoza) ? "" : " po oznaci voza " + oznakaVoza.Trim();
+            return "povratak praznih" + oznaka + (pune.Count == 0 ? "" : istih == 0 ? ", kola se ne poklapaju" : ", " + istih + " od " + prazna.Count + " kola ista");
+        }
+
+        /// <summary>v3.0 (0a.1): tekst INTERNO napomene – „spisak (28 kola) ≠ tovarni list (30 kola) – proveriti“.</summary>
+        internal static string SpisakNijeTovarniList(int kolaSpiska, int kolaTl, int tudjih) =>
+            "spisak (" + kolaSpiska + " kola) ≠ tovarni list (" + kolaTl + " kola)" + (tudjih > 0 ? ", " + tudjih + " kola nisu u tovarnom listu" : "") + " – proveriti";
+
+        /// <summary>v3.0 (0a.1): da li spisak sme da menja broj kola i mase posla (ne sme: manje kola od tovarnog lista ili kola kojih nema u listu).</summary>
+        internal static bool SpisakMenjaPosao(IEnumerable<string> kolaSpiska, IEnumerable<string> kolaTl, int brojKolaTl)
+        {
+            var tl = new HashSet<string>((kolaTl ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0));
+            var sp = (kolaSpiska ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).ToList();
+            var broj = Math.Max(brojKolaTl, tl.Count);
+            if (broj == 0) return true;
+            return sp.Count >= broj && (tl.Count == 0 || sp.All(tl.Contains));
+        }
+
         /// <summary>
         /// Posle povezivanja: posao iz stavki teretnice, razlog SPISAK_KOLA. v2.9.1: teretnica pripada grupi posla čija su kola na njoj
         /// (grupa 1 = natovarena, 2 = prazna / druga roba); vrednosti spiska menjaju samo tu grupu (prazan vagon iz posebnog CUV-a ostaje u
@@ -748,7 +841,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             // neto 0 u stavci je „nije navedeno“ kada nijedna stavka nema neto (spisak samo sa tarom)
             if (s.Kola.All(k => (k.NetoKg ?? 0) == 0) && !s.Kola.All(k => k.Prazna)) foreach (var k in s.Kola) k.NetoKg = null;
             if (izvorni != null) { s.UkupnoTaraKg = izvorni.UkupnoTaraKg; s.UkupnoNetoKg = izvorni.UkupnoNetoKg; s.UkupnoBrutoKg = izvorni.UkupnoBrutoKg; s.DuzinaVozaM = izvorni.DuzinaVozaM; s.PrelazniPut = izvorni.PrelazniPut; s.Prevoznici = izvorni.Prevoznici; s.NhmJedinica = izvorni.NhmJedinica; }
-            var p = PosaoIzDokumenata.IzSpiska(s, pk, NhmPosla(jobId), "");
+            var p = PosaoIzDokumenata.IzSpiska(s, pk, NhmZaKola(jobId, s.Kola.Select(k => k.Broj)), "");
             var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId);
             var rucno = Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND RucnoIzmenjeno = 1", "@id", jobId);
 
@@ -775,6 +868,15 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 foreach (var k in KoloneGrupe) { p.V.Remove(k + "2"); p.Poreklo.RemoveAll(x => x.Kolona == k + "2"); }
             Izvrsi("UPDATE planiranje.tmpTeretnica SET Grupa = @g WHERE ID = @t", "@g", (byte)grupa, "@t", tid);
             var g0 = grupa.ToString();
+            // v3.0 (0a.2): prazna kola uz natovaren posao (povratak praznih) – poreklo grupe 2; kola ne moraju da se poklapaju
+            if (grupa == 2 && p.Grupe.Count == 1 && p.Grupe[0].prazna && gr.Count >= 1 && !gr[0][0].Prazna)
+            {
+                var opisPovratka = OpisPovratka(Skalar("SELECT Referenca FROM planiranje.tmpJobs WHERE ID = @j", "@j", jobId) as string,
+                    gr[0].SelectMany(z => z.Kola), p.Grupe[0].kola);
+                foreach (var po in p.Poreklo.Where(x => x.Kolona.EndsWith("2"))) po.Kandidati = (po.Kandidati.Length > 0 ? po.Kandidati + "; " : "") + opisPovratka;
+                ishod.Napomene.Add(opisPovratka);
+                Istorija(jobId, tid, null, null, null, dokId, "POVRATAK_PRAZNIH", opisPovratka);
+            }
 
             // NHM sa spiska samo kada ga spisak ima; iste 4 cifre kao NHM posla ne menjaju podgrupu iz tovarnog lista
             if (!s.Kola.Any(k => k.Nhm.Length > 0)) { p.V.Remove("NHM1"); p.V.Remove("NHM2"); }
@@ -785,6 +887,20 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var izCim = Skalar("SELECT Vrednost FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = @k AND Rubrika IN ('r18/r21', 'tovarni listovi')", "@j", jobId, "@k", "BrojKola" + g0);
             var kolaCim = izCim != null && int.TryParse(Convert.ToString(izCim), out var bk) ? bk : 0;
             var kolaSpisak = s.Kola.Count;
+            // v3.0 (0a.1, LDC8): spisak sa MANJE kola od tovarnog lista, ili sa kolima kojih u tovarnom listu nema, ne menja broj kola
+            // ni mase posla – stavke ostaju kao posebna verzija (teretnica), uz INTERNO napomenu
+            var tlGrupe = gr.Count >= grupa ? gr[grupa - 1] : new List<ZapisTl>();
+            var kolaTl = new HashSet<string>(tlGrupe.SelectMany(z => z.Kola).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0));
+            var brojTl = Math.Max(kolaCim, tlGrupe.Count > 0 && tlGrupe.All(z => z.Kola.Count > 0) ? kolaTl.Count : tlGrupe.Sum(z => z.BrojKola));
+            var tudjih = kolaTl.Count > 0 ? s.Kola.Count(k => !kolaTl.Contains(BrojKolaUic.Cifre(k.Broj))) : 0;
+            if (!SpisakMenjaPosao(s.Kola.Select(k => k.Broj), kolaTl, brojTl))
+            {
+                var t = SpisakNijeTovarniList(kolaSpisak, brojTl, tudjih);
+                ishod.Napomene.Add(t); ishod.Interno.Add(t);
+                Istorija(jobId, tid, null, null, null, dokId, razlog, t);
+                Izvrsi("UPDATE planiranje.tmpTeretnica SET Napomena = LEFT(ISNULL(Napomena + ' | ', '') + @n, 1000) WHERE ID = @t", "@n", t, "@t", tid);
+                return;
+            }
             var nap = kolaCim > 0 && kolaCim != kolaSpisak ? "Broj kola u tovarnom listu (" + kolaCim + ") ne odgovara spisku kola (" + kolaSpisak + ")" : null;
             if (nap != null)
             {

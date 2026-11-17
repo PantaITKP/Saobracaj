@@ -321,7 +321,8 @@ namespace Saobracaj.Agent.CimProvera
                     var iu = UpisiUBazu(stanje, pravila, m, uid.Id, f.FullName, rr, prilozi, obrada.PoslednjaPosiljka);
                     // v2.9.2 (3.3): mail bez novog izveštaja (isti tovarni list, nova verzija spiska) koji je ažurirao posao – u režimu Test
                     // kratka interna poruka šta je ažurirano (pošiljaocu ništa)
-                    if (!prijavljeno && iu != null && iu.Promene.Count > 0) PosaljiInternoAzurirano(m, iu);
+                    // v3.0 (0a.1): INTERNO napomena upisa („spisak (28 kola) ≠ tovarni list (30 kola) – proveriti“) ide i uz poslat izveštaj
+                    if (iu != null && ((!prijavljeno && iu.Promene.Count > 0) || iu.Interno.Count > 0)) PosaljiInternoAzurirano(m, iu);
                 }
                 var istiPrilog = ponavljanja.IstiPrilozi(prilozi);
                 if (istiPrilog != null)
@@ -478,8 +479,9 @@ namespace Saobracaj.Agent.CimProvera
             try
             {
                 var od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
-                var telo = "INTERNO – ažuriran posao (pošiljaocu ništa). Mail „" + m.Subject + "“ (" + od + ", " + m.Date.LocalDateTime.ToString("dd.MM. HH:mm") + "): tovarni list je isti kao ranije, nova verzija priloga je ažurirala posao:"
-                           + Environment.NewLine + string.Join(Environment.NewLine, iu.Promene.Take(30).Select(x => "  - " + x))
+                var telo = "INTERNO – " + (iu.Promene.Count > 0 ? "ažuriran posao" : "upis posla") + " (pošiljaocu ništa). Mail „" + m.Subject + "“ (" + od + ", " + m.Date.LocalDateTime.ToString("dd.MM. HH:mm") + ")"
+                           + (iu.Promene.Count > 0 ? ": nova verzija priloga je ažurirala posao:" + Environment.NewLine + string.Join(Environment.NewLine, iu.Promene.Take(30).Select(x => "  - " + x)) : ".")
+                           + (iu.Interno.Count > 0 ? Environment.NewLine + Environment.NewLine + "INTERNO: " + string.Join("; ", iu.Interno.Distinct()) : "")
                            + (iu.Napomene.Count > 0 ? Environment.NewLine + Environment.NewLine + "Napomene: " + string.Join("; ", iu.Napomene.Distinct().Take(10)) : "");
                 Slanje.Posalji(cfg, Slanje.Nova(cfg, new[] { cfg.IzvestajAdresa }, null, "[INTERNO] Ažuriran posao – " + m.Subject, telo));
                 log.Info("  interna poruka o ažuriranom poslu poslata (" + iu.Promene.Count + " izmena).");

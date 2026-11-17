@@ -35,6 +35,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         public List<string> Napomene = new List<string>();
         /// <summary>v2.9.2 (3.3): izmene postojećih poslova u ovom mailu („posao 297: Tara1 632.400 → 666.700“) – za kratku internu poruku.</summary>
         public List<string> Promene = new List<string>();
+        /// <summary>v3.0 (0a.1): napomene za INTERNO (spisak ≠ tovarni list…) – interna poruka u režimu Test, rezultat.json, Excel i ANALIZA.md.</summary>
+        public List<string> Interno = new List<string>();
         public override string ToString() =>
             "dokumenata " + Dokumenata + ", poslova novih " + NovihPoslova + " / izmenjenih " + IzmenjenihPoslova + " / istih " + IstihPoslova
             + ", teretnica " + Teretnica + " (stavki " + Stavki + ")" + (Povezano > 0 ? ", naknadno povezano " + Povezano : "")
@@ -185,10 +187,15 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 var g = grupe.FirstOrDefault(x => Preklapanje(x[0].Spisak[0], d.Spisak[0]) >= 0.6);
                 if (g != null) g.Add(d); else grupe.Add(new List<Dokument> { d });
             }
+            // v3.0 (0a.2): spisak uz natovaren tovarni list istog maila (bez oznake praznih kola) je spisak natovarenih kola i kada ima
+            // samo taru (Zmajevo soy: OCR spisak uz CIM nije nova verzija spiska praznih kola istih brojeva)
+            natovareniUzList.Clear();
+            var natovarenTlUMailu = posloviMaila.Any(x => !x.p.Prazna) && !posloviMaila.Any(x => x.p.Prazna);
             foreach (var g in grupe)
             {
                 var glavni = g[0];
                 var spisak = Spoji(g);
+                if (natovarenTlUMailu && Natovaren(spisak) != true && !spisak.Kola.Any(k => k.Prazna)) natovareniUzList.Add(spisak);
                 var jobId = PoveziSpisak(spisak, glavni, posloviMaila, m);
                 posloviMailaZaSpisak = new HashSet<int>(posloviMaila.Select(x => x.id));
                 var tid = UpisiTeretnicu(spisak, glavni, jobId, g.Select(x => DokId(x.Fajl)).FirstOrDefault(x => x.HasValue), m, ishod);
@@ -205,6 +212,12 @@ namespace Saobracaj.Agent.CimProvera.Baza
 
         /// <summary>v2.9.2: poslovi tovarnih listova maila koji se upisuje (za prebacivanje teretnice istog spiska).</summary>
         private HashSet<int> posloviMailaZaSpisak;
+
+        /// <summary>v3.0 (0a.2): spiskovi maila koji su priloženi uz natovaren tovarni list (stanje „natovaren“ i kada imaju samo taru).</summary>
+        private readonly HashSet<SpisakKola> natovareniUzList = new HashSet<SpisakKola>();
+
+        /// <summary>Stanje kola spiska: natovaren (true), prazan (false), nepoznato (null) – uz kontekst maila.</summary>
+        private bool? StanjeSpiska(SpisakKola s) => natovareniUzList.Contains(s) ? true : Natovaren(s);
 
         private static bool IstiFajl(string a, string b)
         {
@@ -496,7 +509,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 return po.id;
             }
             // v2.9.2: natovaren spisak ne ide uz posao praznih kola (exLDC7 prazan, pa LDC8 natovaren – ista kola, isti dosije)
-            var nat = Natovaren(s) == true;
+            var nat = StanjeSpiska(s) == true;
             int? Dozvoljen(int? j) => j.HasValue && nat && PosaoPraznih(j.Value) ? null : j;
             var r62 = R62Kljuc(s.R62);
             if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", r62) is object o && Dozvoljen(Convert.ToInt32(o)) is int j62) return j62;
@@ -509,7 +522,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             }
             // v2.9.2: natovaren spisak ne ide uz posao praznih istih kola (exLDC7 → LDC8); spisak praznih kola sme uz natovaren posao
             // (povratak praznih kola – grupa 2)
-            var tKola = TeretnicaIstihKola(kola, true, Natovaren(s) == true ? true : (bool?)null);
+            var tKola = TeretnicaIstihKola(kola, true, StanjeSpiska(s) == true ? true : (bool?)null);
             if (Dozvoljen(tKola?.jobId) is int jk) return jk;
             return Dozvoljen(PosaoIzDosijea(m));
         }
@@ -614,14 +627,14 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             return l;
         }
 
-        private static string KljucSpiska(SpisakKola s, Dokument d, MailZaUpis m)
+        private string KljucSpiska(SpisakKola s, Dokument d, MailZaUpis m)
         {
             var r62 = R62Kljuc(s.R62);
             if (r62 != null) return r62;
             var voz = BrojVozaSpiska(s, d, m);
             if (voz.Length > 0) return "voz:" + voz;
             // v2.9.2: ista kola prazna i natovarena su dva spiska (exLDC7 prazan → LDC8 natovaren)
-            var stanjeKola = Natovaren(s) == true ? "|n" : Natovaren(s) == false ? "|p" : "";
+            var stanjeKola = StanjeSpiska(s) == true ? "|n" : StanjeSpiska(s) == false ? "|p" : "";
             return "kola:" + Prilog.Sha256(Encoding.UTF8.GetBytes(string.Join(",", s.Kola.Select(k => k.Broj).OrderBy(x => x, StringComparer.Ordinal)))).Substring(0, 16) + stanjeKola;
         }
 
@@ -632,7 +645,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
         private int UpisiTeretnicu(SpisakKola s, Dokument d, int? jobId, int? dokId, MailZaUpis m, IshodUpisa ishod)
         {
             var kljuc = KljucSpiska(s, d, m);
-            var nhmPosla = jobId.HasValue ? NhmPosla(jobId.Value) : "";
+            var nhmPosla = jobId.HasValue ? NhmZaKola(jobId.Value, s.Kola.Select(k => k.Broj)) : "";
             DopuniDuzine(s);
             var nove = Stavke(s, nhmPosla);
             var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
@@ -646,7 +659,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
                 Istorija(jobId, tid, null, null, null, dokId, "SPISAK_KOLA", "teretnica prebačena sa posla " + stariJob + " (tovarni list voza je u ovom mailu)");
                 ishod.Napomene.Add("teretnica " + tid + " prebačena sa posla " + stariJob + " na posao " + jobId);
             }
-            if (tid == null && TeretnicaIstihKola(s.Kola.Select(k => k.Broj).ToList(), false, Natovaren(s)) is var tk && tk != null && (jobId == null || tk.Value.jobId == null || tk.Value.jobId == jobId)) tid = tk.Value.id;
+            if (tid == null && TeretnicaIstihKola(s.Kola.Select(k => k.Broj).ToList(), false, StanjeSpiska(s)) is var tk && tk != null && (jobId == null || tk.Value.jobId == null || tk.Value.jobId == jobId)) tid = tk.Value.id;
             var napomena = N(System.IO.Path.GetFileName(d?.Fajl ?? "") + (d?.Strane.Count > 0 ? ", str. " + (d.Strane.Count == 1 ? d.Strane[0].ToString() : d.Strane.Min() + "–" + d.Strane.Max()) : ""), 512);
             var brojTer = s.R62.Broj.Length > 0 ? N(string.Join(" ", new[] { s.R62.Zemlja, s.R62.Stanica, s.R62.Preduzece, s.R62.Broj }.Where(x => !string.IsNullOrEmpty(x))), 100) : (object)DBNull.Value;
             var referenca = N(BrojVozaSpiska(s, d, m) is var v && v.Length > 0 ? "voz " + v : m.Naslov, 100);
@@ -767,7 +780,7 @@ VALUES (@rb, @t, @bk, @s, @o, @du, @ta, @ne, 0, 0, 0, 0, 0, @v, @rid, @pr, 0, 0,
         {
             var kljuc = Skalar("SELECT KljucPosiljke FROM planiranje.tmpJobs WHERE ID = @j", "@j", jobId) as string ?? "";
             var otp = Regex.Match(kljuc, @"^r62:\d+-\d+-\d+-(\d+)$");
-            var nhm = Poklapanje.Nhm4(NhmPosla(jobId));
+            var nhm = Poklapanje.Nhm4(NhmZaKola(jobId, Kolona("SELECT BrojKola FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t", "@t", tid).Select(Convert.ToString)));
             Izvrsi(@"UPDATE t SET StanicaOd = j.Stanica1ID, StanicaDo = j.Stanica3ID FROM planiranje.tmpTeretnica t JOIN planiranje.tmpJobs j ON j.ID = t.JobID WHERE t.ID = @t;
 UPDATE s SET Otpravna = j.Stanica1ID, Uputna = j.Stanica3ID, Izvozna = j.OtpravnaID, Uvozna = j.UputnaID, Dokument = ISNULL(s.Dokument, @dok), VRNP = ISNULL(s.VRNP, @nhm)
 FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.BrojTeretnice JOIN planiranje.tmpJobs j ON j.ID = t.JobID WHERE t.ID = @t;",

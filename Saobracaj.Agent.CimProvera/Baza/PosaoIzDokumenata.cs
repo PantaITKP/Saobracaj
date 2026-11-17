@@ -391,7 +391,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
             if (t.Length == 0) return null;
             if (Regex.IsMatch(t, @"[©®|¦§«»°¬~^`´¨\\{}\[\]<>]")) return null;
             var tokeni = t.Split(' ').Select(x => x.Trim('.', ',', ';', ':', '(', ')', '"', '\'', '„', '“', '”')).Where(x => x.Length > 0).ToList();
-            bool Dobar(string x) => Regex.IsMatch(x, @"^[\p{L}\d][\p{L}\d\-/\.]*[\p{L}\d]$") && Regex.Matches(x, @"[\p{L}\d]").Count >= 3;
+            // v3.0: donja crta je deo oznake voza („SBGT26_SRB04“)
+            bool Dobar(string x) => Regex.IsMatch(x, @"^[\p{L}\d][\p{L}\d\-/\._]*[\p{L}\d]$") && Regex.Matches(x, @"[\p{L}\d]").Count >= 3;
             var dobri = tokeni.Where(Dobar).ToList();
             if (dobri.Count == 0) return null;
             var sum = tokeni.Count(x => x.Length <= 2);
@@ -399,7 +400,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var jaki = dobri.Where(x => Regex.IsMatch(x, @"[\-/]") && Regex.IsMatch(x, @"\d") || x.Length >= 5).ToList();
             if (sum * 2 >= tokeni.Count && jaki.Count == 0) return null;
             // ceo tekst kada je čist („LDC8-HAMMNOV1“, „SAD HER 79“, „Budamar Coal 17“): kratke reči su manjina, sve reči su slova/cifre
-            if (sum * 2 < tokeni.Count && tokeni.All(x => Regex.IsMatch(x, @"^[\p{L}\d][\p{L}\d\-/\.]*$")) && t.Length <= 100) return t;
+            if (sum * 2 < tokeni.Count && tokeni.All(x => Regex.IsMatch(x, @"^[\p{L}\d][\p{L}\d\-/\._]*$")) && t.Length <= 100) return t;
             var izbor = (jaki.Count > 0 ? jaki : dobri).OrderByDescending(x => Regex.IsMatch(x, @"\d") && Regex.IsMatch(x, @"[\-/]")).ThenByDescending(x => x.Length).First();
             return PodaciPosla.Skrati(izbor, 100);
         }
@@ -604,7 +605,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
             (c.R18?.Stavke ?? new List<SifraTekst>()).Select(x => Regex.Replace(x.Tekst ?? "", @"\D", ""))
                 .Concat(c.R21?.BrojeviKola ?? new List<string>()).Select(x => Regex.Replace(x ?? "", @"\D", "")).Where(x => x.Length == 12).Distinct().ToList();
 
-        private static decimal Tone(double kg) => Math.Round((decimal)kg / 1000m, 3);
+        /// <summary>v3.0 (0a.4): zbir u kg se zaokružuje jednom, na ceo kilogram, pa deli sa 1000 (SAD-HER 80: 694 940,48 kg → 694,940 t).
+        /// Pojedinačne mase (spisak) se ne zaokružuju pre sabiranja.</summary>
+        internal static decimal Tone(double kg) => Math.Round((decimal)Math.Round(kg, MidpointRounding.AwayFromZero) / 1000m, 3);
 
         /// <summary>Broj iz teksta mase u kg: „2 234533“, „1.671.863“, „562.670“, „21500“, „1627,580 t“.</summary>
         internal static double? Kg(string s, bool triDecimaleTone = false)

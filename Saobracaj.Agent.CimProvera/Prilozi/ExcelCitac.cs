@@ -170,7 +170,10 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                             .Where(m => m.Success).Select(m => Regex.Replace(m.Groups[1].Value, @"[ .]", "")).FirstOrDefault();
                     if (nhm != null) { stavka.Nhm = nhm; stavka.Prazna = nhm.StartsWith("9921") || nhm.StartsWith("9922"); }
                     // v2.8.1: kola označena kao prazna u svojoj vrsti („Empty“, „Leer“, „prazna“, rum. „gol“)
-                    if (celije.Any(c => Regex.IsMatch(c.Trim(), @"^(empty|leer|leere?|prazn[ao]?|gol|goale|vide|[üu]res)$", RegexOptions.IgnoreCase))) stavka.Prazna = true;
+                    // v3.0: „EMPTY“ u redu sa tovarnim jedinicama (kontejner/prikolica) opisuje praznu jedinicu, ne kola – kola su natovarena
+                    // (intermodal SAD-HER 80: kola 3580 4992 301-6 sa dva prazna kontejnera)
+                    var imaJedinice = uti.Count > 0 || celije.Any(c => Regex.IsMatch((c ?? "").Trim(), @"^[A-Z]{4}\s?\d{6,7}$"));
+                    if (!imaJedinice && celije.Any(c => Regex.IsMatch(c.Trim(), @"^(empty|leer|leere?|prazn[ao]?|gol|goale|vide|[üu]res)$", RegexOptions.IgnoreCase))) stavka.Prazna = true;
                     spisak.Kola.Add(stavka);
                     redKola[k] = celije;
                 }
@@ -178,6 +181,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             if (spisak.Kola.Any(k => k.Rid)) spisak.RidOznaka = true;
             try { PodaciPoKolima(redovi, spisak, redKola); ZaglavljeSpiska(redovi, spisak, opisIzvora); }
             catch { /* v2.9.0: podaci za teretnicu su dodatak – greška ne sme da promeni proveru */ }
+            PraznaPoZaglavlju(redovi, spisak);
 
             var sve = string.Join("\n", sviTekstovi);
             spisak.UnBrojevi = Regex.Matches(sve.ToUpperInvariant(), @"\bUN\s?-?(\d{4})\b").Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToList();
@@ -208,23 +212,38 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             return rez;
         }
 
+        /// <summary>
+        /// v3.0 (0a.2): spisak praznih kola po zaglavlju – „empty wagons“ / „leere Wagen“ / „prazna kola“ ili šifra 9921/9922 u redu
+        /// zaglavlja (Zmajevo – Kelebia: „Ware | empty wagons | 9922“), kola bez sopstvenog NHM-a i bez mase robe → prazna kola, NHM 9922.
+        /// </summary>
+        internal static void PraznaPoZaglavlju(List<string[]> redovi, SpisakKola spisak)
+        {
+            if (spisak.Kola.Count == 0 || spisak.Kola.Any(k => k.Nhm.Length > 0) || spisak.Kola.Any(k => (k.NetoKg ?? 0) > 0)) return;
+            var oznaka = redovi.Where(r => !r.Any(c => BrojKola(c) != null))
+                .SelectMany(r => r).Select(c => (c ?? "").Trim())
+                .FirstOrDefault(c => Regex.IsMatch(c, @"^(empty wagons?|leere wagen|leerwagen|prazn[ai] (kola|vagoni)|vagoane goale|[üu]res kocsik?|992[12](00)?)$", RegexOptions.IgnoreCase));
+            if (oznaka == null) return;
+            foreach (var k in spisak.Kola) k.Prazna = true;
+            if (spisak.NhmZaglavlje.Length == 0) spisak.NhmZaglavlje = Regex.IsMatch(oznaka, "^9921") ? "992100" : "992200";
+        }
+
         // ------------------------------------------------------------------------------------------- v2.9.0: podaci po kolima
 
         // v2.9.1 (5.1, 5.2): kolone kola imaju prednost nad kolonama tovarnih jedinica („Tara vagona“ pre „Tara“ prikolice, „Wg.Ladung“
         // pre „Netto“, „Ukupna težina“ pre „Brutto“); CER „Súly (t) – Saját / Rakomány / Elegy“, PSP „Tara vg. / Masa inc. / Masa brută“
         private static readonly (string polje, Regex rx)[] PrednostKola =
         {
-            ("tara", new Regex(@"^(tara vagona|tara vg|tara kola|eigengewicht|sajat)\b", RegexOptions.Compiled)),
-            ("neto", new Regex(@"^(wg ?\.? ?ladung|ladung|gewicht der ladung|rakomany|masa inc)\b", RegexOptions.Compiled)),
+            ("tara", new Regex(@"^(tara vagona|tara vg|tara kola|eigengewicht|sajat|v ?\.? ?dara|vagon dara|wagen ?tare|wagen ?tara)\b", RegexOptions.Compiled)),
+            ("neto", new Regex(@"^(wg ?\.? ?ladung|ladung|gewicht der ladung|rakomany|masa inc|ware ?gewicht|warengewicht|masa marfii)\b", RegexOptions.Compiled)),
             ("bruto", new Regex(@"^(ukupna tezina|gesamt ?-? ?gewicht|gesamt|elegy|masa bruta)\b", RegexOptions.Compiled)),
         };
 
         private static readonly (string polje, Regex rx)[] KoloneKola =
         {
-            ("rb", new Regex(@"^(rbr|rb|r br|redni broj|red br|no|nr|pos|lfd nr|lfn|br|#)\.?$", RegexOptions.Compiled)),
+            ("rb", new Regex(@"^(rbr|rb|r br|redni broj|red br|no|nr|pos|lfd nr|lfn|br|sira|#)\.?$", RegexOptions.Compiled)),
             ("tara", new Regex(@"^(tara|tare|dara|tara vg|tara kola|tara vagona|eigengewicht|sajat)\b", RegexOptions.Compiled)),
             ("neto", new Regex(@"^(neto|netto|net|masa inc|masa incarcaturii|masa robe|masa tereta|weight of goods|ladegewicht|wg ?\.? ?ladung|ladung|gewicht der ladung|rakomany)\b", RegexOptions.Compiled)),
-            ("bruto", new Regex(@"^(bruto|brutto|btto|gross|masa bruta|bruttogewicht|ukupna masa|ukupna tezina|gesamt|elegy)\b", RegexOptions.Compiled)),
+            ("bruto", new Regex(@"^(bruto|brutto|btto|gross|masa bruta|bruttogewicht|ukupna masa|ukupna tezina|gesamt|elegy|brut|toplam)\b", RegexOptions.Compiled)),
             ("osovine", new Regex(@"^(bros|br os|br\. os|broj osovina|osovin\w*|axles?|achsen?|achsz\w*|nb essieux|os|nr osii|tsz|tengely\w*)\b", RegexOptions.Compiled)),
             ("duzina", new Regex(@"^(duzina|duz|length|lup|lange|laenge|luep|lange uber puffer|lungime|hossz)\b", RegexOptions.Compiled)),
             ("serija", new Regex(@"^(serija|series|gattung|type|tip|vrsta kola|kategorija|wagon type|typ)\b", RegexOptions.Compiled)),
@@ -339,9 +358,9 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             var fD = maxD >= 1000 ? 0.001 : maxD >= 100 ? 0.01 : 1;
             foreach (var x in spisak.Kola)
             {
-                if (Broj(Celija(x.Broj, "tara")) is double t) x.TaraKg = Math.Round(t * fT);
-                if (Broj(Celija(x.Broj, "neto")) is double n) x.NetoKg = Math.Round(n * fN);
-                if (Broj(Celija(x.Broj, "bruto")) is double b) x.BrutoKg = Math.Round(b * fB);
+                if (Broj(Celija(x.Broj, "tara")) is double t) x.TaraKg = Math.Round(t * fT, 2);
+                if (Broj(Celija(x.Broj, "neto")) is double n) x.NetoKg = Math.Round(n * fN, 2);
+                if (Broj(Celija(x.Broj, "bruto")) is double b) x.BrutoKg = Math.Round(b * fB, 2);
                 if (Broj(Celija(x.Broj, "osovine")) is double o && o >= 2 && o <= 16 && Math.Abs(o - Math.Round(o)) < 0.01) x.Osovine = (int)Math.Round(o);
                 if (Broj(Celija(x.Broj, "duzina")) is double d && d * fD >= 5 && d * fD <= 50) { x.DuzinaM = Math.Round(d * fD, 2); x.DuzinaIzvor = "spisak"; }
                 var s = Celija(x.Broj, "serija");
@@ -458,6 +477,13 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 if (spisak.BrojVoza.Length == 0) spisak.BrojVoza = BrojVoza(red);
                 var oznaka = TekstUtil.Kljuc(c[0]);
                 var vrednost = c.Count > 1 ? string.Join(" ", c.Skip(1)) : Regex.Replace(c[0], @"^[^:]*:\s*", "");
+                // v3.0 (0a.3): NHM spiska u jednoj ćeliji – „24. NHM KODU 392390000000“ (ID 1654, IBC): šifra robe ove grupe, ne posla
+                if (spisak.NhmZaglavlje.Length == 0 && c.Count <= 2
+                    && Regex.Match(red, @"\bNHM(?:[\s\-]*(?:KODU|KODE|KOD|CODE|ŠIFRA|SIFRA|NR\.?|NO\.?))?\s*[:.]?\s*(\d[\d .]{2,16}\d)", RegexOptions.IgnoreCase) is Match mh && mh.Success)
+                {
+                    var d = Regex.Replace(mh.Groups[1].Value, @"\D", "");
+                    if (d.Length >= 4 && d.Length <= 12) spisak.NhmZaglavlje = d.Length > 6 ? d.Substring(0, 6) : d;
+                }
                 if (vrednost.Length == 0 || vrednost == c[0] && !c[0].Contains(":")) continue;
                 if (spisak.OtpravnaTekst.Length == 0 && Regex.IsMatch(oznaka, @"^(otpravna stanica|otpravna|station of departure|departure station|dispatching station|versandbahnhof|gare expeditrice)")) spisak.OtpravnaTekst = vrednost;
                 else if (spisak.UputnaTekst.Length == 0 && Regex.IsMatch(oznaka, @"^(uputna stanica|uputna|destination station|station of destination|bestimmungsbahnhof|gare destinataire)")) spisak.UputnaTekst = vrednost;

@@ -842,7 +842,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var d = ExcelCitac.AnalizaRedova(redovi, kp, "Specification.xls", "excel", "Excel").First(x => x.Tip == TipDokumenta.SpisakKola);
             var s = d.Spisak[0];
             Assert.AreEqual(3, s.Kola.Count, "kola = redovi sa brojem kola, ne prikolice");
-            Assert.AreEqual(35100, s.Kola[0].TaraKg); Assert.AreEqual(31113, s.Kola[0].NetoKg); Assert.AreEqual(66213, s.Kola[0].BrutoKg);
+            // v3.0 (0a.4): mase po kolima se ne zaokružuju pre sabiranja (zbir se zaokružuje jednom, na ceo kg)
+            Assert.AreEqual(35100, s.Kola[0].TaraKg); Assert.AreEqual(31112.99, s.Kola[0].NetoKg.Value, 1e-9); Assert.AreEqual(66212.99, s.Kola[0].BrutoKg.Value, 1e-9);
             Assert.AreEqual(112495, s.UkupnoNetoKg); Assert.AreEqual(217595, s.UkupnoBrutoKg);
             Assert.AreEqual(4, s.NhmJedinica.Count, "NHM po jedinicama (prikolicama)");
             // CIT 23 (Prilog 4 GLV-TC): red sa brojevima kolona 1–9 – kolona 6 = neto, 7 = tara, 8 = bruto
