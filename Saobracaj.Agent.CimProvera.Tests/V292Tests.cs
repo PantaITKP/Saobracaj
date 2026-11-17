@@ -414,7 +414,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataRow("1627,580 t", 1627580.0)]
         public void Masa_tone_sa_tri_decimale(string tekst, double kg)
         {
-            Assert.AreEqual(kg, PosaoIzDokumenata.Kg(tekst).Value, 0.01, tekst);
+            Assert.AreEqual(kg, PosaoIzDokumenata.Kg(tekst, true).Value, 0.01, tekst);
         }
 
         [TestMethod]

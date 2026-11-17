@@ -607,7 +607,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
         private static decimal Tone(double kg) => Math.Round((decimal)kg / 1000m, 3);
 
         /// <summary>Broj iz teksta mase u kg: „2 234533“, „1.671.863“, „562.670“, „21500“, „1627,580 t“.</summary>
-        internal static double? Kg(string s)
+        internal static double? Kg(string s, bool triDecimaleTone = false)
         {
             var t = (s ?? "").Trim();
             var tone = Regex.IsMatch(t, @"\d\s*(t|to|tona|tone|tons?)\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(t, @"kg", RegexOptions.IgnoreCase);
@@ -618,7 +618,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             {
                 t = t.LastIndexOf(',') > t.LastIndexOf('.') ? t.Replace(".", "") : t.Replace(",", "");
                 // v2.9.2 (LDC8 „Netto: 1.848,150 / Bruto: 2.499,750“): hiljade + tačno 3 decimale = tone sa kilogramima
-                if (Regex.IsMatch(t, @"^\d{1,4}[.,]\d{3}$")) tone = true;
+                if (triDecimaleTone && Regex.IsMatch(t, @"^\d{1,4}[.,]\d{3}$")) tone = true;   // samo označene mase u r25 („Netto: …“)
             }
             if (Regex.IsMatch(t, @"^\d{1,3}([.,]\d{3})+$") && !tone) t = Regex.Replace(t, @"[.,]", "");
             // više od 3 decimale u masi nije tona nego kg sa izgubljenim razdvajanjem hiljada (OCR „2.234533“ = 2 234 533 kg)
@@ -657,7 +657,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var tekst = (T(c.R25) + " / " + T(c.R21)).Trim(' ', '/');
             foreach (Match m in MasaRx.Matches(tekst))
             {
-                var v = Kg(m.Groups[2].Value + m.Groups[3].Value);
+                var v = Kg(m.Groups[2].Value + m.Groups[3].Value, true);
                 if (v == null) continue;
                 switch (VrstaMase(m.Groups[1].Value))
                 {
@@ -669,14 +669,14 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var saOznakama = OznakaRx.IsMatch(T(c.R25));
             if (!saOznakama)
             {
-                var brojevi = new[] { c.R25?.Ukupno }.Concat(c.R25?.Pojedinacne ?? new List<string>()).Select(Kg).Where(x => x.HasValue && x > 0).Select(x => x.Value).Distinct().OrderBy(x => x).ToList();
+                var brojevi = new[] { c.R25?.Ukupno }.Concat(c.R25?.Pojedinacne ?? new List<string>()).Select(x => Kg(x)).Where(x => x.HasValue && x > 0).Select(x => x.Value).Distinct().OrderBy(x => x).ToList();
                 if (neto == null && tara == null && bruto == null && brojevi.Count == 3 && Math.Abs(brojevi[0] + brojevi[1] - brojevi[2]) <= 0.01 * brojevi[2])
                 { tara = brojevi[0]; neto = brojevi[1]; bruto = brojevi[2]; }
                 // r25 bez oznaka: upisani broj je masa robe (neto); tara iz posebnog reda („Tara …“) ostaje tara
                 if (neto == null && Kg(c.R25?.Ukupno) is double u && (!(Kg(c.R25?.Tara) is double tt0) || Math.Abs(tt0 - u) > 0.5)) neto = u;
                 if (neto == null && (c.R25?.Pojedinacne?.Count ?? 0) > 0)
                 {
-                    var zbir = c.R25.Pojedinacne.Select(Kg).Where(x => x.HasValue).Sum(x => x.Value);
+                    var zbir = c.R25.Pojedinacne.Select(x => Kg(x)).Where(x => x.HasValue).Sum(x => x.Value);
                     if (zbir > 0) neto = zbir;
                 }
             }
