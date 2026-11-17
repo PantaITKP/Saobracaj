@@ -732,6 +732,10 @@ namespace Saobracaj.Agent.CimProvera.Baza
                     }
                     tara = Uk(tara, s.UkupnoTaraKg, "tara"); neto = Uk(neto, s.UkupnoNetoKg, "neto"); bruto = Uk(bruto, s.UkupnoBrutoKg, "bruto");
                 }
+                // nelogične mase (kolone spiska pogrešno pročitane): bruto manji od neta ili tare → bruto se ne koristi; tara = neto kod
+                // natovarenih kola → tara se ne koristi (ista kolona pročitana dvaput)
+                if (bruto.HasValue && ((neto ?? 0) > bruto + 1 || (tara ?? 0) > bruto + 1)) { opis.Add("bruto sa spiska manji od neta/tare – nije upisan (ručna provera)"); p.Napomene.Add("Spisak kola: " + opis.Last()); bruto = null; }
+                if (!prazna && tara.HasValue && neto.HasValue && neto > 0 && Math.Abs(tara.Value - neto.Value) < 1) { opis.Add("tara jednaka netu – tara nije upisana (ručna provera)"); p.Napomene.Add("Spisak kola: " + opis.Last()); tara = null; }
                 if (bruto == null && tara.HasValue && neto.HasValue) { bruto = tara + neto; opis.Add("bruto izračunat (neto + tara)"); }
                 else if (neto == null && tara.HasValue && bruto.HasValue && bruto >= tara) { neto = bruto - tara; opis.Add("neto izračunat (bruto − tara)"); }
                 else if (tara == null && neto.HasValue && bruto.HasValue && bruto >= neto) { tara = bruto - neto; opis.Add("tara izračunata (bruto − neto)"); }

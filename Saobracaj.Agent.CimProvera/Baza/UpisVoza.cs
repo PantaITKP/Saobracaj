@@ -277,9 +277,28 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
         {
             var j = PosaoIzDosijea(m);
             if (j == null) return null;
-            var red = Red("SELECT Stanica1ID, Stanica3ID FROM planiranje.tmpJobs WHERE ID = @id", "@id", j.Value);
+            var red = Red("SELECT Stanica1ID, Stanica3ID, Referenca FROM planiranje.tmpJobs WHERE ID = @id", "@id", j.Value);
             var l0 = voz.Listovi[0];
-            return red["Stanica1ID"] is int s1 && red["Stanica3ID"] is int s3 && l0.Stanica1 == s1 && l0.Stanica3 == s3 ? j : null;
+            if (!(red["Stanica1ID"] is int s1 && red["Stanica3ID"] is int s3 && l0.Stanica1 == s1 && l0.Stanica3 == s3)) return null;
+            // v2.9.1 (posle ponovne obrade 17.11.): ista prepiska i deonica nisu dovoljni – „Budamar Coal 16“ i „Coal 17“ su dva voza iste
+            // relacije u istoj niti. Isti voz samo kada se poklapa referenca (r8), kola (≥ 80 %) ili su mase iste (kopija lista)
+            string N(object x) => Regex.Replace(Slicnost.Osnovno(x as string ?? ""), @"\s", "");
+            var refPosla = N(red["Referenca"]);
+            var refVoza = voz.Listovi.Select(x => N(x.P.V.TryGetValue("Referenca", out var v) ? v : null)).FirstOrDefault(x => x.Length > 0) ?? "";
+            if (refPosla.Length > 0 && refVoza.Length > 0) return refPosla == refVoza ? j : null;
+            var tl = ZapisiTl(j.Value).Values.ToList();
+            foreach (var l in voz.Listovi) { var z = ZapisTl.Iz(l); if (tl.Any(t => IstiZapis(t, z))) return j; }
+            return null;
+        }
+
+        /// <summary>Dva zapisa TL su isti tovarni list (kopija iz drugog maila sa drugim ključem): ista kola (≥ 80 %) ili iste mase (bar dve, nijedna različita).</summary>
+        internal static bool IstiZapis(ZapisTl a, ZapisTl b)
+        {
+            if (a.Kola.Count > 0 && b.Kola.Count > 0) return a.Kola.Intersect(b.Kola).Count() >= 0.8 * Math.Min(a.Kola.Count, b.Kola.Count);
+            int iste = 0, razlicite = 0;
+            foreach (var (x, y) in new[] { (a.Neto, b.Neto), (a.Tara, b.Tara), (a.Bruto, b.Bruto) })
+                if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= 0.005 * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }
+            return iste >= 2 && razlicite == 0;
         }
 
         private static readonly string[] KoloneZaglavlja =
@@ -310,7 +329,20 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
 
             // zapisi TL: postojeći + listovi ovog maila
             var tl = id.HasValue ? ZapisiTl(id.Value) : new Dictionary<string, ZapisTl>(StringComparer.Ordinal);
-            foreach (var l in voz.Listovi) { var z = ZapisTl.Iz(l); z.Povratak = povratak; tl[KolonaTl(z.Kljuc)] = z; }
+            var noviKljucevi = new HashSet<string>();
+            foreach (var l in voz.Listovi)
+            {
+                var z = ZapisTl.Iz(l); z.Povratak = povratak;
+                // kopija istog lista iz ranijeg maila sa drugim ključem (sken „ref:…“ / r62) zamenjuje raniji zapis – mase se ne sabiraju dvaput
+                foreach (var stari in tl.Where(kv => kv.Key != KolonaTl(z.Kljuc) && !noviKljucevi.Contains(kv.Key) && IstiZapis(kv.Value, z)).Select(kv => kv.Key).ToList())
+                {
+                    tl.Remove(stari);
+                    if (id.HasValue) Izvrsi("DELETE FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = @k", "@j", id.Value, "@k", stari);
+                    ishod.Napomene.Add("tovarni list " + l.Oznaka + " je kopija ranijeg (" + stari + ") – zapis zamenjen");
+                }
+                tl[KolonaTl(z.Kljuc)] = z;
+                noviKljucevi.Add(KolonaTl(z.Kljuc));
+            }
             var kljuceviTl = new HashSet<string>(voz.Listovi.Select(x => x.KljucTl));
             var grupe = Grupe(tl.Values);
             var zbir = new PodaciPosla();

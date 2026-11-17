@@ -723,6 +723,19 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(328, p.V["Stanica1ID"]); Assert.IsNull(p.V["Stanica3ID"], "ne prepisuje se granična stanica na drugi kraj");
         }
 
+        [TestMethod]
+        public void V291_Kopija_lista_iz_drugog_maila_i_razliciti_vozovi()
+        {
+            // Coal 16: CIM (r62) i sken iz drugog maila (ključ „ref:“) – iste mase → isti list; Coal 17 – druge mase → drugi list
+            var c16 = new ZapisTl { Kljuc = "r62:53-810168-3414-092542", Neto = 1725636, Tara = 700170, Bruto = 2425806 };
+            var c16sken = new ZapisTl { Kljuc = "ref:BUDAMARCOAL16|1479|90", Neto = 1725636, Tara = 700170, Bruto = 2425806 };
+            var c17 = new ZapisTl { Kljuc = "ref:BUDAMARCOAL17|1479|90", Tara = 700620 };
+            Assert.IsTrue(UpisUBazu.IstiZapis(c16, c16sken));
+            Assert.IsFalse(UpisUBazu.IstiZapis(c16, c17));
+            // kola odlučuju kada ih oba zapisa imaju
+            Assert.IsFalse(UpisUBazu.IstiZapis(new ZapisTl { Kola = { "315554000242" }, Neto = 5700, Bruto = 29100 }, new ZapisTl { Kola = { "315554000010" }, Neto = 5700, Bruto = 29100 }));
+        }
+
         private static ListPosla Lp(string kljuc, string[] kola, int s1 = 246, int s3 = 118, bool prazna = false, double? neto = null, double? tara = null, string nhm4 = "2520")
         {
             var p = new PodaciPosla { KljucPosiljke = kljuc, Kola = kola.ToList(), Prazna = prazna, Nhm4 = nhm4, NetoKg = neto, TaraKg = tara };
