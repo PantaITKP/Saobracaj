@@ -397,6 +397,44 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(2, UpisUBazu.Grupe(new[] { cim, prazna }).Count);
         }
 
+        private static ListPosla Lp(int? s1, int? s3, int? otp, int? up, string nhm4, double? neto, double? tara = null, double? bruto = null, int bk = 0, params string[] kola)
+        {
+            var p = new PodaciPosla();
+            p.Postavi("Stanica1ID", s1, "", ""); p.Postavi("Stanica3ID", s3, "", ""); p.Postavi("OtpravnaID", otp, "", ""); p.Postavi("UputnaID", up, "", "");
+            p.Postavi("BrojKola1", bk, "", "");
+            p.Nhm4 = nhm4; p.NetoKg = neto; p.TaraKg = tara; p.BrutoKg = bruto; p.Kola = kola.ToList(); p.KljucPosiljke = "k" + Guid.NewGuid().ToString("N");
+            return new ListPosla { P = p };
+        }
+
+        [TestMethod]
+        public void Kopije_lista_sa_jednom_masom_su_isti_list()
+        {
+            // Prahovo 05: četiri kopije skena sa samo netom 924,4 t – jedan list (mase se ne sabiraju)
+            var a = new ZapisTl { Kljuc = "a", Nhm4 = "2702", Neto = 924400 };
+            var b = new ZapisTl { Kljuc = "b", Nhm4 = "2702", Neto = 924400 };
+            var c = new ZapisTl { Kljuc = "c", Nhm4 = "2702", Neto = 1181500 };
+            Assert.IsTrue(UpisUBazu.IstiZapis(a, b));
+            Assert.IsFalse(UpisUBazu.IstiZapis(a, c));
+            Assert.IsFalse(UpisUBazu.IstiZapis(a, new ZapisTl { Kljuc = "d", Nhm4 = "2701", Neto = 924400 }), "druga roba");
+        }
+
+        [TestMethod]
+        public void Vozovi_CUV_bez_kola_sa_masama_CIM_i_listovi_bez_deonice()
+        {
+            // 005NISBAR26: CUV bez kola sa istim masama kao CIM – isti voz
+            var cim = Lp(225, 1365, 225, 26, "2502", 1301240, 459500, 1760740, 18);
+            var cuv = Lp(224, null, 224, 26, "", 1301240, 459500, 1760740, 0);
+            Assert.AreEqual(1, UpisUBazu.Vozovi(new List<ListPosla> { cim, cuv }).Count);
+            // „12 е въглища.pdf“: listovi bez obe tačke deonice idu u voz iste robe; drugi voz (druga roba) ostaje poseban
+            var v1 = Lp(118, 369, 1083, 369, "2702", 50000, null, null, 1, "317553796465");
+            var v2 = Lp(118, 369, 1083, 369, "2702", 50000, null, null, 1, "317553796473");
+            var ibc = Lp(118, 381, 1083, 380, "3824", 4000, null, null, 1, "317553796481");
+            var bez = Lp(null, null, null, 370, "2702", 50000, null, null, 1, "317553796499");
+            var vozovi = UpisUBazu.Vozovi(new List<ListPosla> { v1, v2, ibc, bez });
+            Assert.AreEqual(2, vozovi.Count);
+            Assert.IsTrue(vozovi.Single(v => v.Listovi.Contains(v1)).Listovi.Contains(bez));
+        }
+
         [TestMethod]
         public void Budamar_sinonimi_najduzi_prvi()
         {

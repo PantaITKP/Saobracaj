@@ -1106,6 +1106,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     // novo čitanje se prihvata samo sa CELIM nazivom platioca (ili nejasnim „SRB: KP“) – ne „jujoyde doo Beograd i“
                     if (!ImaCeo(t2)) continue;
                     s.Napomena += (s.Napomena.Length > 0 ? "; " : "") + "r7 ponovo pročitana (" + nacin + ")";
+                    reciPonovljene = reci;   // v2.9.2: osnova za ponovno čitanje r57/r58a (ne gubi se nova r7)
                     return r2;
                 }
                 return null;

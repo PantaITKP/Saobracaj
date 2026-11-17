@@ -14,7 +14,8 @@
 - **Platilac – bliski kandidati**: pravna forma kao znak zemlje (s.r.o./a.s. → SK/CZ; d.o.o. → SRB/HR/SI/BA; Kft./Zrt. → HU; GmbH → DE/AT; Sp. z o.o./S.A. → PL; S.R.L. → RO/IT; A.Ş. → TR), pa zemlja iz dokumenta; sinonim partnera je ceo sadržan u nazivu (pravna forma ostaje), najduži ima prednost. `OP_914`: Budamar South s.r.o. → 3355, Budamar South → 3143, Budamar Logistics → 1580, Budamar → 3143.
 - **Šifra stanice sa kosom crtom** („72/12601“) se normalizuje pre traženja po `Kod`.
 - **tmpDokument**: ponovo primljen fajl ne prepisuje `JobID` (raniji posao ostaje vezan za dokument).
-- **x64 build** (`bin\Release-x64`): isti kod, 64-bitni pdfium; 32-bitni ostaje rezervna varijanta.
+- **x64 build** (`bin\Release-x64`, na serveru `rezerva-x64-2.9.2`): radi i obrađuje 230 mailova u jednom procesu bez nedostatka memorije, ali 64-bitni Tesseract na nekim skenovima čita drugačije (Drenik UID 533: 15 umesto 201 natpisa, gube se otpravna i uputna) – glavni ostaje 32-bitni build sa obradom u delovima od po 20 mailova.
+- **Posle probe**: kopije skena sa jednom masom (Prahovo 05) su isti list (mase se ne sabiraju); ključ spiska „kola:“ razlikuje prazna i natovarena ista kola; isti posao i po istoj ponudi + NHM + broju kola (Bor ID 1657); CUV bez kola sa masama CIM-a istog maila je isti voz (005NISBAR26); list bez obe tačke deonice ide u voz istog maila sa istom stanicom ili robom („12 е въглища.pdf“); ponovo pročitana r7 se ne gubi pri ponovnom čitanju r57/r58a.
 
 ## 2026-11-16 – v2.9.1: ispravke upisa poslova (tmp tabele) posle testova 15. i 16.11. (pravila ostaju 2.8.4)
 

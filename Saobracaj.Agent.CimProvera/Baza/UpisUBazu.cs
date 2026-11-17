@@ -606,7 +606,9 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             if (r62 != null) return r62;
             var voz = BrojVozaSpiska(s, d, m);
             if (voz.Length > 0) return "voz:" + voz;
-            return "kola:" + Prilog.Sha256(Encoding.UTF8.GetBytes(string.Join(",", s.Kola.Select(k => k.Broj).OrderBy(x => x, StringComparer.Ordinal)))).Substring(0, 16);
+            // v2.9.2: ista kola prazna i natovarena su dva spiska (exLDC7 prazan → LDC8 natovaren)
+            var stanjeKola = Natovaren(s) == true ? "|n" : Natovaren(s) == false ? "|p" : "";
+            return "kola:" + Prilog.Sha256(Encoding.UTF8.GetBytes(string.Join(",", s.Kola.Select(k => k.Broj).OrderBy(x => x, StringComparer.Ordinal)))).Substring(0, 16) + stanjeKola;
         }
 
         /// <summary>
