@@ -16,13 +16,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Saobracaj.Agent.CimProvera\Saobracaj.Agent.CimProvera.csproj" />
+    <ProjectReference Include="..\Saobracaj.Agent.CimProvera.Jezgro\Saobracaj.Agent.CimProvera.Jezgro.csproj" />
     <ProjectReference Include="..\Saobracaj.Common\Saobracaj.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Saobracaj.Agent.CimProvera\pravila\*.json" Link="pravila\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\Saobracaj.Agent.CimProvera\sablon\*.json" Link="sablon\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\Saobracaj.Agent.CimProvera\sablon\obrasci\*.json" Link="sablon\obrasci\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera.Jezgro\pravila\*.json" Link="pravila\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera.Jezgro\sablon\*.json" Link="sablon\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Saobracaj.Agent.CimProvera.Jezgro\sablon\obrasci\*.json" Link="sablon\obrasci\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Saobracaj.Agent.CimProvera\tessdata\*.traineddata" Link="tessdata\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

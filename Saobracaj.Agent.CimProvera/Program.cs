@@ -54,6 +54,7 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { Console.Error.WriteLine("Greška u config-u: " + ex); return 1; }
             var log = new Log(cfg.LogFolder, cfg.LogDana);
             Slanje.Dnevnik = log;   // v2.8.4: zaštita režima Test upisuje uklonjene primaoce u log
+            Slanje.Transport = SmtpSlanje.Posalji;   // v3.0: SMTP postavlja samo agent (jezgro samo sastavlja; CimRadionica ne šalje)
             Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
             Baza.Ponude.Konekcija = cfg.Konekcija;   // v2.9.2: platilac preko broja ponude (samo čitanje dbo.Ponudba)
             // Syncfusion ključ (Word → PDF) iz Syncfusion.dpapi; greška se upisuje tek kada Word prilog treba pretvoriti
