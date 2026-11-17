@@ -29,6 +29,7 @@ BEGIN
 END
 
 -- 2. tabele: redosled = prvo tabele koje pokazuju na druge
+IF OBJECT_ID(N'planiranje.tmpJobsDogadjaj',    N'U') IS NOT NULL DROP TABLE planiranje.tmpJobsDogadjaj;   -- v3.0 (OP_918)
 IF OBJECT_ID(N'planiranje.tmpJobsIstorija',    N'U') IS NOT NULL DROP TABLE planiranje.tmpJobsIstorija;
 IF OBJECT_ID(N'planiranje.tmpJobsPolje',       N'U') IS NOT NULL DROP TABLE planiranje.tmpJobsPolje;
 IF OBJECT_ID(N'planiranje.tmpTeretnicaStavke', N'U') IS NOT NULL DROP TABLE planiranje.tmpTeretnicaStavke;

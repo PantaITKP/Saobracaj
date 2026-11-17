@@ -26,6 +26,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         public RezultatProvere Provera;
         /// <summary>Dosije pošiljke sa kojim je mail povezan (oznake ranijih mailova „UID 262“), null = nova pošiljka.</summary>
         public Dosije.Posiljka Dosije;
+        /// <summary>v3.0 (2.10): događaji iz teksta maila (novi deo poruke) – samo zapis, polja posla se ne menjaju.</summary>
+        public List<Radionica.Dogadjaj> Dogadjaji = new List<Radionica.Dogadjaj>();
     }
 
     /// <summary>Rezultat upisa jednog maila (za log).</summary>
@@ -37,6 +39,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         public List<string> Promene = new List<string>();
         /// <summary>v3.0 (0a.1): napomene za INTERNO (spisak ≠ tovarni list…) – interna poruka u režimu Test, rezultat.json, Excel i ANALIZA.md.</summary>
         public List<string> Interno = new List<string>();
+        /// <summary>v3.0: poslovi maila posle upisa (ID i ključna polja – rezultat.json, Zbirni Excel CimRadionica).</summary>
+        public List<Dictionary<string, object>> Poslovi = new List<Dictionary<string, object>>();
         public override string ToString() =>
             "dokumenata " + Dokumenata + ", poslova novih " + NovihPoslova + " / izmenjenih " + IzmenjenihPoslova + " / istih " + IstihPoslova
             + ", teretnica " + Teretnica + " (stavki " + Stavki + ")" + (Povezano > 0 ? ", naknadno povezano " + Povezano : "")
@@ -116,6 +120,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 try
                 {
                     UpisiMail(m, ishod);
+                    PosloviMaila(m, ishod);
                     if (svoja) tx.Commit();
                 }
                 catch
@@ -134,11 +139,29 @@ namespace Saobracaj.Agent.CimProvera.Baza
 
         // ------------------------------------------------------------------------------------------- tok upisa
 
+        internal static readonly string[] KljucnaPolja = { "ID", "Verzija", "OtpravnaID", "UputnaID", "Stanica1ID", "Stanica2ID", "Stanica3ID", "PlatilacID", "NHM1", "BrojKola1", "Neto1", "Tara1", "Bruto1",
+            "NHM2", "BrojKola2", "Neto2", "Tara2", "Bruto2", "Referenca", "BrojPonude", "KljucPosiljke" };
+
+        /// <summary>v3.0: poslovi maila (tmpDokument po UID-u i sandučetu) sa ključnim poljima – samo čitanje, u istoj transakciji.</summary>
+        private void PosloviMaila(MailZaUpis m, IshodUpisa ishod)
+        {
+            try
+            {
+                var ids = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", m.Uid, "@s", N(m.Sanduce, 200));
+                foreach (var id in ids.Select(x => Convert.ToInt32(x)).OrderBy(x => x))
+                {
+                    var red = Red("SELECT " + string.Join(", ", KljucnaPolja) + " FROM planiranje.tmpJobs WHERE ID = @id", "@id", id);
+                    if (red != null) ishod.Poslovi.Add(red);
+                }
+            }
+            catch (Exception ex) { log?.Upozorenje("  poslovi maila nisu pročitani: " + ex.Message); }
+        }
+
         private void UpisiMail(MailZaUpis m, IshodUpisa ishod)
         {
             var r = m.Provera;
             // v2.9.1 (5.7): ponovljeni mail (isti prilozi, odgovor se ne šalje) – prijem se beleži (BrojPrijema) i tekst maila ide u Napomenu posla
-            if (r == null) { UpisiPonovljeni(m, ishod); return; }
+            if (r == null) { UpisiPonovljeni(m, ishod); UpisiDogadjaje(m, ishod); return; }
             var dokumenti = r.Dokumenti.Where(d => !d.IzDosijea).ToList();
             // 1. prijem: svaki prilog (isti heš = isti red)
             var fajlovi = new List<Prilog>();
@@ -208,6 +231,53 @@ namespace Saobracaj.Agent.CimProvera.Baza
 
             // 4. CIT 7 povezan sa poslom
             foreach (var c7 in r.Cit7) PrimeniCit7(c7, DokId(c7.Fajl), m, ishod);
+
+            // 5. v3.0 (2.10): događaji iz teksta maila
+            UpisiDogadjaje(m, ishod);
+        }
+
+        /// <summary>
+        /// v3.0 (2.10, faza 1): događaji iz teksta maila → planiranje.tmpJobsDogadjaj (posao maila, dokument maila), jedan red u Napomeni
+        /// posla i zapis u istoriji (DOGADJAJ). Polja posla se iz teksta NE menjaju. Bez tabele (OP_918 nije pokrenut) – samo napomena u logu.
+        /// </summary>
+        private void UpisiDogadjaje(MailZaUpis m, IshodUpisa ishod)
+        {
+            if (m.Dogadjaji == null || m.Dogadjaji.Count == 0) return;
+            if (Skalar("SELECT OBJECT_ID(N'planiranje.tmpJobsDogadjaj', N'U')") == null)
+            {
+                ishod.Napomene.Add("događaji iz teksta (" + m.Dogadjaji.Count + ") nisu upisani – tabela planiranje.tmpJobsDogadjaj ne postoji (OP_918)");
+                return;
+            }
+            var dokument = Skalar("SELECT MIN(ID) FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s", "@u", m.Uid, "@s", N(m.Sanduce, 200));
+            var dokId = dokument == null ? (int?)null : Convert.ToInt32(dokument);
+            var poslovi = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", m.Uid, "@s", N(m.Sanduce, 200))
+                .Select(x => (int?)Convert.ToInt32(x)).ToList();
+            if (poslovi.Count == 0) poslovi.Add(null);
+            var red = "Događaji (" + ZaglavljeNapomene(m) + "): " + string.Join("; ", m.Dogadjaji.Select(d => d.Tip + " " + string.Join(" ", new[] { d.MestoTekst, d.VremeTekst, d.VremenskaZona, d.Vrednost }.Where(x => !string.IsNullOrEmpty(x)))));
+            var upisano = 0;
+            foreach (var jobId in poslovi)
+            {
+                foreach (var d in m.Dogadjaji)
+                {
+                    var isti = Skalar(@"SELECT TOP 1 ID FROM planiranje.tmpJobsDogadjaj WHERE ISNULL(JobID, 0) = ISNULL(@j, 0) AND Tip = @t AND ISNULL(Vrednost, '') = @v
+  AND ISNULL(VremeTekst, '') = @vt AND ISNULL(Recenica, '') = @r", "@j", (object)jobId ?? DBNull.Value, "@t", d.Tip, "@v", Prazno(N(d.Vrednost, 200)), "@vt", Prazno(N(d.VremeTekst, 100)), "@r", Prazno(N(d.Recenica, 1000)));
+                    if (isti != null) continue;
+                    Izvrsi(@"INSERT planiranje.tmpJobsDogadjaj (JobID, DokumentID, Tip, MestoID, MestoTekst, Vreme, VremeTekst, VremenskaZona, Vrednost, Recenica, Jezik, Pouzdanost)
+VALUES (@j, @d, @t, @mid, @m, @vr, @vt, @z, @v, @r, @jez, @p)", "@j", (object)jobId ?? DBNull.Value, "@d", (object)dokId ?? DBNull.Value, "@t", d.Tip,
+                        "@mid", (object)d.MestoID ?? DBNull.Value, "@m", N(d.MestoTekst, 200), "@vr", d.Vreme.HasValue ? (object)d.Vreme.Value.DateTime : DBNull.Value,
+                        "@vt", N(d.VremeTekst, 100), "@z", N(d.VremenskaZona, 10), "@v", N(d.Vrednost, 200), "@r", N(d.Recenica, 1000), "@jez", N(d.Jezik, 5), "@p", (byte)Math.Max(0, Math.Min(100, d.Pouzdanost)));
+                    upisano++;
+                }
+                if (jobId == null) continue;
+                // jedan red u Napomeni (najnoviji gore) i zapis u istoriji – samo jednom po mailu
+                var stara = Skalar("SELECT Napomena FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId.Value) as string;
+                if (stara == null || !stara.Contains(red))
+                {
+                    Izvrsi("UPDATE planiranje.tmpJobs SET Napomena = @n WHERE ID = @id", "@n", SpojiNapomenu(PodaciPosla.Skrati(red, 600), stara), "@id", jobId.Value);
+                    Istorija(jobId, null, null, null, null, dokId, "DOGADJAJ", red);
+                }
+            }
+            if (upisano > 0) ishod.Napomene.Add("događaja iz teksta maila: " + upisano);
         }
 
         /// <summary>v2.9.2: poslovi tovarnih listova maila koji se upisuje (za prebacivanje teretnice istog spiska).</summary>
@@ -835,6 +905,9 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
         }
 
         // ------------------------------------------------------------------------------------------- SQL pomoćne
+
+        /// <summary>DBNull → "" (poređenje sa ISNULL(kolona, '')).</summary>
+        private static object Prazno(object v) => v is DBNull ? "" : v;
 
         private static object N(string s, int max) => string.IsNullOrEmpty(s) ? (object)DBNull.Value : s.Length <= max ? s : s.Substring(0, max - 1) + "…";
 

@@ -5,6 +5,7 @@
 
    - Pisanje (SELECT/INSERT/UPDATE/DELETE) samo u planiranje.tmp* tabelama iz OP_910_tmp_Kreiranje.sql.
    - Čitanje šifarnika: dbo.stanice, dbo.Partnerji, dbo.NHM; v2.9.2: dbo.Ponudba (broj ponude → platilac, samo čitanje).
+   - v3.0: planiranje.tmpJobsDogadjaj (OP_918) – pisanje, kada tabela postoji.
    - Samo čitanje: planiranje.OP_Jobs, dbo.Teretnica, dbo.Najava (poređenje, tačka 8) i dbo.TeretnicaStavke (poređenje i
      poslednja dužina istih kola kada je nema na spisku – odluka 14.11.; agent je ne menja).
    - Nema db_datareader / db_datawriter: nalog ne vidi ni ne menja ništa drugo.
@@ -54,6 +55,12 @@ GRANT SELECT ON dbo.TeretnicaStavke   TO [svc_cimprovera];
 GRANT SELECT ON dbo.Najava            TO [svc_cimprovera];
 -- v2.9.2: platilac deonice KP preko broja ponude (samo čitanje; agent čita samo PonStPon i PonPart)
 GRANT SELECT ON dbo.Ponudba           TO [svc_cimprovera];
+GO
+-- v3.0: događaji iz teksta maila (OP_918_tmp_Dogadjaji.sql) – pisanje samo u tmp tabelu; preskače se dok OP_918 nije pokrenut
+IF OBJECT_ID(N'planiranje.tmpJobsDogadjaj', N'U') IS NOT NULL
+    EXEC (N'GRANT SELECT, INSERT, UPDATE, DELETE ON planiranje.tmpJobsDogadjaj TO [svc_cimprovera];');
+ELSE
+    PRINT N'planiranje.tmpJobsDogadjaj ne postoji – pokrenuti OP_918_tmp_Dogadjaji.sql pa ponovo OP_913.';
 GO
 PRINT N'OP_913_tmp_Prava: gotovo. Prava naloga svc_cimprovera:';
 SELECT s.name + N'.' + o.name AS Objekat, p.permission_name AS Pravo

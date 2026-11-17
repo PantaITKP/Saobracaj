@@ -297,7 +297,8 @@ namespace Saobracaj.Agent.CimProvera
                 if (a.Contains("--obrisi-podatke"))
                 {
                     using (var tx = k.BeginTransaction())
-                    using (var cmd = new System.Data.SqlClient.SqlCommand(@"DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke;
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(@"IF OBJECT_ID(N'planiranje.tmpJobsDogadjaj', N'U') IS NOT NULL DELETE FROM planiranje.tmpJobsDogadjaj;
+DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke;
 UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM planiranje.tmpTeretnica; DELETE FROM planiranje.tmpJobs; DELETE FROM planiranje.tmpDokument;", k, tx) { CommandTimeout = 300 })
                     {
                         cmd.ExecuteNonQuery();
@@ -465,11 +466,15 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
                     try
                     {
                         upis = upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp) { Prefiks = prefiks };
+                        var teloU = ulazniMail != null ? ObradaPoruke.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "";
+                        var domen = (posiljalac ?? "").Contains("@") ? posiljalac.Substring(posiljalac.LastIndexOf('@') + 1) : "";
                         var iu = upis.Upisi(new Baza.MailZaUpis
                         {
                             MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Uid = uidMaila, Sanduce = sanduceMaila, Posiljalac = posiljalac ?? "",
-                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? ObradaPoruke.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
+                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = teloU,
                             Prilozi = prilozi, Provera = rr, Dosije = obrada.PoslednjaPosiljka,
+                            // v3.0 (2.10): događaji iz teksta maila – isto kao u agentu
+                            Dogadjaji = Radionica.IzvlacenjeDogadjaja.Izvuci(naslovMaila ?? ime, teloU, new DateTimeOffset(datum), domen),
                         });
                         log.Info("  " + ime + ": upis u bazu – " + iu);
                         Console.WriteLine("Upis u bazu: " + iu);

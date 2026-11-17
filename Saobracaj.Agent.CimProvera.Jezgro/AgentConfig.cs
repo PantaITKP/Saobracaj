@@ -51,6 +51,8 @@ namespace Saobracaj.Agent.CimProvera
         public string PravilaFajl;
         public string SablonFajl;
         public string StanjeFolder;
+        /// <summary>v3.0: keš čitanja (prazno = StanjeFolder\kes); CimRadionica koristi jedan keš za sve radne prostore.</summary>
+        public string KesFolder;
         public string LogFolder;
         public int LogDana;
 

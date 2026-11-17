@@ -14,6 +14,8 @@ namespace Saobracaj.Agent.CimProvera
         private readonly string folder;
         private readonly object sync = new object();
         public bool Tiho { get; set; }
+        /// <summary>v3.0: dodatni prijem redova (CimRadionica: log.txt po mailu); ne menja log fajl agenta.</summary>
+        public Action<string> Prati { get; set; }
 
         public Log(string folder, int cuvajDana = 90)
         {
@@ -37,6 +39,7 @@ namespace Saobracaj.Agent.CimProvera
             var red = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz") + " " + nivo + " " + poruka;
             lock (sync)
             {
+                try { Prati?.Invoke(red); } catch { }
                 if (!Tiho) Console.Error.WriteLine(red);
                 try
                 {

@@ -56,7 +56,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             sablon = CimSablon.Ucitaj(cfg.SablonFajl, cfg.ObrasciFolder, cfg.PragPoravnanja);
             if (Ocr.Dostupan(cfg.TessdataFolder, cfg.OcrJezici, out var razlog)) ocr = new Ocr(cfg.TessdataFolder, cfg.OcrJezici, cfg.OcrMinPouzdanostReci, cfg.OcrDodatniJezici);
             else log?.Upozorenje("OCR nije dostupan (" + razlog + ") – skenovi i fotografije se ne čitaju.");
-            kesFolder = Path.Combine(cfg.StanjeFolder, "kes");
+            // v3.0: CimRadionica deli jedan keš za sve radne prostore (KesFolder); agent – stanje\kes kao ranije
+            kesFolder = string.IsNullOrEmpty(cfg.KesFolder) ? Path.Combine(cfg.StanjeFolder, "kes") : cfg.KesFolder;
         }
 
         public RezultatPriloga Procitaj(Prilog p)

@@ -69,6 +69,8 @@ namespace Saobracaj.Agent.CimProvera
         public List<PripremljenaPoruka> Poruke = new List<PripremljenaPoruka>();
         public PrimerRezultat Primer;
         public Baza.IshodUpisa Upis;
+        /// <summary>v3.0 (2.10): događaji iz novog dela poruke (isti spisak ide u upis i u rezultat.json).</summary>
+        public List<Radionica.Dogadjaj> Dogadjaji = new List<Radionica.Dogadjaj>();
         /// <summary>Trajanje faza (s): citanje (provera sa čitanjem), upis, ukupno.</summary>
         public Dictionary<string, double> Trajanje = new Dictionary<string, double>();
         public string Greska;
@@ -100,6 +102,8 @@ namespace Saobracaj.Agent.CimProvera
         public Func<IEnumerable<string>, RezultatProvere, bool, string, string> Poredi;
         /// <summary>v2.9.0: jedan upis po prolazu (šifarnici se učitavaju jednom).</summary>
         public Baza.UpisUBazu Upis;
+        /// <summary>v3.0 (2.10): mesto događaja → ID stanice (opciono; šifarnik).</summary>
+        public Func<string, int?> StanicaPoNazivu;
 
         public ObradaPoruke(AgentConfig cfg, Log log, Obrada obrada, PravilaSkup pravila, Stanje stanje, bool dryRun)
         {
@@ -172,6 +176,12 @@ namespace Saobracaj.Agent.CimProvera
             var kljuc = u.Kljuc;
             var odlazni = u.Odlazni;
             var m = u.Poruka;
+            try
+            {
+                var od1 = m.From.Mailboxes.FirstOrDefault()?.Address ?? "";
+                rez.Dogadjaji = Radionica.IzvlacenjeDogadjaja.Izvuci(m.Subject, TeloMaila(m), m.Date, od1.Contains("@") ? od1.Substring(od1.LastIndexOf('@') + 1) : "", StanicaPoNazivu);
+            }
+            catch (Exception ex) { log?.Upozorenje("  događaji iz teksta maila nisu izdvojeni: " + ex.Message); }
             {
                 var razlog = Slanje.RazlogPreskakanja(m, cfg, !odlazni);
                 if (razlog != null)
@@ -365,7 +375,7 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     MessageId = m.MessageId ?? "", Uid = uid, Sanduce = cfg.Nalog + "|" + folder, Posiljalac = m.From.Mailboxes.FirstOrDefault()?.Address ?? "",
                     Naslov = m.Subject ?? "", Primljeno = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime, Telo = TeloMaila(m),
-                    Prilozi = prilozi, Provera = r, Dosije = dosije,
+                    Prilozi = prilozi, Provera = r, Dosije = dosije, Dogadjaji = rez.Dogadjaji,
                 });
                 log.Info("  UID " + uid + ": upis u bazu – " + ishod);
                 rez.Upis = ishod;
