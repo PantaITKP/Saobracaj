@@ -10,8 +10,11 @@
      - Stamora Moravita / RO             → 93 Vršac gr.
      - Dragoman, Kalotina, Kapikule, Svilengrad / BG → 118 Dimitrovgrad gr.
      - Tabanovci / MK                    → 273 Preševo gr.
-     Oznaka zemlje (HU, HR, RO, BG, MK) se koristi samo kada prelaz nije naveden (pouzdanost 60).
-     Prelazi za ostale zemlje se NE dodaju dok ih korisnik ne potvrdi.
+     Oznaka zemlje (HU, RO, BG, MK) se koristi samo kada prelaz nije naveden (pouzdanost 60).
+   Odluke 16.11.2026 (posle probe):
+     - PARTNER „CINKOTURK LOJISTIK“      → 2531 CINKOTURK LTD
+     - potvrđeni prelazi: BA / Zvornik → 417 Brasina gr., MNE / Bijelo Polje → 1365 Prijepolje gr., Erdut / Dalj → 51 Bogojevo gr.
+     - HR samo po zemlji se NE pogađa (Šid gr. – Tovarnik i Bogojevo gr. – Erdut): red „HR“ se briše, upisuje se NULL i kandidati.
    TekstNormalizovan je kao u agentu (velika slova, bez kvačica i interpunkcije; partner bez pravnog oblika i grada).
    - Menja samo planiranje.tmpSinonimi; može da se pokrene više puta (postojeći red se ažurira).
    - Briše se sa tmp tabelama (OP_911_tmp_Brisanje.sql).
@@ -29,7 +32,6 @@ INSERT @s VALUES ('GRANICA', N'KELEBIA',          328, N'odluka 16.11.2026 (Kele
 INSERT @s VALUES ('GRANICA', N'0711',             328, N'odluka 16.11.2026 (granični kod 0711 Subotica/Kelebia)');
 INSERT @s VALUES ('GRANICA', N'HU',               328, N'odluka 16.11.2026 (HU → Subotica gr.)');
 INSERT @s VALUES ('GRANICA', N'TOVARNIK',         381, N'odluka 16.11.2026 (Tovarnik → Šid gr.)');
-INSERT @s VALUES ('GRANICA', N'HR',               381, N'odluka 16.11.2026 (HR → Šid gr.)');
 INSERT @s VALUES ('GRANICA', N'STAMORA MORAVITA', 93,  N'odluka 16.11.2026 (Stamora Moravita → Vršac gr.)');
 INSERT @s VALUES ('GRANICA', N'STAMORA',          93,  N'odluka 16.11.2026 (Stamora Moravita → Vršac gr.)');
 INSERT @s VALUES ('GRANICA', N'RO',               93,  N'odluka 16.11.2026 (RO → Vršac gr.)');
@@ -40,8 +42,18 @@ INSERT @s VALUES ('GRANICA', N'SVILENGRAD',       118, N'odluka 16.11.2026 (Svil
 INSERT @s VALUES ('GRANICA', N'BG',               118, N'odluka 16.11.2026 (BG → Dimitrovgrad gr.)');
 INSERT @s VALUES ('GRANICA', N'TABANOVCI',        273, N'odluka 16.11.2026 (Tabanovci → Preševo gr.)');
 INSERT @s VALUES ('GRANICA', N'MK',               273, N'odluka 16.11.2026 (MK → Preševo gr.)');
+-- potvrđeno 16.11.2026 (predlog iz OP_Jobs)
+INSERT @s VALUES ('GRANICA', N'BA',               417, N'odluka 16.11.2026 (BA → Brasina gr.)');
+INSERT @s VALUES ('GRANICA', N'ZVORNIK',          417, N'odluka 16.11.2026 (Zvornik → Brasina gr.)');
+INSERT @s VALUES ('GRANICA', N'MNE',              1365, N'odluka 16.11.2026 (MNE → Prijepolje gr.)');
+INSERT @s VALUES ('GRANICA', N'BIJELO POLJE',     1365, N'odluka 16.11.2026 (Bijelo Polje → Prijepolje gr.)');
+INSERT @s VALUES ('GRANICA', N'ERDUT',            51,  N'odluka 16.11.2026 (Erdut → Bogojevo gr.)');
+INSERT @s VALUES ('GRANICA', N'DALJ',             51,  N'odluka 16.11.2026 (Dalj → Bogojevo gr.)');
+INSERT @s VALUES ('PARTNER', N'CINKOTURK LOJISTIK', 2531, N'odluka 16.11.2026 (CINKOTURK LOJISTIK → 2531 CINKOTURK LTD)');
 
 BEGIN TRANSACTION;
+-- odluka 16.11.2026: HR samo po zemlji se ne pogađa (dva prelaza)
+DELETE FROM planiranje.tmpSinonimi WHERE Tip = 'GRANICA' AND TekstNormalizovan = N'HR';
 UPDATE x SET CiljniID = s.Cilj, Izvor = s.Izvor
 FROM planiranje.tmpSinonimi x JOIN @s s ON s.Tip = x.Tip AND s.Tekst = x.TekstNormalizovan;
 INSERT planiranje.tmpSinonimi (Tip, TekstNormalizovan, CiljniID, Izvor)
@@ -51,18 +63,3 @@ COMMIT TRANSACTION;
 
 SELECT Tip, TekstNormalizovan, CiljniID, Izvor FROM planiranje.tmpSinonimi ORDER BY Tip, TekstNormalizovan;
 GO
-
-/* ---------------------------------------------------------------------
-   PREDLOG (v2.9.1) – granični prelazi za ostale zemlje, iz postojećih planiranje.OP_Jobs (najčešća granična stanica po
-   zemlji prevoznika PreuzimaOd / PredajeOperateru, 16.11.2026). NE KORISTE SE dok ih korisnik ne potvrdi: posle potvrde
-   skinuti komentar i ponovo pokrenuti skriptu.
-     BA  → 417 Brasina gr.        (ulaz 4, izlaz 3)
-     MNE → 1365 Prijepolje gr.    (izlaz 2)
-     HR  → 51 Bogojevo gr.        (ulaz 6, izlaz 4 – Erdut/Dalj; HR je već 381 Šid gr. – dodati samo naziv prelaza)
-   INSERT @s VALUES ('GRANICA', N'BA', 417, N'predlog 16.11.2026 (OP_Jobs: BA → Brasina gr.)');
-   INSERT @s VALUES ('GRANICA', N'ZVORNIK', 417, N'predlog 16.11.2026 (Zvornik → Brasina gr.)');
-   INSERT @s VALUES ('GRANICA', N'MNE', 1365, N'predlog 16.11.2026 (OP_Jobs: MNE → Prijepolje gr.)');
-   INSERT @s VALUES ('GRANICA', N'BIJELO POLJE', 1365, N'predlog 16.11.2026 (Bijelo Polje → Prijepolje gr.)');
-   INSERT @s VALUES ('GRANICA', N'ERDUT', 51, N'predlog 16.11.2026 (Erdut → Bogojevo gr.)');
-   INSERT @s VALUES ('GRANICA', N'DALJ', 51, N'predlog 16.11.2026 (Dalj → Bogojevo gr.)');
-   --------------------------------------------------------------------- */

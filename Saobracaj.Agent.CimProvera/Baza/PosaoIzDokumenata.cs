@@ -140,7 +140,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var otp = pk.Stanica(otpTekst, otpSifra.Length > 0 ? otpSifra : r62Stanica.Length > 0 ? r62Stanica : null, c.R16?.Zemlja);
             if (!otp.Id.HasValue && otpSifra.Length > 0 && r62Stanica.Length > 0) otp = pk.Stanica(otpTekst, r62Stanica, c.R16?.Zemlja);
             var sifraOtp = otpSifra.Length > 0 ? otpSifra : r62Stanica;
-            if (otp.Id.HasValue && sifraOtp.Length > 0 && pk.StaniceSaKodom(sifraOtp) is List<int> isti && isti.Count > 1 && !string.IsNullOrWhiteSpace(c.R29?.Mesto))
+            if (sifraOtp.Length > 0 && pk.StaniceSaKodom(sifraOtp) is List<int> isti && isti.Count > 1 && !string.IsNullOrWhiteSpace(c.R29?.Mesto))
             {
                 var po29 = pk.Stanica(c.R29.Mesto);
                 if (po29.Id.HasValue && isti.Contains(po29.Id.Value) && po29.Id != otp.Id)
@@ -210,8 +210,18 @@ namespace Saobracaj.Agent.CimProvera.Baza
             }
             else p.Postavi("PredajePartneruID", null, "KP nije poslednji u lancu prevoznika (" + opisPuta + ")", "r4", 100, "", fajl);
 
-            // Stanica1 (ulaz) / Stanica3 (izlaz): tekst r57/r13 i granični kodovi (tmpSinonimi GRANICA), pa zemlja susednog prevoznika (pouzdanost 60)
+            // v2.9.1 (ispravka 16.11.): deonica KP iz šifara u r57 („3212 KP 72 0711 210013“ → 0711 Subotica gr. – 210013 Pančevo Varoš)
+            var (kodOd, kodDo) = SifreDeonice(pk, iKp >= 0 ? put[iKp] : null);
+            if (!zavrsava && kodDo != null && posle == null && iKp >= 0 && pk.DrzavaStanice(kodDo.Id.Value) == "SRB" && !pk.JeGranicna(kodDo.Id.Value))
+            {
+                // KP je poslednji, a deonica KP se završava u stanici u Srbiji: voz se završava u Srbiji (uputna nije pročitana)
+                zavrsava = true; p.Zavrsava = true;
+                if (!up.Id.HasValue) { up = kodDo; p.Postavi("UputnaID", kodDo, "r57 (kraj deonice KP, r10/r12 nečitljivi)", fajl); }
+            }
+            // Stanica1 (ulaz) / Stanica3 (izlaz): šifre deonice KP u r57, tekst r57/r13 i granični kodovi (tmpSinonimi GRANICA), pa zemlja
+            // susednog prevoznika (pouzdanost 60); kada se ne može odrediti – NULL i kandidati
             if (polazi) p.Postavi("Stanica1ID", otp, "r16 (voz polazi iz Srbije)", fajl);
+            else if (kodOd != null) p.Postavi("Stanica1ID", kodOd, "r57 (šifra početka deonice KP)", fajl);
             else
             {
                 var tekstovi = new[] { pre?.Do, iKp >= 0 ? put[iKp].Od : null }.Concat(Prelazi(c)).Concat(new[] { T(c.R20), T(c.R13), T(c.R57), r7 }).ToList();
@@ -222,7 +232,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
             // Stanica2: utovarno mesto („u.m. Kukujevci“, „Beograd Ranžirna (Ostružnica)“) kada nije otpravna stanica
             var st2 = Stanica2(pk, otp.Id, ("r16", T(c.R16)), ("r16", c.R16?.Mesto), ("naslov maila", naslovMaila), ("ime fajla", System.IO.Path.GetFileNameWithoutExtension(fajl)));
             if (st2 != null) p.Postavi("Stanica2ID", st2, "utovarno mesto", fajl);
-            if (zavrsava) p.Postavi("Stanica3ID", up, "r10/r12 (voz se završava u Srbiji)", fajl);
+            if (zavrsava && kodDo != null && (!up.Id.HasValue || up.Id == kodDo.Id)) p.Postavi("Stanica3ID", kodDo, "r57 (šifra kraja deonice KP)", fajl);
+            else if (zavrsava) p.Postavi("Stanica3ID", up, "r10/r12 (voz se završava u Srbiji)", fajl);
+            else if (kodDo != null) p.Postavi("Stanica3ID", kodDo, "r57 (šifra kraja deonice KP)", fajl);
             else
             {
                 var prelazi = Prelazi(c).ToList();
@@ -231,6 +243,16 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 if (!izlaz.Id.HasValue || !pk.JeGranicna(izlaz.Id.Value))
                     izlaz = Granica(pk, tekstovi.Concat(new[] { T(c.R13), T(c.R57), r7 }), Zemlja(posle ?? (iKp < 0 && put.Count > 0 ? put[0] : null)), izlaz);
                 p.Postavi("Stanica3ID", izlaz, "r57/r13 (predaja sledećem prevozniku)", fajl);
+            }
+
+            // ista stanica na oba kraja deonice KP (granična stanica prepisana na drugi kraj – Drenik: 328 / 328) – deonica nije određena:
+            // stanica koja nije iz otpravne/uputne ni iz šifre deonice → NULL i kandidati
+            if (p.V["Stanica1ID"] is int s1 && p.V["Stanica3ID"] is int s3 && s1 == s3 && !(polazi && zavrsava))
+            {
+                var kol = zavrsava ? "Stanica1ID" : "Stanica3ID";
+                var po = p.Poreklo.First(x => x.Kolona == kol);
+                p.Postavi(kol, null, po.Tekst, po.Rubrika, 0, s1 + " " + "(ista stanica kao na drugom kraju deonice KP)" + (po.Kandidati.Length > 0 ? "; " + po.Kandidati : ""), fajl);
+                p.Poreklo.First(x => x.Kolona == kol).Tekst = PodaciPosla.Skrati("deonica KP nije određena – Stanica1 i Stanica3 bi bile ista stanica (" + s1 + "); " + po.Tekst, 1000);
             }
 
             // platilac za deonicu KP: uvek firma iz dokumenta – iz r7 (zapis za srpsku deonicu ili ceo put; „for KP firma“ = firma plaća
@@ -342,6 +364,29 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 if ((d.Length == 6 || d.Length == 8) && !Regex.IsMatch(d, @"^(19|20)\d\d") && !l.Contains(d)) l.Add(d);
             }
             return l;
+        }
+
+        /// <summary>
+        /// v2.9.1: početak i kraj deonice KP iz šifara u r57 („72 0711 210013“): četvorocifrena šifra = granični prelaz (tmpSinonimi GRANICA),
+        /// 5–7 cifara = stanica (uz „72“ ispred); samo stanice u Srbiji. null kada šifra nije pronađena.
+        /// </summary>
+        internal static (Pogodak od, Pogodak @do) SifreDeonice(Poklapanje pk, PrevoznikNaPutu kp)
+        {
+            if (kp == null || string.IsNullOrWhiteSpace(kp.Deonica)) return (null, null);
+            var tok = Regex.Matches(kp.Deonica, @"\d+(?:-\d)?").Cast<Match>().Select(m => m.Value).ToList();
+            var st = new List<Pogodak>();
+            for (int i = 0; i < tok.Count; i++)
+            {
+                var t = tok[i]; var c = Regex.Replace(t, @"\D", "");
+                if (c == "72" && i + 1 < tok.Count) continue;   // oznaka zemlje ispred šifre
+                var zemlja = i > 0 && tok[i - 1] == "72" ? "72" : "";
+                Pogodak g = null;
+                if (c.Length == 4) g = pk.Granica(c);
+                else if (c.Length >= 5 && c.Length <= 7) g = pk.Stanica(null, (zemlja.Length > 0 ? zemlja : "72") + c, null, false, new[] { "SRB" }, samoDrzave: new[] { "SRB" });
+                if (g != null && g.Id.HasValue && pk.DrzavaStanice(g.Id.Value) == "SRB") { g.Tekst = "r57: " + kp.Deonica + " (šifra " + t + ")"; st.Add(g); }
+            }
+            if (st.Count < 2) return (null, null);
+            return (st[0], st[st.Count - 1]);
         }
 
         private static readonly HashSet<string> SusedneZemlje = new HashSet<string> { "HU", "HR", "RO", "BG", "MK", "BA", "MNE", "AL" };
@@ -464,7 +509,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 var z = r57.FirstOrDefault(y => y.Uic == u);
                 if (z == null) r57.Add(z = new PrevoznikNaPutu { Uic = u });
                 if (z.Naziv.Length == 0 && m.Groups[2].Success) z.Naziv = m.Groups[2].Value;
-                if (z.Deonica.Length == 0 && m.Groups[3].Value.Contains("-")) z.Deonica = m.Groups[3].Value.Trim();
+                if (z.Deonica.Length == 0 && (m.Groups[3].Value.Contains("-") || Regex.IsMatch(m.Groups[3].Value, @"\d{4}"))) z.Deonica = m.Groups[3].Value.Trim();
             }
             var t13 = T(c.R13) + " " + string.Join(" ", (c.R13?.Stavke ?? new List<SifraTekst>()).Select(x => x.Sifra + " " + x.Tekst));
             var r13 = new List<PrevoznikNaPutu>();

@@ -285,9 +285,30 @@ WHERE ID IS NOT NULL GROUP BY ID";
                 .ThenByDescending(x => sifra != null && KodPoklapa(sifra, x.st.KodCifre))
                 .ThenBy(x => x.st.Id).First();
             p.Kandidati = string.Join("; ", lista.Take(3).Select(x => x.st.Id + " " + x.st.Opis + (x.st.Drzava.Length > 0 ? " (" + x.st.Drzava + ")" : "") + " " + x.o.ToString("0.00", CultureInfo.InvariantCulture)));
+            // v2.9.1 (ispravka 16.11.): ista šifra kod više stanica različitih naziva (1380 Wlasna i 1385 Kwidzyn – 51023119), a naziv ih ne
+            // razlikuje: pravilo 6 – stanica koja se najviše koristi u OP_Jobs/TeretnicaStavke; nijedna korišćena (ili ista upotreba) → NULL i kandidati
+            if (!string.IsNullOrWhiteSpace(sifra) && KodPoklapa(sifra, izbor.st.KodCifre))
+            {
+                var ista = lista.Where(x => Math.Abs(x.o - izbor.o) < 0.0001 && x.st.Norm != izbor.st.Norm && KodPoklapa(sifra, x.st.KodCifre)).ToList();
+                if (ista.Count > 0)
+                {
+                    var svi = new[] { izbor }.Concat(ista).ToList();
+                    var max = svi.Max(x => Upotreba(x.st));
+                    var najvise = svi.Where(x => Upotreba(x.st) == max).ToList();
+                    p.Kandidati = string.Join("; ", svi.Select(x => x.st.Id + " " + x.st.Opis + " (upotreba " + Upotreba(x.st) + ")"));
+                    if (max == 0 || najvise.Count > 1)
+                    {
+                        p.Napomena = "šifra " + sifra + " pripada stanicama " + string.Join(", ", svi.Select(x => x.st.Id)) + (max == 0 ? " – nijedna nije korišćena" : " – ista upotreba") + "; nije upisano";
+                        p.Pouzdanost = (int)Math.Round(izbor.o * 50);
+                        return;
+                    }
+                    izbor = najvise[0];
+                    p.Napomena = "šifra " + sifra + " pripada stanicama " + string.Join(", ", svi.Select(x => x.st.Id)) + " – izabrana najviše korišćena (pravilo 6)";
+                }
+            }
             if (izbor.o < PragStanice) { p.Napomena = "najbliži naziv ispod praga " + PragStanice.ToString("0.00", CultureInfo.InvariantCulture); p.Pouzdanost = (int)Math.Round(izbor.o * 100); return; }
             var dup = bliski.Where(x => x.st.Norm == izbor.st.Norm && x.st.Id != izbor.st.Id).ToList();
-            if (dup.Count > 0) p.Napomena = "duplikat u šifarniku: izabran " + izbor.st.Id + " (upotreba " + Upotreba(izbor.st) + "), ostali: " + string.Join(", ", dup.Select(x => x.st.Id + " (upotreba " + Upotreba(x.st) + ")"));
+            if (dup.Count > 0) p.Napomena = (p.Napomena.Length > 0 ? p.Napomena + "; " : "") + "duplikat u šifarniku: izabran " + izbor.st.Id + " (upotreba " + Upotreba(izbor.st) + "), ostali: " + string.Join(", ", dup.Select(x => x.st.Id + " (upotreba " + Upotreba(x.st) + ")"));
             var st0 = izbor.st;
             // sinonim važi i za izabranu stanicu: naziv izabrane stanice je u tmpSinonimi („Pančevo“ 1464 → 246) – i kada OCR šum
             // („PANČEVO jr“) sprečava tačno poklapanje teksta
@@ -385,16 +406,20 @@ WHERE ID IS NOT NULL GROUP BY ID";
                 foreach (var sk in Skracenice(naziv))
                 {
                     var kand = s.Partneri.Where(z => z.Reci1.Contains(sk) || z.Reci2.Contains(sk)).ToList();
+                    // v2.9.1 (ispravka 16.11.): partner sa popunjenim UIC-om različitim od UIC-a iz dokumenta nije pogodak (PKP: 2151 ≠ 2338 PKP Cargo Connect)
+                    if (u.Length == 4) kand = kand.Where(z => z.Uic.Length == 0).ToList();
                     if (kand.Count == 0) continue;
                     var uz = kand.Where(z => z.Prevoznik).ToList(); if (uz.Count > 0) kand = uz;
                     if (dr.Count > 0) { var zz = kand.Where(z => dr.Contains(z.Drzava)).ToList(); if (zz.Count > 0) kand = zz; }
                     p.Kandidati = string.Join("; ", kand.Take(3).Select(z => Opis(z, 1)));
                     if (kand.Count > 1) { p.Napomena += "skraćenica „" + sk + "“: " + kand.Count + " partnera – nije upisano"; p.Pouzdanost = 50; return p; }
                     var z1 = kand[0];
-                    p.Id = z1.PaSifra; p.Pouzdanost = 90;
-                    p.Napomena += "skraćenica „" + sk + "“ u nazivu partnera";
-                    if (u.Length == 4 || !z1.Prevoznik)
-                        ZaSifarnik.Add("partner postoji, ali nema " + (u.Length == 4 && z1.Uic.Length == 0 ? "UIC " + u : "") + (u.Length == 4 && z1.Uic.Length == 0 && !z1.Prevoznik ? " ni " : "") + (!z1.Prevoznik ? "oznaku Prevoznik" : "") + ": PaSifra " + Oznaka(z1));
+                    p.Id = z1.PaSifra; p.Pouzdanost = u.Length == 4 ? 70 : 90;
+                    p.Napomena += "skraćenica „" + sk + "“ u nazivu partnera" + (u.Length == 4 ? " (UIC " + u + " nije u šifarniku – proveriti)" : "");
+                    if (u.Length == 4)
+                        ZaSifarnik.Add("proveriti: skraćenica „" + sk + "“ → PaSifra " + Oznaka(z1) + " (partner bez UIC-a; u dokumentu UIC " + u + ")");
+                    else if (!z1.Prevoznik)
+                        ZaSifarnik.Add("partner postoji, ali nema oznaku Prevoznik: PaSifra " + Oznaka(z1));
                     return p;
                 }
                 return null;
@@ -486,12 +511,21 @@ WHERE ID IS NOT NULL GROUP BY ID";
                 if (t.Contains(" " + x.Tekst + " ")) { p.Id = x.CiljniId; p.Pouzdanost = 90; p.Napomena = "granični prelaz „" + x.Tekst + "“"; return p; }
             foreach (var z in Drzave(zemlja))
             {
+                if (VisePrelaza.TryGetValue(z, out var vise))
+                {
+                    p.Kandidati = string.Join("; ", vise.Select(id => id + " " + ImeStanice(id)));
+                    p.Napomena = "zemlja " + z + " ima više graničnih prelaza – samo po zemlji se ne određuje (NULL i kandidati)";
+                    return p;
+                }
                 var x = gr.FirstOrDefault(y => y.Tekst == z);
                 if (x != null) { p.Id = x.CiljniId; p.Pouzdanost = 60; p.Napomena = "granični prelaz samo po zemlji susednog prevoznika (" + z + ")"; return p; }
             }
             p.Napomena = "granični prelaz nije prepoznat";
             return p;
         }
+
+        /// <summary>v2.9.1 (odluka 16.11.): zemlje sa više prelaza prema Srbiji – samo po zemlji se prelaz ne pogađa.</summary>
+        private static readonly Dictionary<string, int[]> VisePrelaza = new Dictionary<string, int[]> { ["HR"] = new[] { 381, 51 } };
 
         // ------------------------------------------------------------------------------------------- NHM
 

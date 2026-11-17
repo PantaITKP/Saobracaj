@@ -627,7 +627,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var pk = Pk291();
             // „3277 CRW“: UIC nije u šifarniku → skraćenica „CRW“ kao posebna reč naziva
             var p = pk.Partner("CRW", "3277", null, "prevoznik");
-            Assert.AreEqual(1722, p.Id, p + " | " + p.Kandidati); Assert.AreEqual(90, p.Pouzdanost);
+            Assert.AreEqual(1722, p.Id, p + " | " + p.Kandidati); Assert.AreEqual(70, p.Pouzdanost, "UIC iz dokumenta nije u šifarniku – najviše 70");
             Assert.IsTrue(pk.ZaSifarnik.Any(x => x.Contains("1722") && x.Contains("UIC 3277")), string.Join("; ", pk.ZaSifarnik));
             // tačan UIC među svim partnerima (Prevoznik nije 1) → uzima se, napomena
             var c = pk.Partner("CER", "3085", null, "prevoznik");
@@ -679,6 +679,48 @@ namespace Saobracaj.Agent.CimProvera.Tests
             p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp, null, "henrietta.varga.szalai@cercargo.eu");
             Assert.AreEqual(1692, p.V["PreuzimaOdID"]);
             Assert.IsTrue(p.Poreklo.First(x => x.Kolona == "PreuzimaOdID").Pouzdanost <= 60);
+        }
+
+        [TestMethod]
+        public void V291_Ispravke_16_11_sifra_vise_stanica_skracenica_HR_deonica_KP()
+        {
+            var s = Sif();
+            s.Stanice.Add(new StanicaZapis { Id = 1380, Opis = "Wlasna", Drzava = "PL", Kod = "51023119" });
+            s.Stanice.Add(new StanicaZapis { Id = 1385, Opis = "Kwidzyn", Drzava = "PL", Kod = "51023119" });
+            s.Stanice.Add(new StanicaZapis { Id = 51, Opis = "Bogojevo gr.", Drzava = "SRB" });
+            s.Stanice.First(x => x.Id == 404).Kod = "210013";   // korisnik dodao šifru 16.11.
+            s.Partneri.Add(new PartnerZapis { PaSifra = 2338, PaNaziv = "PKP Cargo Connect Sp z.o.o", PaDoNaziv = "PKP Cargo Connect Sp z.o.o", Drzava = "PL", Uic = "9952", Prevoznik = true });
+            s.Partneri.Add(new PartnerZapis { PaSifra = 1722, PaNaziv = "CENTRAL RAILWAYS A.S. CRW", PaDoNaziv = "CENTRAL RAILWAYS A.S. CRW", Drzava = "SK", Prevoznik = true });
+            s.Partneri.Add(new PartnerZapis { PaSifra = 1641, PaNaziv = "CER Slovakia a.s.", PaDoNaziv = "CER Slovakia a.s.", Drzava = "HU", Uic = "3085", Prevoznik = true });
+            foreach (var (t, id) in new[] { ("KELEBIA", 328), ("0711", 328), ("HU", 328), ("TOVARNIK", 381), ("ERDUT", 51) })
+                s.Sinonimi.Add(new SinonimZapis { Tip = "GRANICA", Tekst = t, CiljniId = id });
+            var pk = new Poklapanje(s.Pripremi());
+            // (2) ista šifra kod više stanica: nijedna korišćena → NULL i kandidati; korišćena → ona
+            var w = pk.Stanica("Ont P", "51023119");
+            Assert.IsNull(w.Id, w.ToString()); StringAssert.Contains(w.Kandidati, "1385"); StringAssert.Contains(w.Napomena, "nijedna nije korišćena");
+            s.UpotrebaStanica[1385] = 12;
+            Assert.AreEqual(1385, new Poklapanje(s).Stanica("Ont P", "51023119").Id, "pravilo 6 – najviše korišćena");
+            s.UpotrebaStanica.Remove(1385);
+            // (3) skraćenica: partner sa drugim UIC-om nije pogodak (PKP 2151 ≠ 2338); bez UIC-a – pouzdanost ≤ 70
+            Assert.IsNull(pk.Partner("PKP Cargo Spolka Akcyjna in restructuring", "2151", null, "prevoznik").Id);
+            var crw = pk.Partner("CRW", "3277", null, "prevoznik");
+            Assert.AreEqual(1722, crw.Id); Assert.IsTrue(crw.Pouzdanost <= 70);
+            Assert.IsTrue(pk.ZaSifarnik.Any(x => x.StartsWith("proveriti") && x.Contains("1722")));
+            // (5) HR samo po zemlji – dva prelaza → NULL i kandidati
+            var hr = pk.Granica(null, "HR");
+            Assert.IsNull(hr.Id); StringAssert.Contains(hr.Kandidati, "381"); StringAssert.Contains(hr.Kandidati, "51");
+            Assert.AreEqual(51, pk.Granica("via Erdut").Id);
+            // (1) deonica KP iz šifara r57 (Drenik: „3212 KP 72 0711 210013“): Stanica1 328, Stanica3 i Uputna 404 (r10/r12 nečitljivi)
+            var c = List("Ont P", "", "- Kea)", "", "", new[] { "2151 PKP 54 0825 0890", "3085 CER 55 0887 0711", "3212 KP 72 0711 210013" });
+            c.R62 = new Identifikacija { Zemlja = "51", Stanica = "023119", Preduzece = "2151", Broj = "532986", Status = StatusRubrike.Popunjeno };
+            var p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp);
+            Assert.AreEqual(328, p.V["Stanica1ID"]); Assert.AreEqual(404, p.V["Stanica3ID"]); Assert.AreEqual(404, p.V["UputnaID"]);
+            Assert.AreEqual(1641, p.V["PreuzimaOdID"], "CER 3085");
+            Assert.IsNull(p.V["OtpravnaID"], "Wlasna/Kwidzyn ista šifra, nijedna korišćena");
+            // ista granična stanica na oba kraja (bez šifara deonice) → Stanica3 NULL i kandidati
+            c = List("Budapest Ferencváros", "55 12345-6", "Zagreb", "78 72480-0", "", new[] { "2155 RCH BUDAPEST-KELEBIA", "3212 KP KELEBIA-SUBOTICA", "2178 HZC SUBOTICA-ZAGREB" });
+            p = PosaoIzDokumenata.Napravi(c, null, null, pk, pravila.Kp);
+            Assert.AreEqual(328, p.V["Stanica1ID"]); Assert.IsNull(p.V["Stanica3ID"], "ne prepisuje se granična stanica na drugi kraj");
         }
 
         private static ListPosla Lp(string kljuc, string[] kola, int s1 = 246, int s3 = 118, bool prazna = false, double? neto = null, double? tara = null, string nhm4 = "2520")
