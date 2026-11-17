@@ -336,10 +336,36 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
             }
             log.Info("Ponovna obrada: " + poruke.Count + " mailova sa prilozima.");
             if (poruke.Count == 0) return 0;
-            var arg = new List<string> { "validate" };
-            arg.AddRange(poruke.OrderBy(x => x.vreme).Select(x => x.fajl));
-            arg.AddRange(new[] { "--upis", "--stanje", stanje, "--izlaz", Path.Combine(radni, "izvestaji") });
-            return Validate(cfg, log, arg.Skip(1).ToList());
+            // v2.9.1: obrada u delovima od po 20 mailova, svaki deo u posebnom procesu (32-bitni proces sa OCR-om ostaje bez memorije posle
+            // ~70 mailova – „Out of memory“, proces se gasi); stanje (dosije, ponavljanja) je zajedničko za sve delove, redosled prijema ostaje
+            var redom = poruke.OrderBy(x => x.vreme).Select(x => x.fajl).ToList();
+            var exe = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            const int Deo = 20;
+            int greske = 0;
+            for (int i = 0; i < redom.Count; i += Deo)
+            {
+                var deo = redom.Skip(i).Take(Deo).ToList();
+                var arg = new List<string> { "validate" };
+                arg.AddRange(deo);
+                arg.AddRange(new[] { "--upis", "--stanje", stanje, "--izlaz", Path.Combine(radni, "izvestaji") });
+                var psi = new System.Diagnostics.ProcessStartInfo(exe, string.Join(" ", arg.Select(x => "\"" + x.Replace("\"", "\\\"") + "\"")))
+                {
+                    UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
+                    WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                };
+                log.Info("Ponovna obrada: deo " + (i / Deo + 1) + "/" + ((redom.Count + Deo - 1) / Deo) + " – mailovi " + (i + 1) + "–" + (i + deo.Count) + " od " + redom.Count);
+                using (var pr = System.Diagnostics.Process.Start(psi))
+                {
+                    // izlaz se čita (ne čuva) da proces ne zastane na punom baferu; log piše sam proces
+                    pr.OutputDataReceived += (s, e) => { }; pr.ErrorDataReceived += (s, e) => { };
+                    pr.BeginOutputReadLine(); pr.BeginErrorReadLine();
+                    pr.WaitForExit();
+                    if (pr.ExitCode != 0) { greske++; log.Upozorenje("Ponovna obrada: deo " + (i / Deo + 1) + " završen sa kodom " + pr.ExitCode); }
+                }
+                File.AppendAllText(Path.Combine(radni, "obradjeno.txt"), string.Join(Environment.NewLine, deo.Select(Path.GetFileName)) + Environment.NewLine);
+            }
+            log.Info("Ponovna obrada: završeno " + redom.Count + " mailova" + (greske > 0 ? ", delova sa greškom " + greske : "") + ".");
+            return greske == 0 ? 0 : 1;
         }
 
         // ------------------------------------------------------------------------------------------- validate
