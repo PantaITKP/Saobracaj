@@ -313,6 +313,25 @@ namespace Saobracaj.Agent.CimProvera
             public Nalaz N;
             /// <summary>Podnaslov grupe kada mail ima više listova: „Tovarni list 1: 72 16350-1 3212 15890-0 (str. 1–3)“ (v2.8).</summary>
             public string Grupa;
+            /// <summary>v3.0 (2.9.3 tačka 2): redni broj u tabeli i u krugu PRIMER-a – od 1 na svakom tovarnom listu.</summary>
+            public int Broj;
+        }
+
+        /// <summary>
+        /// v3.0 (2.9.3 tačka 2): numeracija od 1 na svakom tovarnom listu. Redovi koji važe za više listova („Svi tovarni listovi“)
+        /// dobijaju 1…s; redovi jednog lista nastavljaju od s+1, posebno za svaki list – na strani lista u PRIMER-u brojevi su 1, 2, 3…
+        /// i isti su kao u tabeli maila.
+        /// </summary>
+        internal static List<Red> Numerisi(List<Red> redovi)
+        {
+            var zajednicki = 0;
+            foreach (var x in redovi.Where(x => x.Listovi.Count != 1)) x.Broj = ++zajednicki;
+            foreach (var g in redovi.Where(x => x.Listovi.Count == 1).GroupBy(x => x.Listovi[0]))
+            {
+                var b = zajednicki;
+                foreach (var x in g) x.Broj = ++b;
+            }
+            return redovi;
         }
 
         /// <summary>Podnaslov grupe nalaza po tovarnom listu (više listova u mailu): broj lista, identifikacija iz r62, fajl i strane.</summary>
@@ -460,7 +479,7 @@ namespace Saobracaj.Agent.CimProvera
 
         /// <summary>Redovi tabele POTREBNE ISPRAVKE (greške).</summary>
         internal static List<Red> RedoviIspravki(RezultatProvere r, PravilaSkup p, bool en) =>
-            Grupisi(r, Tezina.Greska).Where(s => !s.N.SamoInterno).Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList();
+            Numerisi(Grupisi(r, Tezina.Greska).Where(s => !s.N.SamoInterno).Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) }).ToList());
 
         /// <summary>Redovi tabele NAPOMENE: upozorenja, preporuke pravila (npr. NHM 6 cifara) i opšte preporuke (najviše 5).</summary>
         internal static List<Red> RedoviNapomena(RezultatProvere r, PravilaSkup p, bool en)
@@ -470,7 +489,8 @@ namespace Saobracaj.Agent.CimProvera
             var opste = prep.Where(s => s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal)).Take(MaxPreporuka);
             return Grupisi(r, Tezina.Upozorenje).Where(s => !s.N.SamoInterno).Concat(prep.Where(s => !s.N.Pravilo.StartsWith("REC", StringComparison.Ordinal))).Concat(opste)
                 .Select(s => new Red { N = s.N, Listovi = s.Listovi, Grupa = NaslovGrupe(r, s.Listovi, en), Rubrika = RubrikaKolona(p, s.N.Rubrika, en), Sta = StaNije(r, s, en), Primer = Primer(s.N, en) })
-                .OrderBy(x => x.Listovi.Count == r.Listovi.Count && r.Listovi.Count > 1 ? -1 : r.Listovi.FindIndex(l => x.Listovi.Count > 0 && l.Oznaka == x.Listovi[0])).ToList();
+                .OrderBy(x => x.Listovi.Count == r.Listovi.Count && r.Listovi.Count > 1 ? -1 : r.Listovi.FindIndex(l => x.Listovi.Count > 0 && l.Oznaka == x.Listovi[0])).ToList()
+                is var redovi ? Numerisi(redovi) : null;
         }
 
         /// <summary>Informacije ispod tabela (npr. „Platilac za deonicu kroz Srbiju: …“).</summary>
@@ -620,7 +640,7 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     i++;
                     if (x.Grupa != null && x.Grupa != grupa) { grupa = x.Grupa; sb.AppendLine("— " + grupa + " —"); }
-                    sb.AppendLine(i + ". " + (Regex.IsMatch(x.Rubrika ?? "", @"^\d") ? (en ? "Box " : "Rubrika ") : "") + x.Rubrika);
+                    sb.AppendLine((x.Broj > 0 ? x.Broj : i) + ". " + (Regex.IsMatch(x.Rubrika ?? "", @"^\d") ? (en ? "Box " : "Rubrika ") : "") + x.Rubrika);
                     sb.AppendLine("   " + k[2] + ": " + x.Sta);
                     sb.AppendLine("   " + k[3] + ": " + x.Primer);
                 }
@@ -690,7 +710,7 @@ namespace Saobracaj.Agent.CimProvera
                 {
                     i++;
                     if (x.Grupa != null && x.Grupa != grupa) { grupa = x.Grupa; sb.Append("<tr><td colspan=\"4\" " + Td.Replace("style=\"", "style=\"background-color:#f2f2f2;font-weight:bold;") + ">" + H(grupa) + "</td></tr>"); }
-                    sb.Append("<tr><td " + Td + ">" + i + "</td><td " + Td + "><b>" + H(x.Rubrika) + "</b></td><td " + Td + ">" + H(x.Sta) + "</td><td " + Td + ">" + H(x.Primer) + "</td></tr>");
+                    sb.Append("<tr><td " + Td + ">" + (x.Broj > 0 ? x.Broj : i) + "</td><td " + Td + "><b>" + H(x.Rubrika) + "</b></td><td " + Td + ">" + H(x.Sta) + "</td><td " + Td + ">" + H(x.Primer) + "</td></tr>");
                 }
                 sb.Append("</table>");
             }

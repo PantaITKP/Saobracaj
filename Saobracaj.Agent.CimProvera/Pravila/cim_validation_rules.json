@@ -26,8 +26,8 @@
       "RID tabela A, pogl. 3.2",
       "EWC katalog otpada (Odluka 2014/955/EU)"
     ],
-    "version": "2.8.4",
-    "updated": "2026-11-14",
+    "version": "3.0",
+    "updated": "2026-11-17",
     "company": {
       "name": "Kombinovani prevoz d.o.o.",
       "short": "KP",
@@ -243,6 +243,18 @@
           "Interni izveštaji: „Primer ispravke je u prilogu.“ umesto rečenice za pošiljaoca; nepouzdano pročitane rubrike u jednom redu.",
           "r62 na skenu sa nepouzdanim ciframa (rukom upisana) ne koristi se za odluke (KP tovarni list, ponavljanje, dosije) – „r62 nečitljiva – ručna provera“.",
           "Zaštita režima Test u funkciji slanja: svaki primalac (To, Cc, Bcc) osim agenti@kprevoz.co.rs se uklanja pre slanja, u log „TEST: uklonjen primalac …“."
+        ]
+      },
+      {
+        "date": "2026-11-17",
+        "version": "3.0",
+        "basis": "PROMPT_v2.9.3 (RID amonijak 52 290239 3057 001784/001792, Coal 17 PSP 53 245129 3154 001394) i PROMPT_v3.0 (deo 0a)",
+        "changes": [
+          "r23 (RID): X u r23 i UN broj u r21 ili na spisku kola – ispravno; X bez UN broja – greška „nedostaju RID podaci (UN broj, naziv, klasa)“ (R21, r21-un); UN broj bez X – greška „treba X u r23“ (X1); ni X ni UN – ništa. UN broj na spisku se računa uvek (ne samo kada r21 upućuje na spisak).",
+          "X21 ima novo značenje: kola nose različitu opasnu robu, a spisak kola nema RID podatke po kolima – greška. Prazna kolona RID na spisku kod iste robe nije greška (ranije: „RID oznaka na spisku kola i u r23 se ne slažu“).",
+          "r58a zavisi od izdavaoca (preduzeće u r62): 3212 – greška, predlog 3212 (KP2, kao do sada); drugi prevoznik – samo upozorenje, predlog = šifra i naziv izdavaoca iz r62 (naziv iz dokumenta), nikad 3212; r62 nečitljiv ili prazan – upozorenje „r58a prazna – proveriti“, bez predloga.",
+          "PRIMER: poravnanje obrasca za svaku stranu posebno; okviri koji izlaze van strane – ponovno poravnanje sa sledećim pouzdanim obrascem, inače oznake uz ivicu + INTERNO „poravnanje strane N nepouzdano“; brojevi u tabeli i u krugovima od 1 na svakom tovarnom listu (zajednički nalazi 1…s, nalazi lista od s+1).",
+          "Upis poslova (deo 0a): spisak sa manje kola ili tuđim kolima ne menja posao (INTERNO „spisak (28 kola) ≠ tovarni list (30 kola) – proveriti“); povratak praznih i po oznaci voza/referenci uz suprotan smer; NHM, mase i broj kola grupe samo iz dokumenata grupe; zbirovi masa u celim kg; keš čuva reči i natpise po rubrikama (verzija čitača L22)."
         ]
       }
     ]
@@ -1207,7 +1219,7 @@
       "required_parts": [
         "šifra_preduzeća_UIC ili prepoznatljiv naziv prevoznika"
       ],
-      "check": "greška samo kada u r58a nema ni šifre preduzeća (UIC) ni prepoznatljivog naziva prevoznika; naziv, adresa i potpis nisu obavezni",
+      "check": "greška samo kada u r58a nema ni šifre preduzeća (UIC) ni prepoznatljivog naziva prevoznika; naziv, adresa i potpis nisu obavezni. v3.0: prazna r58a na listu drugog prevoznika (r62 ≠ 3212) – upozorenje, predlog = šifra i naziv izdavaoca iz r62, nikad 3212; r62 nečitljiv/prazan – upozorenje „r58a prazna – proveriti“",
       "basis": "interna odluka KP 2026-11-12 (priručnik traži šifru, naziv, adresu i potpis)",
       "message": "Rubrika 58a: upisati šifru preduzeća (UIC) ugovornog prevoznika.",
       "message_en": "Box 58a: enter the company code (UIC) of the contractual carrier.",
@@ -1739,12 +1751,13 @@
       "popunjava": "pošiljalac",
       "popunjava_basis": "GLV-CIM Prilog 2, str. 26 (rubrike 1-30 popunjava pošiljalac)",
       "severity": "error",
-      "if": "RID oznaka na spisku kola",
-      "then": "r23 na CIM-u == 'X' (i obrnuto)",
-      "message": "RID oznaka na spisku kola i u rubrici 23 se ne slažu.",
-      "message_en": "The RID marking on the wagon list and in box 23 do not match.",
-      "primer": "r23: X i RID oznaka na spisku kola (ili nijedno)",
-      "primer_en": "box 23: X and RID marking on the wagon list (or neither)"
+      "if": "r23 == 'X' i kola nose različitu opasnu robu (više UN brojeva u r21 ili različit NHM na spisku)",
+      "then": "spisak kola ima RID podatke po kolima (UN broj, naziv, klasa)",
+      "basis": "v3.0 (PROMPT_v2.9.3 tačka 1): RID podaci se upisuju u r21; kolona RID na spisku je potrebna samo kada ih nema u r21 ili kada kola nose različitu opasnu robu",
+      "message": "Kola nose različitu opasnu robu – na spisku kola treba RID podaci po kolima.",
+      "message_en": "The wagons carry different dangerous goods – the wagon list must contain the RID data for each wagon.",
+      "primer": "spisak kola: UN broj, naziv i klasa uz svaka kola",
+      "primer_en": "wagon list: UN number, name and class next to each wagon"
     },
     {
       "id": "X22",

@@ -195,14 +195,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 }
                 case "R58A":
                 {
-                    // ugovorni prevoznik = preduzeće iz r62; naziv iz r57 (ista šifra)
-                    var sifra = Cif(k.C.R62.Preduzece);
-                    if (sifra.Length != 4) sifra = k.C.R57.Prevoznici.Select(x => Cif(x.Sifra)).FirstOrDefault(x => x.Length == 4) ?? "";
-                    if (sifra.Length != 4) return ("", null, false);
-                    var naziv = k.P.Kp.JeKpSifra(sifra) ? k.P.Kp.Naziv : k.C.R57.Prevoznici.FirstOrDefault(x => Cif(x.Sifra) == sifra)?.Naziv;
-                    // „RO: PSP UIC“ → „PSP“ (oznaka mreže i reč UIC nisu deo naziva)
-                    naziv = Regex.Replace(Regex.Replace(naziv ?? "", @"^\s*[A-ZŽŠČĆĐ]{2,4}\s*:\s*", ""), @"\b(UIC|CIT)\b|\d{4}", "").Trim(' ', ',', '-', ':', '(', ')');
-                    return ((sifra + " " + (naziv ?? "")).Trim(), null, false);
+                    // ugovorni prevoznik = preduzeće izdavaoca iz r62; naziv iz dokumenta (r57/r13/r7, ista šifra).
+                    // v3.0 (2.9.3 tačka 3): bez pouzdane šifre u r62 nema predloga (nikad prvi prevoznik iz r57, nikad 3212 za tuđi list)
+                    var sifra = Provere.IzdavalacR62(k);
+                    if (sifra == null) return ("", null, false);
+                    return ((sifra + " " + (Provere.NazivPrevoznika(k, sifra) ?? "")).Trim(), null, false);
                 }
                 case "KP2":
                 {

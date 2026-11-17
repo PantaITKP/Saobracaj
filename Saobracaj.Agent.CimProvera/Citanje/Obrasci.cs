@@ -512,6 +512,26 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
         public ObrazacSablon Po(string id) => Sabloni.FirstOrDefault(s => s.Id == id);
 
+        /// <summary>
+        /// v3.0 (2.9.3 tačka 2): najveći prepust okvira rubrika van strane (udeo strane) za dato poravnanje – 0 kada su svi okviri
+        /// na strani. Amonijak 001792: CIT šablon (78 sidara) je okvire r9/r62 stavio ~4 % desno van strane.
+        /// </summary>
+        public double IzvanStrane(Poravnanje p)
+        {
+            var o = p == null ? null : Po(p.Obrazac);
+            if (o == null) return 0;
+            double max = 0;
+            foreach (var r in o.Rubrike.Values)
+            {
+                var t = new[] { p.NaStranu(r[0], r[1]), p.NaStranu(r[2], r[1]), p.NaStranu(r[2], r[3]), p.NaStranu(r[0], r[3]) };
+                max = Math.Max(max, Math.Max(Math.Max(-t.Min(q => q.x), t.Max(q => q.x) - 1), Math.Max(-t.Min(q => q.y), t.Max(q => q.y) - 1)));
+            }
+            return Math.Max(0, max);
+        }
+
+        /// <summary>Prepust veći od ovoga (1,5 % strane) znači da poravnanje nije dobro za tu stranu.</summary>
+        public const double DozvoljenPrepust = 0.015;
+
         /// <summary>Poleđina lista (računski odseci): ključne reči poleđine, a bez pouzdanog poravnanja prednje strane.</summary>
         public string Poledjina(string tekstStrane)
         {

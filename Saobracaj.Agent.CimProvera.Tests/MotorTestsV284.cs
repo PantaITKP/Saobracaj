@@ -194,7 +194,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsFalse(r.Listovi.Single().KpRezim);
             var n = Svi(r).FirstOrDefault(x => x.Pravilo == "R58A");
             Assert.IsNotNull(n, string.Join(" | ", Svi(r).Select(x => x.Pravilo)));
-            Assert.AreEqual(Tezina.Greska, n.Tezina);
+            // v3.0 (PROMPT_v2.9.3 tačka 3): list drugog prevoznika (r62 2154) – prazna r58a je upozorenje sa predlogom iz r62, nikad 3212
+            Assert.AreEqual(Tezina.Upozorenje, n.Tezina);
+            StringAssert.StartsWith(n.Primer, "2154");
             Assert.IsFalse(n.SamoInterno);
             Assert.IsTrue(Svi(r.BezInternih()).Any(x => x.Pravilo == "R58A"));
         }

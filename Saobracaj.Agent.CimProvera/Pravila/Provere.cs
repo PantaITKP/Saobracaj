@@ -842,7 +842,27 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             // r62 i r58a obe prazne na KP listu: prijavljuje se jednom, kao R62. v2.8.4 (odluka 2026-11-14): kod spoljnog
             // pošiljaoca je prazna r62 samo napomena, a r58a popunjava pošiljalac – prazna r58a je njegova greška (CUV_257)
             if (!r.Popunjena && !k.C.R62.Popunjena && k.Kp) yield break;
-            if (!r.Popunjena) { yield return P("58a", "r58a").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
+            // v3.0 (2.9.3 tačka 3): prazna r58a zavisi od izdavaoca lista (preduzeće u r62). KP (3212) → KP2 (greška, predlog 3212).
+            // Drugi prevoznik → samo upozorenje, predlog = šifra i naziv izdavaoca iz r62 – nikad 3212. r62 nečitljiv/prazan → upozorenje „proveriti“.
+            if (!r.Popunjena)
+            {
+                var izdavalac = IzdavalacR62(k);
+                if (izdavalac == null)
+                {
+                    var pg0 = P("58a", "r58a-proveri").D(k.U.Engleski ? "(the company code in box 62 could not be read)" : "(šifra preduzeća u r62 nije pročitana)");
+                    pg0.Tezina = Tezina.Upozorenje;
+                    pg0.Poruka = k.U.Engleski ? "Box 58a is empty – check (the contractual carrier is the company that issued the consignment note, box 62)." : "Rubrika 58a je prazna – proveriti (ugovorni prevoznik je preduzeće koje je izdalo tovarni list, r62).";
+                    pg0.Predlog = k.U.Engleski ? "code and name of the carrier from box 62" : "šifra i naziv prevoznika iz r62";
+                    yield return pg0; yield break;
+                }
+                var naziv = NazivPrevoznika(k, izdavalac);
+                var pg1 = P("58a", "r58a").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)");
+                pg1.Tezina = Tezina.Upozorenje;
+                pg1.Poruka = k.U.Engleski ? "Box 58a: enter the contractual carrier – the company that issued the consignment note (box 62: " + izdavalac + ")."
+                                          : "Rubrika 58a: upisati ugovornog prevoznika – preduzeće koje je izdalo tovarni list (r62: " + izdavalac + ").";
+                pg1.Predlog = (izdavalac + " " + (naziv ?? "")).Trim();
+                yield return pg1; yield break;
+            }
             if (!k.Citljivo(r, "58a")) yield break;
             // v2.7: dovoljna je šifra preduzeća (UIC) ili prepoznatljiv naziv prevoznika; naziv, adresa i potpis nisu obavezni.
             if (ImaPrevoznika58a(k, r)) yield break;
@@ -854,6 +874,42 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 pg.Dodatak += k.U.Engleski ? " (OCR reading of the stamp is unreliable – check manually.)" : " (OCR čitanje pečata nije pouzdano – proveriti ručno.)";
             }
             yield return pg;
+        }
+
+        /// <summary>v3.0 (2.9.3 tačka 3): šifra preduzeća izdavaoca iz r62 (4 cifre, pouzdano pročitana) – null ako je r62 prazna ili nečitljiva.</summary>
+        internal static string IzdavalacR62(Kontekst k)
+        {
+            var s = Cifre(k.C.R62.Preduzece);
+            if (s.Length != 4 || !k.C.R62.Popunjena) return null;
+            if (k.Ocr && k.C.R62.Pouzdanost < 0.6) return null;
+            return s;
+        }
+
+        /// <summary>
+        /// Naziv prevoznika sa date šifre iz samog dokumenta (r57, r13, r7: „3057 Bulmarket“, „BMRC 3057“, „Unicom Tranzit 3154“);
+        /// KP iz pravila. Naziv se ne izmišlja – null kada ga dokument nema.
+        /// </summary>
+        internal static string NazivPrevoznika(Kontekst k, string sifra)
+        {
+            if (k.P.Kp.JeKpSifra(sifra)) return k.P.Kp.Naziv;
+            string Ocisti(string x) => Regex.Replace(Regex.Replace(x ?? "", @"^\s*[A-ZŽŠČĆĐ]{2,4}\s*:\s*", ""), @"\b(UIC|CIT|code|šifra|sifra)\b|\d{4}", "", RegexOptions.IgnoreCase).Trim(' ', ',', '-', ':', '(', ')', ';', '/');
+            // naziv: bar 3 slova u nizu, nije oznaka mreže („BDŽ:“, „SRB:“ – reč iza koje je dvotačka), nije KP ni reč „via/za/carrier“
+            bool Dobar(string n) => Regex.IsMatch(n ?? "", @"\p{L}{3,}") && !k.P.Kp.JeKp(n)
+                && !Regex.IsMatch(n, @"^(SRB|RS|BG|HU|RO|HR|BA|MK|IŽS|IZS|via|for|za|carrier|prevoznik)$", RegexOptions.IgnoreCase);
+            var izR57 = Ocisti(k.C.R57.Prevoznici.FirstOrDefault(x => Cifre(x.Sifra) == sifra)?.Naziv);
+            if (Dobar(izR57)) return izR57;
+            foreach (var t in new[] { k.C.R57.Tekst, k.C.R13.Tekst, string.Join("\n", k.C.R13.Stavke.Select(x => x.Tekst)), k.C.R7.Tekst, string.Join("\n", k.C.R7.Stavke.Select(x => x.Tekst)) })
+            {
+                foreach (var red in (t ?? "").Split('\n'))
+                {
+                    // reči naziva odvojene jednim razmakom (tri razmaka = granica kolone, iza je deonica: „3057 B   Povelyanovo“)
+                    var m = Regex.Match(red, @"(?<!\d)" + sifra + @"(?!\d) ?[-–]? ?(?<n>\p{L}[\p{L}\.&]*(?: \p{L}[\p{L}\.&]*){0,2})(?!\s*:)(?![\p{L}\.&])");
+                    if (!m.Success) m = Regex.Match(red, @"(?<![\p{L}\.&])(?<n>\p{L}[\p{L}\.&]*(?: \p{L}[\p{L}\.&]*){0,2})(?!\s*:) ?(?:UIC ?)?[-–]? ?(?<!\d)" + sifra + @"(?!\d)");
+                    var n = m.Success ? Ocisti(m.Groups["n"].Value) : "";
+                    if (Dobar(n)) return n;
+                }
+            }
+            return null;
         }
 
         /// <summary>r58a ima šifru preduzeća (UIC, 4 cifre) ili prepoznatljiv naziv prevoznika (KP u bilo kom obliku, ili reč od 4+ slova).</summary>
@@ -900,7 +956,23 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         // =========================================================================================== r21_subrules
 
         /// <summary>r21 upućuje na spisak kola („Siehe Wagenliste“), a priloženi spisak ima UN brojeve – UN broj je na spisku.</summary>
-        private static bool UnNaSpisku(Kontekst k) => Pominje(k.C.R21.Tekst, TipDokumenta.SpisakKola) && k.Spiskovi.Any(x => x.s.UnBrojevi.Count > 0);
+        /// v3.0 (2.9.3 tačka 1): UN broj na bilo kom priloženom spisku (i po kolima, Kemler/UN) – RID podaci mogu biti u r21 ili na spisku.
+        private static bool UnNaSpisku(Kontekst k) => k.Spiskovi.Any(x => x.s.UnBrojevi.Count > 0 || x.s.Kola.Any(kk => UnBroj(kk.KemlerUn) != null));
+
+        /// <summary>UN broj iz teksta: „UN 1005“, „UN-Nr. 1005“, „UN No. 1005“, „ООН 1005“, „1005“ uz Kemler („268/1005“).</summary>
+        internal static string UnBroj(string t)
+        {
+            if (string.IsNullOrWhiteSpace(t)) return null;
+            var m = Regex.Match(t, @"(?:\bUN|ООН|OON)\s*[-.]?\s*(?:Nr\.?|No\.?|number|broj|br\.?)?\s*[:.]?\s*(\d{4})(?!\d)", RegexOptions.IgnoreCase);
+            if (m.Success) return m.Groups[1].Value;
+            m = Regex.Match(t.Trim(), @"^\d{2,3}X?\s*/\s*(\d{4})$");
+            return m.Success ? m.Groups[1].Value : null;
+        }
+
+        /// <summary>UN brojevi iz r21 (pročitani i u tekstu rubrike).</summary>
+        private static List<string> UnUR21(Kontekst k) =>
+            k.C.R21.UnBrojevi.Where(u => !Prazno(u)).Concat(Regex.Matches(k.C.R21.Tekst ?? "", @"(?:\bUN|ООН)\s*[-.]?\s*(?:Nr\.?|No\.?)?\s*[:.]?\s*(\d{4})(?!\d)", RegexOptions.IgnoreCase).Cast<Match>().Select(m => m.Groups[1].Value))
+                .Distinct().ToList();
 
         private static IEnumerable<Pogodak> R21Desc(Kontekst k)
         {
@@ -909,8 +981,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (Prazno(r.OpisRobe)) yield return P("21", "r21");
             if (r.ZaostaliTekstSablona)
                 yield return P("21", "r21-sablon").D((k.U.Engleski ? "Leftover template text: „" : "Zaostali tekst šablona: „") + r.ZaostaliTekst + "“.");
-            if (N(k.C.R23.Tekst) == "x" && r.UnBrojevi.Count == 0 && !UnNaSpisku(k))
-                yield return P("21", "r21-un").D(k.U.Engleski ? "Box 23 (RID) is marked, but box 21 has no UN number." : "Rubrika 23 (RID) je označena, a u rubrici 21 nema UN broja.");
+            // v3.0 (2.9.3 tačka 1): X u r23, a UN broja nema ni u r21 ni na spisku → greška „nedostaju RID podaci“
+            if (N(k.C.R23.Tekst) == "x" && UnUR21(k).Count == 0 && !UnNaSpisku(k))
+            {
+                var pg = P("21", "r21-un").D(k.U.Engleski ? "Box 23 (RID) is marked, but there is no UN number in box 21 or on the wagon list." : "Rubrika 23 (RID) je označena, a UN broja nema ni u rubrici 21 ni na spisku kola.");
+                pg.Poruka = k.U.Engleski ? "Box 21: RID data are missing (UN number, name, class)." : "Rubrika 21: nedostaju RID podaci (UN broj, naziv, klasa).";
+                pg.Predlog = k.U.Engleski ? "UN 1005 AMMONIA, ANHYDROUS, 2.3 (8), RID" : "UN 1005 AMONIJAK, BEZVODNI, 2.3 (8), RID";
+                yield return pg;
+            }
         }
 
         private static IEnumerable<Pogodak> R21Uti(Kontekst k)
@@ -1017,13 +1095,19 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         private static IEnumerable<Pogodak> X1(Kontekst k)
         {
-            if (k.C.R21.UnBrojevi.Any(u => !Prazno(u)) && N(k.C.R23.Tekst) != "x") yield return P("23", "rid");
+            // v3.0 (2.9.3 tačka 1): UN broj u r21 ili na spisku, a u r23 nema X → greška „treba X u r23“
+            if ((UnUR21(k).Count > 0 || UnNaSpisku(k)) && N(k.C.R23.Tekst) != "x" && (!k.C.R23.Popunjena || k.Citljivo(k.C.R23, "23")))
+            {
+                var pg = P("23", "rid");
+                pg.Poruka = k.U.Engleski ? "Box 23: the goods are dangerous (UN number in box 21 or on the wagon list) – mark X in box 23." : "Rubrika 23: roba je opasna (UN broj u rubrici 21 ili na spisku kola) – treba X u r23.";
+                yield return pg;
+            }
         }
 
         private static IEnumerable<Pogodak> X2(Kontekst k)
         {
             if (N(k.C.R23.Tekst) != "x") yield break;
-            if (k.C.R21.UnBrojevi.Count == 0 && !UnNaSpisku(k)) yield return P("21", "r21-un");
+            // v3.0: „X bez UN broja“ prijavljuje R21 (r21-un, greška „nedostaju RID podaci“); ovde samo preporuka za šifru 7.5
             if (!R7Ima(k, "5")) yield return P("7", "r7-5");
         }
 
@@ -1166,10 +1250,22 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         private static IEnumerable<Pogodak> X21(Kontekst k)
         {
-            if (k.Spiskovi.Count == 0) yield break;
-            var cimRid = N(k.C.R23.Tekst) == "x";
-            var spisakRid = k.Spiskovi.Any(s => s.s.RidOznaka || s.s.Kola.Any(x => x.Rid));
-            if (cimRid != spisakRid) yield return P("23", "x21");
+            // v3.0 (2.9.3 tačka 1): kolona RID na spisku je potrebna samo kada kola nose RAZLIČITU opasnu robu (prazna kolona RID kod
+            // iste robe nije greška – amonijak 52 290239 3057 001784: UN 1005 u r21, svih 12 kola NHM 281410)
+            if (k.Spiskovi.Count == 0 || N(k.C.R23.Tekst) != "x") yield break;
+            var kola = k.Spiskovi.SelectMany(s => s.s.Kola).Where(x => !x.Prazna).ToList();
+            var unR21 = UnUR21(k);
+            var nhm = kola.Select(x => Cifre(x.Nhm)).Where(x => x.Length >= 4).Select(x => x.Substring(0, 4)).Distinct().ToList();
+            var razlicita = unR21.Count > 1 || (nhm.Count > 1 && unR21.Count != nhm.Count);
+            var poKolima = kola.Count > 0 && kola.All(x => x.Rid || UnBroj(x.KemlerUn) != null);
+            if (razlicita && !poKolima)
+            {
+                var pg = P("23", "x21").D(k.U.Engleski ? "(UN numbers in box 21: " + string.Join(", ", unR21) + "; NHM on the list: " + string.Join(", ", nhm) + ")"
+                                                       : "(UN brojevi u r21: " + string.Join(", ", unR21) + "; NHM na spisku: " + string.Join(", ", nhm) + ")");
+                pg.Poruka = k.U.Engleski ? "The wagons carry different dangerous goods – the wagon list must contain the RID data for each wagon." : "Kola nose različitu opasnu robu – na spisku kola treba RID podaci po kolima.";
+                pg.Predlog = k.U.Engleski ? "wagon list: UN number, name and class next to each wagon" : "spisak kola: UN broj, naziv i klasa uz svaka kola";
+                yield return pg;
+            }
         }
 
         /// <summary>X22: carinski dokument u mailu ili MRN u r21 → naveden u r9 ili r7 šifra 10 (Prilog 2: „Prateći dokument mora da se upiše u rubriku 9“).</summary>

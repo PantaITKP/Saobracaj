@@ -236,6 +236,20 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var nazivi = lista.Where(r => JeNaziv(r, potpisi)).ToList();
             rez.Probe = Obrasci.Probaj(nazivi.Count >= 5 ? nazivi : lista, raster, lista);
             var naj = rez.Probe.FirstOrDefault();
+            // v3.0 (2.9.3 tačka 2): poravnanje za svaku stranu posebno; okviri rubrika ne smeju da izađu van strane – inače ponovo,
+            // sa sledećim pouzdanim obrascem čiji su okviri na strani (ako ga nema, PRIMER stavlja oznake uz ivicu + INTERNO)
+            if (naj != null && naj.Pouzdano && Obrasci.IzvanStrane(naj) > ObrasciSkup.DozvoljenPrepust)
+            {
+                var prepust = Obrasci.IzvanStrane(naj);
+                var bolje = rez.Probe.FirstOrDefault(p => p != naj && p.Pouzdano && Obrasci.IzvanStrane(p) <= ObrasciSkup.DozvoljenPrepust);
+                if (bolje != null)
+                {
+                    bolje.Razlog = (bolje.Razlog + "; ponovljeno poravnanje – " + naj.Obrazac + " izlazi " + (prepust * 100).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " % van strane").Trim(' ', ';');
+                    rez.Probe.Remove(bolje); rez.Probe.Insert(0, bolje);
+                    naj = bolje;
+                }
+                else naj.Razlog = (naj.Razlog + "; okviri izlaze " + (prepust * 100).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " % van strane").Trim(' ', ';');
+            }
             if (naj == null || !naj.Pouzdano)
             {
                 rez.Poravnanje = naj;

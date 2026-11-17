@@ -251,7 +251,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["X17"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "HRK" }),
             ["X19"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].R62.Preduzece = "3121"; s.Ostali.Add(d); },
             ["X20"] = s => { DvaKola(s); s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "380", Tekst = "Faktura" } } }, "380 Faktura"); s.Ostali.Add(Spisak(Kola("317866560015"), Kola("317866560023"))); },
-            ["X21"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].RidOznaka = true; s.Ostali.Add(d); },
+            // v3.0 (2.9.3): X21 = različita opasna roba po kolima, a spisak bez RID podataka po kolima
+            ["X21"] = s => { s.C.R23 = F(new TekstRubrika(), "X"); s.C.R21.UnBrojevi.AddRange(new[] { "1005", "1203" }); s.Ostali.Add(Spisak(Kola("317866560015", "281410"), Kola("317866560023", "271012"))); },
             ["X22"] = s => { s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "380", Tekst = "Faktura" } } }, "380 Faktura"); s.Ostali.Add(new Dokument { Tip = TipDokumenta.TranzitnaDeklaracija, Fajl = "T1.pdf" }); },
             ["X26"] = s => { s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "271", Tekst = "Wagon list" } } }, "271 Wagon list"); },
             ["X27"] = s => { s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "380", Tekst = "Faktura/Invoice" } } }, "380 Faktura/Invoice"); },

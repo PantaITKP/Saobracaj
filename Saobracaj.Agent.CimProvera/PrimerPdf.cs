@@ -29,6 +29,8 @@ namespace Saobracaj.Agent.CimProvera
         public List<(string list, int ispravki, int napomena, int bezRubrike)> PoListu = new List<(string, int, int, int)>();
         /// <summary>v2.8.1: šta je upisano u koju rubriku (za proveru izgleda i testove).</summary>
         public List<Upis> Upisi = new List<Upis>();
+        /// <summary>v3.0 (2.9.3 tačka 2): INTERNO napomene („poravnanje strane 2 nepouzdano“).</summary>
+        public List<string> Interno = new List<string>();
         public bool Napravljen => Pdf != null;
     }
 
@@ -113,8 +115,8 @@ namespace Saobracaj.Agent.CimProvera
                 // nalazi „samo interno“ se u primeru ne prikazuju
                 var ispravke = Izvestaj.RedoviIspravki(r, p, en);
                 var napomene = Izvestaj.RedoviNapomena(r, p, en);
-                var redovi = ispravke.Select((x, i) => new Stavka { Red = x, Greska = true, Broj = i + 1 })
-                    .Concat(napomene.Select((x, i) => new Stavka { Red = x, Greska = false, Broj = i + 1 }))
+                var redovi = ispravke.Select((x, i) => new Stavka { Red = x, Greska = true, Broj = x.Broj > 0 ? x.Broj : i + 1 })
+                    .Concat(napomene.Select((x, i) => new Stavka { Red = x, Greska = false, Broj = x.Broj > 0 ? x.Broj : i + 1 }))
                     .Where(x => !x.Red.N.SamoInterno).ToList();
 
                 var strane = new List<Bitmap>();
@@ -128,6 +130,18 @@ namespace Saobracaj.Agent.CimProvera
                         var bmp = l.Cim.Sablon == "TABELA" ? PodlogaTabele(pr, out okviri)
                             : Podloga(pr, l.Cim.StranaLista > 0 ? l.Cim.StranaLista : l.Dokument.Strane.FirstOrDefault());
                         if (bmp == null) continue;
+                        // v3.0 (2.9.3 tačka 2): nijedna oznaka ni tekst van strane – okviri koji izlaze se uklapaju u stranu, uz INTERNO napomenu
+                        if (okviri != null && Prepust(okviri) > ObrasciSkup.DozvoljenPrepust)
+                        {
+                            var stranaPrimera = strane.Count + 1;
+                            var tekst = "poravnanje strane " + stranaPrimera + " nepouzdano (" + System.IO.Path.GetFileName((l.Dokument?.Fajl ?? "").Split('/', '\\').Last())
+                                + (l.Cim.StranaLista > 0 ? ", str. " + l.Cim.StranaLista : "") + ") – okviri rubrika izlazili su " + (Prepust(okviri) * 100).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)
+                                + " % van strane; oznake su pomerene na stranu, proveriti PRIMER pre slanja";
+                            okviri = UStranu(okviri);
+                            rez.Interno.Add(tekst);
+                            if (!l.Nalazi.Any(x => x.Pravilo == "PRIMER-PORAVNANJE"))
+                                l.Nalazi.Add(new Nalaz { Pravilo = "PRIMER-PORAVNANJE", Rubrika = "", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, SamoInterno = true, Tekst = tekst, Detalj = tekst });
+                        }
                         var (isp, nap, bez) = Ucrtaj(bmp, l, redovi, en, r, okviri, rez.Upisi, out var naMargini);
                         rez.PoListu.Add((l.Oznaka, isp, nap, bez));
                         strane.Add(Oznaci(bmp, en, naMargini));
@@ -156,6 +170,23 @@ namespace Saobracaj.Agent.CimProvera
             }
             catch (Exception ex) { rez.Pdf = null; rez.Razlog = "greska"; rez.Greska = ex.Message; }
             return rez;
+        }
+
+        /// <summary>Najveći prepust okvira rubrika van strane (normalizovane koordinate 0–1).</summary>
+        internal static double Prepust(Dictionary<string, double[]> okviri) =>
+            okviri == null || okviri.Count == 0 ? 0 : Math.Max(0, okviri.Values.Max(o => Math.Max(Math.Max(-o[0], o[2] - 1), Math.Max(-o[1], o[3] - 1))));
+
+        /// <summary>
+        /// v3.0 (2.9.3 tačka 2): okviri rubrika koji izlaze van strane – zajednički pomak i razmera tako da svi budu na strani (margina 1 %).
+        /// Relativni raspored rubrika ostaje isti (oznake ostaju uz svoje rubrike, uz ivicu strane).
+        /// </summary>
+        internal static Dictionary<string, double[]> UStranu(Dictionary<string, double[]> okviri)
+        {
+            const double m = 0.01;
+            double x0 = Math.Min(m, okviri.Values.Min(o => o[0])), y0 = Math.Min(m, okviri.Values.Min(o => o[1]));
+            double x1 = Math.Max(1 - m, okviri.Values.Max(o => o[2])), y1 = Math.Max(1 - m, okviri.Values.Max(o => o[3]));
+            double sx = (1 - 2 * m) / (x1 - x0), sy = (1 - 2 * m) / (y1 - y0);
+            return okviri.ToDictionary(kv => kv.Key, kv => new[] { m + (kv.Value[0] - x0) * sx, m + (kv.Value[1] - y0) * sy, m + (kv.Value[2] - x0) * sx, m + (kv.Value[3] - y0) * sy });
         }
 
         // ------------------------------------------------------------------------------------------- podloga i oznake
