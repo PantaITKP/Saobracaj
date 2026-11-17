@@ -54,7 +54,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Obrada.JeEngleskiIliNemacki(tekst);
             PraviloKp.Normalizuj(tekst);
             CimSablon.Norm(tekst);
-            Assert.AreEqual("U+1F642", AgentRad.ZnakoviVanBmp("ok " + Hi + Lo + " " + Hi + Lo));
+            Assert.AreEqual("U+1F642", ObradaPoruke.ZnakoviVanBmp("ok " + Hi + Lo + " " + Hi + Lo));
         }
 
         // ------------------------------------------------------------------------------------------- red poruka

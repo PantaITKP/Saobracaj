@@ -5,17 +5,6 @@ using System.Linq;
 
 namespace Saobracaj.Agent.CimProvera
 {
-    /// <summary>Ishod obrade jedne poruke.</summary>
-    internal enum Korak
-    {
-        /// <summary>Poruka je završena bez izveštaja (preskočena, bez priloga, nema CIM-a, obaveštenje…).</summary>
-        Gotova,
-        /// <summary>Poruka je proverena i izveštaj je poslat.</summary>
-        Obradjena,
-        /// <summary>Privremena greška: poruka se ponovo pokušava u sledećem pokretanju (najviše MaxPokusaja puta).</summary>
-        PrivremenaGreska,
-    }
-
     /// <summary>
     /// Red novih poruka jednog foldera. Svaka poruka se obrađuje posebno: greška (i izuzetak) u jednoj poruci ne zaustavlja
     /// ostale. Pre obrade se u log upisuju UID, Message-ID, pošiljalac, naslov i imena priloga. Posle <c>max</c> neuspelih

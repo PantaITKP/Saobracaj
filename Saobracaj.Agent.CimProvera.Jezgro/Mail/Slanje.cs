@@ -15,6 +15,8 @@ namespace Saobracaj.Agent.CimProvera.Mail
         public const string ZaglavljeAgenta = "X-KP-CimProvera";
         /// <summary>Zaglavlje svakog odgovora agenta (v2.7.1): „X-CimProvera: odgovor“ – takve poruke agent ne obrađuje.</summary>
         public const string ZaglavljeOdgovora = "X-CimProvera";
+        /// <summary>Vrsta poruke agenta (npr. „poredjenje“ u režimu Test).</summary>
+        public const string ZaglavljeVrste = "X-KP-CimProvera-Vrsta";
 
         /// <summary>Zaglavlja automatskog odgovora agenta (zaštita od petlji: odgovor stiže u isto sanduče koje agent čita).</summary>
         public static void OznaciOdgovor(MimeMessage m)

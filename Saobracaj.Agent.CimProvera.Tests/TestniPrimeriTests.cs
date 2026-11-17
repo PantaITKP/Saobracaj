@@ -402,7 +402,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var m = new MimeKit.MimeMessage();
             m.Body = new MimeKit.TextPart("html") { Text = "<p>Please see attached.</p><blockquote>Poštovani, tovarni list</blockquote>" };
-            var t = AgentRad.TeloMaila(m);
+            var t = ObradaPoruke.TeloMaila(m);
             StringAssert.Contains(t, "Please see attached");
             Assert.IsFalse(t.Contains("Poštovani"));
         }

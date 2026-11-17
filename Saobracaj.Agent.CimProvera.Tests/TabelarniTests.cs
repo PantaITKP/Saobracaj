@@ -151,7 +151,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var m = new MimeMessage(); m.From.Add(MailboxAddress.Parse("posiljalac@firma.de")); m.Subject = "HER-SAD 79";
             foreach (var (rezim, ocekivano) in new[] { ("Test", "agenti@kprevoz.co.rs"), ("Live", "priprema@kprevoz.co.rs") })
             {
-                var (naslov, telo, primaoci) = AgentRad.InternaRucnaProvera(CfgRezim(rezim), m, ishod);
+                var (naslov, telo, primaoci) = ObradaPoruke.InternaRucnaProvera(CfgRezim(rezim), m, ishod);
                 CollectionAssert.Contains(primaoci, ocekivano, rezim);
                 CollectionAssert.DoesNotContain(primaoci, "posiljalac@firma.de", "ne ide pošiljaocu");
                 StringAssert.Contains(telo, "Tovarni list nije automatski prepoznat. Prilog CIM HER-SAD.doc nije mogao da se pročita – proverite ručno.");

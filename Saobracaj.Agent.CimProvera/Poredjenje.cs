@@ -76,7 +76,7 @@ namespace Saobracaj.Agent.CimProvera
     /// </summary>
     internal static class Poredjenje
     {
-        public const string ZaglavljeVrste = "X-KP-CimProvera-Vrsta";
+        public const string ZaglavljeVrste = Mail.Slanje.ZaglavljeVrste;
 
         // ------------------------------------------------------------------------------------- stavke iz teksta izveštaja
 

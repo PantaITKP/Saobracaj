@@ -468,7 +468,7 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
                         var iu = upis.Upisi(new Baza.MailZaUpis
                         {
                             MessageId = ulazniMail?.MessageId ?? (string)mt?["messageId"] ?? "validate:" + ime, Uid = uidMaila, Sanduce = sanduceMaila, Posiljalac = posiljalac ?? "",
-                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
+                            Naslov = naslovMaila ?? ime, Primljeno = datum, Telo = ulazniMail != null ? ObradaPoruke.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "",
                             Prilozi = prilozi, Provera = rr, Dosije = obrada.PoslednjaPosiljka,
                         });
                         log.Info("  " + ime + ": upis u bazu – " + iu);
@@ -539,7 +539,7 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
                 foreach (var x in ishod.Preskoceno) sb.AppendLine("  (preskočeno) " + x);
                 foreach (var x in ishod.NisuProcitani) sb.AppendLine("  (NIJE PROČITANO) " + x);
                 sb.AppendLine();
-                var teloV = ulazniMail != null ? AgentRad.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "";
+                var teloV = ulazniMail != null ? ObradaPoruke.TeloMaila(ulazniMail) : teloMaila ?? (string)mt?["telo"] ?? "";
                 if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0 && !Obrada.MozdaCim(ishod, naslovMaila, teloV))
                     sb.AppendLine("BEZ ODGOVORA (v2.9.2, 3.2) – prilozi nisu pročitani (" + string.Join("; ", ishod.NisuProcitani.Concat(ishod.NisaPouzdanost)) + "), a ni strana ne liči na CIM/CUV ni mail ne pominje CIM/CUV/tovarni list – samo log i tmpDokument.");
                 else if (!r.ImaTovarniList && ishod.NisuProcitani.Count + ishod.Neprepoznati.Count + ishod.NisaPouzdanost.Count > 0)
