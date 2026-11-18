@@ -164,7 +164,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                     if (spisak.Kola.Any(x => x.Broj == k))
                     {
                         int Brojeva(string[] r) => r.Count(c => Regex.IsMatch((c ?? "").Trim(), @"^\d+([.,]\d+)?$"));
-                        if (redKola.TryGetValue(k, out var stari) && Brojeva(celije) > Brojeva(stari)) redKola[k] = celije;
+                        // samo red zaglavlja (najviše jedna brojčana ćelija) se zamenjuje – više redova istih kola (jedinica po redu, SAD-HER 80) ostaju kao ranije
+                        if (redKola.TryGetValue(k, out var stari) && Brojeva(stari) <= 1 && Brojeva(celije) > Brojeva(stari)) redKola[k] = celije;
                         continue;
                     }
                     var stavka = new KolaNaSpisku { Broj = k, Uti = uti, Mrn = mrn };
