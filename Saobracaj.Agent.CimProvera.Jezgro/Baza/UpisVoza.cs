@@ -56,6 +56,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         [JsonProperty("rid")] public string Rid = "";
         [JsonProperty("pov")] public bool Povratak;
         [JsonProperty("kola")] public List<string> Kola = new List<string>();
+        /// <summary>v3.0: referenca lista (r8, normalizovana) – draft i konačni CIM istog voza su ista lista (LDC8).</summary>
+        [JsonProperty("r8")] public string Ref = "";
 
         public string Grupa => Prazna ? "9922" : Nhm4 ?? "";
 
@@ -67,6 +69,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             {
                 Kljuc = l.KljucTl, Obrazac = p.Obrazac, Prazna = p.Prazna, Nhm4 = p.Nhm4, NhmId = p.V.TryGetValue("NHM1", out var n) ? n as int? : null, OstaliNhm = p.OstaliNhm,
                 BrojKola = l.BrojKola, Neto = p.NetoKg, Tara = p.TaraKg, Bruto = p.BrutoKg, Om = S("OMBroj1"), Rid = S("RIDBroj1"), Kola = p.Kola.ToList(),
+                Ref = UpisUBazu.NormOznaka(S("Referenca")),
             };
             // prazna kola: neto 0; bruto = tara kada je navedena samo jedna
             if (z.Prazna) { z.Neto = z.Neto ?? 0; if (z.Bruto == null && z.Tara.HasValue) z.Bruto = z.Tara; if (z.Tara == null && z.Bruto.HasValue) z.Tara = z.Bruto; }
@@ -542,11 +545,29 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         internal static bool IstiZapis(ZapisTl a, ZapisTl b)
         {
             if (a.Kola.Count > 0 && b.Kola.Count > 0) return a.Kola.Intersect(b.Kola).Count() >= 0.8 * Math.Min(a.Kola.Count, b.Kola.Count);
+            // v3.0 (LDC8): ista referenca (r8), ista grupa robe i isti broj kola – nova verzija istog lista (draft → konačni CIM), i kada
+            // se mase razlikuju (draft: tara 643,420; konačni: 651,600)
+            if (!string.IsNullOrEmpty(a.Ref) && a.Ref == b.Ref && a.Grupa.Length > 0 && a.Grupa == b.Grupa && a.BrojKola > 1 && a.BrojKola == b.BrojKola) return true;   // samo list za više kola (CIM po vagonu – ID 1654 – ima istu referencu za svaki vagon)
             int iste = 0, razlicite = 0;
             foreach (var (x, y) in new[] { (a.Neto, b.Neto), (a.Tara, b.Tara), (a.Bruto, b.Bruto) })
                 if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= 0.005 * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }
             // v2.9.2: kopije skena sa jednom masom (Prahovo 05: samo neto 924,4) – ista masa, ista grupa robe i isti broj kola
-            return razlicite == 0 && (iste >= 2 || (iste == 1 && a.Grupa.Length > 0 && a.Grupa == b.Grupa && a.BrojKola == b.BrojKola));
+            // v3.0 (LDC8, UID 789): kopija sa jednom masom bez pročitanog broja kola (0) je isti list za VIŠE kola (ne za list jednih kola –
+            // ID 1654: dva vagona uglja mogu imati isti neto 60,130)
+            return razlicite == 0 && (iste >= 2 || (iste == 1 && a.Grupa.Length > 0 && a.Grupa == b.Grupa && (a.BrojKola == b.BrojKola || (a.BrojKola == 0 && b.BrojKola > 1) || (b.BrojKola == 0 && a.BrojKola > 1))));
+        }
+
+        /// <summary>v3.0: nova verzija lista preuzima iz ranije ono što sama nema (sken bez broja kola, kopija sa samo netom).</summary>
+        internal static void DopuniZapis(ZapisTl novi, ZapisTl stari)
+        {
+            if (novi.Neto == null && stari.Neto != null && novi.Tara == null && novi.Bruto == null) { novi.Neto = stari.Neto; }
+            // nova verzija sa delimičnim masama (samo neto) zadržava taru/bruto ranije pune verzije kada se neto slaže
+            if (novi.Neto.HasValue && stari.Neto.HasValue && Math.Abs(novi.Neto.Value - stari.Neto.Value) <= 0.005 * Math.Max(novi.Neto.Value, stari.Neto.Value))
+            { if (novi.Tara == null) novi.Tara = stari.Tara; if (novi.Bruto == null) novi.Bruto = stari.Bruto; }
+            if (novi.BrojKola == 0) novi.BrojKola = stari.BrojKola;
+            if (novi.Kola.Count == 0) novi.Kola = stari.Kola.ToList();
+            if (string.IsNullOrEmpty(novi.Ref)) novi.Ref = stari.Ref;
+            if (string.IsNullOrEmpty(novi.Nhm4)) { novi.Nhm4 = stari.Nhm4; novi.NhmId = stari.NhmId; }
         }
 
         private static readonly string[] KoloneZaglavlja =
@@ -582,12 +603,29 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             // zapisi TL: postojeći + listovi ovog maila
             var tl = id.HasValue ? ZapisiTl(id.Value) : new Dictionary<string, ZapisTl>(StringComparer.Ordinal);
             var noviKljucevi = new HashSet<string>();
+            var alias = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var l in voz.Listovi)
             {
                 var z = ZapisTl.Iz(l); z.Povratak = povratak;
+                // v3.0 (LDC8, UID 789): isti list dva puta u istom mailu (konačni CIM i kopija „ex docs“ sa drugim ključem) – jedan zapis
+                var istiUMailu = tl.Where(kv => noviKljucevi.Contains(kv.Key) && kv.Key != KolonaTl(z.Kljuc) && (kv.Value.BrojKola > 1 || z.BrojKola > 1) && IstiZapis(kv.Value, z)).Select(kv => kv.Key).FirstOrDefault();
+                if (istiUMailu != null)
+                {
+                    DopuniZapis(tl[istiUMailu], z);
+                    alias[KolonaTl(z.Kljuc)] = istiUMailu;
+                    if (tl.ContainsKey(KolonaTl(z.Kljuc)) && !noviKljucevi.Contains(KolonaTl(z.Kljuc)))
+                    {
+                        tl.Remove(KolonaTl(z.Kljuc));
+                        if (id.HasValue) Izvrsi("DELETE FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = @k", "@j", id.Value, "@k", KolonaTl(z.Kljuc));
+                    }
+                    ishod.Napomene.Add("tovarni list " + l.Oznaka + " je isti list kao " + istiUMailu + " (u istom mailu) – jedan zapis");
+                    continue;
+                }
                 // kopija istog lista iz ranijeg maila sa drugim ključem (sken „ref:…“ / r62) zamenjuje raniji zapis – mase se ne sabiraju dvaput
                 foreach (var stari in tl.Where(kv => kv.Key != KolonaTl(z.Kljuc) && !noviKljucevi.Contains(kv.Key) && IstiZapis(kv.Value, z)).Select(kv => kv.Key).ToList())
                 {
+                    // v3.0: ono što nova kopija nema (mase, broj kola, kola, referenca) ostaje iz ranijeg zapisa
+                    DopuniZapis(z, tl[stari]);
                     tl.Remove(stari);
                     if (id.HasValue) Izvrsi("DELETE FROM planiranje.tmpJobsPolje WHERE JobID = @j AND TeretnicaID IS NULL AND Kolona = @k", "@j", id.Value, "@k", stari);
                     ishod.Napomene.Add("tovarni list " + l.Oznaka + " je kopija ranijeg (" + stari + ") – zapis zamenjen");
@@ -620,7 +658,9 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             {
                 if (povratak && i == 0) continue;   // povratak praznih: menja se samo grupa 2
                 if (i < grupe.Count) VrednostiGrupe(zbir, i + 1, grupe[i], null);
-                else if (i == 1) foreach (var k in new[] { "NHM2", "Bruto2", "BrojKola2", "Duzina2", "Neto2", "RIDBroj2", "OMBroj2", "SerijaKola2" }) zbir.V[k] = null;
+                // v3.0 (Zmajevo): grupa 2 iz spiska (povratak praznih – teretnica sa Grupa = 2) ostaje i kada tovarni listovi imaju samo grupu 1
+                else if (i == 1 && !(id.HasValue && Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE JobID = @j AND Grupa = 2", "@j", id.Value) != null))
+                    foreach (var k in new[] { "NHM2", "Bruto2", "BrojKola2", "Duzina2", "Neto2", "RIDBroj2", "OMBroj2", "SerijaKola2" }) zbir.V[k] = null;
             }
             zbir.Kola = voz.Listovi.SelectMany(x => x.P.Kola).Distinct().ToList();
             if (grupe.Count > 2) zbir.Napomene.Add("Više od dve grupe robe u vozu – ostale grupe: " + string.Join("; ", grupe.Skip(2).Select(g => g.Sum(z => z.BrojKola) + " kola NHM " + g[0].Grupa)));
@@ -630,7 +670,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             // zapisi TL (poreklo grupa) i istorija povratka
             foreach (var l in voz.Listovi)
             {
-                var z = tl[KolonaTl(l.KljucTl)];
+                if (!tl.TryGetValue(alias.TryGetValue(KolonaTl(l.KljucTl), out var a0) ? a0 : KolonaTl(l.KljucTl), out var z)) continue;
                 var gi = grupe.FindIndex(g => g.Contains(z)) + 1;
                 UpisiPoreklo(jid, null, new PoljePorekla { Kolona = KolonaTl(z.Kljuc), Vrednost = z.Opis(gi > 0 ? gi : 3), Tekst = z.Json(), Rubrika = "tovarni list", Pouzdanost = 100, Kandidati = l.Oznaka + (l.Kopija > 1 ? " (" + l.Kopija + " kopije)" : "") }, l.DokId);
             }
@@ -811,7 +851,11 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var sp = (kolaSpiska ?? Enumerable.Empty<string>()).Select(BrojKolaUic.Cifre).ToList();
             var broj = Math.Max(brojKolaTl, tl.Count);
             if (broj == 0) return true;
-            return sp.Count >= broj && (tl.Count == 0 || sp.All(tl.Contains));
+            if (sp.Count < broj) return false;                       // manje kola od tovarnog lista (LDC8: 28 od 30)
+            if (tl.Count == 0 || sp.All(tl.Contains)) return true;    // isti skup kola
+            // spisak ima VIŠE kola od pročitanih tovarnih listova i sadrži sva njihova kola – neki list nije pročitan (ID 1654: 5 IBC kola,
+            // pročitana 4 lista) – spisak ima prednost; inače (druga kola) ne menja posao
+            return sp.Count > broj && tl.All(sp.Contains);
         }
 
         /// <summary>
@@ -838,6 +882,18 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                     });
                 }
             if (s.Kola.Count == 0) return;
+            // v3.0 (0a.4): stavke čuvaju mase u tonama na 3 decimale (po kolima zaokruženo na kg) – kada je originalni spisak istog maila
+            // dostupan, mase po kolima idu iz njega, pa se zbir zaokružuje jednom (SAD-HER 80: 694 940,48 kg → 694,940 t, ne 694,941)
+            if (izvorni != null)
+            {
+                var poBroju = izvorni.Kola.GroupBy(k => BrojKolaUic.Cifre(k.Broj)).ToDictionary(g => g.Key, g => g.First());
+                foreach (var k in s.Kola)
+                    if (poBroju.TryGetValue(BrojKolaUic.Cifre(k.Broj), out var o))
+                    {
+                        if (o.TaraKg.HasValue && k.TaraKg.HasValue && Math.Abs(o.TaraKg.Value - k.TaraKg.Value) < 1) k.TaraKg = o.TaraKg;
+                        if (o.NetoKg.HasValue && k.NetoKg.HasValue && Math.Abs(o.NetoKg.Value - k.NetoKg.Value) < 1) k.NetoKg = o.NetoKg;
+                    }
+            }
             // neto 0 u stavci je „nije navedeno“ kada nijedna stavka nema neto (spisak samo sa tarom)
             if (s.Kola.All(k => (k.NetoKg ?? 0) == 0) && !s.Kola.All(k => k.Prazna)) foreach (var k in s.Kola) k.NetoKg = null;
             if (izvorni != null) { s.UkupnoTaraKg = izvorni.UkupnoTaraKg; s.UkupnoNetoKg = izvorni.UkupnoNetoKg; s.UkupnoBrutoKg = izvorni.UkupnoBrutoKg; s.DuzinaVozaM = izvorni.DuzinaVozaM; s.PrelazniPut = izvorni.PrelazniPut; s.Prevoznici = izvorni.Prevoznici; s.NhmJedinica = izvorni.NhmJedinica; }
@@ -864,7 +920,8 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 foreach (var k in KoloneGrupe) { p.V.Remove(k + "2"); if (p.V.TryGetValue(k + "1", out var v)) { p.V[k + "2"] = v; p.V.Remove(k + "1"); } }
                 foreach (var po in p.Poreklo) if (po.Kolona.EndsWith("1")) po.Kolona = po.Kolona.Substring(0, po.Kolona.Length - 1) + "2";
             }
-            else if (p.Grupe.Count == 1 && gr.Count > 1)
+            // v3.0 (Zmajevo): spisak jedne grupe ne briše grupu 2 – ni drugu grupu tovarnih listova ni povratak praznih (teretnica sa Grupa = 2)
+            else if (p.Grupe.Count == 1 && (gr.Count > 1 || Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE JobID = @j AND Grupa = 2 AND ID <> @t", "@j", jobId, "@t", tid) != null))
                 foreach (var k in KoloneGrupe) { p.V.Remove(k + "2"); p.Poreklo.RemoveAll(x => x.Kolona == k + "2"); }
             Izvrsi("UPDATE planiranje.tmpTeretnica SET Grupa = @g WHERE ID = @t", "@g", (byte)grupa, "@t", tid);
             var g0 = grupa.ToString();
@@ -893,9 +950,11 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var kolaTl = new HashSet<string>(tlGrupe.SelectMany(z => z.Kola).Select(BrojKolaUic.Cifre).Where(x => x.Length > 0));
             var brojTl = Math.Max(kolaCim, tlGrupe.Count > 0 && tlGrupe.All(z => z.Kola.Count > 0) ? kolaTl.Count : tlGrupe.Sum(z => z.BrojKola));
             var tudjih = kolaTl.Count > 0 ? s.Kola.Count(k => !kolaTl.Contains(BrojKolaUic.Cifre(k.Broj))) : 0;
-            if (!SpisakMenjaPosao(s.Kola.Select(k => k.Broj), kolaTl, brojTl))
+            // spisak sa više grupa (LDC8 „louis dreyfus“: 28 kola robe + 1 sa drugim NHM-om) – poredi se grupa kojoj spisak pripada
+            var kolaZaProveru = p.Grupe.Count > 1 && p.Grupe.Count >= grupa ? p.Grupe[grupa - 1].kola.ToList() : s.Kola.Select(k => k.Broj).ToList();
+            if (!SpisakMenjaPosao(kolaZaProveru, kolaTl, brojTl))
             {
-                var t = SpisakNijeTovarniList(kolaSpisak, brojTl, tudjih);
+                var t = SpisakNijeTovarniList(kolaZaProveru.Count, brojTl, tudjih);
                 ishod.Napomene.Add(t); ishod.Interno.Add(t);
                 Istorija(jobId, tid, null, null, null, dokId, razlog, t);
                 Izvrsi("UPDATE planiranje.tmpTeretnica SET Napomena = LEFT(ISNULL(Napomena + ' | ', '') + @n, 1000) WHERE ID = @t", "@n", t, "@t", tid);
@@ -922,14 +981,21 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                     bool Isto(double? a) => a > 0 && Math.Abs(a.Value - kg) <= 0.001 * kg;
                     var druga = tlMase.Where(kv => kv.Key != kol && Isto(kv.Value)).Select(kv => kv.Key).FirstOrDefault();
                     if (druga == null || Isto(tlMase[kol])) continue;
-                    p.V.Remove(kol + g0);
+                    // v3.0 (LDC8): vrednost iz tovarnog lista (ako postoji) vraća se u posao – ispravlja i raniju pogrešnu kolonu istog spiska
+                    if (tlMase[kol] > 0)
+                    {
+                        p.V[kol + g0] = PosaoIzDokumenata.Tone(tlMase[kol].Value);
+                        var po = p.Poreklo.FirstOrDefault(x => x.Kolona == kol + g0);
+                        if (po != null) { po.Vrednost = p.V[kol + g0]; po.Rubrika = "r25/r21"; po.Tekst = "tovarni list (kolona spiska pogrešno pročitana: " + (kg / 1000).ToString("N3", CultureInfo.GetCultureInfo("sr-Latn-RS")) + " t = " + druga.ToLowerInvariant() + ")"; }
+                    }
+                    else p.V.Remove(kol + g0);
                     uklonjeno.Add(kol.ToLowerInvariant() + " sa spiska " + (kg / 1000).ToString("N3", CultureInfo.GetCultureInfo("sr-Latn-RS")) + " t = " + druga.ToLowerInvariant() + " iz tovarnog lista");
                 }
                 if (uklonjeno.Count > 0)
                 {
                     // vrednosti izračunate iz pogrešne kolone („bruto izračunat (neto + tara)“) se takođe ne upisuju
                     foreach (var po in p.Poreklo.Where(x => x.Kolona.EndsWith(g0) && (x.Tekst ?? "").Contains("izračunat")).ToList()) p.V.Remove(po.Kolona);
-                    var t = "Spisak kola: proveriti kolone spiska – " + string.Join("; ", uklonjeno) + " (nije upisano)";
+                    var t = "Spisak kola: proveriti kolone spiska – " + string.Join("; ", uklonjeno) + " (sa spiska nije upisano; ostaje vrednost iz tovarnog lista)";
                     p.Napomene.Add(t);
                     Istorija(jobId, tid, null, null, null, dokId, razlog, PodaciPosla.Skrati(t, 400));
                 }

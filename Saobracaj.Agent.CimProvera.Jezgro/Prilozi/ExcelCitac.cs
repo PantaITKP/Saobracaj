@@ -218,13 +218,23 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         /// </summary>
         internal static void PraznaPoZaglavlju(List<string[]> redovi, SpisakKola spisak)
         {
-            if (spisak.Kola.Count == 0 || spisak.Kola.Any(k => k.Nhm.Length > 0) || spisak.Kola.Any(k => (k.NetoKg ?? 0) > 0)) return;
-            var oznaka = redovi.Where(r => !r.Any(c => BrojKola(c) != null))
-                .SelectMany(r => r).Select(c => (c ?? "").Trim())
-                .FirstOrDefault(c => Regex.IsMatch(c, @"^(empty wagons?|leere wagen|leerwagen|prazn[ai] (kola|vagoni)|vagoane goale|[üu]res kocsik?|992[12](00)?)$", RegexOptions.IgnoreCase));
-            if (oznaka == null) return;
-            foreach (var k in spisak.Kola) k.Prazna = true;
-            if (spisak.NhmZaglavlje.Length == 0) spisak.NhmZaglavlje = Regex.IsMatch(oznaka, "^9921") ? "992100" : "992200";
+            if (spisak.Kola.Count == 0 || spisak.Kola.Any(k => k.Nhm.Length > 0)) return;
+            var celije = redovi.Where(r => !r.Any(c => BrojKola(c) != null)).SelectMany(r => r).Select(c => (c ?? "").Trim()).ToList();
+            var recima = celije.FirstOrDefault(c => Regex.IsMatch(c, @"(?i)\b(empty wagons?|leere wagen|leerwagen|prazn[ai] (kola|vagoni)|vagoane goale|[üu]res kocsik?)\b"));
+            var sifrom = celije.FirstOrDefault(c => Regex.IsMatch(c, @"^992[12](00)?$"));
+            // samo šifra 9922 u zaglavlju: kola bez mase robe; izričito „empty wagons“: kola su prazna i kada je OCR kolonu tare pročitao kao neto
+            if (recima == null && (sifrom == null || spisak.Kola.Any(k => (k.NetoKg ?? 0) > 0))) return;
+            var oznaka = sifrom ?? recima;
+            foreach (var k in spisak.Kola)
+            {
+                k.Prazna = true;
+                if ((k.NetoKg ?? 0) > 0 && (k.TaraKg == null || Math.Abs(k.NetoKg.Value - (k.BrutoKg ?? k.NetoKg.Value)) < 1))
+                {
+                    if (k.TaraKg == null) k.TaraKg = k.NetoKg;
+                    k.NetoKg = 0;
+                }
+            }
+            if (spisak.NhmZaglavlje.Length == 0) spisak.NhmZaglavlje = Regex.IsMatch(oznaka ?? "", "^9921") ? "992100" : "992200";
         }
 
         // ------------------------------------------------------------------------------------------- v2.9.0: podaci po kolima

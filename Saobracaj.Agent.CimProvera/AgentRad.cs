@@ -151,7 +151,13 @@ namespace Saobracaj.Agent.CimProvera
             var fs = stanje.FolderSanduceta(cfg.Nalog, f.FullName, DateTimeOffset.Now);
             if (fs.UidValidity != f.UidValidity)
             {
-                if (fs.UidValidity != 0) log.Upozorenje("UIDVALIDITY foldera " + f.FullName + " se promenio – čita se od ImportOd, duplikati se prepoznaju po Message-ID.");
+                if (fs.UidValidity != 0)
+                {
+                    log.Upozorenje("UIDVALIDITY foldera " + f.FullName + " se promenio – čita se od ImportOd, duplikati se prepoznaju po Message-ID.");
+                    // v3.0 (2.9.3 tačka 4.3): INTERNO – folder je obrisan i napravljen ponovo (ili ispražnjen na serveru)
+                    Upozori(stanje, "uidvalidity-" + f.FullName, "UIDVALIDITY foldera " + f.FullName + " se promenio (" + fs.UidValidity + " → " + f.UidValidity + "). Agent ne obrađuje ponovo već obrađene poruke "
+                        + "(prepoznaju se po Message-ID i hešu priloga) i ne preskače nove; čita od nulte tačke / ImportOd. Arhiva i dosije ostaju ispravni.", 24);
+                }
                 fs.UidValidity = f.UidValidity;
                 fs.PoslednjiUid = 0;
             }
@@ -247,6 +253,10 @@ namespace Saobracaj.Agent.CimProvera
             var uid = new UniqueId(f.UidValidity, (uint)s.Uid);
             if (!f.IsOpen) f.Open(FolderAccess.ReadOnly);
             var m = f.GetMessage(uid);
+            // v3.0 (tačka 5): svaka nova poruka ide i u arhivu (samo dopisivanje; greška arhive ne zaustavlja obradu)
+            if (!dryRun && !string.IsNullOrEmpty(cfg.ArhivaFolder))
+                try { new Arhiva(cfg.ArhivaFolder).Sacuvaj(f.FullName, f.UidValidity, uid.Id, m, t => log.Upozorenje(t)); }
+                catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": poruka nije upisana u arhivu: " + ex.Message); }
             obradaPoruke.Poredi = (fajlovi, r, en, opis) => Poredi(indeks, sanduce, f, fajlovi, r, pravila, en, opis, uid.Id);
             return obradaPoruke.Obradi(new UlaznaPoruka { Poruka = m, Uid = uid.Id, Folder = f.FullName, Kljuc = s.Kljuc, Odlazni = odlazni, Izvor = "imap" }, ps).Korak;
         }

@@ -252,12 +252,15 @@ namespace Saobracaj.Agent.CimProvera
                     Oznaka = oznaka, MessageId = m.MessageId ?? "", Naslov = m.Subject ?? "", Posiljalac = od, Vreme = datum,
                     Prethodni = m.References.Concat(string.IsNullOrEmpty(m.InReplyTo) ? new string[0] : new[] { m.InReplyTo }).Distinct().ToList(),
                 };
+                var pocetakProvere = DateTime.Now;
                 try { ishod = obrada.Proveri(prilozi, od, cfg.JeInterni(od), datum, en); }
                 catch (Exception ex)
                 {
                     log.Greska("  UID " + uid.Id + ": obrada nije uspela", ex);
                     ishod = new Ishod { PrivremenaGreska = true, NisuProcitani = { ex.Message } };
                 }
+                rez.Ishod = ishod; rez.Engleski = en;
+                rez.Trajanje["provera"] = (DateTime.Now - pocetakProvere).TotalSeconds;
                 if (WordUPdf.NedostajaoKljuc && !WordUPdf.KljucUcitan)
                 {
                     // jedno interno obaveštenje (dok se ključ ne podesi); Word prilog je već na ručnoj proveri

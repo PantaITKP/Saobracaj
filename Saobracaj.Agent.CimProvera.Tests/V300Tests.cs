@@ -187,6 +187,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsFalse(UpisUBazu.SpisakMenjaPosao(tl.Take(29).Concat(new[] { "335649932019" }), tl, 30), "kola kojih nema u tovarnom listu");
             Assert.IsFalse(UpisUBazu.SpisakMenjaPosao(tl.Take(28), new string[0], 30), "tovarni list bez brojeva kola, 30 kola u r21");
             Assert.IsTrue(UpisUBazu.SpisakMenjaPosao(tl, new string[0], 30));
+            // ID 1654: pročitana 4 lista (4 kola), spisak 5 kola i sadrži sva 4 – neki list nije pročitan, spisak ima prednost
+            Assert.IsTrue(UpisUBazu.SpisakMenjaPosao(tl.Take(5), tl.Take(4), 4));
+            Assert.IsFalse(UpisUBazu.SpisakMenjaPosao(tl.Skip(1).Take(5), tl.Take(4), 4), "više kola, ali ne sadrži kola iz lista");
             Assert.IsTrue(UpisUBazu.SpisakMenjaPosao(tl, new string[0], 0), "posao bez tovarnog lista");
             Assert.AreEqual("spisak (28 kola) ≠ tovarni list (30 kola) – proveriti", UpisUBazu.SpisakNijeTovarniList(28, 30, 0));
         }

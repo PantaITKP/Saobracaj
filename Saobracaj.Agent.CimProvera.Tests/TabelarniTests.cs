@@ -246,8 +246,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsTrue(pr.Upisi.Where(u => u.Dopuna.Length > 0).All(u => u.Okvir.Contains(u.Tekst) || u.Mesto.Contains("margin")), string.Join("\n", pr.Upisi));
             Assert.IsFalse(pr.Upisi.Any(u => Pravila.Dopune.OpisFormata.IsMatch(u.Dopuna)), string.Join("\n", pr.Upisi));
             var (_, isp, nap, leg) = pr.PoListu.Single();
-            Assert.AreEqual(5, isp, "r1, r9, r16, r24 i r58a (v2.8: R58A važi za svaki list) ucrtane na listu");
-            Assert.IsTrue(nap >= 4, "r4, r7, r14, r22 na listu: " + nap);
+            // v3.0 (2.9.3 tačka 3): list drugog prevoznika – prazna r58a je napomena (upozorenje), ne ispravka
+            Assert.AreEqual(4, isp, "r1, r9, r16 i r24 ucrtane na listu");
+            Assert.IsTrue(nap >= 5, "r4, r7, r14, r22 i r58a na listu: " + nap);
             Assert.IsTrue(pr.Pdf.Length > 1000 && pr.Pdf.Length < PrimerPdf.MaxBajtova);
             StringAssert.StartsWith(System.Text.Encoding.ASCII.GetString(pr.Pdf, 0, 5), "%PDF");
         }

@@ -257,8 +257,26 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             return m.Success ? int.Parse(m.Groups[1].Value) + (m.Groups[2].Value.Length > 0 ? (m.Groups[2].Value[0] - 'a' + 1) / 10.0 : 0) : 999;
         }
 
-        /// <summary>INDEKS.md, SAZETAK.md i rezultati.jsonl za skup analiza.</summary>
-        public static void Zbirno(string koren, string verzija, List<(int rb, RezultatAlata ra, string folder)> stavke)
+        /// <summary>INDEKS.md, SAZETAK.md i rezultati.jsonl za skup analiza (iz rezultat.json svake analize).</summary>
+        public static void Zbirno(string koren, string verzija, List<(int rb, RezultatAlata ra, string folder)> stavke) =>
+            Zbirno(koren, verzija, stavke.Select(x => (x.rb, x.ra.Json, x.folder)).ToList());
+
+        /// <summary>INDEKS.md, SAZETAK.md i rezultati.jsonl iz svih foldera _Analiza\&lt;verzija&gt;\NNN_… (rezultat.json).</summary>
+        public static void ZbirnoIzFoldera(string koren, string verzija)
+        {
+            var baza = Path.Combine(koren, "_Analiza", RadniProstor.BezbednoIme(verzija, 30));
+            if (!Directory.Exists(baza)) return;
+            var l = new List<(int, JObject, string)>();
+            foreach (var d in Directory.GetDirectories(baza))
+            {
+                var m = Regex.Match(Path.GetFileName(d), @"^(\d{3,})_");
+                var f = Path.Combine(d, "rezultat.json");
+                if (m.Success && File.Exists(f)) l.Add((int.Parse(m.Groups[1].Value), JObject.Parse(File.ReadAllText(f, Encoding.UTF8)), d));
+            }
+            Zbirno(koren, verzija, l);
+        }
+
+        public static void Zbirno(string koren, string verzija, List<(int rb, JObject json, string folder)> stavke)
         {
             var baza = Path.Combine(koren, "_Analiza", RadniProstor.BezbednoIme(verzija, 30));
             Directory.CreateDirectory(baza);
@@ -266,10 +284,9 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             ind.AppendLine("# Indeks – " + verzija).AppendLine();
             ind.AppendLine("| NNN | Datum | Od | Naslov | Odluka | Greške | Upoz. | Događaji | Folder |").AppendLine("|---|---|---|---|---|---|---|---|---|");
             using (var jl = new StreamWriter(Path.Combine(baza, "rezultati.jsonl"), false, new UTF8Encoding(false)))
-                foreach (var (rb, ra, folder) in stavke.OrderBy(x => x.rb))
+                foreach (var (rb, j, folder) in stavke.OrderBy(x => x.rb))
                 {
-                    var j = ra.Json;
-                    ind.AppendLine("| " + rb.ToString("000") + " | " + ra.Stavka.Datum.ToString("dd.MM. HH:mm", CultureInfo.InvariantCulture) + " | " + M(ra.Stavka.Od) + " | " + M(ra.Stavka.Naslov) + " | " + M((string)j["odluka"])
+                    ind.AppendLine("| " + rb.ToString("000") + " | " + M((string)j["poruka"]?["datum"]) + " | " + M((string)j["poruka"]?["od"]) + " | " + M((string)j["poruka"]?["naslov"]) + " | " + M((string)j["odluka"])
                         + " | " + (j["provera"]?["gresaka"] ?? 0) + " | " + (j["provera"]?["upozorenja"] ?? 0) + " | " + ((j["dogadjaji"] as JArray)?.Count ?? 0) + " | [" + Path.GetFileName(folder) + "](" + Uri.EscapeDataString(Path.GetFileName(folder)) + "/ANALIZA.md) |");
                     jl.WriteLine(j.ToString(Newtonsoft.Json.Formatting.None));
                 }
@@ -277,15 +294,15 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             var sz = new StringBuilder();
             sz.AppendLine("# Sažetak – " + verzija).AppendLine();
             sz.AppendLine("- poruka: " + stavke.Count);
-            foreach (var g in stavke.GroupBy(x => (string)x.ra.Json["odluka"]).OrderByDescending(g => g.Count())) sz.AppendLine("- " + M(g.Key) + ": " + g.Count());
-            var nalazi = stavke.SelectMany(x => (x.ra.Json["provera"]?["listovi"] as JArray ?? new JArray()).SelectMany(l => (JArray)l["nalazi"])).ToList();
+            foreach (var g in stavke.GroupBy(x => (string)x.json["odluka"]).OrderByDescending(g => g.Count())) sz.AppendLine("- " + M(g.Key) + ": " + g.Count());
+            var nalazi = stavke.SelectMany(x => (x.json["provera"]?["listovi"] as JArray ?? new JArray()).SelectMany(l => (JArray)l["nalazi"])).ToList();
             sz.AppendLine().AppendLine("## Najčešći nalazi").AppendLine().AppendLine("| Pravilo | Rubrika | Težina | Broj |").AppendLine("|---|---|---|---|");
             foreach (var g in nalazi.GroupBy(x => (string)x["pravilo"] + "|" + x["rubrika"] + "|" + x["tezina"]).OrderByDescending(g => g.Count()).Take(30))
             { var p = g.Key.Split('|'); sz.AppendLine("| " + p[0] + " | " + p[1] + " | " + TezinaKratko(p[2]) + " | " + g.Count() + " |"); }
-            var dog = stavke.SelectMany(x => x.ra.Obrada.Dogadjaji).ToList();
+            var dog = stavke.SelectMany(x => x.json["dogadjaji"] as JArray ?? new JArray()).ToList();
             sz.AppendLine().AppendLine("## Događaji po tipu").AppendLine();
-            foreach (var g in dog.GroupBy(d => d.Tip).OrderByDescending(g => g.Count())) sz.AppendLine("- " + g.Key + ": " + g.Count());
-            var trajanje = stavke.Select(x => (double?)x.ra.Json["trajanje"]?["ukupno"] ?? 0).ToList();
+            foreach (var g in dog.GroupBy(d => (string)d["tip"]).OrderByDescending(g => g.Count())) sz.AppendLine("- " + g.Key + ": " + g.Count());
+            var trajanje = stavke.Select(x => (double?)x.json["trajanje"]?["ukupno"] ?? 0).ToList();
             if (trajanje.Count > 0) sz.AppendLine().AppendLine("Trajanje: ukupno " + trajanje.Sum().ToString("0", CultureInfo.InvariantCulture) + " s, prosečno " + trajanje.Average().ToString("0.0", CultureInfo.InvariantCulture) + " s po poruci.");
             File.WriteAllText(Path.Combine(baza, "SAZETAK.md"), sz.ToString(), new UTF8Encoding(false));
         }

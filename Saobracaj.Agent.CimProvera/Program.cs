@@ -139,6 +139,7 @@ namespace Saobracaj.Agent.CimProvera
                     return 0;
                 }
                 if (a.Count > 0 && a[0] == "ponovna-obrada") return PonovnaObrada(cfg, log, a);
+                if (a.Count > 0 && a[0] == "arhiviraj") return Arhiviraj(cfg, log, a);
                 if (a.Count > 1 && a[0] == "preuzmi")
                 {
                     // preuzmi <uid> [--odlazni] [--izlaz folder]: čuva priloge jedne poruke (folder se otvara samo za čitanje; ništa se ne menja)
@@ -233,6 +234,24 @@ namespace Saobracaj.Agent.CimProvera
                     {
                         // v2.9.1: jednokratni zahtev za ponovnu obradu (samo upis) – fajl „ponovna_obrada.zahtev“ („--od-uid 191“) u folderu
                         // agenta; izvršava se pod nalogom zadatka (DPAPI konekcija i lozinka sandučeta), pa se preimenuje u „.gotovo“
+                        // v3.0 (tačka 5): jednokratno arhiviranje sandučeta – fajl „arhiviranje.zahtev“ („--od-uid 191“); izvršava se pod nalogom
+                        // zadatka (DPAPI lozinka sandučeta), posle toga agent izlazi BEZ obrade pošte (agent je zaustavljen dok korisnik ne odluči)
+                        var zahtevArhive = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "arhiviranje.zahtev");
+                        if (!dry && File.Exists(zahtevArhive))
+                        {
+                            var uToku = Path.ChangeExtension(zahtevArhive, ".u_toku");
+                            File.Move(zahtevArhive, uToku);
+                            var arg = new List<string> { "arhiviraj" };
+                            arg.AddRange(File.ReadAllText(uToku).Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries));
+                            int rez;
+                            try { rez = Arhiviraj(cfg, log, arg); }
+                            catch (Exception ex) { log.Greska("Arhiviranje nije uspelo", ex); rez = 1; }
+                            File.AppendAllText(uToku, Environment.NewLine + "# " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz") + " – završeno, kod " + rez + " (izveštaj: arhiva\\izvestaj.txt, detalji u logu)" + Environment.NewLine);
+                            var gotovo = Path.ChangeExtension(zahtevArhive, ".gotovo");
+                            if (File.Exists(gotovo)) File.Delete(gotovo);
+                            File.Move(uToku, gotovo);
+                            return rez;
+                        }
                         var zahtev = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ponovna_obrada.zahtev");
                         if (!dry && File.Exists(zahtev))
                         {
@@ -268,6 +287,63 @@ namespace Saobracaj.Agent.CimProvera
                 log.Greska("Neočekivana greška", ex);
                 return 1;
             }
+        }
+
+        // ------------------------------------------------------------------------------------------- arhiva (v3.0, tačka 5)
+
+        internal static string ArhivaKoren(AgentConfig cfg) => string.IsNullOrEmpty(cfg.ArhivaFolder) ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "arhiva") : cfg.ArhivaFolder;
+
+        /// <summary>
+        /// arhiviraj [--od-uid N]: sve poruke INBOX-a od UID-a N (podrazumevano nulta tačka) i foldera poslatih od istog vremena → arhiva\&lt;folder&gt;\&lt;UID&gt;.eml
+        /// + indeks.csv. IMAP samo za čitanje; ništa se ne briše. Postojeće poruke u arhivi se preskaču. Izveštaj: arhiva\izvestaj.txt.
+        /// </summary>
+        private static int Arhiviraj(AgentConfig cfg, Log log, List<string> a)
+        {
+            string Op(string ime) { var i = a.IndexOf(ime); return i > 0 && i + 1 < a.Count ? a[i + 1] : null; }
+            var stanje = Stanje.Ucitaj(cfg.StanjeFolder);
+            var od = long.TryParse(Op("--od-uid") ?? "", out var o) ? o : Math.Max(1, stanje.NultaTackaUid);
+            var ar = new Arhiva(ArhivaKoren(cfg));
+            int novih = 0, postoji = 0;
+            DateTimeOffset? odVreme = stanje.NultaTacka;
+            using (var s = new Sanduce(cfg))
+            {
+                s.Povezi();
+                var f = s.Dolazni();
+                f.Open(MailKit.FolderAccess.ReadOnly);
+                var uids = f.Search(MailKit.Search.SearchQuery.All).Where(u => u.Id >= od).OrderBy(u => u.Id).ToList();
+                if (uids.Count > 0)
+                {
+                    var prvi = f.Fetch(new[] { uids[0] }, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).FirstOrDefault()?.InternalDate;
+                    if (prvi.HasValue && (!odVreme.HasValue || prvi.Value < odVreme.Value)) odVreme = prvi;
+                }
+                log.Info("Arhiviranje: " + f.FullName + " UID " + od + "+ (" + uids.Count + " poruka, UIDVALIDITY " + f.UidValidity + ") → " + ar.Koren);
+                foreach (var u in uids)
+                {
+                    if (File.Exists(ar.Putanja(f.FullName, f.UidValidity, u.Id))) { postoji++; continue; }
+                    if (ar.Sacuvaj(f.FullName, f.UidValidity, u.Id, f.GetMessage(u), t => log.Upozorenje(t))) novih++;
+                }
+                if (cfg.CitajOdlazne)
+                    try
+                    {
+                        var p = s.Odlazni();
+                        p.Open(MailKit.FolderAccess.ReadOnly);
+                        var sve = p.Search(MailKit.Search.SearchQuery.All).OrderBy(u => u.Id).ToList();
+                        var datumi = sve.Count == 0 ? new Dictionary<MailKit.UniqueId, DateTimeOffset?>() : p.Fetch(sve, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).ToDictionary(x => x.UniqueId, x => x.InternalDate);
+                        var poslate = sve.Where(u => !odVreme.HasValue || (datumi.TryGetValue(u, out var d) && d.HasValue && d.Value >= odVreme.Value)).ToList();
+                        log.Info("Arhiviranje: " + p.FullName + " (" + poslate.Count + " poruka od " + (odVreme?.ToString("dd.MM.yyyy HH:mm") ?? "početka") + ")");
+                        foreach (var u in poslate)
+                        {
+                            if (File.Exists(ar.Putanja(p.FullName, p.UidValidity, u.Id))) { postoji++; continue; }
+                            if (ar.Sacuvaj(p.FullName, p.UidValidity, u.Id, p.GetMessage(u), t => log.Upozorenje(t))) novih++;
+                        }
+                    }
+                    catch (Exception ex) { log.Upozorenje("Arhiviranje: folder poslatih nije dostupan: " + ex.Message); }
+            }
+            var izv = "Arhiva " + ar.Koren + " – " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz") + Environment.NewLine + "Novih: " + novih + ", već u arhivi: " + postoji + Environment.NewLine + ar.Izvestaj();
+            File.WriteAllText(Path.Combine(ar.Koren, "izvestaj.txt"), izv, new UTF8Encoding(false));
+            log.Info(izv.Replace(Environment.NewLine, " | "));
+            Console.WriteLine(izv);
+            return 0;
         }
 
         // ------------------------------------------------------------------------------------------- ponovna obrada (v2.9.1)
@@ -314,6 +390,29 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
             var poruke = new List<(DateTimeOffset vreme, string fajl)>();
             // nulta tačka (vreme reseta) iz stanja agenta – samo čitanje; za folder poslatih (odlazni) poruke posle tog vremena
             var nulta = Stanje.Ucitaj(cfg.StanjeFolder).NultaTacka;
+            // v3.0 (tačka 5): poruka iz sandučeta ili iz arhive – isti filter i isti zapis
+            void Dodaj(string folder, bool odlazni, long uid, MimeKit.MimeMessage m)
+            {
+                var razlog = Slanje.RazlogPreskakanja(m, cfg, !odlazni);
+                if (razlog != null) { log.Info("  " + folder + " UID " + uid + ": preskočeno – " + razlog); return; }
+                if (!Prilozi.Raspakivanje.PriloziMaila(m).Any()) { log.Info("  " + folder + " UID " + uid + ": bez priloga – preskočeno"); return; }
+                var put = Path.Combine(eml, string.Concat(folder.Replace('/', '_').Split(Path.GetInvalidFileNameChars())) + "__" + uid + ".eml");
+                m.WriteTo(put);
+                poruke.Add((m.Date, put));
+            }
+            if (string.Equals(Op("--izvor"), "arhiva", StringComparison.OrdinalIgnoreCase))
+            {
+                var ar = new Arhiva(ArhivaKoren(cfg));
+                var zapisi = ar.Procitaj();
+                if (zapisi.Count == 0) { Console.Error.WriteLine("ponovna-obrada --izvor arhiva: arhiva je prazna (" + ar.Koren + ")."); return 1; }
+                log.Info("Ponovna obrada iz arhive " + ar.Koren + " (" + zapisi.Count + " poruka u indeksu).");
+                foreach (var z in ar.Poruke(cfg.DolazniFolder, od, doUid)) Dodaj(z.Folder, false, z.Uid, MimeKit.MimeMessage.Load(z.Fajl));
+                if (cfg.CitajOdlazne && nulta.HasValue)
+                    foreach (var fold in zapisi.Select(z => z.Folder).Distinct(StringComparer.OrdinalIgnoreCase).Where(x => !string.Equals(x, cfg.DolazniFolder, StringComparison.OrdinalIgnoreCase)))
+                        foreach (var z in ar.Poruke(fold, 0).Where(z => DateTimeOffset.TryParse(z.Datum, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d) && d >= nulta.Value))
+                            Dodaj(z.Folder, true, z.Uid, MimeKit.MimeMessage.Load(z.Fajl));
+            }
+            else
             using (var s = new Sanduce(cfg))
             {
                 s.Povezi();
@@ -328,16 +427,7 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
                         var datumi = f.Fetch(uids, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).ToDictionary(x => x.UniqueId, x => x.InternalDate);
                         uids = uids.Where(u => datumi.TryGetValue(u, out var d) && d.HasValue && d.Value >= nulta.Value).ToList();
                     }
-                    foreach (var u in uids)
-                    {
-                        var m = f.GetMessage(u);
-                        var razlog = Slanje.RazlogPreskakanja(m, cfg, !odlazni);
-                        if (razlog != null) { log.Info("  " + f.FullName + " UID " + u.Id + ": preskočeno – " + razlog); continue; }
-                        if (!Prilozi.Raspakivanje.PriloziMaila(m).Any()) { log.Info("  " + f.FullName + " UID " + u.Id + ": bez priloga – preskočeno"); continue; }
-                        var put = Path.Combine(eml, string.Concat(f.FullName.Replace('/', '_').Split(Path.GetInvalidFileNameChars())) + "__" + u.Id + ".eml");
-                        m.WriteTo(put);
-                        poruke.Add((m.Date, put));
-                    }
+                    foreach (var u in uids) Dodaj(f.FullName, odlazni, u.Id, f.GetMessage(u));
                 }
             }
             log.Info("Ponovna obrada: " + poruke.Count + " mailova sa prilozima.");

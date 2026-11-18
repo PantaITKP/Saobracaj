@@ -185,7 +185,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var i = Mail("CIM COAL 16", "tibor.tasnadi@pspcargo.ro");
             NemaGreske(i, "4"); NemaGreske(i, "7");
-            ImaGresku(i, "58a", "R58A"); ImaGresku(i, "13", "KP3"); ImaGresku(i, "16"); ImaGresku(i, "29");
+            ImaGresku(i, "13", "KP3"); ImaGresku(i, "16"); ImaGresku(i, "29");
+            // v3.0 (2.9.3 tačka 3): tuđi tovarni list – prazna r58a je upozorenje, nikad predlog 3212
+            var r58 = Nalazi(i).Single(n => n.Rubrika == "58a");
+            Assert.AreEqual(Tezina.Upozorenje, r58.Tezina); Assert.IsFalse((r58.Primer ?? "").Contains("3212"), r58.Primer);
         }
 
         [TestMethod, TestCategory("Regresija")]
@@ -197,7 +200,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 // v2.8.4 (odluka KP 2026-11-14): spoljni pošiljalac – prazna r62 je napomena, prazna r58a je greška pošiljaoca
                 Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R62" && n.Tezina == Tezina.Upozorenje && !n.SamoInterno), l.Oznaka);
                 Assert.IsFalse(l.Nalazi.Any(n => n.Pravilo == "R62" && n.Tezina == Tezina.Greska), l.Oznaka);
-                Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R58A" && n.Tezina == Tezina.Greska && !n.SamoInterno), l.Oznaka + ": r58a popunjava pošiljalac");
+                // v3.0 (2.9.3 tačka 3): r62 prazna – r58a prazna je upozorenje „proveriti“ (izdavalac nepoznat), pošiljaocu
+                Assert.IsTrue(l.Nalazi.Any(n => n.Pravilo == "R58A" && n.Tezina == Tezina.Upozorenje && !n.SamoInterno && n.Tekst.Contains("proveriti")), l.Oznaka + ": r58a prazna – proveriti");
             }
         }
 

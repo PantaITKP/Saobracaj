@@ -53,6 +53,8 @@ namespace Saobracaj.Agent.CimProvera
         public string StanjeFolder;
         /// <summary>v3.0: keš čitanja (prazno = StanjeFolder\kes); CimRadionica koristi jedan keš za sve radne prostore.</summary>
         public string KesFolder;
+        /// <summary>v3.0 (tačka 5): arhiva sandučeta (.eml po UID-u + indeks.csv); prazno = bez arhive. Podrazumevano „arhiva“ pored exe-a.</summary>
+        public string ArhivaFolder;
         public string LogFolder;
         public int LogDana;
 
@@ -168,6 +170,8 @@ namespace Saobracaj.Agent.CimProvera
             cfg.SablonFajl = Apsolutna(cfg.SablonFajl);
             cfg.TessdataFolder = Apsolutna(cfg.TessdataFolder);
             cfg.StanjeFolder = Apsolutna(cfg.StanjeFolder);
+            var arh = S("ArhivaFolder", "arhiva");
+            cfg.ArhivaFolder = arh == "-" ? "" : Apsolutna(arh);
             cfg.LogFolder = Apsolutna(cfg.LogFolder);
 
             cfg.Lozinka = Tajna("Lozinka", "CIMPROVERA_LOZINKA");

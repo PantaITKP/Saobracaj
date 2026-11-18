@@ -533,3 +533,46 @@ Za svaku stavku su navedeni datum (ako je poznat) i izvor u zagradi. Važi posle
   - stanje drži po radnom prostoru i nikad ne dira `stanje\posiljke.json` agenta;
   - upisuje samo u tmp (online), ili u `rezultat.json` (offline);
   - paket za analizu ne sadrži lozinke, DPAPI ni connection string.
+
+## 10. Tumačenja u implementaciji v3.0 (17.–18.11.)
+
+Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti odlukom korisnika.
+
+**Upis poslova**
+- „EMPTY“ uz kontejner ili prikolicu u redu kola opisuje praznu tovarnu jedinicu, ne prazna kola. Takva kola ostaju u grupi natovarenih (SAD-HER 80: 19 kola u jednoj grupi).
+- Spisak sa „empty wagons“ ili šifrom 9921/9922 u zaglavlju, bez NHM-a i mase robe po kolima, je spisak praznih kola (NHM 9922) – Zmajevo – Kelebia.
+- Spisak priložen uz natovaren tovarni list u istom mailu je spisak natovarenih kola i kada ima samo taru. Ne postaje nova verzija spiska praznih istih kola (Zmajevo soy, UID 660).
+- Oznaka voza sa donjom crtom („SBGT26_SRB04“) je ispravna referenca (r8).
+- Povratak praznih: poreklo grupe 2 je „povratak praznih po oznaci voza X, kola se ne poklapaju“, odnosno „…, N od M kola ista“.
+- Spisak sa jednom grupom ne briše grupu 2 posla kada posao već ima teretnicu grupe 2 (povratak praznih). Primer: Zmajevo, UID 763, „Wagon list CIM.pdf“.
+- NHM za kola spiska bez sopstvenog NHM-a uzima se iz grupe tovarnog lista sa istim kolima, a ne iz NHM1 posla. Kada se kola ne poklapaju ni sa jednom grupom, NHM ostaje NULL.
+- Ako spisak ima samo zaglavlje „NHM KODU 392390000000“ (12 cifara), koristi se prvih 6 cifara.
+- Spisak sa manje kola ili tuđim kolima (0a.1):
+  - teretnica ostaje kao zapis;
+  - posao se ne menja;
+  - INTERNO napomena ide u `IshodUpisa.Interno`, u Test režimu u kratku internu poruku, u Excel i u ANALIZA.md.
+- Turske kolone spiska: V.DARA = tara kola, NET TON = neto, TOPLAM = bruto, SIRA = redni broj.
+
+**Pravila i PRIMER**
+- r58a: naziv izdavaoca se uzima samo iz samog dokumenta (r57, r13, r7). Oznaka mreže („BDŽ:“, „SRB:“) nije naziv. Bez pouzdanog naziva predlog je samo šifra („3057“).
+- RID: UN broj na spisku (kolona ili Kemler/UN po kolima) računa se i kada r21 ne upućuje na spisak. Različita opasna roba = više UN brojeva u r21 ili različit NHM natovarenih kola na spisku.
+- PRIMER:
+  - zajednički nalazi („Svi tovarni listovi“) dobijaju brojeve 1…s, a nalazi svakog lista nastavljaju od s+1; tabela maila i krugovi koriste iste brojeve;
+  - obrazac čiji okviri izlaze više od 1,5 % van strane zamenjuje se sledećim pouzdanim obrascem;
+  - ako takvog nema, okviri se uklapaju u stranu, uz INTERNO „poravnanje strane N nepouzdano“.
+
+**Događaji (faza 1)**
+- Kratka rečenica (manje od 4 reči) dobija jezik celog novog dela poruke.
+- Vremenska zona redom: izričito u tekstu, pa domen pošiljaoca (.ro/.bg/.ua/.md/.gr = EET, .tr = TRT), pa jezik rečenice, inače CET.
+- Samo dan i deo dana („18/morning“) znači mesec maila u 08:00.
+
+**CimRadionica**
+- Odgovor se priprema kao u Live režimu: KopijaNa = priprema@kprevoz.co.rs, UpozorenjaNa = agenti@kprevoz.co.rs, transport je prazan.
+- Rezultati se čuvaju po verzijama. Nova verzija za poređenje obrađuje se „ispočetka“ (dosije i ponavljanja radnog prostora se brišu, keš ostaje).
+- Keš čitanja je zajednički za sve radne prostore (`C:\CimRadionica\kes`). Kopija šifarnika je zajednička (`C:\CimRadionica\sifarnici`).
+
+**Arhiva**
+- Arhiva se puni samo dopisivanjem; fajlovi su samo za čitanje. Posle promene UIDVALIDITY nove poruke idu u `<folder>@<uidvalidity>`.
+- Arhiviranje se pokreće fajlom `arhiviranje.zahtev` („--od-uid 191“) i zakazanim zadatkom pod svc nalogom. Posle arhiviranja agent izlazi bez obrade pošte.
+- Agent u redovnom radu upisuje svaku novu poruku i u arhivu (`ArhivaFolder`, podrazumevano `arhiva` pored exe-a).
+- Promena UIDVALIDITY šalje INTERNO upozorenje (najviše jednom dnevno).

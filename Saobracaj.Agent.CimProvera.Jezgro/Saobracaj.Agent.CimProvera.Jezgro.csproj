@@ -58,7 +58,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Saobracaj.Agent.CimProvera" />
-    <InternalsVisibleTo Include="Saobracaj.Agent.CimRadionica" />
+    <InternalsVisibleTo Include="CimRadionica" />
     <InternalsVisibleTo Include="Saobracaj.Agent.CimProvera.Tests" />
   </ItemGroup>
 
