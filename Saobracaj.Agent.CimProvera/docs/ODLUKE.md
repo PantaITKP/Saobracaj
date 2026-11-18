@@ -642,3 +642,86 @@ Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti
 - Arhiviranje se pokreće fajlom `arhiviranje.zahtev` („--od-uid 191“) i zakazanim zadatkom pod svc nalogom. Posle arhiviranja agent izlazi bez obrade pošte.
 - Agent u redovnom radu upisuje svaku novu poruku i u arhivu (`ArhivaFolder`, podrazumevano `arhiva` pored exe-a).
 - Promena UIDVALIDITY šalje INTERNO upozorenje (najviše jednom dnevno).
+
+## 11. v3.0.1 – ispravke posle analize obrade „Osnovni“ (18.11.)
+
+Osnova: PROMPT_v3.0.1 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.0.md`.
+
+### 11.1 Odluke korisnika (18.11.)
+
+**R16 – datum i vreme preuzimanja**
+- Dok list nema pečat ili potpis prevoznika (radna verzija), nedostatak datuma i vremena je **upozorenje**, sa napomenom: „Posle overe (pečat prevoznika) nedostatak datuma i vremena smatraće se greškom.“
+- Kada pečat ili potpis prevoznika postoji – **greška**, kao do sada.
+- Kada agent ne može pouzdano da utvrdi da li pečat postoji – upozorenje sa istom napomenom i INTERNO „pečat nije pouzdano prepoznat“.
+- Nedostatak mesta/stanice u r16 ostaje greška i u radnoj verziji.
+- Tumačenje (agent): pečat postoji kod ispisa elektronskog lista i kod skena čija r58a ima prevoznika (šifra ili naziv) i mastilo pečata (≥ 0,03 površine). Pečata nema kod digitalnog dokumenta (tekst PDF-a, Word, Excel), kod „draft / nacrt / radna verzija“ i kod skena sa praznom r58a. Sve ostalo je „nije pouzdano prepoznat“.
+
+**R1 i R4 – zemlja**
+- Zemlja ne postoji ni u kom obliku → **greška** (kao do sada), i kada je grad jednoznačan („11030 Belgrade“).
+- Zemlja postoji u bilo kom obliku, ali nije po ISO 3166 → samo **upozorenje** R1-ISO / R4-ISO „zemlju upisati po ISO 3166: RS“ (DE, HU, CZ…). Primeri: Srbija, Serbia, Serbien, Szerbia, Србија, SRB, SR, Srbia, Deutchland, Hungary, Česká republika.
+- Rečnik oblika (`Model/Zemlje.cs`) je zajednički za čitanje, pravila i dopune. Sadrži susedne i česte zemlje na latinici, ćirilici, engleskom, nemačkom, mađarskom, rumunskom, bugarskom, turskom, češkom i slovačkom, kao i skraćenice od 2–3 slova.
+- Tumačenje (agent): skraćenica se priznaje samo velikim slovima, kao posebna reč na kraju reda ili ispred poštanskog broja („SRB-11000“, „…, Novi Sad, SRB“). „Bul.“ i slično u adresi nisu zemlja. Slovačko „SR“ uz slovačku adresu (Bratislava, SK PDV) nije Srbija. Pokvaren naziv (jedno slovo razlike, bar 7 slova, „Srbijja“) priznaje se samo kao posebna reč na kraju reda.
+
+### 11.2 Provera dokumenata – nema lažnih grešaka prema pošiljaocu
+
+- **R30**: kod CUV-a (X u polju CUV, „CUV“ u nazivu fajla, prazna kola NHM 9922; zaglavlje „Wagenbrief CUV“ nije dokaz – štampano je na svakom obrascu) polje CIM je s pravom prazno – nema greške. CIT 18 (prateći list) nije CIM – R30 se ne primenjuje. X u polju CIM na CUV-u (izričit znak: X u polju CUV ili ime fajla) – upozorenje „označen CIM, a dokument je CUV – proveriti“.
+- **Nema dokaza – nema tvrdnje**: nalaz (greška ili upozorenje) u rubrici čiji je tekst nečitljiv ne ide pošiljaocu. Umesto njega ide samo INTERNO „rN nečitljiva – ručna provera“, a list je na ručnoj proveri. Važi za sva pravila tipa „X nije naveden / nedostaje“ (UID 62, KP7-PLATILAC).
+- **Mera čitljivosti po polju** (sken, popunjena rubrika). Ima tri dela; polje je nečitljivo kada je bilo koji deo ispod praga:
+  - OCR – pouzdanost rubrike, prag 0,6;
+  - pokrivenost – deo mastila podataka rubrike koji pokrivaju pročitane reči, prag 0,35 („malo prepoznatih reči“; ispravno pročitane rubrike sa natpisima i kućicama imaju 0,42–0,51, izgubljen tekst 0,13–0,31);
+  - smisao – udeo znakova u smislenim rečima i brojevima, prag 0,55 („većina znakova bez smisla“).
+
+  Mera je u rezultat.json (`citljivost`) i u ANALIZA.md (kolona „Čitljivost“). Tekst PDF-a, Word i Excel se ne mere.
+- **Samoprovera pre slanja**: svaka greška ili upozorenje za pošiljaoca mora imati pouzdan dokaz – rubrika pouzdano prazna, ili popunjena i čitljiva. Inače list ide na ručnu proveru (interni izveštaj).
+  - SAŽETAK: „izveštaji pošiljaocu: N; od toga sa nalazom bez pouzdanog dokaza: M (spisak)“. M se računa nezavisno, iz rezultat.json, i mora biti 0.
+  - Rezultat lista: `bez_dokaza`.
+
+### 11.3 Upis poslova
+
+- **Kopije** (3.1): bez pouzdane r62 kopije su samo listovi sa istim masama (± 0,1 %), istim kolima i istim ili kompatibilnim brojem otpravljanja. Kompatibilan znači da je jedan nepročitan ili da se razlikuje najviše jedna cifra. Nesiguran r62 nikad nije razlog za spajanje (amonijak: 001784 i 001792 su dva lista, 24 kola).
+- **Spisak ima prednost samo ako je usklađen sam sa sobom** (3.2):
+  - bruto = neto + tara (± 0,5 %);
+  - bruto nije manji od neta ili tare;
+  - nema dve kolone sa istim zbirom;
+  - vrednosti po kolima su u opsegu: neto ≤ 110 t, tara 7–45 t, bruto ≤ 140 t, natovarena kola ≥ 1 t neta.
+
+  Inače se mase sa spiska ne upisuju i važe mase iz r25, uz napomenu i INTERNO „Spisak kola – proveriti kolone: …“.
+- **Radna → konačna verzija** (3.3): radna verzija (bez r62) i konačna (sa r62) istog lista zamenjuju se, ne sabiraju – i za CUV. Uslovi: ista grupa robe, isti broj kola (više kola), reference iste ili jedna nije upisana, mase bez većih razlika (± 5 %). Bor ID 1657 → 37 kola.
+- **Spisak praznih kola** (3.4): kada su sva kola prazna (NHM 9921/9922, oznaka „prazna“, ili „prazno / leer / empty“ u nazivu fajla, a kola bez NHM-a robe), jedina masa je tara. Vrednost upisana kao „neto“ je tara, neto je 0 – i u stavkama teretnice.
+- **Veza iz dosijea** (3.5): kada dosije prepozna isti tovarni list (skenirana i overena verzija ili nova verzija), mail ide u posao ranijeg maila i kada je r62 nesiguran. Overena verzija dopunjuje postojeći zapis lista – ne dodaje kola ni mase.
+- **Različit broj voza ili referenca = različit posao** (3.6): to važi za vozove istog maila, za traženje posla po znacima i za listove iste deonice (Eurolog: 268F, 269F, 270F, 272F → 4 posla).
+- **Provera smisla** (3.8):
+  - natovarena kola sa neto < 1 t po kolima, ili neto spiska < 1 % ili > 300 % od r25 → vrednost se ne upisuje (0), uz napomenu;
+  - tačka predaje (Stanica1/Stanica3) iz teksta r57/r13/r20 koja nije granična stanica upisuje se samo uz pouzdanost ≥ 95; inače NULL i kandidati („Kostolac“ iz „Franko prevoznina (X) Kost…“).
+- **BrojPonude i Referenca** (3.9):
+  - BrojPonude je ceo broj (ponuda KP) ili obrazac stranog ugovora sa crticama („42-0003-26“). Ništa drugo: „Kuty br/Lanzhot br“, „KP2026“ i „0362.03“ → NULL.
+  - Referenca nije PIB ili matični broj stranke (iste cifre u r1–r6, ili uz PIB/MB/IČO/VAT), natpis obrasca („Рефернним“) ni OCR šum.
+- **3.7 (HER-SAD, značenje „neto“ kod intermodalnih spiskova)** čeka odluku korisnika – predlog je u izveštaju za v3.0.1.
+- Greška čitanja HSL spiska (nezavisna od odluke 3.7): red zaglavlja sa brojem prvih kola („1_2 | 3_4 | … | 35 80 4956 491 - 9“) zaklanjao je red tih kola, pa su prva kola bila „bez tare“, a zbir tare i bruta bio delimičan. Sada se za kola u više redova uzima red sa više brojčanih ćelija.
+
+### 11.4 Klasifikacija priloga
+
+- Slike iz potpisa (logo, baner – i one veće od 10 KB, image001.png od 190 KB) ne učestvuju u prepoznavanju ponavljanja.
+- Mail koji ima samo slike iz potpisa dobija odluku „nema dokumenata (samo slike iz potpisa) – bez odgovora“ (status `SamoPotpis`), a ne „isti prilog kao ranije“.
+- **Fotografija nije logo.** Logo je samo mala slika iz potpisa (malo piksela, traka/baner, ime logo/ikona). Klasifikaciju strane, kao sken, prolazi:
+  - slika iz ZIP-a;
+  - slika sa imenom dokumenta (broj kola, CIM, CUV, scan, foto, viber/whatsapp);
+  - slika veća od 1000 px koja nije baner.
+
+  Primer: UID 171, fotografije iz ZIP-a.
+- **Word u alatu**: `Instaliraj-CimRadionica.ps1` traži Syncfusion ključ (skriveni unos) i preko `CimRadionica.exe --podesi-syncfusion` ga čuva samo šifrovanog (DPAPI, trenutni korisnik) u `%LOCALAPPDATA%\Saobracaj\CimProvera\Syncfusion.dpapi`. Ključ ne ide u repo, log ni na ekran.
+- Bez ključa alat to jasno javlja na početku obrade: dijalog u GUI-ju, odnosno upozorenje u komandnoj liniji.
+- Uzrok u „Osnovni“: na laptopu je `Syncfusion.dpapi` postojao (13.11.), ali ga alat nije ni učitavao („nije učitan (nije učitavan)“). Sada ga učitavaju i radni procesi (`--radnik`), kao agent.
+
+### 11.5 Događaji – vezivanje za posao
+
+- Mail bez svog posla (bez dokumenata) vezuje događaje redom:
+  1. nit – In-Reply-To / References, pa isti naslov bez RE/FW/AW/WG/Odg u poslednjih 14 dana;
+  2. ID najave („ID nnnn“ u naslovu, telu ili događaju ID_NAJAVE);
+  3. broj voza ili referenca posla;
+  4. relacija iz naslova (dve stanice) + datum ± 5 dana.
+
+  Veza je sigurna samo kada korak daje jedan posao. Bez sigurne veze događaj ostaje bez posla, sa kandidatima u rezultat.json i ANALIZA.md, i INTERNO.
+- Događaji iz mailova bez priloga i iz mailova sa samo slikama iz potpisa se sada upisuju (ranije se mail preskakao pre upisa).
+- SAŽETAK: „događaji: N; vezani za posao: X; nevezani: Y (od toga sa kandidatima: Z)“.
+- Kandidati se u bazi ne čuvaju posebno. `planiranje.tmpJobsDogadjaj` nema kolonu za njih, pa šema tmp tabela ostaje ista.

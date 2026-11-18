@@ -29,6 +29,12 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         public string Izraz = "";
         /// <summary>v3.0: BROJ_KOLA je raspon ili razlomak („4,5 vagona“, „3-4 wagons“) – vrednost je tekst, nije broj kola posla.</summary>
         public bool Raspon;
+        /// <summary>v3.0.1 (5): posao za koji je događaj vezan („512“; više poslova maila – „512, 517“); prazno = nevezan.</summary>
+        public string Posao = "";
+        /// <summary>v3.0.1 (5): kako je vezan („posao maila“, „nit (In-Reply-To/References)“, „ID najave 1657“, „broj voza 268F“, „relacija + datum“).</summary>
+        public string Veza = "";
+        /// <summary>v3.0.1 (5): nevezan događaj – kandidati („posao 517: ista nit; posao 521: relacija“), za ručnu odluku.</summary>
+        public List<string> Kandidati = new List<string>();
         public override string ToString() => Tip + " " + (VremeTekst.Length > 0 ? VremeTekst + " " : "") + (MestoTekst.Length > 0 ? "@" + MestoTekst + " " : "") + Vrednost + " [" + Jezik + ", " + Pouzdanost + "]";
     }
 

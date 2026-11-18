@@ -204,7 +204,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R10"] = s => s.C.R10.Stanica = "",
             ["R12"] = s => { s.C.R12 = new TekstRubrika(); s.C.R10.SifraStanice = ""; },
             ["R14"] = s => s.C.R14 = new TekstRubrika(),
-            ["R16"] = s => s.C.R16.Datum = "",
+            ["R16"] = s => { s.C.R16.Datum = ""; s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true; },   // v3.0.1: overen list (ispis e-CIM) – greška
             ["R20"] = s => s.C.R20 = new TekstRubrika(),
             ["R20-INCO"] = s => s.C.R20.Tekst = "DAP",
             ["R20-RUTA"] = s => s.C.R20.Tekst = "DAP Curtici Gr",
@@ -559,7 +559,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Tezina_iz_json_a()
         {
-            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika();
+            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika(); s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true;   // v3.0.1: overen list (ispis e-CIM) – R16 greška
             var r = Proveri(s);
             Assert.AreEqual(Tezina.Greska, Prvi(r, "R16").Tezina);
             Assert.AreEqual(Tezina.Upozorenje, Prvi(r, "R20").Tezina);
@@ -687,7 +687,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Naslov_po_sablonu()
         {
-            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika();
+            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R20 = new TekstRubrika(); s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true;   // v3.0.1: overen list (ispis e-CIM) – R16 greška
             var r = Proveri(s);
             // v2.8: list koji je izdao KP (r62, preduzeće 3212) – interni izveštaj
             Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – potrebne ispravke", Izvestaj.Naslov(r, pravila, false), string.Join(" | ", Svi(r)));
@@ -695,7 +695,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var samoUpoz = new Scenario(); samoUpoz.C.R20 = new TekstRubrika();
             Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – napomene", Izvestaj.Naslov(Proveri(samoUpoz), pravila, false));
             Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 (004NISBAR26) – ispravan", Izvestaj.Naslov(Proveri(new Scenario()), pravila, false));
-            var bezRef = new Scenario(); bezRef.C.R8 = new TekstRubrika(); bezRef.C.R16.Datum = "";
+            var bezRef = new Scenario(); bezRef.C.R8 = new TekstRubrika(); bezRef.C.R16.Datum = ""; bezRef.C.ElektronskiIspis = true; bezRef.C.NapomenaIspisa = true;
             Assert.AreEqual("[INTERNO] KP tovarni list – Tovarni list CIM 72 72345-6 3212 12345-6 – potrebne ispravke", Izvestaj.Naslov(Proveri(bezRef), pravila, false), "bez reference nema zagrade");
             Assert.AreEqual("[INTERNO] KP tovarni list – Consignment note CIM 72 72345-6 3212 12345-6 (004NISBAR26) – corrections required", Izvestaj.Naslov(r, pravila, true));
         }
@@ -703,7 +703,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Mail_sa_tabelama_zahvalnicom_informacijom_i_potpisom()
         {
-            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R14 = new TekstRubrika(); s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2620" } };
+            var s = new Scenario(); s.C.R16.Datum = ""; s.C.R14 = new TekstRubrika(); s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true; s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2620" } };
             var r = Proveri(s);
             var telo = Izvestaj.Telo(r, pravila, false);
             StringAssert.StartsWith(telo, "Poštovani,");

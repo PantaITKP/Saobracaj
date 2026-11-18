@@ -214,12 +214,14 @@ namespace Saobracaj.Agent.CimProvera
                 var digitalni = sken ? (p.Listovi.Where(x => x.Digitalni && (x.Kljuc == k || k == null || !k.StartsWith("r62:"))).OrderByDescending(x => x.Vreme).FirstOrDefault()) : null;
                 if (digitalni != null && (raniji == null || raniji.Digitalni))
                 {
+                    l.DosijeVeza = digitalni.Oznaka; l.OverenaVerzija = true;
                     l.Nalazi.RemoveAll(n => !n.SamoInterno && n.Rubrika != "–" && !RubrikeOverene.Contains(n.Rubrika) && n.Pravilo != "KP2");
                     uvodi.Add(en
                         ? "This is the scanned and stamped version of the consignment note already checked on " + digitalni.Vreme.ToString("dd.MM.yyyy") + " (" + digitalni.Oznaka + ", digital). Only what is new is checked: stamp (box 58a), box 62 and box 29."
                         : "Ovo je skenirana i overena verzija tovarnog lista koji je već proveren " + digitalni.Vreme.ToString("dd.MM.yyyy") + " (" + digitalni.Oznaka + ", digitalni). Proverava se samo ono što je novo: pečat (r58a), r62 i r29.");
                     continue;
                 }
+                if (raniji != null) l.DosijeVeza = raniji.Oznaka;
                 if (raniji == null || raniji.Otisak == Ponavljanja.Otisak(l.Cim)) continue;
                 var sada = l.Nalazi.Where(n => n.Tezina == Tezina.Greska && !n.SamoInterno).Select(n => n.Rubrika).Where(x => x != "–").Distinct().ToList();
                 var pre = raniji.Nalazi.Select(x => x.Split('|').Last()).Where(x => x != "–").Distinct().ToList();

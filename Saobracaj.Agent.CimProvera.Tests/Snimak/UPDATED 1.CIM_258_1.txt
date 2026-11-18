@@ -1,8 +1,8 @@
-grešaka 4, upozorenja 8, listova 1
+grešaka 3, upozorenja 9, listova 1
 warning	G6	r9
 warning	R1-ISO	r1
 warning	R4-ISO	r4
-error	R16	r16
+warning	R16	r16
 warning	R18-SPISAK	r18
 error	R25-MASA	r25
 error	R29	r29

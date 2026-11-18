@@ -236,6 +236,7 @@ namespace Saobracaj.Agent.CimProvera
                 case "NeprocitanoRucnaProvera": return "prilozi nisu pročitani";
                 case "Greska": return "obrada nije uspela";
                 case "BezPriloga": return "bez priloga";
+                case "SamoPotpis": return "samo slike iz potpisa";
                 default: return s ?? "nepoznato";
             }
         }
@@ -346,7 +347,7 @@ namespace Saobracaj.Agent.CimProvera
                 foreach (var kv in stara.Poruke)
                 {
                     var ps = kv.Value;
-                    if (ps.Status == "Preskoceno" || ps.Status == "BezPriloga") continue;
+                    if (ps.Status == "Preskoceno" || ps.Status == "BezPriloga" || ps.Status == "SamoPotpis") continue;
                     var id = Regex.Replace(kv.Key, @"^[^|@\s]+@[^|\s]+\|", "");   // ključ po sanduču (v2.7.1): „nalog|Message-ID“
                     poruke[id] = new PrviIzvestaj { MessageId = id, Vreme = ps.Vreme, Folder = ps.Folder, Uid = ps.Uid, Status = ps.Status, Greske = ps.Greske, Upozorenja = ps.Upozorenja };
                 }

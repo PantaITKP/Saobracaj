@@ -120,19 +120,46 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var ka = a.P.KljucPosiljke ?? ""; var kb = b.P.KljucPosiljke ?? "";
             bool r62a = ka.StartsWith("r62:", StringComparison.Ordinal), r62b = kb.StartsWith("r62:", StringComparison.Ordinal);
             if (r62a && r62b) return ka == kb;   // dve pouzdane r62: isti broj = isti list
-            // bez pouzdane r62 (ključ „ref:“ je isti za sve listove istog voza): odlučuju brojevi kola kada ih oba lista imaju
-            // (kopija skena: OCR može da pogreši pojedine brojeve – dovoljno je 80 % istih kola), uz istu masu robe (± 2 %)
-            if (a.P.NetoKg > 0 && b.P.NetoKg > 0 && Math.Abs(a.P.NetoKg.Value - b.P.NetoKg.Value) > 0.02 * Math.Max(a.P.NetoKg.Value, b.P.NetoKg.Value)) return false;
-            if (a.P.Kola.Count > 0 && b.P.Kola.Count > 0) return a.P.Kola.Intersect(b.P.Kola).Count() >= 0.8 * Math.Min(a.P.Kola.Count, b.P.Kola.Count);
-            // ista otpravna i uputna i iste mase (bar dve od tri, nijedna različita) – kopija skena sa nečitljivom r62 (Šabac: 11132026Scan130104.pdf)
-            var iste = 0; var razlicite = 0;
-            foreach (var (x, y) in new[] { (a.P.NetoKg, b.P.NetoKg), (a.P.TaraKg, b.P.TaraKg), (a.P.BrutoKg, b.P.BrutoKg) })
-                if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= 0.005 * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }
-            if (iste >= 2 && razlicite == 0 && a.Otpravna.HasValue && a.Otpravna == b.Otpravna && a.Uputna.HasValue && a.Uputna == b.Uputna) return true;
-            if (ka == kb && ka.Length > 0 && a.P.Kola.Count == 0 && b.P.Kola.Count == 0) return true;
+            // v3.0.1 (3.1, amonijak UID 259: 001784 i 001792, bruto 955 450 / 954 500 kg spojeni → 12 kola umesto 24): bez pouzdane r62 kopije su
+            // SAMO listovi sa istim masama (± 0,1 %), istim kolima i istim (ili kompatibilnim) brojem otpravljanja. Nesiguran r62 nikad nije razlog za spajanje.
+            if (!KompatibilanBroj(a.P.BrojOtpravljanja, b.P.BrojOtpravljanja)) return false;
+            var (iste, razlicite) = IsteMase(a.P, b.P, 0.001);
+            if (razlicite > 0) return false;
+            if (a.P.BrojVoza.Length > 0 && b.P.BrojVoza.Length > 0 && !string.Equals(UpisUBazu.NormOznaka(a.P.BrojVoza), UpisUBazu.NormOznaka(b.P.BrojVoza), StringComparison.Ordinal)) return false;
+            // kola: kada ih oba lista imaju – ista kola (kopija skena: OCR može da pogreši pojedine brojeve – dovoljno je 80 % istih)
+            if (a.P.Kola.Count > 0 && b.P.Kola.Count > 0) return a.P.Kola.Intersect(b.P.Kola).Count() >= 0.8 * Math.Max(a.P.Kola.Count, b.P.Kola.Count) && (iste >= 1 || NemaMasa(a.P, b.P));
             if (a.P.Kola.Count > 0 || b.P.Kola.Count > 0) return false;
-            return a.P.Posiljalac.Length >= 3 && Slicnost.Ocena(a.P.Posiljalac, b.P.Posiljalac) >= 0.9 && a.P.Primalac.Length >= 3 && Slicnost.Ocena(a.P.Primalac, b.P.Primalac) >= 0.9
+            // bez kola: iste mase (bar dve od tri, nijedna različita), ista otpravna i uputna – kopija skena sa nečitljivom r62 (Šabac: 11132026Scan130104.pdf)
+            if (iste >= 2 && a.Otpravna.HasValue && a.Otpravna == b.Otpravna && a.Uputna.HasValue && a.Uputna == b.Uputna) return true;
+            // isti sadržaj (ključ „sadrzaj:“/„list:“) samo uz bar jednu istu masu ili kada nijedan nema masu
+            if (ka == kb && ka.Length > 0 && !ka.StartsWith("ref:", StringComparison.Ordinal) && (iste >= 1 || NemaMasa(a.P, b.P))) return true;
+            return iste >= 1 && a.P.Posiljalac.Length >= 3 && Slicnost.Ocena(a.P.Posiljalac, b.P.Posiljalac) >= 0.9 && a.P.Primalac.Length >= 3 && Slicnost.Ocena(a.P.Primalac, b.P.Primalac) >= 0.9
                    && a.Otpravna.HasValue && a.Otpravna == b.Otpravna && a.Uputna.HasValue && a.Uputna == b.Uputna;
+        }
+
+        /// <summary>Broj parova masa (neto, tara, bruto) koji su oba navedena i isti u granici tolerancije, i broj različitih.</summary>
+        internal static (int iste, int razlicite) IsteMase(PodaciPosla a, PodaciPosla b, double tolerancija)
+        {
+            var iste = 0; var razlicite = 0;
+            foreach (var (x, y) in new[] { (a.NetoKg, b.NetoKg), (a.TaraKg, b.TaraKg), (a.BrutoKg, b.BrutoKg) })
+                if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= tolerancija * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }
+            return (iste, razlicite);
+        }
+
+        private static bool NemaMasa(PodaciPosla a, PodaciPosla b) =>
+            !(a.NetoKg > 0 || a.TaraKg > 0 || a.BrutoKg > 0) && !(b.NetoKg > 0 || b.TaraKg > 0 || b.BrutoKg > 0);
+
+        /// <summary>
+        /// v3.0.1 (3.1): brojevi otpravljanja su kompatibilni kada jedan nije pročitan ili su isti; OCR sme da pogreši najviše jednu cifru
+        /// (iste dužine). „001784“ i „001792“ nisu kompatibilni.
+        /// </summary>
+        internal static bool KompatibilanBroj(string a, string b)
+        {
+            var x = Regex.Replace(a ?? "", @"\D", ""); var y = Regex.Replace(b ?? "", @"\D", "");
+            if (x.Length < 4 || y.Length < 4) return true;
+            if (x == y) return true;
+            if (x.Length != y.Length) return false;
+            return x.Zip(y, (p, q) => p != q).Count(r => r) <= 1;
         }
 
         /// <summary>Kopija dopunjuje list: polje se zamenjuje kada je u kopiji pročitano pouzdanije (ili nije bilo pročitano).</summary>
@@ -163,21 +190,24 @@ namespace Saobracaj.Agent.CimProvera.Baza
         internal static List<VozListova> Vozovi(List<ListPosla> listovi)
         {
             var vozovi = new List<VozListova>();
+            // v3.0.1 (3.6, Eurolog UID 170: 268F, 269F, 270F, 272F → bila su 3 posla): različit broj voza ili referenca r8 nikad nisu isti voz,
+            // ni kada je deonica ista
+            bool Moze(VozListova v, ListPosla l) => v.Listovi.All(y => IstiVozIliNepoznat(y, l));
             foreach (var l in listovi.Where(x => x.Stanica1.HasValue && x.Stanica3.HasValue))
             {
-                var v = vozovi.FirstOrDefault(x => x.Listovi[0].Stanica1 == l.Stanica1 && x.Listovi[0].Stanica3 == l.Stanica3);
+                var v = vozovi.FirstOrDefault(x => x.Listovi[0].Stanica1 == l.Stanica1 && x.Listovi[0].Stanica3 == l.Stanica3 && Moze(x, l));
                 if (v == null) vozovi.Add(v = new VozListova());
                 v.Listovi.Add(l);
             }
             foreach (var l in listovi.Where(x => !x.Stanica1.HasValue || !x.Stanica3.HasValue))
             {
                 var bezDeonice = !l.Stanica1.HasValue && !l.Stanica3.HasValue;
-                var v = vozovi.FirstOrDefault(x => (l.Stanica1.HasValue && x.Listovi[0].Stanica1 == l.Stanica1) || (l.Stanica3.HasValue && x.Listovi[0].Stanica3 == l.Stanica3))
-                        ?? (vozovi.Count == 1 && bezDeonice ? vozovi[0] : null)
+                var v = vozovi.FirstOrDefault(x => ((l.Stanica1.HasValue && x.Listovi[0].Stanica1 == l.Stanica1) || (l.Stanica3.HasValue && x.Listovi[0].Stanica3 == l.Stanica3)) && Moze(x, l))
+                        ?? (vozovi.Count == 1 && bezDeonice && Moze(vozovi[0], l) ? vozovi[0] : null)
                         // v2.9.2: list bez obe tačke deonice (nečitljiv sken – „12 е въглища.pdf“, listovi 6 i 9) ide u voz istog maila sa istom
                         // otpravnom/uputnom, pa sa istom grupom robe (NHM 4)
-                        ?? (bezDeonice ? vozovi.FirstOrDefault(x => x.Listovi.Any(y => (l.Otpravna.HasValue && y.Otpravna == l.Otpravna) || (l.Uputna.HasValue && y.Uputna == l.Uputna))) : null)
-                        ?? (bezDeonice && l.P.Nhm4.Length > 0 ? vozovi.Where(x => x.Listovi.Any(y => y.P.Nhm4 == l.P.Nhm4)).OrderByDescending(x => x.Listovi.Count).FirstOrDefault() : null);
+                        ?? (bezDeonice ? vozovi.FirstOrDefault(x => Moze(x, l) && x.Listovi.Any(y => (l.Otpravna.HasValue && y.Otpravna == l.Otpravna) || (l.Uputna.HasValue && y.Uputna == l.Uputna))) : null)
+                        ?? (bezDeonice && l.P.Nhm4.Length > 0 ? vozovi.Where(x => Moze(x, l) && x.Listovi.Any(y => y.P.Nhm4 == l.P.Nhm4)).OrderByDescending(x => x.Listovi.Count).FirstOrDefault() : null);
                 if (v == null) vozovi.Add(v = new VozListova());
                 v.Listovi.Add(l);
             }
@@ -186,12 +216,25 @@ namespace Saobracaj.Agent.CimProvera.Baza
             foreach (var v in vozovi.ToList())
             {
                 if (vozovi.Count < 2 || !v.Listovi.All(l => l.P.Kola.Count == 0 && l.BrojKola == 0)) continue;
-                var drugi = vozovi.FirstOrDefault(x => x != v && x.Listovi.Any(a => v.Listovi.Any(b => IsteMase(ZapisTl.Iz(a), ZapisTl.Iz(b)))));
+                var drugi = vozovi.FirstOrDefault(x => x != v && v.Listovi.All(b => Moze(x, b)) && x.Listovi.Any(a => v.Listovi.Any(b => IsteMase(ZapisTl.Iz(a), ZapisTl.Iz(b)))));
                 if (drugi == null) continue;
                 drugi.Listovi.AddRange(v.Listovi);
                 vozovi.Remove(v);
             }
             return vozovi;
+        }
+
+        /// <summary>
+        /// v3.0.1 (3.6): dva lista mogu biti isti voz samo kada se broj voza i referenca (r8) ne razlikuju – jednaki su ili jedan nije upisan.
+        /// </summary>
+        internal static bool IstiVozIliNepoznat(ListPosla a, ListPosla b)
+        {
+            string Ref(ListPosla x) => NormOznaka(x.P.V.TryGetValue("Referenca", out var v) ? v as string : null);
+            var va = NormOznaka(a.P.BrojVoza); var vb = NormOznaka(b.P.BrojVoza);
+            if (va.Length > 0 && vb.Length > 0 && va != vb) return false;
+            var ra = Ref(a); var rb = Ref(b);
+            if (ra.Length > 0 && rb.Length > 0 && ra != rb) return false;
+            return true;
         }
 
         /// <summary>Bar dve iste mase (± 0,5 %), nijedna različita.</summary>
@@ -400,6 +443,15 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             return null;
         }
 
+        /// <summary>v3.0.1 (3.5): posao ranijeg maila iz dosijea („UID 46“) – JobID dokumenta tog maila u tmpDokument; null ako ga nema.</summary>
+        private int? PosaoMaila(string oznaka, MailZaUpis m)
+        {
+            var u = Regex.Match(oznaka ?? "", @"^UID (\d+)$");
+            if (!u.Success) return null;
+            var j = Skalar("SELECT TOP 1 JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL ORDER BY ID DESC", "@u", long.Parse(u.Groups[1].Value), "@s", N(m.Sanduce, 200));
+            return j == null ? (int?)null : Convert.ToInt32(j);
+        }
+
         /// <summary>„ID 1602“, „ID 1602 + 1496“, „ID1657“ iz naslova maila → brojevi (3–5 cifara).</summary>
         internal static HashSet<string> IdIzNaslova(string naslov)
         {
@@ -416,7 +468,7 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
         {
             public int Id; public int? O, U; public int PouzdO, PouzdU; public string Referenca = ""; public string Kljuc = "";
             public HashSet<string> Ids = new HashSet<string>(); public DateTime? Primljeno; public HashSet<string> Kola = new HashSet<string>();
-            public List<ZapisTl> Tl = new List<ZapisTl>(); public bool Nit; public string Ponuda = ""; public int BrojKola;
+            public List<ZapisTl> Tl = new List<ZapisTl>(); public bool Nit; public string Ponuda = ""; public int BrojKola; public string BrojVoza = "";
         }
 
         /// <summary>
@@ -436,6 +488,7 @@ WHERE p.TeretnicaID IS NULL AND p.Kolona LIKE 'TL:%' AND j.Kreirano >= DATEADD(d
             string N(object x) => Regex.Replace(Slicnost.Osnovno(x as string ?? ""), @"\s", "");
             var ref0 = voz.Listovi.Select(x => N(x.P.V.TryGetValue("Referenca", out var v) ? v : null)).FirstOrDefault(x => x.Length > 0) ?? "";
             var ids0 = IdIzNaslova(m.Naslov);
+            var vozBroj0 = NormOznaka(l0.P.BrojVoza);
             // kola voza: listovi + spiskovi kola istog maila; samo brojevi sa ispravnom kontrolnom cifrom
             var kola0 = new HashSet<string>(voz.Listovi.SelectMany(x => x.P.Kola).Concat((m.Provera?.Dokumenti ?? new List<Model.Dokument>())
                 .Where(d => d.Tip == Model.TipDokumenta.SpisakKola && !d.IzDosijea).SelectMany(d => d.Spisak).SelectMany(s => s.Kola).Select(k => k.Broj))
@@ -466,7 +519,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                     {
                         Id = r.GetInt32(0), O = r.IsDBNull(1) ? (int?)null : r.GetInt32(1), U = r.IsDBNull(2) ? (int?)null : r.GetInt32(2), Referenca = N(r.GetString(3)), Kljuc = r.GetString(4),
                         PouzdO = Convert.ToInt32(r.GetValue(5)), PouzdU = Convert.ToInt32(r.GetValue(6)), Primljeno = r.IsDBNull(7) ? (DateTime?)null : r.GetDateTime(7),
-                        Ponuda = Convert.ToString(r.GetValue(8)).Trim(), BrojKola = Convert.ToInt32(r.GetValue(9)),
+                        Ponuda = Convert.ToString(r.GetValue(8)).Trim(), BrojKola = Convert.ToInt32(r.GetValue(9)), BrojVoza = NormOznaka(ExcelCitac.BrojVoza(r.GetString(3))),
                     };
             if (kand.Count == 0) return (null, null);
             using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL"))
@@ -514,6 +567,8 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 var refIsta = ref0.Length > 0 && z.Referenca.Length > 0 && ref0 == z.Referenca;
                 var refRazl = ref0.Length > 0 && z.Referenca.Length > 0 && ref0 != z.Referenca;
                 if (refRazl && !kola50) continue;   // Coal 16 / Coal 17 – različiti vozovi iste relacije
+                // v3.0.1 (3.6): različit broj voza – nikad isti posao (ni uz ista kola: isti vagoni u sledećem obrtu)
+                if (vozBroj0.Length > 0 && z.BrojVoza.Length > 0 && vozBroj0 != z.BrojVoza) continue;
                 var idIsti = ids0.Count > 0 && z.Ids.Overlaps(ids0);
                 var r62Isti = r62bz.Length > 0 && BezZemlje(z.Kljuc) == r62bz;
                 // dve ispravne, različite r62 su dve pošiljke – isti voz samo uz isti ID iz naslova ili r8 (voz od više listova)
@@ -548,9 +603,15 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             // v3.0 (LDC8): ista referenca (r8), ista grupa robe i isti broj kola – nova verzija istog lista (draft → konačni CIM), i kada
             // se mase razlikuju (draft: tara 643,420; konačni: 651,600)
             if (!string.IsNullOrEmpty(a.Ref) && a.Ref == b.Ref && a.Grupa.Length > 0 && a.Grupa == b.Grupa && a.BrojKola > 1 && a.BrojKola == b.BrojKola) return true;   // samo list za više kola (CIM po vagonu – ID 1654 – ima istu referencu za svaki vagon)
+            // v3.0.1 (3.3, Bor ID 1657: VTG UID 66 bez r62 + KP UID 103 → 74 kola): radna verzija (bez r62) i konačna (sa r62) istog lista – i za CUV.
+            // Ista grupa robe, isti broj kola (više kola), reference iste ili jedna nije upisana, mase bez većih razlika (± 5 %) → zamena, ne zbir.
+            if (a.Kljuc.StartsWith("r62:", StringComparison.Ordinal) != b.Kljuc.StartsWith("r62:", StringComparison.Ordinal) && a.Grupa.Length > 0 && a.Grupa == b.Grupa
+                && a.BrojKola > 1 && a.BrojKola == b.BrojKola && (string.IsNullOrEmpty(a.Ref) || string.IsNullOrEmpty(b.Ref) || a.Ref == b.Ref)
+                && new[] { (a.Neto, b.Neto), (a.Tara, b.Tara), (a.Bruto, b.Bruto) }.All(m => !(m.Item1 > 0 && m.Item2 > 0) || Math.Abs(m.Item1.Value - m.Item2.Value) <= 0.05 * Math.Max(m.Item1.Value, m.Item2.Value)))
+                return true;
             int iste = 0, razlicite = 0;
             foreach (var (x, y) in new[] { (a.Neto, b.Neto), (a.Tara, b.Tara), (a.Bruto, b.Bruto) })
-                if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= 0.005 * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }
+                if (x > 0 && y > 0) { if (Math.Abs(x.Value - y.Value) <= 0.001 * Math.Max(x.Value, y.Value)) iste++; else razlicite++; }   // v3.0.1 (3.1): kopija = iste mase ± 0,1 %
             // v2.9.2: kopije skena sa jednom masom (Prahovo 05: samo neto 924,4) – ista masa, ista grupa robe i isti broj kola
             // v3.0 (LDC8, UID 789): kopija sa jednom masom bez pročitanog broja kola (0) je isti list za VIŠE kola (ne za list jednih kola –
             // ID 1654: dva vagona uglja mogu imati isti neto 60,130)
@@ -585,6 +646,10 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         {
             int? id = null; var veza = "";
             foreach (var l in voz.Listovi) { id = PosaoPoKljucu(l.P.KljucPosiljke); if (id != null) { veza = "ključ " + l.P.KljucPosiljke; break; } }
+            // v3.0.1 (3.5, YU DIN UID 54): dosije je prepoznao isti tovarni list iz ranijeg maila – mail ide u posao tog maila i kada je r62 nesiguran
+            if (id == null)
+                foreach (var l in voz.Listovi.Where(x => !string.IsNullOrEmpty(x.P.DosijeVeza)))
+                    if (PosaoMaila(l.P.DosijeVeza, m) is int jd0) { id = jd0; veza = "dosije: isti tovarni list kao " + l.P.DosijeVeza + (l.P.OverenaVerzija ? " (skenirana i overena verzija)" : ""); break; }
             var glavni0 = voz.Listovi.OrderByDescending(x => !x.P.Prazna).ThenByDescending(x => x.BrojKola).First();
             if (id == null && glavni0.P.BrojVoza.Length > 0 && glavni0.Otpravna is int o0 && glavni0.Uputna is int u0)
             {
@@ -607,6 +672,18 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             foreach (var l in voz.Listovi)
             {
                 var z = ZapisTl.Iz(l); z.Povratak = povratak;
+                // v3.0.1 (3.5): overena verzija već upisanog lista (dosije) – isti list: dopunjuje postojeći zapis iste grupe, ne dodaje kola ni mase
+                if (l.P.OverenaVerzija && !tl.ContainsKey(KolonaTl(z.Kljuc)))
+                {
+                    var postojeci = tl.Where(kv => !noviKljucevi.Contains(kv.Key) && (kv.Value.Grupa == z.Grupa || z.Grupa.Length == 0)).OrderByDescending(kv => kv.Value.BrojKola).Select(kv => kv.Key).FirstOrDefault();
+                    if (postojeci != null)
+                    {
+                        DopuniZapis(tl[postojeci], z);
+                        alias[KolonaTl(z.Kljuc)] = postojeci;
+                        ishod.Napomene.Add("tovarni list " + l.Oznaka + " je skenirana i overena verzija lista " + postojeci + " (" + l.P.DosijeVeza + ") – isti zapis");
+                        continue;
+                    }
+                }
                 // v3.0 (LDC8, UID 789): isti list dva puta u istom mailu (konačni CIM i kopija „ex docs“ sa drugim ključem) – jedan zapis
                 var istiUMailu = tl.Where(kv => noviKljucevi.Contains(kv.Key) && kv.Key != KolonaTl(z.Kljuc) && (kv.Value.BrojKola > 1 || z.BrojKola > 1) && IstiZapis(kv.Value, z)).Select(kv => kv.Key).FirstOrDefault();
                 if (istiUMailu != null)
@@ -1002,6 +1079,17 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             }
             // neto r25 ↔ spisak > 1 % (5.1): interna napomena u poreklu i istoriji
             var r25 = gr.Count >= grupa ? gr[grupa - 1].Where(z => z.Neto.HasValue).Sum(z => z.Neto.Value) : 0;
+            // v3.0.1 (3.2): spisak nije usklađen sam sa sobom – mase sa spiska nisu upisane (ostaju iz r25), INTERNO „spisak – proveriti kolone“
+            if (p.SpisakNeuskladjen) foreach (var x in p.Napomene.Where(x => x.StartsWith("Spisak kola – proveriti kolone", StringComparison.Ordinal))) ishod.Interno.Add(x);
+            // v3.0.1 (3.8): provera smisla – neto spiska < 1 % ili > 300 % od r25 → ne upisuje se
+            if (p.V.TryGetValue("Neto" + g0, out var nsp0) && nsp0 is decimal ns0 && ns0 > 0
+                && PosaoIzDokumenata.NesmislenNeto((double)ns0 * 1000, 0, p.Grupe.Count > 0 && p.Grupe[Math.Min(grupa, p.Grupe.Count) - 1].prazna, r25 > 0 ? r25 : (double?)null) is string bez)
+            {
+                p.V.Remove("Neto" + g0); p.Poreklo.RemoveAll(x => x.Kolona == "Neto" + g0);
+                var t = "Spisak kola: neto nije upisan – " + bez;
+                ishod.Napomene.Add(t); ishod.Interno.Add(t);
+                Istorija(jobId, tid, null, null, null, dokId, razlog, t);
+            }
             string napMase = null;
             if (p.V.TryGetValue("Neto" + g0, out var nsp) && nsp is decimal ns && ns > 0 && r25 > 0 && Math.Abs((double)ns * 1000 - r25) > 0.01 * r25)
             {

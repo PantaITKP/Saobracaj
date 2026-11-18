@@ -159,7 +159,14 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                 }
                 foreach (var k in kola)
                 {
-                    if (spisak.Kola.Any(x => x.Broj == k)) continue;
+                    // v3.0.1 (HSL Wagenliste HER-SAD 81: red zaglavlja „1_2 | 3_4 | … | 35 80 4956 491 - 9“ pre reda prvih kola): ista kola u više
+                    // redova – vrednosti po kolima iz reda sa više brojčanih ćelija (pravi red kola), ne iz zaglavlja („bez tare 1 kola“)
+                    if (spisak.Kola.Any(x => x.Broj == k))
+                    {
+                        int Brojeva(string[] r) => r.Count(c => Regex.IsMatch((c ?? "").Trim(), @"^\d+([.,]\d+)?$"));
+                        if (redKola.TryGetValue(k, out var stari) && Brojeva(celije) > Brojeva(stari)) redKola[k] = celije;
+                        continue;
+                    }
                     var stavka = new KolaNaSpisku { Broj = k, Uti = uti, Mrn = mrn };
                     if (ridKolona >= 0 && ridKolona < celije.Length)
                         stavka.Rid = Regex.IsMatch(celije[ridKolona], @"^(x|х|da|yes|ja|oui)$", RegexOptions.IgnoreCase);

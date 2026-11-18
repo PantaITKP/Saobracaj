@@ -184,14 +184,17 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 else if ((bool?)l["r62_za_odluke"] == false)
                     sb.AppendLine("**r62 nije pouzdano pročitana** – ne koristi se kao siguran ključ (ponavljanje, posao, KP).").AppendLine();
                 var nalazi = (JArray)l["nalazi"];
-                sb.AppendLine("| Rubrika | Status | Pročitano (sirovo) | Pouzd. | Nalazi |").AppendLine("|---|---|---|---|---|");
+                // v3.0.1 (2.2): mera čitljivosti po polju (sken): ukupno (OCR / pokriveno rečima / smisleni znakovi), „nečitljivo“ ispod praga
+                sb.AppendLine("| Rubrika | Status | Pročitano (sirovo) | Pouzd. | Čitljivost | Nalazi |").AppendLine("|---|---|---|---|---|---|");
                 foreach (var p in (l["rubrike"] as JObject ?? new JObject()).Properties().OrderBy(p => Redosled(p.Name)))
                 {
                     var rub = p.Name.Substring(1);
                     var naRub = nalazi.Where(x => string.Equals((string)x["rubrika"], rub, StringComparison.OrdinalIgnoreCase)).Select(x => TezinaKratko((string)x["tezina"]) + " " + x["pravilo"] + ((bool?)x["samo_interno"] == true ? " (interno)" : "")).ToList();
-                    sb.AppendLine("| " + rub + " | " + p.Value["status"] + " | " + M((string)p.Value["tekst"]) + " | " + p.Value["pouzdanost"] + " | " + M(string.Join("; ", naRub)) + " |");
+                    sb.AppendLine("| " + rub + " | " + p.Value["status"] + " | " + M((string)p.Value["tekst"]) + " | " + p.Value["pouzdanost"] + " | " + MeraTekst(p.Value["citljivost"] as JObject) + " | " + M(string.Join("; ", naRub)) + " |");
                 }
                 sb.AppendLine();
+                if (l["bez_dokaza"] is JArray bd && bd.Count > 0)
+                    sb.AppendLine("**Samoprovera: nalazi bez pouzdanog dokaza** (list na ručnoj proveri): " + M(string.Join(", ", bd.Select(x => (string)x)))).AppendLine();
                 sb.AppendLine("### Nalazi").AppendLine();
                 if (nalazi.Count == 0) sb.AppendLine("_nema_");
                 foreach (var x in nalazi)
@@ -281,6 +284,41 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         /// <summary>Novi deo poruke (bez citata i potpisa) iz pripremljenog ulaza.</summary>
         private static string NoviDeo(RezultatAlata ra) => ra.Json["poruka"]?["telo_novo"] is JValue v ? (string)v ?? "" : "";
 
+        /// <summary>v3.0.1: „0,92 (OCR 0,92 · reči 45 % · smisao 88 %) **nečitljivo**“; prazno kada polje nije mereno (tekst PDF-a, prazna rubrika).</summary>
+        private static string MeraTekst(JObject c)
+        {
+            if (c == null) return "";
+            var sr = CultureInfo.GetCultureInfo("sr-Latn-RS");
+            var pok = (double?)c["pokrivenost"] ?? -1;
+            return ((double)c["ukupno"]).ToString("0.00", sr) + " (OCR " + ((double)c["ocr"]).ToString("0.00", sr) + (pok >= 0 ? " · reči " + (pok * 100).ToString("0") + " %" : "")
+                   + " · smisao " + ((double)c["smisao"] * 100).ToString("0") + " %)" + ((bool?)c["necitljivo"] == true ? " **nečitljivo**" : "");
+        }
+
+        /// <summary>
+        /// v3.0.1 (2.3): samoprovera iz rezultat.json – nalazi (greška/upozorenje, ne interno) za pošiljaoca čiji dokaz nije pouzdan: rubrika
+        /// nečitljiva (status ili mera polja) ili popunjena bez pročitanog teksta. Nezavisno od motora (proverava ono što bi stvarno otišlo).
+        /// </summary>
+        internal static List<string> BezPouzdanogDokaza(JObject j)
+        {
+            var rez = new List<string>();
+            foreach (JObject l in j["provera"]?["listovi"] as JArray ?? new JArray())
+            {
+                var rub = l["rubrike"] as JObject ?? new JObject();
+                foreach (var x in (JArray)l["nalazi"])
+                {
+                    var t = (string)x["tezina"];
+                    if ((bool?)x["samo_interno"] == true || (t != "error" && t != "warning")) continue;
+                    var r = (string)x["rubrika"] ?? "";
+                    if (r == "–" || r == "30" || r == "22" || r == "23" || r == "62" || !(rub["r" + r] is JObject rj)) continue;
+                    var st = (string)rj["status"];
+                    var necitljivo = st == StatusRubrike.Necitljivo || ((bool?)rj["citljivost"]?["necitljivo"] == true)
+                                     || (st == StatusRubrike.Popunjeno && string.IsNullOrWhiteSpace((string)rj["tekst"]));
+                    if (necitljivo) rez.Add(x["pravilo"] + " r" + r);
+                }
+            }
+            return rez;
+        }
+
         private static string TezinaKratko(string t) => t == "error" ? "GREŠKA" : t == "warning" ? "upozorenje" : t == "recommendation" ? "preporuka" : t == "info" ? "info" : t;
 
         private static double Redosled(string imeRubrike)
@@ -337,6 +375,16 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 foreach (var (rb, j, _) in neuspeli) sz.AppendLine("| " + rb.ToString("000") + " | " + M((string)j["poruka"]?["datum"]) + " | " + M((string)j["poruka"]?["naslov"]) + " | " + M((string)j["odluka"]) + " |");
                 sz.AppendLine().AppendLine("Ponovna obrada: **Obradi ponovo neuspele** ili `--neuspele`.");
             }
+            // v3.0.1 (2.3): samoprovera izveštaja pošiljaocu – broj izveštaja i koliko ih ima nalaz bez pouzdanog dokaza (mora biti 0)
+            var pos = stavke.Where(x => ((string)x.json["odluka"] ?? "").StartsWith("izveštaj pošiljaocu", StringComparison.Ordinal)).OrderBy(x => x.rb).ToList();
+            var bezDokaza = pos.Select(x => (x.rb, uid: (string)x.json["poruka"]?["uid"], b: BezPouzdanogDokaza(x.json))).Where(x => x.b.Count > 0).ToList();
+            sz.AppendLine().AppendLine("- izveštaji pošiljaocu: " + pos.Count + "; od toga sa nalazom bez pouzdanog dokaza: " + bezDokaza.Count
+                + (bezDokaza.Count > 0 ? " (" + string.Join("; ", bezDokaza.Select(x => x.rb.ToString("000") + " UID " + x.uid + ": " + string.Join(", ", x.b))) + ")" : ""));
+            // v3.0.1 (5): događaji vezani za posao / nevezani
+            var sviDog = stavke.SelectMany(x => x.json["dogadjaji"] as JArray ?? new JArray()).ToList();
+            var vezani = sviDog.Count(d => !string.IsNullOrEmpty((string)d["posao"]));
+            sz.AppendLine("- događaji: " + sviDog.Count + "; vezani za posao: " + vezani + "; nevezani: " + (sviDog.Count - vezani)
+                + " (od toga sa kandidatima: " + sviDog.Count(d => string.IsNullOrEmpty((string)d["posao"]) && ((d["kandidati"] as JArray)?.Count ?? 0) > 0) + ")");
             var nalazi = stavke.SelectMany(x => (x.json["provera"]?["listovi"] as JArray ?? new JArray()).SelectMany(l => (JArray)l["nalazi"])).ToList();
             sz.AppendLine().AppendLine("## Najčešći nalazi").AppendLine().AppendLine("| Pravilo | Rubrika | Težina | Broj |").AppendLine("|---|---|---|---|");
             foreach (var g in nalazi.GroupBy(x => (string)x["pravilo"] + "|" + x["rubrika"] + "|" + x["tezina"]).OrderByDescending(g => g.Count()).Take(30))

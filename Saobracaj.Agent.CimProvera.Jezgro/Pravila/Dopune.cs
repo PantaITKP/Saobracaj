@@ -377,7 +377,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private static string Zemlja(Kontekst k, string broj, Model.Strana st)
         {
             // 1. iz adrese: naziv zemlje u adresi (ne u nazivu firme), mesto, poštanski broj sa oznakom zemlje („D-44653“)
-            if (Provere.ZemljaUAdresi(st) && Provere.IsoPoNazivu.TryGetValue(st.NazivZemlje.Trim(), out var iz)) return iz;
+            if (Provere.ZemljaUAdresi(st) && Zemlje.Iso(st.NazivZemlje) is string iz) return iz;
             var adresa = Provere.AdresaBezNaziva(st);
             var izAdrese = ZemljaIzAdrese(adresa);
             if (izAdrese != null) return izAdrese;

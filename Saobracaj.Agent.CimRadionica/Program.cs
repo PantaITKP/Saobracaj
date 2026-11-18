@@ -99,11 +99,27 @@ namespace Saobracaj.Agent.CimRadionica
             var a = args.ToList();
             if (a.Count > 0 && a[0] != "--radnik" && a[0].StartsWith("--") && a[0] != "--snimci")
                 Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
-            if (a.Count >= 2 && a[0] == "--radnik") return Radnik(a[1]);
+            // v3.0.1 (4.3, „Syncfusion licencni ključ nije učitan (nije učitavan)“ za 10 Word priloga u „Osnovni“): alat ključ nije ni učitavao –
+            // radnik (i pred-čitanje) ga učitava pre čitanja priloga, kao agent; bez ključa Word prilog ide na ručnu proveru
+            if (a.Count >= 2 && a[0] == "--radnik") { try { Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.UcitajKljuc(); } catch { } return Radnik(a[1]); }
             if (a.Count >= 3 && a[0] == "--uvezi") return Uvezi(a[1], a.Skip(2).ToList());
             if (a.Count >= 2 && a[0] == "--obradi") return ObradiBezUi(a);
             // v3.0 (odluka 18.11.): online režim na laptopu – konekcija iz CIMPROVERA_KONEKCIJA (nikad iz argumenata) se čuva DPAPI-jem
             // za trenutnog korisnika; folder Testiranje na Desktop-u
+            // v3.0.1 (4.3): Syncfusion licencni ključ (Word → PDF) za nalog korisnika na laptopu – iz promenljive CIMPROVERA_SYNCFUSION (postavlja je
+            // Instaliraj-CimRadionica.ps1 posle unosa) u %LOCALAPPDATA%\Saobracaj\CimProvera\Syncfusion.dpapi (DPAPI, trenutni korisnik). Ključ se ne ispisuje.
+            if (a.Count >= 1 && a[0] == "--podesi-syncfusion")
+            {
+                var kljuc = Environment.GetEnvironmentVariable("CIMPROVERA_SYNCFUSION");
+                if (string.IsNullOrWhiteSpace(kljuc)) { Console.Error.WriteLine("CIMPROVERA_SYNCFUSION nije postavljena."); return 1; }
+                var put = Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.PutanjeKljuca().Last();
+                Directory.CreateDirectory(Path.GetDirectoryName(put));
+                File.WriteAllText(put, AgentConfig.Zastiti(kljuc.Trim()), new System.Text.UTF8Encoding(false));
+                kljuc = null;
+                var ok = Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.UcitajKljuc();
+                Console.WriteLine("Syncfusion ključ sačuvan (DPAPI, trenutni korisnik) u " + put + "; provera: " + Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.StanjeKljuca);
+                return ok ? 0 : 2;
+            }
             if (a.Count >= 1 && a[0] == "--podesi-online")
             {
                 var pp = Podesavanja.Ucitaj();
@@ -189,6 +205,9 @@ namespace Saobracaj.Agent.CimRadionica
             var neuspeleRanije = a.Contains("--neuspele") ? new HashSet<string>(rp.Neuspeli(verzija).Select(x => x.Kljuc)) : null;
             var stavke = rp.Hronoloski().Where(s => (samo == null || samo.Contains(s.Kljuc) || samo.Contains(rp.Rb(s).ToString("000"))) && rp.Rb(s) >= od
                                                    && (neuspeleRanije == null || neuspeleRanije.Contains(s.Kljuc))).ToList();
+            // v3.0.1 (4.3): bez Syncfusion ključa – jasno upozorenje NA POČETKU obrade (ne tek po prilogu)
+            if (!Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.UcitajKljuc())
+                Console.Error.WriteLine("UPOZORENJE: " + GlavnaForma.PorukaBezSyncfusion());
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int n = 0;
             var analiza = a.Contains("--analiza");

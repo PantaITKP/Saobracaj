@@ -194,7 +194,16 @@ namespace Saobracaj.Agent.CimProvera
                 if (prilozi.Count == 0)
                 {
                     log.Info("  UID " + uid.Id + ": mail nema priloga – preskočeno (BezPriloga).");
+                    // v3.0.1 (5): događaji iz teksta maila bez dokumenata se upisuju i vezuju za posao (nit, ID najave, voz, relacija)
+                    if (rez.Dogadjaji.Count > 0) UpisiUBazu(m, uid.Id, u.Folder, null, prilozi, null);
                     ps.Status = "BezPriloga"; return Korak.Gotova;
+                }
+                // v3.0.1 (4.1): mail sa samo slikama iz potpisa (logo, baner) nema dokumenata – bez odgovora; slike ne učestvuju u ponavljanju
+                if (prilozi.All(p => Raspakivanje.Ukras(p.ime, p.sadrzaj) != null))
+                {
+                    log.Info("  UID " + uid.Id + ": samo slike iz potpisa (" + prilozi.Count + ") – nema dokumenata, bez odgovora.");
+                    if (rez.Dogadjaji.Count > 0) UpisiUBazu(m, uid.Id, u.Folder, null, new List<(string, byte[])>(), null);
+                    ps.Status = "SamoPotpis"; return Korak.Gotova;
                 }
                 ps.HesPriloga = Prilog.Sha256(prilozi.SelectMany(p => p.sadrzaj).ToArray()).Substring(0, 16);
                 // v2.8.4 (6.1): isti prilog (isti heš) koji je već proveren se ne proverava ponovo – novi mail dobija istu odluku;
@@ -377,6 +386,7 @@ namespace Saobracaj.Agent.CimProvera
                 var ishod = Upis.Upisi(new Baza.MailZaUpis
                 {
                     MessageId = m.MessageId ?? "", Uid = uid, Sanduce = cfg.Nalog + "|" + folder, Posiljalac = m.From.Mailboxes.FirstOrDefault()?.Address ?? "",
+                    Prethodni = new[] { m.InReplyTo }.Concat(m.References ?? Enumerable.Empty<string>()).Where(x => !string.IsNullOrWhiteSpace(x)).ToList(),
                     Naslov = m.Subject ?? "", Primljeno = m.Date == DateTimeOffset.MinValue ? DateTime.Now : m.Date.LocalDateTime, Telo = TeloMaila(m),
                     Prilozi = prilozi, Provera = r, Dosije = dosije, Dogadjaji = rez.Dogadjaji,
                 });

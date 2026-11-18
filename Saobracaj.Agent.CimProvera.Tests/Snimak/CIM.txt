@@ -1,8 +1,9 @@
-grešaka 2, upozorenja 7, listova 1
+grešaka 1, upozorenja 8, listova 1
 warning	G6	r9
 warning	R1-ISO	r1
 warning	R14	r14
-error	R16	r16
+warning	R16	r16
+info	R16	r16
 recommendation	R25-MASA	r25
 error	R29	r29
 warning	R62	r62

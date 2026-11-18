@@ -16,6 +16,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
     internal sealed class MailZaUpis
     {
         public string MessageId = "";
+        /// <summary>v3.0.1 (5): In-Reply-To + References (nit) – za vezu događaja sa poslom ranijeg maila.</summary>
+        public List<string> Prethodni = new List<string>();
         public long Uid;
         public string Sanduce = "";
         public string Posiljalac = "";
@@ -218,6 +220,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
             {
                 var glavni = g[0];
                 var spisak = Spoji(g);
+                // v3.0.1 (3.4): spisak praznih kola – jedina masa je tara (i u stavkama teretnice)
+                if (PosaoIzDokumenata.NormalizujPrazna(spisak, glavni.Fajl)) ishod.Napomene.Add("spisak praznih kola (" + spisak.Kola.Count + " kola) – masa sa spiska je tara, neto 0");
                 if (natovarenTlUMailu && Natovaren(spisak) != true && !spisak.Kola.Any(k => k.Prazna)) natovareniUzList.Add(spisak);
                 var jobId = PoveziSpisak(spisak, glavni, posloviMaila, m);
                 posloviMailaZaSpisak = new HashSet<int>(posloviMaila.Select(x => x.id));
@@ -252,6 +256,22 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var dokId = dokument == null ? (int?)null : Convert.ToInt32(dokument);
             var poslovi = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", m.Uid, "@s", N(m.Sanduce, 200))
                 .Select(x => (int?)Convert.ToInt32(x)).ToList();
+            // v3.0.1 (5): mail bez svog posla (bez dokumenata) – veza redom: nit, ID najave, broj voza / referenca, relacija + datum;
+            // bez sigurne veze događaj ostaje bez posla, sa kandidatima (rezultat.json / ANALIZA.md)
+            var veza = poslovi.Count > 0 ? "posao maila" : "";
+            var kandidati = new List<string>();
+            if (poslovi.Count == 0)
+            {
+                var (jd, vz, kand) = PosaoZaDogadjaje(m);
+                if (jd.HasValue) { poslovi.Add(jd); veza = vz; ishod.Napomene.Add("događaji vezani za posao " + jd + " (" + vz + ")"); }
+                else { kandidati = kand ?? new List<string>(); if (kandidati.Count > 0) ishod.Interno.Add("događaji bez posla – kandidati: " + string.Join("; ", kandidati)); }
+            }
+            foreach (var d in m.Dogadjaji)
+            {
+                d.Posao = string.Join(", ", poslovi.Where(x => x.HasValue).Select(x => x.Value));
+                d.Veza = d.Posao.Length > 0 ? veza : "";
+                d.Kandidati = d.Posao.Length > 0 ? new List<string>() : kandidati;
+            }
             if (poslovi.Count == 0) poslovi.Add(null);
             var red = "Događaji (" + ZaglavljeNapomene(m) + "): " + string.Join("; ", m.Dogadjaji.Select(d => d.Tip + " " + string.Join(" ", new[] { d.MestoTekst, d.VremeTekst, d.VremenskaZona, d.Vrednost }.Where(x => !string.IsNullOrEmpty(x)))));
             var upisano = 0;

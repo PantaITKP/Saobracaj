@@ -163,7 +163,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
         }
 
         private static readonly System.Text.RegularExpressions.Regex ImeUkrasa = new System.Text.RegularExpressions.Regex(
-            @"logo|signature|signatur|potpis|podpis|unterschrift|banner|baner|facebook|linkedin|twitter|instagram|youtube|whatsapp|viber|xing|icon|ikon|social|outlook",
+            @"logo|signature|signatur|potpis|podpis|unterschrift|banner|baner|facebook|linkedin|twitter|instagram|youtube|xing|icon|ikon|social|outlook",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
@@ -197,10 +197,28 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             return null;
         }
 
+        /// <summary>v3.0.1 (4.1): isto kao <see cref="Ukras(Prilog)"/> za prilog maila (ime, sadržaj) – za ponavljanje i „samo slike iz potpisa“.</summary>
+        public static string Ukras(string ime, byte[] sadrzaj)
+        {
+            if (sadrzaj == null) return null;
+            var ext = Path.GetExtension(ime ?? "").ToLowerInvariant();
+            var v = Prepoznaj(ext, sadrzaj, out var media);
+            return v == VrstaPriloga.Slika ? Ukras(new Prilog { Naziv = ime ?? "", Sadrzaj = sadrzaj, Vrsta = v, MediaType = media }) : null;
+        }
+
+        /// <summary>v3.0.1 (4.2): ime fotografije/skena dokumenta – broj kola (11–12 cifara), „CIM“, „CUV“, „tovarni“, „wagon“, „scan“, viber/whatsapp fotografija.</summary>
+        private static readonly System.Text.RegularExpressions.Regex ImeDokumenta = new System.Text.RegularExpressions.Regex(
+            @"(?<!\d)\d{11}-?\d(?!\d)|(?<!\d)\d{4}\s?\d{4}\s?\d{3}-?\d(?!\d)|(?<![a-z])(cim|cuv|cit|tovarn\w*|frachtbrief|wagon\w*|vagon\w*|kola|scan\w*|sken\w*|img_\d{8}|viber_image|whatsapp image|photo|foto\w*|dokument\w*)(?![a-z])",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
         public static string Ukras(Prilog p)
         {
             if (p?.Vrsta != VrstaPriloga.Slika || p.Sadrzaj == null) return null;
             if (p.Sadrzaj.Length < 15 * 1024) return "mala slika (" + p.Sadrzaj.Length / 1024 + " KB)";
+            // v3.0.1 (4.2, UID 171 „26.11.15_Vrsac_ID1606_31785300434-7_K_R1….jpg“): fotografija nije logo – slika iz ZIP-a ili sa imenom
+            // dokumenta (broj kola, CIM, scan, viber…) ide na klasifikaciju strane, kao sken (CIM ume da stigne kao fotografija)
+            var ime0 = Path.GetFileNameWithoutExtension((p.Naziv ?? "").Split('/', '\\').Last());
+            if ((p.Naziv ?? "").Contains("/") || ImeDokumenta.IsMatch(ime0)) return null;
             int w, h;
             try
             {
@@ -210,6 +228,8 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             catch { return null; }   // ne može da se otvori – čita se (i ide na ručnu proveru ako ne uspe)
             var dim = w + "×" + h + " px";
             if ((long)w * h < 250_000) return "mala slika (" + dim + ")";
+            // v3.0.1 (4.2): velika slika (> 1000 px) nije logo, osim trake/banera
+            if (Math.Max(w, h) > 1000 && !(Math.Max(w, h) >= 3.0 * Math.Min(w, h) && Math.Min(w, h) < 500)) return null;
             if (Math.Max(w, h) >= 3.0 * Math.Min(w, h) && Math.Min(w, h) < 500) return "traka/baner (" + dim + ")";
             var ime = Path.GetFileNameWithoutExtension((p.Naziv ?? "").Split('/', '\\').Last());
             if (ImeUkrasa.IsMatch(ime) && (long)w * h < 1_500_000) return "logo/ikona po imenu (" + dim + ")";

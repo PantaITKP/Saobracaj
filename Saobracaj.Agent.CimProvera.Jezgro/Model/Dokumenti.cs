@@ -47,6 +47,9 @@ namespace Saobracaj.Agent.CimProvera.Model
 
         [Newtonsoft.Json.JsonIgnore]
         public bool Popunjena => Status == StatusRubrike.Popunjeno || Status == StatusRubrike.Necitljivo;
+
+        /// <summary>v3.0.1 (2.2): sken – udeo mastila podataka rubrike koji pokrivaju pročitane reči (0–1); -1 = nije mereno (tekst PDF-a, bez šablona).</summary>
+        [Interni] public double Pokrivenost { get; set; } = -1;
     }
 
     internal sealed class TekstRubrika : Rubrika { }
@@ -247,6 +250,8 @@ namespace Saobracaj.Agent.CimProvera.Model
         /// <summary>Polje r52 (frankaturni račun) i r58b (pojednostavljeni postupak): oznaceno / prazno / nesigurno.</summary>
         [Interni] public string R52Polje { get; set; } = "";
         [Interni] public string R58bPolje { get; set; } = "";
+        /// <summary>v3.0.1 (1.1): sken – mastilo podataka u r58a (pečat/potpis prevoznika), udeo površine; -1 = nije mereno (tekst PDF-a, Word, Excel).</summary>
+        [Interni] public double MastiloR58a { get; set; } = -1;
         [Opis("Rubrika 21 - Naznačenje robe.")] public NaznacenjeRobe R21 { get; set; } = new NaznacenjeRobe();
         [Opis("Rubrika 22 - Naročita pošiljka (popunjeno ako je polje označeno).")] public TekstRubrika R22 { get; set; } = new TekstRubrika();
         [Opis("Rubrika 23 - RID (tekst tačno kako piše, npr. 'X').")] public TekstRubrika R23 { get; set; } = new TekstRubrika();

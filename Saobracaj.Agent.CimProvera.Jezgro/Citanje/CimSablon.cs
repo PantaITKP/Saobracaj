@@ -101,15 +101,32 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 m is double v && Obrazac.PraznoMastilo.TryGetValue(kljuc, out var o) ? Math.Max(0, v - o) : m;
 
             /// <summary>Mastilo koje nije odštampani obrazac (linije, crtice, nazivi rubrika, krugovi) u pravougaoniku šablona.</summary>
-            public double? MastiloU(double[] sablonski, double[] iskljuciNaStrani = null)
+            public double? MastiloU(double[] sablonski, double[] iskljuciNaStrani = null, IEnumerable<double[]> iskljuciJos = null)
             {
                 if (Raster == null || sablonski == null) return null;
                 var r = NaStrani(sablonski);
                 const double ivica = 0.003;
                 var iskljuci = Dodela.Where(d => d.naziv).Select(d => new[] { d.rec.X0 - 0.002, d.rec.Y0 - 0.002, d.rec.X1 + 0.002, d.rec.Y1 + 0.002 })
                     .Concat(Raster.Krugovi().Select(k => new[] { k.X0 - 0.002, k.Y0 - 0.002, k.X1 + 0.002, k.Y1 + 0.002 }))
-                    .Concat(iskljuciNaStrani == null ? Enumerable.Empty<double[]>() : new[] { iskljuciNaStrani });
+                    .Concat(iskljuciNaStrani == null ? Enumerable.Empty<double[]>() : new[] { iskljuciNaStrani })
+                    .Concat(iskljuciJos ?? Enumerable.Empty<double[]>());
                 return Raster.MastiloPodataka(r[0] + ivica, r[1] + ivica, r[2] - ivica, r[3] - ivica, iskljuci);
+            }
+
+            /// <summary>
+            /// v3.0.1 (2.2): udeo mastila podataka rubrike koji pokrivaju pročitane reči (0–1). Mnogo mastila van pročitanih reči = OCR je
+            /// ispustio deo upisa („malo prepoznatih reči“). null bez slike/šablona ili kada rubrika skoro nema mastila.
+            /// </summary>
+            public double? PokrivenostReci(string id)
+            {
+                if (Raster == null || Obrazac == null || !Obrazac.Rubrike.TryGetValue(id, out var r0)) return null;
+                var ugao = NaStrani(new[] { r0[0], r0[1], r0[0] + 0.035, r0[1] + 0.022 });
+                var ukupno = Osnova(MastiloU(r0, ugao), id);
+                if (!(ukupno is double u) || u < 0.004) return null;
+                // reč pokriva svoj pravougaonik uz malu ivicu (delovi slova iznad/ispod linije)
+                var reci = Rubrika(id).Select(w => new[] { w.X0 - 0.003, w.Y0 - 0.004, w.X1 + 0.003, w.Y1 + 0.004 }).ToList();
+                var ostatak = Osnova(MastiloU(r0, ugao, reci), id) ?? 0;
+                return Math.Max(0, Math.Min(1, 1 - ostatak / u));
             }
 
             public double[] KucicaNaStrani(string id) => Obrazac != null && Obrazac.Kucice.TryGetValue(id, out var r0) ? NaStrani(r0) : null;

@@ -256,6 +256,17 @@
           "PRIMER: poravnanje obrasca za svaku stranu posebno; okviri koji izlaze van strane – ponovno poravnanje sa sledećim pouzdanim obrascem, inače oznake uz ivicu + INTERNO „poravnanje strane N nepouzdano“; brojevi u tabeli i u krugovima od 1 na svakom tovarnom listu (zajednički nalazi 1…s, nalazi lista od s+1).",
           "Upis poslova (deo 0a): spisak sa manje kola ili tuđim kolima ne menja posao (INTERNO „spisak (28 kola) ≠ tovarni list (30 kola) – proveriti“); povratak praznih i po oznaci voza/referenci uz suprotan smer; NHM, mase i broj kola grupe samo iz dokumenata grupe; zbirovi masa u celim kg; keš čuva reči i natpise po rubrikama (verzija čitača L22)."
         ]
+      },
+      {
+        "date": "2026-11-18",
+        "version": "3.0.1",
+        "basis": "PROMPT_v3.0.1 i analiza obrade „Osnovni“ (IZVESTAJ_Osnovni_3.0.0)",
+        "changes": [
+          "R16 (odluka korisnika 18.11.): bez pečata/potpisa prevoznika (radna verzija: digitalni dokument, „draft“, sken sa praznom r58a) nedostatak datuma i vremena preuzimanja je upozorenje sa napomenom „Posle overe (pečat prevoznika) nedostatak datuma i vremena smatraće se greškom.“; sa pečatom (r58a sa prevoznikom i mastilom pečata, ispis elektronskog lista) – greška; pečat nije pouzdano prepoznat – upozorenje + INTERNO „pečat nije pouzdano prepoznat“. Nedostatak mesta/stanice ostaje greška.",
+          "R1/R4 (odluka korisnika 18.11.): zemlja ne postoji ni u kom obliku – greška (i kada je grad jednoznačan, „11030 Belgrade“); zemlja u bilo kom obliku koji nije ISO 3166 (naziv na jezicima suseda, ćirilica, SRB, SR, pogrešno napisan naziv) – samo upozorenje R1-ISO/R4-ISO „zemlju upisati po ISO 3166: RS“.",
+          "R30: kod CUV-a (X u polju CUV, CUV u nazivu fajla, prazna kola NHM 9922) polje CIM je s pravom prazno – nema greške; CIT 18 (prateći list) nije CIM – R30 se ne primenjuje; X u polju CIM na CUV-u – upozorenje „označen CIM, a dokument je CUV – proveriti“.",
+          "Nema dokaza – nema tvrdnje: nalaz (greška/upozorenje) u rubrici čiji je tekst nečitljiv po meri polja (OCR pouzdanost, pokrivenost mastila pročitanim rečima, udeo smislenih znakova) ide samo u INTERNO „rN nečitljiva – ručna provera“; mera je u ANALIZA.md. Samoprovera pre slanja: nalaz za pošiljaoca bez pouzdanog dokaza → list na ručnu proveru."
+        ]
       }
     ]
   },
@@ -674,11 +685,11 @@
       "field": "1",
       "severity": "warning",
       "filled_by": "sender",
-      "if": "zemlja pošiljaoca upisana rečima, bez ISO 3166 šifre",
+      "if": "zemlja pošiljaoca upisana u bilo kom obliku koji nije ISO 3166 (naziv, ćirilica, SRB, SR), bez ISO 3166 šifre",
       "then": "ISO 3166 šifra zemlje",
       "basis": "priručnik Prilog 2, rubr. 1",
-      "message": "Rubrika 1: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. RS).",
-      "message_en": "Box 1: the country is written in words – enter the ISO 3166 country code (e.g. RS).",
+      "message": "Rubrika 1: zemlja nije upisana po ISO 3166 – upisati ISO 3166 šifru zemlje (npr. RS).",
+      "message_en": "Box 1: the country is not entered according to ISO 3166 – enter the ISO 3166 country code (e.g. RS).",
       "primer": "…, 21000 Novi Sad, RS",
       "primer_en": "…, 21000 Novi Sad, RS"
     },
@@ -740,11 +751,11 @@
       "field": "4",
       "severity": "warning",
       "filled_by": "sender",
-      "if": "zemlja primaoca upisana rečima, bez ISO 3166 šifre",
+      "if": "zemlja primaoca upisana u bilo kom obliku koji nije ISO 3166 (naziv, ćirilica, SRB, SR), bez ISO 3166 šifre",
       "then": "ISO 3166 šifra zemlje",
       "basis": "priručnik Prilog 2, rubr. 4",
-      "message": "Rubrika 4: zemlja je upisana rečima – upisati ISO 3166 šifru zemlje (npr. IT).",
-      "message_en": "Box 4: the country is written in words – enter the ISO 3166 country code (e.g. IT).",
+      "message": "Rubrika 4: zemlja nije upisana po ISO 3166 – upisati ISO 3166 šifru zemlje (npr. IT).",
+      "message_en": "Box 4: the country is not entered according to ISO 3166 – enter the ISO 3166 country code (e.g. IT).",
       "primer": "…, 44042 Cento, IT",
       "primer_en": "…, 44042 Cento, IT"
     },

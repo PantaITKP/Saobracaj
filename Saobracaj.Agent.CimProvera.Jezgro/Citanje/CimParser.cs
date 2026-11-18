@@ -19,33 +19,6 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","EL","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE",
             "RS","BA","ME","MK","AL","XK","TR","UA","MD","CH","NO","GB","RU","BY","GE","AM","AZ","KZ","CN","IR","MA","DZ","TN",
         };
-        private static readonly Dictionary<string, string> NaziviZemalja = new Dictionary<string, string>
-        {
-            ["srbija"] = "RS", ["serbia"] = "RS", ["serbien"] = "RS", ["serbie"] = "RS", ["србија"] = "RS",
-            ["madjarska"] = "HU", ["mađarska"] = "HU", ["hungary"] = "HU", ["ungarn"] = "HU", ["hongrie"] = "HU",
-            ["grcka"] = "GR", ["grčka"] = "GR", ["greece"] = "GR", ["griechenland"] = "GR",
-            ["bugarska"] = "BG", ["bulgaria"] = "BG", ["bulgarien"] = "BG", ["rumunija"] = "RO", ["romania"] = "RO", ["rumänien"] = "RO",
-            ["hrvatska"] = "HR", ["croatia"] = "HR", ["kroatien"] = "HR", ["slovenija"] = "SI", ["slovenia"] = "SI",
-            ["turska"] = "TR", ["turkey"] = "TR", ["türkiye"] = "TR", ["turkei"] = "TR", ["türkei"] = "TR",
-            ["makedonija"] = "MK", ["macedonia"] = "MK", ["crna gora"] = "ME", ["montenegro"] = "ME",
-            ["austrija"] = "AT", ["austria"] = "AT", ["österreich"] = "AT", ["nemacka"] = "DE", ["nemačka"] = "DE", ["germany"] = "DE", ["deutschland"] = "DE",
-            ["ceska"] = "CZ", ["češka"] = "CZ", ["czech"] = "CZ", ["tschechien"] = "CZ", ["slovacka"] = "SK", ["slovakia"] = "SK", ["slowakei"] = "SK",
-            ["italija"] = "IT", ["italy"] = "IT", ["italien"] = "IT", ["italia"] = "IT", ["poljska"] = "PL", ["poland"] = "PL", ["polen"] = "PL",
-            // rečnik zemalja za r1, r4, r10 (oblici na jezicima CIT obrazaca)
-            ["italie"] = "IT", ["olaszország"] = "IT", ["italien"] = "IT", ["românia"] = "RO", ["roumanie"] = "RO", ["románia"] = "RO", ["rumunjska"] = "RO", ["rumunsko"] = "RO", ["rumänien"] = "RO",
-            ["görögország"] = "GR", ["grèce"] = "GR", ["grecia"] = "GR", ["grčija"] = "GR", ["ελλάδα"] = "GR", ["гърция"] = "GR",
-            ["szerbia"] = "RS", ["serbija"] = "RS", ["srbsko"] = "RS", ["sırbistan"] = "RS", ["сърбия"] = "RS",
-            ["magyarország"] = "HU", ["ungheria"] = "HU", ["maďarsko"] = "HU", ["madžarska"] = "HU", ["ungaria"] = "HU", ["унгария"] = "HU",
-            ["bulgarie"] = "BG", ["bulharsko"] = "BG", ["bulgária"] = "BG", ["българия"] = "BG", ["bugaristan"] = "BG",
-            ["croatie"] = "HR", ["croazia"] = "HR", ["horvátország"] = "HR", ["chorvatsko"] = "HR", ["hırvatistan"] = "HR",
-            ["slovénie"] = "SI", ["slovenien"] = "SI", ["szlovénia"] = "SI", ["slovinsko"] = "SI", ["slovenija"] = "SI",
-            ["autriche"] = "AT", ["ausztria"] = "AT", ["rakousko"] = "AT", ["allemagne"] = "DE", ["germania"] = "DE", ["németország"] = "DE", ["německo"] = "DE",
-            ["république tchèque"] = "CZ", ["csehország"] = "CZ", ["česko"] = "CZ", ["slovaquie"] = "SK", ["szlovákia"] = "SK", ["slovensko"] = "SK",
-            ["turquie"] = "TR", ["turchia"] = "TR", ["törökország"] = "TR", ["turecko"] = "TR", ["türkiye cumhuriyeti"] = "TR",
-            ["macédoine du nord"] = "MK", ["north macedonia"] = "MK", ["severna makedonija"] = "MK", ["bosnia"] = "BA", ["bosna i hercegovina"] = "BA",
-            ["pologne"] = "PL", ["polonia"] = "PL", ["lengyelország"] = "PL", ["polsko"] = "PL",
-        };
-
         private static readonly Regex Datum = new Regex(@"\b(?<d>[0-3]?\d)\s?[./-]\s?(?<m>[01]?\d)\s?[./-]\s?(?<g>(?:20)?\d{2})\b", RegexOptions.Compiled);
         private static readonly Regex DatumIso = new Regex(@"\b(?<g>20\d{2})-(?<m>[01]\d)-(?<d>[0-3]\d)\b", RegexOptions.Compiled);
         private static readonly Regex DatumGmd = new Regex(@"\b(?<g>20\d{2})\s?[./]\s?(?<m>[01]?\d)\s?[./]\s?(?<d>[0-3]?\d)\b", RegexOptions.Compiled);
@@ -79,7 +52,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         {
             if (XRx.IsMatch(t) || Regex.IsMatch(t, @"\d")) return false;
             var n = CimSablon.Norm(t);
-            if (n.Length <= 2) return !(Regex.IsMatch(t.Trim('.', ',', ':'), @"^[A-Z]{2}$") && (IsoZemlje.Contains(t.Trim('.', ',', ':')) || t.StartsWith("KP")));
+            if (n.Length <= 2) return !(Regex.IsMatch(t.Trim('.', ',', ':'), @"^[A-Z]{2}$") && (IsoZemlje.Contains(t.Trim('.', ',', ':')) || Zemlje.Skracenice.ContainsKey(t.Trim('.', ',', ':')) || t.StartsWith("KP")));
             if (Regex.IsMatch(n, @"(.)\1{2,}")) return true;
             return n.Length >= 4 && !Regex.IsMatch(n, @"[aeiouyаеиоу]");
         }
@@ -328,7 +301,11 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 if (rub.Status == StatusRubrike.Prazno && mast is double m && m > prag.Mastilo) { rub.Status = StatusRubrike.Necitljivo; rub.Pouzdanost = 0.3; }
                 // Samo šum OCR-a (ostaci natpisa), a bez mastila podataka: prazno, ne nečitljivo.
                 else if (rub.Status == StatusRubrike.Necitljivo && string.IsNullOrEmpty(rub.Tekst) && mast is double m2 && m2 <= prag.Mastilo) { rub.Status = StatusRubrike.Prazno; rub.Pouzdanost = 1; }
+                // v3.0.1 (2.2): sken – koliki deo mastila rubrike pokrivaju pročitane reči (mera čitljivosti polja)
+                if (strana.Izvor == IzvorTeksta.Ocr && rub.Status == StatusRubrike.Popunjeno && r.PokrivenostReci(id) is double pok) rub.Pokrivenost = Math.Round(pok, 3);
             }
+            // v3.0.1 (1.1): mastilo u r58a (pečat/potpis ugovornog prevoznika) – za odluku da li je list overen
+            c.MastiloR58a = strana.Izvor == IzvorTeksta.Ocr && r.Mastilo("58a") is double m58 ? Math.Round(m58, 4) : -1;
 
             c.ElektronskiIspis = Regex.IsMatch(n, @"ispis elektronskog|ausdruck des elektronischen|print-?out of the electronic|impression de la lettre de voiture electronique");
             c.NapomenaIspisa = c.ElektronskiIspis;
@@ -353,8 +330,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // (PDV/PIB broj "RS101938497" nije šifra zemlje: šifra mora biti odvojena od cifara razmakom ili crticom)
             foreach (Match m in Regex.Matches(t, @"(?<![A-Za-z0-9])([A-Z]{2})(?=[\s\-]+\d|\s*$|\s*\n|,)"))
                 if (IsoZemlje.Contains(m.Groups[1].Value)) { s.SifraZemlje = m.Groups[1].Value == "EL" ? "GR" : m.Groups[1].Value; break; }
-            var nk = t.ToLowerInvariant();
-            s.NazivZemlje = NaziviZemalja.Keys.FirstOrDefault(z => Regex.IsMatch(nk, @"(?<!\p{L})" + Regex.Escape(z) + @"(?!\p{L})")) ?? "";
+            // v3.0.1: zemlja u bilo kom obliku (naziv na jezicima suseda, ćirilica, skraćenica „SRB“, pokvaren naziv „Srbijja“) – kako je upisana
+            s.NazivZemlje = Zemlje.Nadji(t);
             var bezKontakta = linije.Where(l => !Regex.IsMatch(l, @"@|(?:\+|00)\d{5}|\b(tel|fax|e-?mail|vat|pdv|pib|dič|ust|tva)\b", RegexOptions.IgnoreCase)).ToList();
             s.Naziv = bezKontakta.FirstOrDefault() ?? "";
             s.Adresa = string.Join(", ", bezKontakta.Skip(1));
@@ -408,9 +385,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
         private static string Zemlja(string t)
         {
-            var nk = (t ?? "").ToLowerInvariant();
-            var naziv = NaziviZemalja.Keys.FirstOrDefault(z => Regex.IsMatch(nk, @"(?<!\p{L})" + Regex.Escape(z) + @"(?!\p{L})"));
-            if (naziv != null) return naziv;
+            var naziv = Zemlje.Nadji(t);
+            if (naziv.Length > 0) return naziv;
             var m = Regex.Match(t ?? "", @"(?<![A-Za-z])(RS|HU|RO|BG|GR|HR|SI|MK|ME|BA|TR|CZ|SK|AT|DE|IT|PL)(?![A-Za-z])");
             return m.Success ? m.Value : "";
         }

@@ -133,7 +133,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             string Opis() => string.Join("\n", svi.Select(n => n.Tezina + " " + n.Pravilo + " r" + n.Rubrika + ": " + n.Detalj));
             bool Ima(string pravilo, string rub, string tezina) => svi.Any(n => n.Pravilo == pravilo && n.Rubrika == rub && n.Tezina == tezina);
             // greške iz reference
-            Assert.IsTrue(Ima("R16", "16", Tezina.Greska), "r16\n" + Opis());
+            Assert.IsTrue(Ima("R16", "16", Tezina.Upozorenje), "r16 – v3.0.1: Word nacrt bez pečata prevoznika, upozorenje\n" + Opis());
             Assert.IsTrue(Ima("R29", "29", Tezina.Greska), "r29\n" + Opis());
             Assert.IsTrue(svi.Any(n => n.Rubrika == "9" && n.Tezina == Tezina.Greska), "r9 – spisak kola nije priložen\n" + Opis());
             // upozorenja / preporuke iz reference
@@ -155,7 +155,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var pr = PrimerPdf.Napravi(Cuv().Provera, pravila, false, new[] { (CuvIme, File.ReadAllBytes(p)) });
             Assert.IsTrue(pr.Napravljen, pr.Razlog + " " + pr.Greska);
             Assert.AreEqual(1, pr.Strane.Count, "v2.8.1: samo strana lista, bez legende");
-            Assert.IsTrue(pr.PoListu.Single().ispravki >= 4);
+            Assert.IsTrue(pr.PoListu.Single().ispravki >= 3, "v3.0.1: r16 je napomena (bez pečata)");
         }
 
         // ------------------------------------------------------------------------------------------- ručna provera

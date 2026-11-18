@@ -84,6 +84,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public bool KpRezim;
         public List<Nalaz> Nalazi = new List<Nalaz>();
         public bool ZaRucnuProveru;
+        /// <summary>v3.0.1 (3.5): dosije je prepoznao isti tovarni list iz ranijeg maila („UID 46“) – mail se vezuje za taj posao i kada je r62 nesiguran.</summary>
+        public string DosijeVeza;
+        /// <summary>v3.0.1 (3.5): skenirana i overena verzija već proverenog digitalnog lista (isti list – ne dodaje nova kola ni mase).</summary>
+        public bool OverenaVerzija;
     }
 
     internal sealed class RezultatProvere
@@ -107,6 +111,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public List<Cit7Rezultat> Cit7 = new List<Cit7Rezultat>();
         /// <summary>v2.8.4 (8): uvod iz dosijea („Ovo je nova verzija tovarnog lista od …“ / „skenirana i overena verzija…“); null ako nema.</summary>
         public string UvodDosijea;
+        /// <summary>v3.0.1 (2.3): samoprovera pre slanja – nalazi za pošiljaoca bez pouzdanog dokaza („list: pravilo rN“); prazno = sve u redu.</summary>
+        public List<string> BezDokaza = new List<string>();
 
         /// <summary>Isti rezultat bez nalaza "samo interno" (izveštaj za spoljnog pošiljaoca).</summary>
         public RezultatProvere BezInternih() => new RezultatProvere
@@ -237,6 +243,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     }
                 }
 
+                // v3.0.1 (2.2): „nema dokaza – nema tvrdnje“. Nalaz (greška ili upozorenje) u rubrici čiji je tekst nečitljiv po meri polja
+                // (niska pouzdanost OCR-a, malo prepoznatih reči, većina znakova bez smisla) ne ide pošiljaocu – samo INTERNO „rubrika N nečitljiva – ručna provera“.
+                NecitljivaPolja(rl, k, u.Engleski);
+                if (rl.Nalazi.Any(n => n.SamoInterno && System.Text.RegularExpressions.Regex.IsMatch(n.Tekst ?? "", @"^(r\d+[a-z]? nečitljiva – ručna provera|(r|Box )\d+[a-z]? unreadable – manual check)"))) rl.ZaRucnuProveru = true;
+
                 // (bez duplikata: pravilo R62 je već dalo internu napomenu „r62 nečitljiva – proveriti ručno“)
                 if (r62Procitano != null && !rl.Nalazi.Any(n => n.Rubrika == "62" && (n.Tekst ?? "").StartsWith("r62 nečitljiva")))
                 {
@@ -299,7 +310,59 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     rl.Nalazi.Add(new Nalaz { Pravilo = "PRIMER-KONTROLA", Rubrika = n.Rubrika, Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tekst, Uputstvo = tekst, SamoInterno = true, Kljuc = "primer-kontrola|" + n.Rubrika + "|" + n.Pravilo });
                     rl.ZaRucnuProveru = true;
                 }
+                // v3.0.1 (2.3): samoprovera pre slanja – svaka greška/upozorenje za pošiljaoca mora imati pouzdan dokaz; inače list ide na ručnu proveru
+                foreach (var bd in BezDokaza(rl))
+                {
+                    rez.BezDokaza.Add(rl.Oznaka + ": " + bd.Pravilo + " r" + bd.Rubrika);
+                    rl.ZaRucnuProveru = true;
+                }
                 rez.Listovi.Add(rl);
+            }
+            return rez;
+        }
+
+        /// <summary>Rubrike čiji nalazi ne zavise od teksta polja (oznake X, opšti nalazi).</summary>
+        private static readonly HashSet<string> BezMereTeksta = new HashSet<string>(StringComparer.Ordinal) { "–", "30", "22", "23", "62" };
+        private static readonly HashSet<string> BezMerePravila = new HashSet<string>(StringComparer.Ordinal) { "CITLJIVOST", "OBRAZAC", "R62-NECITLJIVA", "NECITLJIVO-POLJE", "PRIMER-KONTROLA" };
+
+        /// <summary>Mera čitljivosti rubrike sa lista (null ako rubrika ne postoji).</summary>
+        internal static Citljivost.Mera MeraRubrike(CimList c, string rubrika, bool sken)
+        {
+            var r = RubrikaLista(c, rubrika);
+            return r == null ? null : Citljivost.Izmeri(r, sken);
+        }
+
+        /// <summary>v3.0.1 (2.2): nalazi u nečitljivim poljima → jedna INTERNO napomena po rubrici („r7 nečitljiva – ručna provera“).</summary>
+        internal static void NecitljivaPolja(RezultatLista rl, Kontekst k, bool en)
+        {
+            foreach (var g in rl.Nalazi.Where(n => !n.SamoInterno && (n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje)
+                                                   && !BezMereTeksta.Contains(n.Rubrika ?? "–") && !BezMerePravila.Contains(n.Pravilo)).GroupBy(n => n.Rubrika).ToList())
+            {
+                var m = MeraRubrike(rl.Cim, g.Key, k.Ocr);
+                if (m == null || !m.Necitljivo) continue;
+                var pravila = string.Join(", ", g.Select(n => n.Pravilo).Distinct());
+                foreach (var n in g) rl.Nalazi.Remove(n);
+                var tekst = en
+                    ? "Box " + g.Key + " unreadable – manual check: " + pravila + " is not reported to the sender (" + m.Razlog() + "; " + m.Opis() + "). Agent read: " + TekstRubrike(rl.Cim, g.Key)
+                    : "r" + g.Key + " nečitljiva – ručna provera: " + pravila + " se ne prijavljuje pošiljaocu (" + m.Razlog() + "; " + m.Opis() + "). Agent je pročitao: " + TekstRubrike(rl.Cim, g.Key);
+                Dodaj(rl.Nalazi, new Nalaz { Pravilo = "NECITLJIVO-POLJE", Rubrika = g.Key, Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tekst, Uputstvo = tekst, SamoInterno = true,
+                                             Vrednost = TekstRubrike(rl.Cim, g.Key), Kljuc = "necitljivo-polje|" + g.Key });
+                rl.ZaRucnuProveru = true;
+            }
+        }
+
+        /// <summary>v3.0.1 (2.3): nalazi za pošiljaoca (greška/upozorenje, ne interno) čiji dokaz nije pouzdan (nečitljiva rubrika, prazan dokaz).</summary>
+        internal static List<Nalaz> BezDokaza(RezultatLista rl)
+        {
+            var rez = new List<Nalaz>();
+            if (rl?.Cim == null) return rez;
+            var sken = rl.Dokument?.Izvor == "ocr";
+            foreach (var n in rl.Nalazi.Where(n => !n.SamoInterno && (n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje)))
+            {
+                if (BezMereTeksta.Contains(n.Rubrika ?? "–") || BezMerePravila.Contains(n.Pravilo)) continue;
+                var r = RubrikaLista(rl.Cim, n.Rubrika);
+                if (r == null) continue;
+                if (!Citljivost.DokazPouzdan(r.Status, r.Tekst, Citljivost.Izmeri(r, sken))) rez.Add(n);
             }
             return rez;
         }

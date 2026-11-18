@@ -259,6 +259,9 @@ namespace Saobracaj.Agent.CimRadionica
                 if (MessageBox.Show("Obrisati PODATKE iz planiranje.tmp* (DELETE; tmpSinonimi i tmpNHM ostaju)?", "Brisanje tmp podataka", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
                 try { RadniProstor.ObrisiTmpPodatke(konekcija); } catch (Exception ex) { MessageBox.Show("Brisanje nije uspelo: " + ex.Message); return; }
             }
+            // v3.0.1 (4.3): bez Syncfusion ključa Word prilozi se ne čitaju – jasno na početku obrade
+            if (!Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.UcitajKljuc()
+                && MessageBox.Show(PorukaBezSyncfusion() + Environment.NewLine + Environment.NewLine + "Nastaviti obradu bez Word priloga?", "Syncfusion ključ", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             radi = true;
             var hron = rp.Hronoloski();
             var redom = stavke.Distinct().OrderBy(s => hron.IndexOf(s)).ToList();
@@ -331,6 +334,11 @@ namespace Saobracaj.Agent.CimRadionica
         /// v3.0 (odluka 18.11.): pred-čitanje – poruke se dele na BrojRadnika radnika koji istovremeno čitaju priloge (OCR) u keš; ništa se ne
         /// obrađuje ni ne upisuje. Hronološka obrada posle ide iz keša jednim radnikom, pa najviše BrojRadnika procesa radi u isto vreme.
         /// </summary>
+        /// <summary>v3.0.1 (4.3): poruka kada Syncfusion ključ nije podešen za ovaj nalog (bez vrednosti ključa).</summary>
+        internal static string PorukaBezSyncfusion() =>
+            "Syncfusion licencni ključ nije podešen za nalog " + Environment.UserName + " (" + Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.StanjeKljuca + "). "
+            + "Word prilozi (.doc/.docx/.rtf) neće biti pročitani i idu na ručnu proveru. Podešavanje: ponovo pokrenuti Instaliraj-CimRadionica.ps1 (unos ključa).";
+
         internal static void PredCitaj(string koren, List<string> kljucevi, Podesavanja p, string konekcija, Action<string> red)
         {
             var n = Math.Max(1, Math.Min(p.BrojRadnika, kljucevi.Count));

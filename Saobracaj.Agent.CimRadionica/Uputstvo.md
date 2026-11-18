@@ -7,6 +7,8 @@ CimRadionica je alat za testiranje agenta CimProvera. Koristi isto jezgro kao ag
 - `kes\` – keš čitanja;
 - `sifarnici\` – kopija šifarnika za offline.
 
+**Instalacija** (`Instaliraj-CimRadionica.ps1`): kopija programa, prečica i – od v3.0.1 – unos Syncfusion licencnog ključa (skriveni unos; Enter = bez ključa). Ključ se čuva samo šifrovan (DPAPI, vaš nalog) u `%LOCALAPPDATA%\Saobracaj\CimProvera\Syncfusion.dpapi`; ne ide u repo ni u log. Bez ključa Word prilozi (.doc/.docx/.rtf) se ne čitaju (ručna provera) i alat to javlja **na početku obrade**.
+
 ## 1. Uvoz (kartica Poruke)
 - **Radni prostor**: izaberite postojeći (npr. `Osnovni`) ili dugme **Novi…**. Svaki radni prostor ima svoj dosije i ponavljanja.
 - **Uvezi fajlove**: `.msg` (Outlook), `.eml`, `.zip` (sa porukama).

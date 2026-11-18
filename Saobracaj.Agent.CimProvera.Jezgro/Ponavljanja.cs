@@ -73,7 +73,8 @@ namespace Saobracaj.Agent.CimProvera
         /// </summary>
         public Zapis IstiPrilozi(IEnumerable<(string ime, byte[] sadrzaj)> prilozi)
         {
-            var znacajni = prilozi.Where(p => p.sadrzaj != null && p.sadrzaj.Length >= MinBajtova).ToList();
+            // v3.0.1 (4.1): slike iz potpisa (logo, baner – i veće od 10 KB, image001.png 190 KB) ne određuju ponavljanje
+            var znacajni = prilozi.Where(p => p.sadrzaj != null && p.sadrzaj.Length >= MinBajtova && Raspakivanje.Ukras(p.ime, p.sadrzaj) == null).ToList();
             if (znacajni.Count == 0) return null;
             Zapis prvi = null;
             foreach (var p in znacajni)
@@ -86,7 +87,7 @@ namespace Saobracaj.Agent.CimProvera
 
         public void ZapamtiPriloge(IEnumerable<(string ime, byte[] sadrzaj)> prilozi, string oznaka, string ishod, DateTime vreme)
         {
-            foreach (var p in prilozi.Where(x => x.sadrzaj != null && x.sadrzaj.Length >= MinBajtova))
+            foreach (var p in prilozi.Where(x => x.sadrzaj != null && x.sadrzaj.Length >= MinBajtova && Raspakivanje.Ukras(x.ime, x.sadrzaj) == null))
             {
                 var h = Hes(p.sadrzaj);
                 if (!Prilozi.ContainsKey(h)) Prilozi[h] = new Zapis { Oznaka = oznaka, Vreme = vreme, Ishod = ishod };

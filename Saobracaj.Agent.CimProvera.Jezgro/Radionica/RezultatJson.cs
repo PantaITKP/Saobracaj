@@ -109,6 +109,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 ["tip"] = d.Tip, ["mesto"] = d.MestoTekst, ["mesto_id"] = d.MestoID, ["vreme"] = d.Vreme?.ToString("yyyy-MM-dd HH:mm zzz", CultureInfo.InvariantCulture) ?? "",
                 ["vreme_tekst"] = d.VremeTekst, ["zona"] = d.VremenskaZona, ["vrednost"] = d.Vrednost, ["recenica"] = d.Recenica, ["jezik"] = d.Jezik,
                 ["pouzdanost"] = d.Pouzdanost, ["izraz"] = d.Izraz, ["raspon"] = d.Raspon,
+                ["posao"] = d.Posao ?? "", ["veza"] = d.Veza ?? "", ["kandidati"] = new JArray(d.Kandidati ?? new List<string>()),
             }));
             o["trajanje"] = new JObject(r.Trajanje.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => new JProperty(kv.Key, Math.Round(kv.Value, 1))));
             if (!string.IsNullOrEmpty(r.Greska)) o["greska"] = r.Greska;
@@ -127,6 +128,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             {
                 case "Preskoceno": return "preskočeno (sopstveni odgovor / automatska poruka)";
                 case "BezPriloga": return "mail bez priloga – bez odgovora";
+                case "SamoPotpis": return "nema dokumenata (samo slike iz potpisa) – bez odgovora";
                 case "IstiPrilog": return "isti prilog kao ranije – bez odgovora (prijem zabeležen)";
                 case "IstiList": return "isti tovarni list, nepromenjen – bez novog izveštaja";
                 case "NemaCim": case "SamoSpisak": return "nema CIM/CUV – bez odgovora";
@@ -158,7 +160,9 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 var vrednostDela = new Dictionary<string, string> { ["zemlja"] = c.R62.Zemlja, ["stanica"] = c.R62.Stanica, ["preduzeće"] = c.R62.Preduzece, ["broj otpravljanja"] = c.R62.Broj };
                 o["r62_nesigurno"] = new JArray(nes.Select(kv => new JObject { ["deo"] = kv.Key, ["vrednost"] = vrednostDela.TryGetValue(kv.Key, out var v) ? v ?? "" : "", ["pouzdanost"] = kv.Value }));
                 o["r62_za_odluke"] = !c.R62.NepouzdanaZaOdluke && nes.Count == 0;
-                o["rubrike"] = Rubrike(c);
+                o["rubrike"] = Rubrike(c, l.Dokument?.Izvor == "ocr");
+                // v3.0.1 (2.3): samoprovera – nalazi za pošiljaoca bez pouzdanog dokaza (mora biti prazno)
+                o["bez_dokaza"] = new JArray(Motor.BezDokaza(l).Select(n => n.Pravilo + " r" + n.Rubrika));
             }
             o["nalazi"] = new JArray(l.Nalazi.SelectMany(n => new[] { n }.Concat(n.Takodje)).Select(n => new JObject
             {
@@ -171,13 +175,17 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         }
 
         /// <summary>Sve rubrike lista: r1 … r99 → status, pročitan tekst (sirov), pouzdanost.</summary>
-        internal static JObject Rubrike(CimList c)
+        internal static JObject Rubrike(CimList c, bool sken = false)
         {
             var o = new JObject();
             foreach (var p in typeof(CimList).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => typeof(Rubrika).IsAssignableFrom(p.PropertyType)))
             {
                 if (!(p.GetValue(c) is Rubrika r)) continue;
-                o[p.Name.ToLowerInvariant()] = new JObject { ["status"] = r.Status ?? "", ["tekst"] = r.Tekst ?? "", ["pouzdanost"] = Math.Round(r.Pouzdanost, 2) };
+                var jo = new JObject { ["status"] = r.Status ?? "", ["tekst"] = r.Tekst ?? "", ["pouzdanost"] = Math.Round(r.Pouzdanost, 2) };
+                // v3.0.1 (2.2): mera čitljivosti polja (sken, popunjena rubrika)
+                var m = Citljivost.Izmeri(r, sken);
+                if (m.Merena) jo["citljivost"] = new JObject { ["ukupno"] = Math.Round(m.Ukupno, 2), ["ocr"] = Math.Round(m.Ocr, 2), ["pokrivenost"] = Math.Round(m.Pokrivenost, 2), ["smisao"] = Math.Round(m.Smisao, 2), ["necitljivo"] = m.Necitljivo };
+                o[p.Name.ToLowerInvariant()] = jo;
             }
             return o;
         }

@@ -170,7 +170,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             Assert.AreEqual(1, i.Provera.Listovi.Count, Opis(i));
             Assert.AreEqual("ZS-EUROLOG", List(i).Sablon);
-            Ocekuje(i, Tezina.Greska, "16", "R16", "datum");
+            Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
             // v2.8.2: oznake bez brojeva („Tara: / Netto: / Bruto:“) – „masa nije upisana kao broj“
             Ocekuje(i, Tezina.Greska, "25", "R25-MASA", "nije upisana kao broj"); NeSme(i, "R25");
             Ocekuje(i, Tezina.Greska, "29", "R29");
@@ -222,7 +222,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual("CUV", List(i).Obrazac);
             Assert.AreEqual("K-505", List(i).Sablon);
             CollectionAssert.Contains(i.Provera.Listovi[0].Dokument.Strane, 2);
-            Ocekuje(i, Tezina.Greska, "16", "R16", "datum");
+            Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
             Ocekuje(i, Tezina.Greska, "29", "R29");
             NeSme(i, "R57"); NeSme(i, "R57-DEONICA");
             Ocekuje(i, Tezina.Upozorenje, "7", "KP7-NEJASNO", "16.IŽS: KP 3212");
@@ -254,7 +254,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // greške
             NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP7-NEJASNO");
             Assert.AreEqual("Platilac za deonicu kroz Srbiju: Lokomotiva doo.", Svi(i).Single(n => n.Pravilo == "KP7-INFO").Tekst);
-            Ocekuje(i, Tezina.Greska, "16", "R16", "datum");
+            Ocekuje(i, Tezina.Greska, "16", "R16", "datum");   // v3.0.1 (R16): sken sa pečatom prevoznika u r58a – greška
             Ocekuje(i, Tezina.Greska, "21", "R21-EWC", "otpad", primer: "12 01 01"); Ocekuje(i, Tezina.Greska, "21", "R21-EWC", primer: "19 12 02");
             Ocekuje(i, Tezina.Greska, "29", "R29", "Ruma"); Ocekuje(i, Tezina.Greska, "29", "R29", "datum ispostavljanja");
             NeSme(i, "R57"); NeSme(i, "R57-DEONICA");
@@ -407,16 +407,16 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Greska, "1", "R1", "zemlja");
             Ocekuje(i, Tezina.Greska, "9", "G3", "WAGON LIST");
             Ocekuje(i, Tezina.Upozorenje, "18", "R18-SPISAK", "WAGON LIST"); NeSme(i, "X26");
-            Ocekuje(i, Tezina.Greska, "16", "R16", "datum");
+            Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
             Ocekuje(i, Tezina.Preporuka, "24", "R24-NHM6", "9922", primer: "992200"); NeSme(i, "R24");
             Ocekuje(i, Tezina.Preporuka, "25", "R25-MASA", "praznih kola", primer: "Tara"); NeSme(i, "R25"); Assert.IsFalse(Svi(i).Any(n => n.Pravilo == "R25-MASA" && n.Tezina == Tezina.Greska), "9922: samo preporuka");
             Ocekuje(i, Tezina.Greska, "7", "KP7-PLATILAC", "Payer for SZ is Ferest Rail");
-            Assert.AreEqual(4, i.Provera.BrojGresaka, Opis(i));
+            Assert.AreEqual(3, i.Provera.BrojGresaka, Opis(i));   // v3.0.1: R16 je upozorenje (bez pečata)
             // upozorenja
             Ocekuje(i, Tezina.Upozorenje, "4", "R4-ISO", "Romania");
             Ocekuje(i, Tezina.Upozorenje, "21", "X30", "31 wgs");
             Ocekuje(i, Tezina.Upozorenje, "14", "R14");
-            Assert.AreEqual(4, i.Provera.BrojUpozorenja, Opis(i));
+            Assert.AreEqual(5, i.Provera.BrojUpozorenja, Opis(i));   // + R16 (v3.0.1)
             // ne sme
             NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP7-INFO"); NeSme(i, "KP57"); NeSme(i, "KP3"); NeSme(i, "R30"); NeSme(i, "R57"); NeSme(i, "R57-DEONICA"); NeSme(i, "R12"); NeSme(i, "R20"); NeSme(i, "R29"); NeSme(i, "R62");
             NeSme(i, "R58A"); NeSme(i, "R49"); NeSme(i, "OBRAZAC");

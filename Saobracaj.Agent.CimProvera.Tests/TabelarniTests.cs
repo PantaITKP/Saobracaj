@@ -224,7 +224,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             StringAssert.Contains(telo, "Platilac za deonicu kroz Srbiju: Budamar Logistics a.s.");
             var svi = r.Listovi.SelectMany(l => l.Nalazi).ToList();
             string Opis() => string.Join("\n", svi.Select(n => n.Tezina + " " + n.Pravilo + " r" + n.Rubrika + ": " + n.Detalj));
-            foreach (var (pr, rub) in new[] { ("R16", "16"), ("R24", "24"), ("R1", "1") }) Assert.IsTrue(svi.Any(n => n.Pravilo == pr && n.Rubrika == rub && n.Tezina == Tezina.Greska), pr + "\n" + Opis());
+            // v3.0.1 (odluka 18.11.): Excel tovarni list nema pečat prevoznika – datum/vreme preuzimanja je upozorenje
+            Assert.IsTrue(svi.Any(n => n.Pravilo == "R16" && n.Tezina == Tezina.Upozorenje && n.Tekst.Contains("Posle overe")), "R16\n" + Opis());
+            foreach (var (pr, rub) in new[] { ("R24", "24"), ("R1", "1") }) Assert.IsTrue(svi.Any(n => n.Pravilo == pr && n.Rubrika == rub && n.Tezina == Tezina.Greska), pr + "\n" + Opis());
             Assert.IsTrue(svi.Any(n => n.Rubrika == "9" && n.Tezina == Tezina.Greska), "r9 prazna\n" + Opis());
             foreach (var (pr, rub) in new[] { ("R4-ISO", "4"), ("R14", "14"), ("R22", "22"), ("X5", "7") }) Assert.IsTrue(svi.Any(n => n.Pravilo == pr && n.Rubrika == rub && n.Tezina == Tezina.Upozorenje), pr + "\n" + Opis());
             foreach (var pr in new[] { "KP7-PLATILAC", "KP7-NIJE-PLATILAC", "KP3", "KP57", "R18-SPISAK", "R25-MASA", "R29", "R30", "CITLJIVOST", "R10" })
@@ -247,8 +249,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsFalse(pr.Upisi.Any(u => Pravila.Dopune.OpisFormata.IsMatch(u.Dopuna)), string.Join("\n", pr.Upisi));
             var (_, isp, nap, leg) = pr.PoListu.Single();
             // v3.0 (2.9.3 tačka 3): list drugog prevoznika – prazna r58a je napomena (upozorenje), ne ispravka
-            Assert.AreEqual(4, isp, "r1, r9, r16 i r24 ucrtane na listu");
-            Assert.IsTrue(nap >= 5, "r4, r7, r14, r22 i r58a na listu: " + nap);
+            Assert.AreEqual(3, isp, "r1, r9 i r24 ucrtane na listu (r16 je od v3.0.1 napomena – list bez pečata)");
+            Assert.IsTrue(nap >= 6, "r4, r7, r14, r16, r22 i r58a na listu: " + nap);
             Assert.IsTrue(pr.Pdf.Length > 1000 && pr.Pdf.Length < PrimerPdf.MaxBajtova);
             StringAssert.StartsWith(System.Text.Encoding.ASCII.GetString(pr.Pdf, 0, 5), "%PDF");
         }
