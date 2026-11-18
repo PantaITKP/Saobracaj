@@ -867,8 +867,8 @@
       "basis": "interna odluka KP 2026-11-12",
       "message": "Rubrika 14: preporučujemo da upišete broj ponude Kombinovanog prevoza.",
       "message_en": "Box 14: we recommend entering the Kombinovani prevoz offer number.",
-      "primer": "broj ponude KP, npr. KP 2026/123",
-      "primer_en": "KP offer number, e.g. KP 2026/123"
+      "primer": "broj ponude KP (ceo broj), npr. 8957",
+      "primer_en": "KP offer number (whole number), e.g. 8957"
     },
     {
       "id": "R15",

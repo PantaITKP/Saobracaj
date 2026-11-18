@@ -688,6 +688,15 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // v2.8.4: pouzdanost samih cifara (HOLCIM: 72 162032 3212 146100 sa 0,93–0,96 uz šum „+ gs“; YU DIN rukom: 0,69–0,75)
             r.PouzdanostCifara = ocr ? ciste.Where(w => Regex.IsMatch(w.T, @"\d.*\d") && !Regex.IsMatch(w.T, @"\p{L}")).Select(w => w.Pouzdanost).DefaultIfEmpty(1).Min() : 1;
             r.OcrSum = ocr && ciste.Any(w => Regex.IsMatch(w.T, @"\p{L}\p{L}?\d|\d\p{L}"));
+            // v3.0 (e): pouzdanost svakog dela r62 (reči čije cifre čine deo) – deo ispod praga za r62 je nesiguran (ANALIZA.md, nije ključ)
+            if (ocr)
+                foreach (var (ime, vrednost) in new[] { ("zemlja", r.Zemlja), ("stanica", r.Stanica), ("preduzeće", r.Preduzece), ("broj otpravljanja", r.Broj) })
+                {
+                    var cif = Regex.Replace(vrednost ?? "", @"\D", "");
+                    if (cif.Length == 0) continue;
+                    var p = ciste.Where(w => { var wc = Regex.Replace(w.T ?? "", @"\D", ""); return wc.Length >= 2 && (wc.Contains(cif) || cif.Contains(wc)); }).Select(w => w.Pouzdanost).DefaultIfEmpty(1).Min();
+                    if (p < Pravila.Motor.PragR62) r.NesigurniDelovi[ime] = Math.Round(p, 2);
+                }
             return r;
         }
 

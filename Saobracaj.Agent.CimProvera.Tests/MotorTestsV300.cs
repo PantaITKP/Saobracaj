@@ -217,5 +217,76 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var s3 = new Scenario(); s3.C.R26 = F(new Iznos { Vrednost = "128", Valuta = "" }, "128"); s3.C.R26.Pouzdanost = 0.4;
             Assert.IsFalse(Svi(Proveri(s3)).Any(n => (n.Pravilo == "X12" || n.Pravilo == "R26") && n.Tezina == Tezina.Upozorenje), string.Join(" | ", Svi(Proveri(s3))));
         }
+
+        // ------------------------------------------------------------------------------------------- pregled probnog _Analiza (18.11.)
+
+        [TestMethod]
+        public void R57_sken_deo_sifre_212_KP_a_r13_3212_samo_interno()
+        {
+            // (a) mail 782: r57 „212 KP, \ Dimitrovgrad gr. Prahovo“ (OCR), r13 „43.3 BDZ: 3057; 3212“
+            var s = new Scenario { IzvorCim = "ocr" };
+            s.C.R57.Prevoznici.Clear(); s.C.R57.Tekst = "2 пс\n4057 вуке j Povelyanovo - Dragoman gr.\n212 KP,   \\   Dimitrovgrad gr. Prahovo";
+            s.C.R13.Tekst = "43.1 via Dragoman/Dimitrovgrad gr\n43.3 BDZ:   3057;   3212";
+            var r = Proveri(s);
+            Assert.IsFalse(Svi(r).Any(n => n.Pravilo == "KP57" && !n.SamoInterno), string.Join(" | ", Svi(r)));
+            var n57 = Svi(r).Single(n => n.Pravilo == "KP57");
+            Assert.AreEqual(Tezina.Info, n57.Tezina);
+            StringAssert.Contains(n57.Tekst, "proveriti ručno");
+            // bez 3212 u r13 – ostaje upozorenje „dopisati UIC 3212“
+            s.C.R13.Tekst = "43.1 via Dragoman/Dimitrovgrad gr"; s.C.R13.Stavke.Clear();
+            Assert.IsTrue(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57" && !n.SamoInterno && n.Tekst.Contains("3212")), string.Join(" | ", Svi(Proveri(s)).Select(n => n.Pravilo + ":" + n.Tezina + ":" + n.SamoInterno + ":" + n.Tekst)));
+            Assert.IsTrue(Provere.DeoSifreUzKp("212 KP, Dimitrovgrad", "3212") && Provere.DeoSifreUzKp("RS: KP 321", "3212") && !Provere.DeoSifreUzKp("KP 45", "3212"));
+        }
+
+        [TestMethod]
+        public void R14_primer_je_ceo_broj_ponude()
+        {
+            // (b) ponuda je ceo broj („8957“), ne „KP 2026/123“
+            var s = new Scenario(); s.C.R14 = new TekstRubrika();
+            var n = Prvi(Proveri(s), "R14");
+            StringAssert.Contains(n.Primer, "8957");
+            Assert.IsFalse((n.Primer ?? "").Contains("2026/123"));
+        }
+
+        [TestMethod]
+        public void R20_mesto_u_koloni_jusqu_a_bis_nema_upozorenja()
+        {
+            // (d) mail 782: „Franko prevoznina (X) x   Dragoman / FCA“ – Dragoman je u koloni „jusqu'à / bis“
+            var s = new Scenario { IzvorCim = "ocr" };
+            s.C.R20 = F(new TekstRubrika(), "Franko prevoznina (X) x   Dragoman\nFCA");
+            Assert.IsFalse(Ima(Proveri(s), "R20-INCO"), string.Join(" | ", Svi(Proveri(s))));
+            var t = new Scenario { IzvorCim = "ocr" };
+            t.C.R20 = F(new TekstRubrika(), "Franko prevoznina (X)\nFCA");
+            Assert.IsTrue(Ima(Proveri(t), "R20-INCO"), "bez mesta – upozorenje ostaje");
+            Assert.AreEqual("Dragoman", Provere.MestoIzKoloneBis("Franko prevoznina (X) x   Dragoman "));
+            Assert.AreEqual("", Provere.MestoIzKoloneBis("Frachtfrei bis (X) Incoterms 2020"));
+        }
+
+        [TestMethod]
+        public void R62_rukom_nesiguran_broj_otpravljanja_nije_kljuc()
+        {
+            // (e) mail 782: „001784“ rukom, OCR „007777“ niske pouzdanosti – deo je nesiguran, r62 nije siguran ključ
+            Saobracaj.Agent.CimProvera.Citanje.Rec W(string t, double x, double p) => new Saobracaj.Agent.CimProvera.Citanje.Rec { T = t, X0 = x, X1 = x + 0.05, Y0 = 0.92, Y1 = 0.94, Pouzdanost = p, Font = "" };
+            var id = Saobracaj.Agent.CimProvera.Citanje.CimParser.Identifikacija(new List<Saobracaj.Agent.CimProvera.Citanje.Rec> { W("52", 0.60, 0.96), W("290239", 0.66, 0.95), W("3057", 0.74, 0.96), W("007777", 0.85, 0.42) });
+            Assert.AreEqual("007777", id.Broj);
+            Assert.IsTrue(id.NesigurniDelovi.ContainsKey("broj otpravljanja"), string.Join(", ", id.NesigurniDelovi.Keys));
+            Assert.IsFalse(id.NesigurniDelovi.ContainsKey("stanica"));
+            var c = IspravanCim(); c.R62 = id; c.PouzdanostStrane = 0.8;
+            Assert.IsTrue(Motor.R62Nepouzdana(c));
+            Assert.IsFalse((Ponavljanja.KljucLista(c) ?? "").StartsWith("r62:"), "nesigurna r62 nije ključ ponavljanja");
+        }
+
+        [TestMethod]
+        public void Adrese_bez_viska_navodnika_u_Za_Cc_i_Live_primaocima()
+        {
+            // (f) mail 429: „<eredhungarykft@gmail.com'>“ u zaglavlju; „'priprema@kprevoz.co.rs'“ (158 puta u sandučetu)
+            var m = MimeKit.MimeMessage.Load(new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(
+                "From: dispo@crw.sk\r\nTo: hombauer@budamar.sk, \"Ered\" <eredhungarykft@gmail.com'>\r\nCc: 'priprema@kprevoz.co.rs'\r\nSubject: Aviso\r\nMessage-ID: <a@b>\r\n\r\ntelo\r\n")));
+            CollectionAssert.AreEqual(new[] { "hombauer@budamar.sk", "eredhungarykft@gmail.com" }, PrimaociLive.Adrese(m.To).ToArray());
+            CollectionAssert.AreEqual(new[] { "priprema@kprevoz.co.rs" }, PrimaociLive.Adrese(m.Cc).ToArray());
+            var live = PrimaociLive.Iz(m, null);
+            Assert.IsTrue(live.To.Contains("eredhungarykft@gmail.com") && live.To.All(a => !a.Contains("'")), live.Opis());
+            Assert.AreEqual("x@y.rs", PrimaociLive.Ocisti(" '“x@y.rs”' "));
+        }
     }
 }

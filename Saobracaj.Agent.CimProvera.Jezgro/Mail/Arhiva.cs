@@ -76,7 +76,7 @@ namespace Saobracaj.Agent.CimProvera.Mail
             {
                 Folder = folder, Uid = uid, UidValidity = uidValidity, MessageId = (m.MessageId ?? "").Trim('<', '>'),
                 Datum = m.Date == DateTimeOffset.MinValue ? "" : m.Date.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture),
-                Posiljalac = m.From.Mailboxes.FirstOrDefault()?.Address ?? "", Naslov = Regex.Replace(m.Subject ?? "", @"\s+", " ").Trim(),
+                Posiljalac = PrimaociLive.Ocisti(m.From.Mailboxes.FirstOrDefault()?.Address), Naslov = Regex.Replace(m.Subject ?? "", @"\s+", " ").Trim(),
                 Prilozi = string.Join("; ", prilozi.Select(p => p.ime)),
                 HesPriloga = prilozi.Count == 0 ? "" : Prilog.Sha256(prilozi.SelectMany(p => p.sadrzaj).ToArray()).Substring(0, 16),
                 Bajtova = File.Exists(fajl) ? new FileInfo(fajl).Length : 0,

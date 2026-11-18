@@ -48,8 +48,8 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>Režim Test: primaoci u Live režimu („Odgovori svima“) iz zaglavlja X-CimProvera-Live-Primaoci.</summary>
         public string LivePrimaoci;
         public string Naslov => Poruka?.Subject ?? "";
-        public List<string> Za => Poruka?.To.Mailboxes.Select(x => x.Address).ToList() ?? new List<string>();
-        public List<string> Cc => Poruka?.Cc.Mailboxes.Select(x => x.Address).ToList() ?? new List<string>();
+        public List<string> Za => PrimaociLive.Adrese(Poruka?.To);
+        public List<string> Cc => PrimaociLive.Adrese(Poruka?.Cc);
         public string Telo => Poruka?.TextBody ?? "";
         public string Html => Poruka?.HtmlBody ?? "";
         public List<string> Prilozi => Poruka?.Attachments.Select(a => a.ContentDisposition?.FileName ?? a.ContentType?.Name ?? "").ToList() ?? new List<string>();

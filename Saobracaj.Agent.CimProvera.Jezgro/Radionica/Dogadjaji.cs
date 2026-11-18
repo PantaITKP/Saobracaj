@@ -90,7 +90,8 @@ namespace Saobracaj.Agent.CimProvera.Radionica
 
         private static readonly Regex Mrn = new Regex(@"(?<![A-Z0-9])(\d{2}[A-Z]{2}[A-Z0-9]{12}[0-9A-Z]{2})(?![A-Z0-9])", RegexOptions.Compiled);
         private static readonly Regex BrojKola = new Regex(@"(?i)(?<!\d)(\d{1,3})\s*(?:x\s*)?(?:wagons?|kola\b|vagon[aie]?\b|vagoane|vagonlar?|Wagen\b|kocsi\b|kocsik|вагона?|wgs?\.?)(?!\w)", RegexOptions.Compiled);
-        private static readonly Regex IdNajave = new Regex(@"(?i)(?:(?<![\p{L}\d])ID\s*[:#.]?\s*(\d{3,5})(?!\d)|\b(?:aviso|avizo|avis|najava|najave|announcement|Ank[üu]ndigung|predaviza)\s*(?:br\.?|no\.?|nr\.?|#)?\s*[:.]?\s*(\d{3,8})(?!\d))", RegexOptions.Compiled);
+        // v3.0 (odluka korisnika 18.11.): ID najave samo iz oblika „ID nnnn“ – „Aviso: 46836/15“ je broj avize/voza, ne ID najave
+        private static readonly Regex IdNajave = new Regex(@"(?<![\p{L}\d])ID\s*[:#.]?\s*(\d{3,5})(?![\d/])", RegexOptions.Compiled);
         private static readonly Regex BrojVoza = new Regex(@"(?i)(?:\b(?:train|voz|vlak|Zug|tren|vonat|влак)\s*(?:no\.?|nr\.?|br\.?|broj|number|n°|#)?\s*[:.]?\s*(\d{2,6}[A-Z]?)(?![\d])|(?<![\p{L}\d])([A-Z]{2,6}\d{1,4}[_\-][A-Z0-9]{2,10})(?![\p{L}\d]))", RegexOptions.Compiled);
 
         /// <summary>
@@ -133,7 +134,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                     if (int.TryParse(m.Groups[1].Value, out var n) && n > 0 && n <= 120)
                     { rez.Add(new Dogadjaj { Tip = "BROJ_KOLA", Vrednost = n.ToString(), Jezik = jezik, Izraz = Regex.Replace(m.Value, @"\d+\s*", "").Trim(), Recenica = Skrati(rec, 500), MestoTekst = mesto, MestoID = mestoId, Pouzdanost = 80 }); break; }
                 foreach (Match m in IdNajave.Matches(rec))
-                    rez.Add(new Dogadjaj { Tip = "ID_NAJAVE", Vrednost = m.Groups[1].Success && m.Groups[1].Value.Length > 0 ? m.Groups[1].Value : m.Groups[2].Value, Jezik = jezik, Izraz = Regex.Replace(m.Value, @"\d+", "").Trim(' ', ':', '.', '#'), Recenica = Skrati(rec, 500), Pouzdanost = 85 });
+                    rez.Add(new Dogadjaj { Tip = "ID_NAJAVE", Vrednost = m.Groups[1].Value, Jezik = jezik, Izraz = Regex.Replace(m.Value, @"\d+", "").Trim(' ', ':', '.', '#'), Recenica = Skrati(rec, 500), Pouzdanost = 85 });
                 foreach (Match m in BrojVoza.Matches(rec))
                 {
                     var v = m.Groups[1].Success && m.Groups[1].Value.Length > 0 ? m.Groups[1].Value : m.Groups[2].Value;
@@ -237,13 +238,48 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         /// relativno („sutra ujutru“, „tomorrow 10:00“, „in 2 hours“, „za 3 sata“). Godina i mesec iz datuma maila kada nisu navedeni.
         /// Vraća vreme u zoni (sa pomakom) i tekst kako piše; (null, "") kada vremena nema.
         /// </summary>
+        // v3.0 (c): nazivi meseci – tačni oblici (en, de, sr, hu, tr) i skraćenice; „Mail 15“ nije maj
+        private static readonly string[][] Meseci =
+        {
+            new[] { "january", "jan", "januar", "januara", "jänner", "január", "ocak" },
+            new[] { "february", "feb", "februar", "februara", "február", "şubat", "subat" },
+            new[] { "march", "mar", "märz", "marz", "mart", "marta", "március", "marcius" },
+            new[] { "april", "apr", "aprila", "április", "aprilis", "nisan" },
+            new[] { "may", "mai", "maj", "maja", "május", "majus", "mayıs", "mayis" },
+            new[] { "june", "jun", "juni", "juna", "június", "junius", "haziran" },
+            new[] { "july", "jul", "juli", "jula", "július", "julius", "temmuz" },
+            new[] { "august", "aug", "avgust", "avgusta", "augusztus", "ağustos", "agustos" },
+            new[] { "september", "sep", "sept", "septembar", "septembra", "szeptember", "eylül", "eylul" },
+            new[] { "october", "oct", "okt", "oktober", "oktobar", "oktobra", "október", "ekim" },
+            new[] { "november", "nov", "novembar", "novembra", "kasım", "kasim" },
+            new[] { "december", "dec", "dez", "dezember", "decembar", "decembra", "aralık", "aralik" },
+        };
+        private static readonly string MeseciRegex = "(?:" + string.Join("|", Meseci.SelectMany(x => x).Distinct().OrderByDescending(x => x.Length).Select(Regex.Escape)) + ")";
+        private static int Mesec(string rec)
+        {
+            var r = (rec ?? "").Trim('.').ToLowerInvariant();
+            for (int i = 0; i < Meseci.Length; i++) if (Meseci[i].Contains(r)) return i + 1;
+            return 0;
+        }
+
         internal static (DateTimeOffset? vreme, string tekst) Vreme(string t, DateTimeOffset datumMaila, string zona)
         {
             var baza = datumMaila == DateTimeOffset.MinValue ? DateTime.Now : datumMaila.LocalDateTime;
             int? dan = null, mesec = null, godina = null, sat = null, minut = null;
             var delovi = new List<string>();
             var m = Regex.Match(t, @"(?<!\d)(20\d{2})-(\d{1,2})-(\d{1,2})(?!\d)");
+            // v3.0 (c): mađarski „2026.11.15.-én“ / „2026. 11. 15.“ (godina.mesec.dan., uz nastavak -án/-én/-i)
+            Match mh = m.Success ? m : Regex.Match(t, @"(?<!\d)(20\d{2})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?(?:\s*-\s*?\p{L}{1,3}\b)?");
+            // v3.0 (c): naziv meseca – „15 November 2026“, „November 15, 2026“, „15. novembra“, „15. Nov.“
+            Match mn = m.Success || mh.Success ? Match.Empty : Regex.Match(t, @"(?i)(?<![\p{L}\d])(\d{1,2})(?:st|nd|rd|th|\.)?\s+(" + MeseciRegex + @")\.?(?:,?\s+(20\d{2}))?(?!\p{L})");
+            Match mn2 = m.Success || mh.Success || mn.Success ? Match.Empty : Regex.Match(t, @"(?i)(?<!\p{L})(" + MeseciRegex + @")\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(20\d{2}))?(?!\d)");
             if (m.Success) { godina = int.Parse(m.Groups[1].Value); mesec = int.Parse(m.Groups[2].Value); dan = int.Parse(m.Groups[3].Value); delovi.Add(m.Value); }
+            else if (mh.Success && int.Parse(mh.Groups[2].Value) is int mh1 && mh1 >= 1 && mh1 <= 12 && int.Parse(mh.Groups[3].Value) is int dh && dh >= 1 && dh <= 31)
+            { m = mh; godina = int.Parse(mh.Groups[1].Value); mesec = mh1; dan = dh; delovi.Add(mh.Value.Trim()); }
+            else if (mn.Success && int.Parse(mn.Groups[1].Value) is int dn1 && dn1 >= 1 && dn1 <= 31)
+            { m = mn; dan = dn1; mesec = Mesec(mn.Groups[2].Value); if (mn.Groups[3].Success) godina = int.Parse(mn.Groups[3].Value); delovi.Add(mn.Value.Trim()); }
+            else if (mn2.Success && int.Parse(mn2.Groups[2].Value) is int dn2 && dn2 >= 1 && dn2 <= 31)
+            { m = mn2; dan = dn2; mesec = Mesec(mn2.Groups[1].Value); if (mn2.Groups[3].Success) godina = int.Parse(mn2.Groups[3].Value); delovi.Add(mn2.Value.Trim()); }
             else
             {
                 m = Regex.Match(t, @"(?<![\d.])(\d{1,2})[./](\d{1,2})(?:[./](20\d{2}|\d{2}))?\.?(?![\d/])");

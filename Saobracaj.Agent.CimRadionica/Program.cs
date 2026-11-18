@@ -93,6 +93,29 @@ namespace Saobracaj.Agent.CimRadionica
             if (a.Count >= 2 && a[0] == "--radnik") return Radnik(a[1]);
             if (a.Count >= 3 && a[0] == "--uvezi") return Uvezi(a[1], a.Skip(2).ToList());
             if (a.Count >= 2 && a[0] == "--obradi") return ObradiBezUi(a);
+            // v3.0 (odluka 18.11.): online režim na laptopu – konekcija iz CIMPROVERA_KONEKCIJA (nikad iz argumenata) se čuva DPAPI-jem
+            // za trenutnog korisnika; folder Testiranje na Desktop-u
+            if (a.Count >= 1 && a[0] == "--podesi-online")
+            {
+                var pp = Podesavanja.Ucitaj();
+                var kon = Environment.GetEnvironmentVariable("CIMPROVERA_KONEKCIJA");
+                if (string.IsNullOrWhiteSpace(kon)) { Console.Error.WriteLine("CIMPROVERA_KONEKCIJA nije postavljena."); return 1; }
+                pp.SacuvajKonekciju(kon);
+                pp.Online = true;
+                pp.TestiranjeFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Testiranje");
+                pp.Sacuvaj();
+                Console.WriteLine("Online režim podešen; konekcija sačuvana (DPAPI, trenutni korisnik) u " + pp.KonekcijaFajl + "; Testiranje: " + pp.TestiranjeFolder);
+                return 0;
+            }
+            // v3.0: paket za analizu iz komandne linije – --paket <prostor> <verzija> <izlaz.zip> [--samo-ne]
+            if (a.Count >= 4 && a[0] == "--paket")
+            {
+                var pp = Podesavanja.Ucitaj();
+                var rp0 = RadniProstor.Otvori(Path.Combine(pp.Radni, a[1]));
+                var zip = Zbirno.Paket(rp0, a[2], a[3], a.Contains("--samo-ne"), out var izost);
+                Console.WriteLine("Paket: " + zip + " (" + new FileInfo(zip).Length / 1048576.0 + " MB); izostavljeno (tajne): " + izost.Count);
+                return 0;
+            }
             // osvežavanje lokalne kopije šifarnika (samo čitanje) – konekcija iz DPAPI fajla ili CIMPROVERA_KONEKCIJA, nikad iz argumenata
             if (a.Count >= 1 && a[0] == "--sifarnici")
             {
@@ -136,7 +159,7 @@ namespace Saobracaj.Agent.CimRadionica
             string Op(string k) { var i = a.IndexOf(k); return i > 0 && i + 1 < a.Count ? a[i + 1] : null; }
             var rp = RadniProstor.Otvori(Path.Combine(p.Radni, a[1]));
             var verzija = Op("--verzija") ?? p.Verzija;
-            var online = a.Contains("--online");
+            var online = a.Contains("--online") || (p.Online && !a.Contains("--offline"));
             var konekcija = online ? p.Konekcija() : null;
             if (online && string.IsNullOrEmpty(konekcija)) { Console.Error.WriteLine("Online: konekcija nije podešena."); return 1; }
             if (a.Contains("--ispocetka")) rp.KreniIspocetka();

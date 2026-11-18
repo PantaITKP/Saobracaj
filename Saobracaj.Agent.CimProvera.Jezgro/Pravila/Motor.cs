@@ -313,7 +313,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// </summary>
         internal static bool R62Nepouzdana(CimList c) =>
             c != null && c.PouzdanostStrane > 0 && c.R62 != null && c.R62.Popunjena
-            && (c.R62.Status == StatusRubrike.Necitljivo || c.R62.NepouzdanoCitanje || c.R62.PouzdanostCifara < PragR62);
+            && (c.R62.Status == StatusRubrike.Necitljivo || c.R62.NepouzdanoCitanje || c.R62.PouzdanostCifara < PragR62 || (c.R62.NesigurniDelovi?.Count ?? 0) > 0);
 
         /// <summary>Označava r62 kao nečitljivu (status; tekst ostaje za internu napomenu) i vraća ono što je agent pročitao.</summary>
         internal static string OznaciR62Necitljivu(CimList c)

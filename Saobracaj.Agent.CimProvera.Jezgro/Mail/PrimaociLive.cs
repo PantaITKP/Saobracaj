@@ -24,7 +24,16 @@ namespace Saobracaj.Agent.CimProvera
         public string Napomena = "";
         public int Ukupno => To.Count + Cc.Count;
 
-        private static string Adresa(string a) => (a ?? "").Trim().Trim('<', '>').ToLowerInvariant();
+        /// <summary>
+        /// v3.0 (f): adresa bez viška znakova – pošiljaoci pišu „&lt;x@gmail.com'&gt;“ ili „'x@firma.rs'“ (UID 429: 158 takvih u sandučetu);
+        /// navodnici i apostrofi oko adrese nisu deo adrese (u Live režimu bi odgovor otišao na neispravnu adresu).
+        /// </summary>
+        internal static string Ocisti(string a) => (a ?? "").Trim().Trim('<', '>', '\'', '"', '‘', '’', '“', '”', '`', ' ', ';', ',').Trim();
+
+        private static string Adresa(string a) => Ocisti(a).ToLowerInvariant();
+
+        /// <summary>v3.0 (f): očišćene adrese liste (za rezultat, analizu i Excel).</summary>
+        internal static List<string> Adrese(InternetAddressList l) => (l?.Mailboxes ?? Enumerable.Empty<MailboxAddress>()).Select(x => Ocisti(x.Address)).Where(x => x.Length > 0).ToList();
 
         /// <summary>Primaoci za Live iz zaglavlja originalnog maila.</summary>
         public static PrimaociLive Iz(string from, IEnumerable<string> to, IEnumerable<string> cc, string nalogAgenta, IEnumerable<string> prosledjivanje)

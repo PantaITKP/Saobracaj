@@ -160,6 +160,22 @@ namespace Saobracaj.Agent.CimProvera.Tests
             }
         }
 
+        // ------------------------------------------------------------------------------------------- (e) r62 rukom (mail 782)
+
+        [TestMethod, TestCategory("Regresija")]
+        public void RID_amonijak_782_r62_rukom_nesiguran_broj_nije_kljuc()
+        {
+            // „52 290239 3057 001784“ rukom; opšti OCR „007777“ bez potvrde ciljanog OCR-a kućice – nije siguran ključ
+            var c = Dokumenti(Path.Combine(Slucaj("RID amonijak Prahovo (UID 782)"), "CIM + CIT 1 - signed.pdf")).Where(d => d.Cim.Count > 0).SelectMany(d => d.Cim).First();
+            Console.WriteLine(c.R62.Zemlja + " " + c.R62.Stanica + " " + c.R62.Preduzece + " " + c.R62.Broj + " cif=" + c.R62.PouzdanostCifara + " nes=" + string.Join(",", c.R62.NesigurniDelovi.Select(x => x.Key + ":" + x.Value)));
+            Assert.AreEqual("290239", c.R62.Stanica);
+            if (c.R62.Broj != "001784")
+            {
+                Assert.IsTrue(c.R62.NepouzdanaZaOdluke || c.R62.NesigurniDelovi.Count > 0, "pogrešno pročitan broj mora biti nesiguran");
+                Assert.IsFalse((Ponavljanja.KljucLista(c) ?? "").StartsWith("r62:"), "nesigurna r62 nije ključ");
+            }
+        }
+
         // ------------------------------------------------------------------------------------------- 0a.4 zaokruživanje
 
         [TestMethod, TestCategory("Regresija")]

@@ -541,9 +541,24 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 var mesto = t.Substring(m.Index + m.Length);
                 mesto = Regex.Replace(mesto, @"\bINCOTERMS?\s*(20\d\d)?\b", "", RegexOptions.IgnoreCase);
                 mesto = mesto.Trim(' ', ':', '-', '–', ',', '.', '(', ')', '"', '„', '“', '\n', '\r', '\t');
+                // v3.0 (odluka korisnika 18.11., mail 782 „Franko prevoznina (X) x Dragoman / FCA“): mesto upisano u koloni „jusqu'à / bis“
+                // (isti red sa „Franko“, ispred šifre) je mesto uz Incoterms – nema upozorenja da mesto nedostaje
+                if (mesto.Length == 0) mesto = MestoIzKoloneBis(t.Substring(0, m.Index) + " " + t.Substring(m.Index + m.Length));
                 return (kod, mesto);
             }
             return null;
+        }
+
+        /// <summary>
+        /// v3.0: mesto iz kolone „jusqu'à / bis / do“ rubrike 20 – tekst rubrike bez natpisa polja (Franko, prevoznina, Frachtfrei, port payé,
+        /// oznaka „X“, Incoterms). Reč od bar 3 slova je mesto („Dragoman“); inače prazno.
+        /// </summary>
+        internal static string MestoIzKoloneBis(string tekst)
+        {
+            var t = Regex.Replace(tekst ?? "", @"(?i)\b(franko\w*|franco\w*|frankatur\w*|nefranko|unfrei|prevoznin\w*|troškov\w*|troskov\w*|plaćanj\w*|placanj\w*|frachtfrei|fracht\w*|kostenfrei|port|pay[ée]|jusqu'?\s*[àa]|bis|do|incoterms?|20(10|20)|carriage|paid|free|delivered|to)\b", " ");
+            t = Regex.Replace(t, @"\(\s*[xX]\s*\)|(?<!\p{L})[xX](?!\p{L})", " ");
+            var reci = Regex.Matches(t, @"\p{L}[\p{L}\-\.]{2,}").Cast<Match>().Select(x => x.Value.Trim('.', '-')).Where(x => x.Length >= 3).ToList();
+            return reci.Count == 0 ? "" : string.Join(" ", reci);
         }
 
         private static IEnumerable<Pogodak> R20Inco(Kontekst k)
@@ -1853,6 +1868,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var (naziv, uic) = KpUR57(r, k.P.Kp);
             if (naziv && uic) yield break;
             var en = k.U.Engleski;
+            // v3.0 (odluka korisnika 18.11., mail 782): na skenu OCR pročita samo deo šifre uz KP („212 KP“), a r13 navodi 3212 – nije
+            // upozorenje pošiljaocu („dopisati UIC 3212“), nego INTERNO „proveriti ručno“
+            if (naziv && !uic && k.Ocr && r.Popunjena && DeoSifreUzKp(r.Tekst, k.P.Kp.Uic)
+                && k.C.R13 != null && Regex.IsMatch(k.P.Kp.OcrIspravka(Tekst(k.C.R13)), @"(?<!\d)" + Regex.Escape(k.P.Kp.Uic) + @"(?!\d)"))
+            {
+                var pg = P("57", "kp57-sken");
+                pg.Tezina = Tezina.Info; pg.SamoInterno = true;
+                pg.Poruka = "r57: šifra KP delimično pročitana na skenu (pročitano: „" + Regex.Replace(r.Tekst ?? "", @"\s*\n\s*", " / ") + "“; u r13 je UIC " + k.P.Kp.Uic + ") – proveriti ručno.";
+                yield return pg;
+                yield break;
+            }
             if (naziv || uic)
             {
                 var pg = P("57", naziv ? "kp57-uic" : "kp57-naziv");
@@ -1879,6 +1905,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 yield break;
             }
             yield return P("57", "kp57").D(r.Popunjena ? (en ? "KP is not listed among the carriers in box 57." : "U rubrici 57 KP nije naveden među prevoznicima.") : (en ? "(box is empty)" : "(rubrika je prazna)"));
+        }
+
+        /// <summary>v3.0: uz „KP“ u r57 stoji deo UIC šifre (2–3 cifre koje su deo „3212“: „212 KP“, „KP 321“) – OCR nije pročitao celu šifru.</summary>
+        internal static bool DeoSifreUzKp(string tekst, string uic)
+        {
+            foreach (Match m in Regex.Matches(tekst ?? "", @"(?<![\d])(\d{2,3})[\s,.;:]*KP\b|\bKP[\s,.;:]*(\d{2,3})(?!\d)"))
+            {
+                var c = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                if (c.Length >= 2 && (uic ?? "").Contains(c)) return true;
+            }
+            return false;
         }
 
         /// <summary>v2.9.2 (2): da li r57 sadrži naziv KP (KP, Kombinovani prevoz…) i UIC šifru 3212 – bilo gde u rubrici, bilo kojim redom.</summary>

@@ -79,5 +79,30 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r = IzvlacenjeDogadjaja.RecnikIz(d);
             Assert.AreEqual(2, r.Single(x => x.tip == "ETA" && x.jezik == "en").broj);
         }
+
+        // ------------------------------------------------------------------------------------------- (c) pregled probnog _Analiza, 18.11.
+
+        [TestMethod]
+        public void Vreme_madjarski_datum_i_engleski_naziv_meseca()
+        {
+            var mail = new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.FromHours(1));
+            var (v1, t1) = IzvlacenjeDogadjaja.Vreme("A vonat érkezése Kelebiára 2026.11.15.-én / 11:57", mail, "CET");
+            Assert.AreEqual(new DateTime(2026, 11, 15, 11, 57, 0), v1.Value.DateTime, t1);
+            var (v2, t2) = IzvlacenjeDogadjaja.Vreme("The train arrived at Kelebia on 15 November 2026 at 11:57.", mail, "CET");
+            Assert.AreEqual(new DateTime(2026, 11, 15, 11, 57, 0), v2.Value.DateTime, t2);
+            var (v3, _) = IzvlacenjeDogadjaja.Vreme("Expected arrival at Subotica: November 15 in the morning", mail, "CET");
+            Assert.AreEqual(new DateTime(2026, 11, 15, 8, 0, 0), v3.Value.DateTime);
+            var (v4, _) = IzvlacenjeDogadjaja.Vreme("Mail 15 attached", mail, "CET");
+            Assert.IsNull(v4, "„Mail 15“ nije maj");
+        }
+
+        [TestMethod]
+        public void ID_najave_samo_iz_oblika_ID_nnnn_aviso_nije_ID()
+        {
+            var d = IzvlacenjeDogadjaja.Izvuci("Aviso: 46836/15 / lkw walter SAD-HER 79", "Aviso 46836/15 attached. ETA Subotica 16.11. 10:00", Mail, "crw.sk");
+            Assert.IsFalse(d.Any(x => x.Tip == "ID_NAJAVE"), string.Join(" | ", d));
+            var e = IzvlacenjeDogadjaja.Izvuci("Dokumentacija za predaju ID 1615 Kukujevci - Šid gr", "U prilogu dokumentacija.", Mail, "kprevoz.co.rs");
+            Assert.AreEqual("1615", e.Single(x => x.Tip == "ID_NAJAVE").Vrednost);
+        }
     }
 }

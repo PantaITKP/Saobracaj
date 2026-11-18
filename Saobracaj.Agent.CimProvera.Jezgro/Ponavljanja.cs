@@ -109,7 +109,7 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8.4: broj otpravljanja može biti i oznaka („HER-SAD79“ u „CIM Novi Sad via Kelebia (NEU).xlsx“) – slova i cifre
             var broj = Regex.Replace(PraviloKp.Normalizuj(r?.Broj ?? ""), @"[^a-z0-9]", "");
             // v2.8.4: nečitljiva r62 (rukom upisana na skenu) se ne koristi za ključ (ponavljanje, dosije)
-            if (r != null && !r.NepouzdanaZaOdluke && Cif(r.Zemlja).Length == 2 && Cif(r.Stanica).Length >= 5 && Cif(r.Preduzece).Length == 4 && (Cif(r.Broj).Length >= 5 || broj.Length >= 4))
+            if (r != null && !r.NepouzdanaZaOdluke && (r.NesigurniDelovi?.Count ?? 0) == 0 && Cif(r.Zemlja).Length == 2 && Cif(r.Stanica).Length >= 5 && Cif(r.Preduzece).Length == 4 && (Cif(r.Broj).Length >= 5 || broj.Length >= 4))
                 return "r62:" + Cif(r.Zemlja) + "-" + Cif(r.Stanica) + "-" + Cif(r.Preduzece) + "-" + (Cif(r.Broj).Length >= 5 ? Cif(r.Broj) : broj);
             var posiljalac = N(c.R1?.Naziv);
             var r8 = N(Motor.RubrikaLista(c, "8")?.Tekst);

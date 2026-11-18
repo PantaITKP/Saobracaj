@@ -90,7 +90,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             {
                 Poruka = m, Izvor = izvor, Putanja = putanja, MessageId = mid, Kljuc = kljuc,
                 Datum = m.Date == DateTimeOffset.MinValue ? new DateTimeOffset(File.Exists(putanja) ? File.GetLastWriteTime(putanja) : DateTime.Now) : m.Date,
-                Od = m.From.Mailboxes.FirstOrDefault()?.Address ?? "", Naslov = m.Subject ?? "",
+                Od = PrimaociLive.Ocisti(m.From.Mailboxes.FirstOrDefault()?.Address), Naslov = m.Subject ?? "",
                 Prilozi = prilozi.Select(x => x.ime).ToList(),
                 Nit = KljucNiti(m.Subject),
             };

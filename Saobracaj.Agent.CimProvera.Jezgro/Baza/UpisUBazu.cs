@@ -561,6 +561,8 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         private static string R62Kljuc(Identifikacija r)
         {
             string C(string x) => Regex.Replace(x ?? "", @"\D", "");
+            // v3.0 (e): r62 sa nesigurnim ciframa (rukom pisano, nizak OCR) nije siguran ključ
+            if (r == null || r.NepouzdanaZaOdluke || (r.NesigurniDelovi?.Count ?? 0) > 0) return null;
             return C(r?.Zemlja).Length == 2 && C(r?.Stanica).Length >= 5 && C(r?.Preduzece).Length == 4 && C(r?.Broj).Length >= 5
                 ? "r62:" + C(r.Zemlja) + "-" + C(r.Stanica) + "-" + C(r.Preduzece) + "-" + C(r.Broj) : null;
         }

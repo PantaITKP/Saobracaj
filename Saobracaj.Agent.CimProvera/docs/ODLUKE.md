@@ -578,6 +578,24 @@ Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti
 - Rezultati se čuvaju po verzijama. Nova verzija za poređenje obrađuje se „ispočetka“ (dosije i ponavljanja radnog prostora se brišu, keš ostaje).
 - Keš čitanja je zajednički za sve radne prostore (`C:\CimRadionica\kes`). Kopija šifarnika je zajednička (`C:\CimRadionica\sifarnici`).
 
+**Gde radi CimRadionica (odluka korisnika i IT-ja 18.11.)**
+- Smart App Control je na laptopu isključen (odluka korisnika i IT-ja). CimRadionica radi na laptopu: `C:\CimRadionica`, folder za praćenje je `C:\Users\Stefan\Desktop\Testiranje`.
+- Režim je **online**: upis u `planiranje.tmp*`. Dozvoljen je dok je agent ugašen, jer su to test podaci.
+- Varijanta sa serverom (CimRadionica na 192.168.1.6, Testiranje na share-u) se ne radi. Merenje OCR-a na serveru nije potrebno.
+- **Pre Live-a se podaci alata odvajaju od podataka agenta** (poseban prefiks tabela ili posebna baza). Dok se to ne uradi, alat i agent ne smeju istovremeno da pišu u `planiranje.tmp*`.
+
+**Ispravke iz pregleda probnog _Analiza (18.11.)**
+- (a) r57: OCR na skenu pročita deo šifre uz KP („212 KP“), a u r13 je UIC 3212. Nalaz je samo INTERNO „proveriti ručno“, ne upozorenje (mail 782).
+- (b) Primer za r14 je ceo broj ponude („npr. 8957“).
+- (c) Događaji:
+  - vreme se čita i iz mađarskog „2026.11.15.-én / 11:57“ i iz naziva meseca („15 November 2026 at 11:57“, „November 15“);
+  - ID_NAJAVE se uzima samo iz oblika „ID nnnn“. „Aviso 46836/15“ je broj avize/voza.
+- (d) r20: mesto upisano u koloni „jusqu'à / bis“ („Franko … Dragoman / FCA“) je mesto uz Incoterms, pa nema upozorenja.
+- (e) r62 na skenu: svaki deo (zemlja, stanica, preduzeće, broj otpravljanja) ima svoju pouzdanost.
+  - Deo ispod praga 0,85 je nesiguran, označava se u ANALIZA.md, a r62 tada nije siguran ključ (ponavljanje, posao, KP).
+  - Čitanje opšteg OCR-a u kućici koje nijedan isečak ciljanog OCR-a ne potvrđuje više se ne podiže na 0,85. Primer: rukom pisano „001784“ pročitano kao „007777“. Verzija čitača je zato L23.
+- (f) Adrese bez viška navodnika i apostrofa („&lt;x@gmail.com'&gt;“, „'priprema@…'“). Važi za Live primaoce, rezultat, ANALIZA.md, arhivu i uvoz.
+
 **Nijedan mail ne ispada tiho (odluka korisnika 18.11.)**
 - CimRadionica: ako radnik padne (npr. Smart App Control blokira DLL, HRESULT 0x800711C7), svaki mail tog dela bez ishoda dobija rezultat:
   - status `NijeObradjen`;

@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L22";   // v3.0 (0a.5): keš čuva reči i natpise po rubrikama; L21 v2.9.2: prelivanje r57, ponovni OCR r57/r58a, klasifikacija (Wagenliste, mreža obrasca); L20 v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
+        public const string VerzijaCitaca = "L23";   // v3.0 (e): opšti OCR kućice bez potvrde isečka ne dobija 0,85; pouzdanost delova r62. L22 v3.0 (0a.5): keš čuva reči i natpise po rubrikama; L21 v2.9.2: prelivanje r57, ponovni OCR r57/r58a, klasifikacija (Wagenliste, mreža obrasca); L20 v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L18";   // v2.8.4: orijentacija skena ispod 0,75 (OSD + proba 90°/270°), crno-beli sken, FreeText anotacije
 
@@ -991,7 +991,10 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                     // v2.8.4 (4.5): i jedno čitanje vrlo niske pouzdanosti kome drugi isečak protivreči („180100“ 0,12 uz „88“) – nije pouzdano
                     var sporno = (glasovi.Count > 1 && !vecina)
                                  || (!vecina && izbor.p < 0.3 && pokusaji.Any(x => x.t.Length > 0 && x.t != izbor.t && !izbor.t.Contains(x.t)));
-                    if (odgovara && !sporno) pouzd = Math.Max(pouzd, vecina ? 0.9 : 0.85);
+                    // v3.0 (e, mail 782): jedini važeći glas je opšti OCR (nijedan isečak ga ne potvrđuje – rukom pisano „001784“ pročitano
+                    // kao „007777“) – zadržava svoju pouzdanost, ne podiže se na 0,85 (inače postaje „siguran“ ključ r62)
+                    var samoOpste = odg.Count > 0 && odg.All(x => x.t == opste) && !pokusaji.Take(5).Any(x => x.odg);
+                    if (odgovara && !sporno && !samoOpste) pouzd = Math.Max(pouzd, vecina ? 0.9 : 0.85);
                     else if (sporno) pouzd = Math.Min(pouzd, 0.5);
                     // v2.8.4: sporno čitanje kućice ne zamenjuje cifre koje je opšti OCR već pročitao („2520“ u GIPS r24)
                     if (sporno && r.Rubrika(rub).Any(w => Regex.IsMatch(w.T ?? "", @"\d{2,}"))) continue;

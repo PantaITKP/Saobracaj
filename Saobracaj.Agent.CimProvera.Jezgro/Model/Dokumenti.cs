@@ -187,6 +187,11 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public bool NepouzdanaZaOdluke { get; set; }
         /// <summary>v2.8.1: sken – u rubrici je OCR šum od slova i cifara („jj2“) – razlog za ručnu proveru samo kada neki deo r62 nije pročitan.</summary>
         [Interni] public bool OcrSum { get; set; }
+        /// <summary>
+        /// v3.0 (e): sken – delovi r62 pročitani sa niskom pouzdanošću (ispod praga za r62, npr. rukom pisan broj otpravljanja „001784“
+        /// pročitan kao „007777“): naziv dela → pouzdanost. Ti delovi su nesigurni (ANALIZA.md) i r62 nije siguran ključ.
+        /// </summary>
+        [Interni] public Dictionary<string, double> NesigurniDelovi { get; set; } = new Dictionary<string, double>();
     }
 
     /// <summary>Jedan tovarni list CIM ili kolski list CUV (jedan list, ne ceo PDF).</summary>

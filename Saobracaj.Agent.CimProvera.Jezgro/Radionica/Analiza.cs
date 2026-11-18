@@ -177,6 +177,12 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 sb.AppendLine("Obrazac: " + M((string)l["obrazac"]) + (string.IsNullOrEmpty((string)l["sablon"]) ? "" : " / šablon " + M((string)l["sablon"])) + ", pouzdanost strane " + l["pouzdanost_strane"]
                     + ((bool?)l["kp_rezim"] == true ? ", **KP tovarni list (interno)**" : "") + ((bool?)l["rucna_provera"] == true ? ", **ručna provera**" : "")
                     + (string.IsNullOrEmpty((string)l["neprepoznat"]) ? "" : ", **obrazac nije prepoznat**: " + M((string)l["neprepoznat"]))).AppendLine();
+                // v3.0 (e): nesigurne cifre r62 (rukom pisano / nizak OCR) – nisu siguran ključ
+                if (l["r62_nesigurno"] is JArray nes62 && nes62.Count > 0)
+                    sb.AppendLine("**r62 – nesigurne cifre:** " + string.Join("; ", nes62.Select(x => (string)x["deo"] + " „" + M((string)x["vrednost"]) + "“ (OCR " + ((double)x["pouzdanost"]).ToString("0.00", CultureInfo.GetCultureInfo("sr-Latn-RS")) + ")"))
+                                 + ". r62 se ne koristi kao siguran ključ (ponavljanje, posao, KP).").AppendLine();
+                else if ((bool?)l["r62_za_odluke"] == false)
+                    sb.AppendLine("**r62 nije pouzdano pročitana** – ne koristi se kao siguran ključ (ponavljanje, posao, KP).").AppendLine();
                 var nalazi = (JArray)l["nalazi"];
                 sb.AppendLine("| Rubrika | Status | Pročitano (sirovo) | Pouzd. | Nalazi |").AppendLine("|---|---|---|---|---|");
                 foreach (var p in (l["rubrike"] as JObject ?? new JObject()).Properties().OrderBy(p => Redosled(p.Name)))

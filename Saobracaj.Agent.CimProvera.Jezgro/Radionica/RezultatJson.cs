@@ -42,8 +42,8 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 {
                     ["izvor"] = u.Izvor, ["uid"] = u.Uid, ["folder"] = u.Folder, ["message_id"] = (m.MessageId ?? "").Trim('<', '>'),
                     ["datum"] = m.Date == DateTimeOffset.MinValue ? "" : m.Date.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture),
-                    ["od"] = m.From.Mailboxes.FirstOrDefault()?.Address ?? "", ["za"] = new JArray(m.To.Mailboxes.Select(x => x.Address)),
-                    ["cc"] = new JArray(m.Cc.Mailboxes.Select(x => x.Address)), ["naslov"] = m.Subject ?? "",
+                    ["od"] = PrimaociLive.Ocisti(m.From.Mailboxes.FirstOrDefault()?.Address), ["za"] = new JArray(PrimaociLive.Adrese(m.To)),
+                    ["cc"] = new JArray(PrimaociLive.Adrese(m.Cc)), ["naslov"] = m.Subject ?? "",
                     // novi deo poruke (bez citata i potpisa) – osnova za događaje
                     ["telo_novo"] = Obrada.TekstPosiljaoca("", ObradaPoruke.TeloMaila(m)).Trim(),
                     ["prilozi"] = new JArray(r.Prilozi.Select(p => new JObject { ["ime"] = p.ime, ["bajtova"] = p.sadrzaj.Length, ["hes"] = Prilog.Sha256(p.sadrzaj).Substring(0, 16) })),
@@ -153,6 +153,11 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 o["obrazac"] = c.Obrazac ?? ""; o["sablon"] = c.Sablon ?? ""; o["neprepoznat"] = c.NeprepoznatObrazac ?? "";
                 o["pouzdanost_strane"] = Math.Round(c.PouzdanostStrane, 2);
                 o["r62"] = string.Join(" ", new[] { c.R62.Zemlja, c.R62.Stanica, c.R62.Preduzece, c.R62.Broj }.Where(x => !string.IsNullOrEmpty(x)));
+                // v3.0 (e): nesigurni delovi r62 (niska pouzdanost cifara) i da li je r62 pouzdana za odluke (ključ, KP, ponavljanje)
+                var nes = c.R62.NesigurniDelovi ?? new Dictionary<string, double>();
+                var vrednostDela = new Dictionary<string, string> { ["zemlja"] = c.R62.Zemlja, ["stanica"] = c.R62.Stanica, ["preduzeće"] = c.R62.Preduzece, ["broj otpravljanja"] = c.R62.Broj };
+                o["r62_nesigurno"] = new JArray(nes.Select(kv => new JObject { ["deo"] = kv.Key, ["vrednost"] = vrednostDela.TryGetValue(kv.Key, out var v) ? v ?? "" : "", ["pouzdanost"] = kv.Value }));
+                o["r62_za_odluke"] = !c.R62.NepouzdanaZaOdluke && nes.Count == 0;
                 o["rubrike"] = Rubrike(c);
             }
             o["nalazi"] = new JArray(l.Nalazi.SelectMany(n => new[] { n }.Concat(n.Takodje)).Select(n => new JObject
