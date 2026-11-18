@@ -85,6 +85,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(2, UpisUBazu.SpojiKopije(new List<ListPosla> { L("sadrzaj:z", 536500, 418950, 955450, "001784"), L("sadrzaj:z", 536500, 418950, 955450, "001792") }).Count);
             Assert.IsTrue(UpisUBazu.KompatibilanBroj("001784", "001734"), "jedna cifra (OCR)");
             Assert.IsFalse(UpisUBazu.KompatibilanBroj("001784", "001792"));
+            // r18 „See list: 12 Z-wagons“ – broj kola i uz reč sa crticom (2 × 12 = 24 kola)
+            Assert.AreEqual(12, Provere.BrojKolaUTekstu("See   list:   12 Z-wagons"));
             // zapisi TL iz istog maila (± 0,1 %)
             Assert.IsFalse(UpisUBazu.IstiZapis(ZapisTl.Iz(a), ZapisTl.Iz(b)));
         }
@@ -221,6 +223,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var c = MotorTests.IspravanCim();
             c.R4.Tekst = "VRANJICA d.o.o.\nKraljice Katarine 158\n11030 Belgrade\nJČO:6007205003";
             StringAssert.Contains(PosaoIzDokumenata.NijeReferenca("\"600 7205003/", "\"600 7205003/", c), "PIB");
+            StringAssert.Contains(PosaoIzDokumenata.NijeReferenca("\"600 7205003/", "\"600 7205003/", MotorTests.IspravanCim()), "PIB", "i kada PIB nije u pročitanim rubrikama");
             Assert.AreEqual("natpis obrasca", PosaoIzDokumenata.NijeReferenca("Рефернним", "Рефернним", c));
             Assert.IsNull(PosaoIzDokumenata.NijeReferenca("Budamar Coal 16", "Budamar Coal 16", c));
             Assert.IsNull(PosaoIzDokumenata.NijeReferenca("LUKAVAC02", "LUKAVAC02", c));

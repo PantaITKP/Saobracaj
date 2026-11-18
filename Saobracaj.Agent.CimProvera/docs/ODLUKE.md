@@ -678,7 +678,7 @@ Osnova: PROMPT_v3.0.1 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.0.md`.
 
 ### 11.3 Upis poslova
 
-- **Kopije** (3.1): bez pouzdane r62 kopije su samo listovi sa istim masama (± 0,1 %), istim kolima i istim ili kompatibilnim brojem otpravljanja. Kompatibilan znači da je jedan nepročitan ili da se razlikuje najviše jedna cifra. Nesiguran r62 nikad nije razlog za spajanje (amonijak: 001784 i 001792 su dva lista, 24 kola).
+- **Kopije** (3.1): bez pouzdane r62 kopije su samo listovi sa istim masama (± 0,1 %), istim kolima i istim ili kompatibilnim brojem otpravljanja. Kompatibilan znači da je jedan nepročitan ili da se razlikuje najviše jedna cifra. Nesiguran r62 nikad nije razlog za spajanje (amonijak: 001784 i 001792 su dva lista, 24 kola). Spiskovi različitih kola iste robe u istom poslu (spisak uz svaki od dva lista) se sabiraju u grupu – drugi spisak ne gazi prvi; „12 Z-wagons“ u r18 je broj kola.
 - **Spisak ima prednost samo ako je usklađen sam sa sobom** (3.2):
   - bruto = neto + tara (± 0,5 %);
   - bruto nije manji od neta ili tare;
@@ -695,7 +695,7 @@ Osnova: PROMPT_v3.0.1 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.0.md`.
   - tačka predaje (Stanica1/Stanica3) iz teksta r57/r13/r20 koja nije granična stanica upisuje se samo uz pouzdanost ≥ 95; inače NULL i kandidati („Kostolac“ iz „Franko prevoznina (X) Kost…“).
 - **BrojPonude i Referenca** (3.9):
   - BrojPonude je ceo broj (ponuda KP) ili obrazac stranog ugovora sa crticama („42-0003-26“). Ništa drugo: „Kuty br/Lanzhot br“, „KP2026“ i „0362.03“ → NULL.
-  - Referenca nije PIB ili matični broj stranke (iste cifre u r1–r6, ili uz PIB/MB/IČO/VAT), natpis obrasca („Рефернним“) ni OCR šum.
+  - Referenca nije PIB ili matični broj stranke (iste cifre u r1–r6, ili uz PIB/MB/IČO/VAT), natpis obrasca („Рефернним“), broj bez slova sa 8+ cifara (PIB/matični broj iz susedne rubrike, UID 62 „"600 7205003/“) ni OCR šum.
 - **3.7 (HER-SAD, značenje „neto“ kod intermodalnih spiskova)** čeka odluku korisnika – predlog je u izveštaju za v3.0.1.
 - Greška čitanja HSL spiska (nezavisna od odluke 3.7): red zaglavlja sa brojem prvih kola („1_2 | 3_4 | … | 35 80 4956 491 - 9“) zaklanjao je red tih kola, pa su prva kola bila „bez tare“, a zbir tare i bruta bio delimičan. Sada se za kola u više redova uzima red sa više brojčanih ćelija.
 

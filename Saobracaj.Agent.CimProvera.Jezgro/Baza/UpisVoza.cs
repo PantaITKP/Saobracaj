@@ -945,20 +945,40 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         {
             var s = new SpisakKola();
             var izvorDuzine = Skalar("SELECT Rubrika FROM planiranje.tmpJobsPolje WHERE TeretnicaID = @t AND Kolona = 'Duzina'", "@t", tid) as string == "istorija" ? "istorija" : "spisak";
-            using (var cmd = Komanda("SELECT BrojKola, ISNULL(Serija, ''), ISNULL(BrojOsovina, 0), Duzina, Tara, Neto, ISNULL(VRNP, ''), ISNULL(RID, '') FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t ORDER BY RB", "@t", tid))
-            using (var r = cmd.ExecuteReader())
-                while (r.Read())
-                {
-                    double? T(int i) => r.IsDBNull(i) ? (double?)null : Convert.ToDouble(r.GetValue(i)) * 1000;   // stavke su u t, spisak u kg
-                    var nhm = r.GetString(6);
-                    s.Kola.Add(new KolaNaSpisku
+            List<KolaNaSpisku> Stavke(int t)
+            {
+                var l = new List<KolaNaSpisku>();
+                using (var cmd = Komanda("SELECT BrojKola, ISNULL(Serija, ''), ISNULL(BrojOsovina, 0), Duzina, Tara, Neto, ISNULL(VRNP, ''), ISNULL(RID, '') FROM planiranje.tmpTeretnicaStavke WHERE BrojTeretnice = @t ORDER BY RB", "@t", t))
+                using (var r = cmd.ExecuteReader())
+                    while (r.Read())
                     {
-                        Broj = BrojKolaUic.Cifre(r.GetString(0)), Serija = r.GetString(1).Length > 1 ? r.GetString(1) : "", Nhm = nhm, KemlerUn = r.GetString(7),
-                        TaraKg = T(4) > 0 ? T(4) : null, NetoKg = T(5), DuzinaM = r.IsDBNull(3) ? (double?)null : Convert.ToDouble(r.GetValue(3)), DuzinaIzvor = r.IsDBNull(3) ? "" : izvorDuzine,
-                        Prazna = Regex.IsMatch(nhm, "^992[12]"),
-                    });
-                }
+                        double? T(int i) => r.IsDBNull(i) ? (double?)null : Convert.ToDouble(r.GetValue(i)) * 1000;   // stavke su u t, spisak u kg
+                        var nhm = r.GetString(6);
+                        l.Add(new KolaNaSpisku
+                        {
+                            Broj = BrojKolaUic.Cifre(r.GetString(0)), Serija = r.GetString(1).Length > 1 ? r.GetString(1) : "", Nhm = nhm, KemlerUn = r.GetString(7),
+                            TaraKg = T(4) > 0 ? T(4) : null, NetoKg = T(5), DuzinaM = r.IsDBNull(3) ? (double?)null : Convert.ToDouble(r.GetValue(3)), DuzinaIzvor = r.IsDBNull(3) ? "" : izvorDuzine,
+                            Prazna = Regex.IsMatch(nhm, "^992[12]"),
+                        });
+                    }
+                return l;
+            }
+            s.Kola.AddRange(Stavke(tid));
             if (s.Kola.Count == 0) return;
+            // v3.0.1 (3.1, amonijak UID 259: dva lista sa po jednim spiskom od 12 kola): spiskovi RAZLIČITIH kola iste robe u istom poslu (drugi
+            // tovarni list istog voza) se sabiraju u grupu – drugi spisak ne gazi prvi (24 kola, ne 12)
+            string Grupa(IEnumerable<KolaNaSpisku> k) => k.Select(x => x.Prazna ? "9922" : Poklapanje.Nhm4(x.Nhm)).GroupBy(x => x).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() ?? "";
+            var mojaGrupa = Grupa(s.Kola);
+            var mojaKola = new HashSet<string>(s.Kola.Select(k => k.Broj));
+            var drugiSpiskovi = 0;
+            foreach (var t in Kolona("SELECT ID FROM planiranje.tmpTeretnica WHERE JobID = @j AND ID <> @t", "@j", jobId, "@t", tid).Select(int.Parse))
+            {
+                var druga = Stavke(t);
+                if (druga.Count == 0 || druga.Any(k => mojaKola.Contains(k.Broj)) || Grupa(druga) != mojaGrupa) continue;
+                s.Kola.AddRange(druga); foreach (var k in druga) mojaKola.Add(k.Broj);
+                drugiSpiskovi++;
+            }
+            if (drugiSpiskovi > 0) ishod.Napomene.Add("spisak kola sabran sa " + drugiSpiskovi + " ranijim spiskom istog posla (druga kola iste robe) – ukupno " + s.Kola.Count + " kola");
             // v3.0 (0a.4): stavke čuvaju mase u tonama na 3 decimale (po kolima zaokruženo na kg) – kada je originalni spisak istog maila
             // dostupan, mase po kolima idu iz njega, pa se zbir zaokružuje jednom (SAD-HER 80: 694 940,48 kg → 694,940 t, ne 694,941)
             if (izvorni != null)
@@ -969,11 +989,14 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                     {
                         if (o.TaraKg.HasValue && k.TaraKg.HasValue && Math.Abs(o.TaraKg.Value - k.TaraKg.Value) < 1) k.TaraKg = o.TaraKg;
                         if (o.NetoKg.HasValue && k.NetoKg.HasValue && Math.Abs(o.NetoKg.Value - k.NetoKg.Value) < 1) k.NetoKg = o.NetoKg;
+                        // v3.0.1 (3.2): bruto po kolima (stavke ga ne čuvaju) – za proveru da li je spisak usklađen sam sa sobom
+                        if (o.BrutoKg.HasValue) k.BrutoKg = o.BrutoKg;
                     }
             }
             // neto 0 u stavci je „nije navedeno“ kada nijedna stavka nema neto (spisak samo sa tarom)
             if (s.Kola.All(k => (k.NetoKg ?? 0) == 0) && !s.Kola.All(k => k.Prazna)) foreach (var k in s.Kola) k.NetoKg = null;
-            if (izvorni != null) { s.UkupnoTaraKg = izvorni.UkupnoTaraKg; s.UkupnoNetoKg = izvorni.UkupnoNetoKg; s.UkupnoBrutoKg = izvorni.UkupnoBrutoKg; s.DuzinaVozaM = izvorni.DuzinaVozaM; s.PrelazniPut = izvorni.PrelazniPut; s.Prevoznici = izvorni.Prevoznici; s.NhmJedinica = izvorni.NhmJedinica; }
+            if (izvorni != null && drugiSpiskovi == 0) { s.UkupnoTaraKg = izvorni.UkupnoTaraKg; s.UkupnoNetoKg = izvorni.UkupnoNetoKg; s.UkupnoBrutoKg = izvorni.UkupnoBrutoKg; }
+            if (izvorni != null) { s.DuzinaVozaM = izvorni.DuzinaVozaM; s.PrelazniPut = izvorni.PrelazniPut; s.Prevoznici = izvorni.Prevoznici; s.NhmJedinica = izvorni.NhmJedinica; }
             var p = PosaoIzDokumenata.IzSpiska(s, pk, NhmZaKola(jobId, s.Kola.Select(k => k.Broj)), "");
             var stari = Red("SELECT * FROM planiranje.tmpJobs WHERE ID = @id", "@id", jobId);
             var rucno = Kolona("SELECT Kolona FROM planiranje.tmpJobsPolje WHERE JobID = @id AND TeretnicaID IS NULL AND RucnoIzmenjeno = 1", "@id", jobId);

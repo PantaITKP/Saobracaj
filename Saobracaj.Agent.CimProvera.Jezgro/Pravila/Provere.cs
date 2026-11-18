@@ -187,7 +187,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         internal static int BrojKolaUTekstu(string t)
         {
-            var m = Regex.Match(t ?? "", @"(?<![\d.,/])(\d{1,3})\s*(?:\p{L}+\s+){0,3}?(?:kola|vagona|vagon[ai]?|wagons?|wgs?\.?|wagen|kocsi|carri|wagons|vozů|vozu|vagoane|вагона|кола)\b", RegexOptions.IgnoreCase);
+            var m = Regex.Match(t ?? "", @"(?<![\d.,/])(\d{1,3})\s*(?:\p{L}+[\s\-]+){0,3}?(?:kola|vagona|vagon[ai]?|wagons?|wgs?\.?|wagen|kocsi|carri|wagons|vozů|vozu|vagoane|вагона|кола)\b", RegexOptions.IgnoreCase);
             return m.Success && int.TryParse(m.Groups[1].Value, out var n) && n > 0 && n < 200 ? n : 0;
         }
 

@@ -448,6 +448,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 if (Regex.Replace(stranke, @"\D", "").Contains(cif)) return "PIB / matični broj stranke";
             }
             if (cif.Length >= 8 && Regex.IsMatch(r8 ?? "", @"(?i)\b(PIB|MB|MBR|JMBG|IČO|ICO|JČO|DIČ|DIC|VAT|USt|Tax|OIB|EIK|CUI)\b")) return "PIB / matični broj";
+            // samo cifre (8+), bez slova – PIB / matični broj stranke iz susedne rubrike (UID 62: „"600 7205003/“ = JČO primaoca u r6)
+            if (cif.Length >= 8 && !Regex.IsMatch(oznaka, @"\p{L}")) return "broj bez slova (PIB / matični broj)";
             var bezCifara = !Regex.IsMatch(oznaka, @"\d");
             if (bezCifara && Regex.IsMatch(oznaka.Trim(), @"(?i)^(ref|реф|absend|odes[ií]l|exp[ée]d|r[ée]f[ée]renc)\p{L}*\.?$")) return "natpis obrasca";
             if (Citljivost.Smisao(oznaka) < Citljivost.PragSmisla) return "OCR šum";
