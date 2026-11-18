@@ -87,6 +87,32 @@ namespace Saobracaj.Agent.CimProvera
                 }
                 ps = ps ?? new Stanje.PorukaStanje();
                 ps.Folder = s.Folder; ps.Uid = s.Uid; ps.Vreme = DateTime.Now;
+                // v3.0: prethodno pokretanje je počelo obradu ove poruke i nije je završilo – proces je pao (blokiran DLL, prekid zadatka…).
+                // Pokušaj je već uračunat; posle MaxPokusaja poruka ide na ručnu proveru uz interno obaveštenje (nikad tiho ne ispada).
+                if (ps.UToku)
+                {
+                    ps.UToku = false;
+                    ps.Pokusaja++;
+                    ps.PoslednjaGreska = "obrada prekinuta – proces agenta je pao tokom obrade (greška okruženja, npr. blokiran DLL, ili prekid zadatka)"
+                                         + (string.IsNullOrEmpty(ps.PoslednjaGreska) ? "" : "; ranije: " + ps.PoslednjaGreska);
+                    log?.Upozorenje("  UID " + s.Uid + ": prethodna obrada nije završena (pokušaj " + ps.Pokusaja + "/" + max + ") – " + ps.PoslednjaGreska);
+                    if (ps.Pokusaja >= max)
+                    {
+                        ps.Status = StatusRucna;
+                        stanje.Poruke[s.Kljuc] = ps;
+                        log?.Upozorenje("  UID " + s.Uid + ": posle " + ps.Pokusaja + " pokušaja – ručna provera (više se ne pokušava).");
+                        try { PosleZadnjegPokusaja?.Invoke(s, ps); }
+                        catch (Exception ex) { log?.Greska("  UID " + s.Uid + ": interno obaveštenje nije poslato: " + ex.Message); }
+                        zavrsene.Add(s.Uid); Pomeri();
+                        Sacuvaj();
+                        continue;
+                    }
+                }
+                // v3.0: „u toku“ se upisuje PRE obrade (i ostaje dok obrada traje) – pad procesa ostavlja trag (vidi gore). Nova poruka dobija
+                // status privremene greške, da je posle pada sledeće pokretanje ne bi smatralo obrađenom.
+                ps.UToku = true;
+                if (string.IsNullOrEmpty(ps.Status)) ps.Status = StatusPrivremena;
+                stanje.Poruke[s.Kljuc] = ps; Sacuvaj();
                 log?.Info("  UID " + s.Uid + " – obrada: Message-ID " + (s.MessageId.Length > 0 ? s.MessageId : "(nema)") + ", od " + s.Od + ", naslov „" + s.Naslov + "“, prilozi: "
                           + (s.Prilozi.Count == 0 ? "nema" : string.Join(", ", s.Prilozi)) + (ps.Pokusaja > 0 ? " (pokušaj " + (ps.Pokusaja + 1) + "/" + max + ")" : ""));
 
@@ -96,10 +122,11 @@ namespace Saobracaj.Agent.CimProvera
                 catch (Exception ex)
                 {
                     log?.Greska("  UID " + s.Uid + ": obrada poruke nije uspela", ex);
-                    ps.PoslednjaGreska = ex.GetType().Name + ": " + ex.Message;
+                    ps.PoslednjaGreska = Stanje.GreskaOkruzenja(ex) ?? ex.GetType().Name + ": " + ex.Message;
                     k = Korak.PrivremenaGreska;
                 }
                 sat.Stop();
+                ps.UToku = false;
                 // v2.8.3: trajanje obrade svakog maila
                 log?.Info("  UID " + s.Uid + ": trajanje obrade " + Trajanje(sat.Elapsed) + (sat.Elapsed.TotalMinutes >= 10 ? " (duže od 10 min)" : ""));
 

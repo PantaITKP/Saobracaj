@@ -219,9 +219,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R24-NHM6"] = s => s.C.R24.Stavke = new List<SifraTekst> { new SifraTekst { Sifra = "2520" } },
             ["R18-SPISAK"] = s => s.C.R18 = F(new ListaRubrika { Stavke = { new SifraTekst { Tekst = "po spisku kola" } } }, "po spisku kola"),
             ["R25-MASA"] = s => s.C.R25 = new Masa(),
-            ["R26"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }),
-            ["R27"] = s => s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }),
-            ["R28"] = s => s.C.R28 = F(new Iznos { Vrednost = "", Valuta = "EUR" }),
+            ["R26"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }, "100 XXX"),
+            ["R27"] = s => s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }, "100"),
+            ["R28"] = s => s.C.R28 = F(new Iznos { Vrednost = "250", Valuta = "" }, "250"),
             ["R29"] = s => s.C.R29.Mesto = "",
             ["R30"] = s => s.C.R30.Cim = false,
             ["R49"] = s => s.C.R49 = new TekstRubrika(),
@@ -244,11 +244,11 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["X8"] = s => s.C.R7.Stavke.Add(new SifraTekst { Sifra = "42", Tekst = "" }),
             ["X9"] = DvaKola,
             ["X11"] = s => s.Ostali.Add(Spisak(Kola("317866560015"), Kola("317866560023", "992100", true))),
-            ["X12"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }),
+            ["X12"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }, "100 XXX"),
             ["X13"] = s => { s.C.R25.Pojedinacne = new List<string> { "30000", "20000" }; s.C.R25.Ukupno = "60000"; },
             ["X14"] = s => s.C.R29.Datum = "2026-11-06",
             ["X16"] = s => { s.C.R1.SifraZemlje = "HU"; s.C.R4.SifraZemlje = "AT"; },
-            ["X17"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "HRK" }),
+            ["X17"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "HRK" }, "100 HRK"),
             ["X19"] = s => { var d = Spisak(Kola("317866560015")); d.Spisak[0].R62.Preduzece = "3121"; s.Ostali.Add(d); },
             ["X20"] = s => { DvaKola(s); s.C.R9 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "380", Tekst = "Faktura" } } }, "380 Faktura"); s.Ostali.Add(Spisak(Kola("317866560015"), Kola("317866560023"))); },
             // v3.0 (2.9.3): X21 = različita opasna roba po kolima, a spisak bez RID podataka po kolima
@@ -536,7 +536,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void Nazivi_r26_r28_upozorenja_r27_greska()
         {
-            var s = new Scenario(); s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }); s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }); s.C.R28 = F(new Iznos { Vrednost = "", Valuta = "EUR" });
+            var s = new Scenario(); s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }, "100 XXX"); s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }, "100"); s.C.R28 = F(new Iznos { Vrednost = "250,50", Valuta = "" }, "250,50");
             var r = Proveri(s);
             Assert.AreEqual(Tezina.Upozorenje, r.Listovi[0].Nalazi.First(n => n.Rubrika == "26").Tezina);
             Assert.AreEqual(Tezina.Upozorenje, r.Listovi[0].Nalazi.First(n => n.Rubrika == "28").Tezina);

@@ -121,6 +121,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         public static string Odluka(RezultatObrade r)
         {
             var vrste = r.Poruke.Select(p => p.Vrsta).ToList();
+            if (r.Status == RadniProstor.StatusNeuspeh) return RadniProstor.OdlukaNeuspeha(r.Greska);
             if (r.Korak == Korak.PrivremenaGreska) return "privremena greška – ponovni pokušaj (" + r.Status + ")";
             switch (r.Status)
             {
@@ -134,6 +135,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             }
             if (vrste.Contains("interni")) return "interni izveštaj (" + (r.Provera != null && r.Provera.Listovi.Any(l => l.KpRezim) ? "KP tovarni list" : "ručna provera") + ")";
             if (vrste.Contains("izvestaj")) return "izveštaj pošiljaocu" + (vrste.Contains("kopija") ? " + interna kopija" : "");
+            if (vrste.Contains("kopija")) return "izveštaj samo interno (više od 25 primalaca)";
             if (r.Provera != null && r.Provera.ImaTovarniList && r.Provera.BrojGresaka + r.Provera.BrojUpozorenja == 0) return "ispravan tovarni list – bez odgovora";
             return r.Status;
         }

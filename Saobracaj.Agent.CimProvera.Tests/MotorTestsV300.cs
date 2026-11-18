@@ -182,5 +182,40 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsTrue(u["21"][0] < u["9"][0] && u["62"][1] > u["9"][3]);
             Assert.AreEqual(0, PrimerPdf.Prepust(new Dictionary<string, double[]> { ["1"] = new[] { 0.1, 0.1, 0.5, 0.2 } }));
         }
+
+        // ------------------------------------------------------------------------------------------- r26–r28: valuta samo uz pouzdan iznos
+
+        [DataTestMethod]
+        [DataRow("1.250,00 EUR", true)]
+        [DataRow("EUR 980", true)]
+        [DataRow("1200", true)]
+        [DataRow("250,50", true)]
+        [DataRow("1 250,- din", true)]
+        [DataRow("56: 0128", false)]
+        [DataRow("0128", false)]
+        [DataRow("6. 2% 81", false)]
+        [DataRow("78 nnarj", false)]
+        [DataRow("56 ot 28;", false)]
+        [DataRow("0", false)]
+        public void Iznos_u_r26_prepoznavanje(string tekst, bool iznos) => Assert.AreEqual(iznos, Provere.LiciNaIznos(tekst), tekst);
+
+        [TestMethod]
+        public void R26_sum_56_0128_bez_upozorenja_za_valutu_samo_interno_necitljiva()
+        {
+            // Osnovni, UID 195 (TCDD-3370A, „12 е въглища.pdf“): u r26 OCR je pročitao „56: 0128“ (pouzdanost 0,88) – nije iznos
+            var s = new Scenario(); s.C.R26 = F(new Iznos { Vrednost = "56", Valuta = "" }, "56: 0128"); s.C.R26.Pouzdanost = 0.88;
+            var r = Proveri(s);
+            Assert.IsFalse(Svi(r).Any(n => n.Rubrika == "26" && !n.SamoInterno), string.Join(" | ", Svi(r)));
+            var n26 = Svi(r).Single(n => n.Rubrika == "26");
+            Assert.IsTrue(n26.SamoInterno);
+            Assert.AreEqual(Tezina.Info, n26.Tezina);
+            StringAssert.Contains(n26.Tekst, "r26 nečitljiva");
+            // isti tekst kao pravi iznos bez valute → upozorenje (X12/R26)
+            var s2 = new Scenario(); s2.C.R26 = F(new Iznos { Vrednost = "128", Valuta = "" }, "128"); s2.C.R26.Pouzdanost = 0.88;
+            Assert.IsTrue(Svi(Proveri(s2)).Any(n => n.Rubrika == "26" && n.Tezina == Tezina.Upozorenje && !n.SamoInterno), string.Join(" | ", Svi(Proveri(s2))));
+            // iznos ispod praga pouzdanosti – ni upozorenje ni napomena o valuti
+            var s3 = new Scenario(); s3.C.R26 = F(new Iznos { Vrednost = "128", Valuta = "" }, "128"); s3.C.R26.Pouzdanost = 0.4;
+            Assert.IsFalse(Svi(Proveri(s3)).Any(n => (n.Pravilo == "X12" || n.Pravilo == "R26") && n.Tezina == Tezina.Upozorenje), string.Join(" | ", Svi(Proveri(s3))));
+        }
     }
 }

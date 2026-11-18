@@ -95,7 +95,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         public List<StavkaProstora> Hronoloski() => Indeks.Stavke.OrderBy(s => s.Datum).ThenBy(s => s.Kljuc, StringComparer.Ordinal).ToList();
 
         /// <summary>Redni broj poruke (1…) po datumu slanja – NNN u _Analiza.</summary>
-        public int Rb(StavkaProstora s) => Hronoloski().IndexOf(s) + 1;
+        public int Rb(StavkaProstora s) => Hronoloski().FindIndex(x => x.Kljuc == s.Kljuc) + 1;   // po ključu: i za stavku iz ranije otvorenog prostora
 
         /// <summary>Uvoz putanja (fajl/folder/zip); ista poruka (isti ključ) se ne uvozi dvaput. Vraća nove stavke.</summary>
         public List<StavkaProstora> Uvezi(IEnumerable<string> putanje, List<string> greske = null)
@@ -161,6 +161,74 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             foreach (var s in Indeks.Stavke) { s.Status = ""; s.Odluka = ""; }
             Sacuvaj();
         }
+
+        /// <summary>v3.0: status maila koji nije obrađen zbog greške okruženja (pad radnika, blokiran DLL) – vidi se u Excel-u i _Analiza.</summary>
+        public const string StatusNeuspeh = "NijeObradjen";
+
+        public static string OdlukaNeuspeha(string razlog) =>
+            "nije obrađen – " + (Stanje.GreskaOkruzenja(razlog) ?? ((razlog ?? "").StartsWith("radnik") ? "greška okruženja (radnik nije završio obradu)" : "greška obrade"));
+
+        /// <summary>
+        /// v3.0: posle dela obrade (proces radnika) – poruke dela za koje radnik nije javio ishod dobijaju zapis „nije obrađen“
+        /// (i analizu, ako se pravi). Vraća te poruke (prazno kada je sve obrađeno).
+        /// </summary>
+        public static List<StavkaProstora> ZabeleziNeobradjene(string koren, IEnumerable<string> kljuceviDela, ICollection<string> javljeni, string verzija, string razlog, bool online, bool analiza)
+        {
+            var rp = Otvori(koren);
+            var rez = new List<StavkaProstora>();
+            foreach (var k in kljuceviDela.Where(k => !javljeni.Contains(k)))
+            {
+                var s = rp.Indeks.Stavke.FirstOrDefault(x => x.Kljuc == k);
+                if (s == null) continue;
+                var folder = rp.ZabeleziNeuspeh(s, verzija, razlog ?? "radnik nije javio ishod obrade", online);
+                if (analiza) Analiza.NapisiNeuspeh(rp.Koren, verzija, rp.Rb(s), s, folder);
+                rez.Add(s);
+            }
+            if (rez.Count > 0) rp.Sacuvaj();
+            return rez;
+        }
+
+        /// <summary>
+        /// v3.0: mail nije obrađen (radnik je pao pre ili tokom obrade) – rezultat.json sa statusom „NijeObradjen“ zamenjuje eventualni
+        /// stariji rezultat iste verzije (da se u Excel-u ne bi pojavio stari rezultat kao novi). Nikad tiho.
+        /// </summary>
+        public string ZabeleziNeuspeh(StavkaProstora s, string verzija, string razlog, bool online)
+        {
+            var folder = FolderRezultata(verzija, s);
+            Directory.CreateDirectory(folder);
+            foreach (var f in Directory.GetFiles(folder)) File.Delete(f);
+            var odluka = OdlukaNeuspeha(razlog);
+            var j = new JObject
+            {
+                ["sema"] = RezultatJson.VerzijaSeme,
+                ["verzija"] = new JObject { ["program"] = RezultatJson.VerzijaPrograma, ["pravila"] = "", ["citac"] = LokalniCitac.VerzijaCitaca },
+                ["rezim"] = online ? "online" : "offline",
+                ["obradjeno"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+                ["poruka"] = new JObject
+                {
+                    ["izvor"] = s.Izvor, ["uid"] = Rb(s), ["folder"] = "RADIONICA:" + Ime, ["message_id"] = s.MessageId ?? "",
+                    ["datum"] = s.Datum.ToString("yyyy-MM-dd HH:mm:ss zzz", CultureInfo.InvariantCulture), ["od"] = s.Od ?? "", ["naslov"] = s.Naslov ?? "",
+                    ["prilozi"] = new JArray(s.Prilozi.Select(p => new JObject { ["ime"] = p })),
+                },
+                ["korak"] = "NijeObradjena", ["status"] = StatusNeuspeh, ["odluka"] = odluka, ["greska"] = razlog ?? "",
+                ["odgovor"] = new JArray(), ["dogadjaji"] = new JArray(), ["trajanje"] = new JObject { ["ukupno"] = 0 },
+            };
+            File.WriteAllText(Path.Combine(folder, "rezultat.json"), RezultatJson.U(j), new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(folder, "log.txt"), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + odluka + Environment.NewLine + (razlog ?? ""), new UTF8Encoding(false));
+            s.Status = StatusNeuspeh; s.Odluka = odluka;
+            s.Rezultati[verzija] = folder.Substring(Koren.Length).TrimStart('\\');
+            return folder;
+        }
+
+        /// <summary>v3.0: poruke čiji rezultat verzije je „nije obrađen“ (greška okruženja ili privremena greška obrade) – „obradi ponovo neuspele“.</summary>
+        public List<StavkaProstora> Neuspeli(string verzija) => Hronoloski().Where(s =>
+        {
+            if (!s.Rezultati.TryGetValue(verzija, out var rel)) return false;
+            var f = Path.Combine(Koren, rel, "rezultat.json");
+            if (!File.Exists(f)) return true;
+            try { var j = JObject.Parse(File.ReadAllText(f, Encoding.UTF8)); return (string)j["status"] == StatusNeuspeh || (string)j["korak"] == nameof(Korak.PrivremenaGreska); }
+            catch { return true; }
+        }).ToList();
 
         public string FolderRezultata(string verzija, StavkaProstora s) =>
             Path.Combine(Rezultati, BezbednoIme(verzija, 30), BezbednoIme(s.Datum.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + "_" + s.Naslov, 70) + "_" + Kratko(s.Kljuc));
@@ -272,7 +340,13 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
             var ps = new Stanje.PorukaStanje { Folder = u.Folder, Uid = u.Uid, Vreme = DateTime.Now };
             RezultatObrade r;
             try { r = obrada.Obradi(u, ps); }
-            catch (Exception ex) { r = new RezultatObrade { Status = "Greska", Greska = ex.Message, Korak = Korak.PrivremenaGreska }; log.Greska("obrada nije uspela", ex); }
+            catch (Exception ex)
+            {
+                // v3.0: greška okruženja (blokiran DLL) – „nije obrađen“, kao pad radnika; ostale greške – privremena greška obrade
+                var okr = Stanje.GreskaOkruzenja(ex);
+                r = new RezultatObrade { Status = okr != null ? RadniProstor.StatusNeuspeh : "Greska", Greska = okr ?? ex.Message, Korak = Korak.PrivremenaGreska };
+                log.Greska("obrada nije uspela", ex);
+            }
             r.Trajanje["ukupno"] = sw.Elapsed.TotalSeconds;
             stanje.Sacuvaj();
             // offline: predlog posla po tovarnom listu iz lokalnih šifarnika (online: upis je u tmp tabelama)

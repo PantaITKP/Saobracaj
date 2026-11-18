@@ -541,7 +541,8 @@ namespace Saobracaj.Agent.CimProvera
                 if (live.SamoInterno && cfg.Rezim == Rezim.Live)
                 {
                     log.Info("    " + live.Napomena + " – izveštaj samo interno.");
-                    if (cfg.KopijaNa.Count > 0) PosaljiInterno(m, r, en, nisuProcitani);
+                    // bezKopije: pozivalac (izveštaj sa internim nalazima) sam šalje punu internu kopiju – bez dvostruke kopije
+                    if (cfg.KopijaNa.Count > 0 && !bezKopije) PosaljiInterno(m, r, en, nisuProcitani);
                     return;
                 }
             }

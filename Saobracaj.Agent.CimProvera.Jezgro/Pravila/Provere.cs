@@ -101,7 +101,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             [TipDokumenta.IzvoznaDeklaracija] = new[] { "izvoz", "export", "ausfuhr", "vdd", "ex", "ex1", "exa", "ecs", "e mrn", "eas", "830", "jci" },
             [TipDokumenta.TranzitnaDeklaracija] = new[] { "t1", "t2", "t2l", "tranzit", "transit", "ncts", "tad", "versand", "t mrn", "ts mrn", "820", "821" },
             [TipDokumenta.DrugaCarinska] = new[] { "carinsk", "customs", "zoll", "jci", "ens", "deklarac", "declaration", "mrn" },
-            [TipDokumenta.SpisakKola] = new[] { "spisak kola", "spisku kola", "wagon list", "list of wagons", "wagenliste", "liste des wagons", "cit 23", "cit23", "vagon listesi", "kocsijegyz" },
+            // v3.0: „wagonlist“ (bez razmaka, Zmajevo UID 660/763) i slovački „výkaz vozňov“ (FORTRACK UID 380/577) u r9
+            [TipDokumenta.SpisakKola] = new[] { "spisak kola", "spisku kola", "wagon list", "wagonlist", "list of wagons", "wagenliste", "liste des wagons", "cit 23", "cit23", "vagon listesi", "kocsijegyz", "vykaz voz" },
             [TipDokumenta.DodatniList] = new[] { "dodatni list", "dodatnih list", "dodatni listovi", "additional sheet", "zusatzblatt", "erganzungsblatt", "erganzungsblaett", "ergaenzungsbl", "potlap", "feuille complementaire" },
             [TipDokumenta.Eur1] = new[] { "eur 1", "eur1", "movement certificate" },
             [TipDokumenta.UverenjeOPoreklu] = new[] { "porekl", "origin", "ursprung", "861" },
@@ -784,10 +785,35 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)")) + spisakBezMase);
         }
 
-        private static IEnumerable<Pogodak> Iznos(Kontekst k, Iznos r, string broj)
+        // iznos: 1–3 cifre sa grupama hiljada ili ceo broj bez vodeće nule, opciono decimale („,-“), opciono oznaka valute pre ili posle
+        private const string ValutaOznaka = @"(?:[A-Za-z]{3}|€|\$|£|din\.?|kn)";
+        private static readonly Regex IznosRegex = new Regex(
+            @"^(?:" + ValutaOznaka + @"\s*)?(?:[1-9]\d{0,2}(?:[ .,'’]\d{3})+|[1-9]\d*|0)(?:[.,](?:\d{1,2}|-{1,2}))?(?:\s*" + ValutaOznaka + @")?$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        /// <summary>v3.0: tekst rubrike 26–28 liči na iznos („1.250,00 EUR“, „EUR 980“, „1200“) – ne na OCR šum („56: 0128“, „0128“, „78 nnarj“).</summary>
+        internal static bool LiciNaIznos(string tekst)
+        {
+            var t = Regex.Replace(tekst ?? "", @"\s+", " ").Trim().Trim(';', ':', '.', ',').Trim();
+            if (t.Length == 0 || t == "0") return false;
+            return IznosRegex.IsMatch(t);
+        }
+
+        private static IEnumerable<Pogodak> Iznos(Kontekst k, Iznos r, string broj, bool napomena = false)
         {
             // Neobavezne rubrike (26–28): mastilo bez pročitanog teksta (sitni natpisi obrasca) nije razlog za upozorenje.
             if (!r.Popunjena || (r.Status == StatusRubrike.Necitljivo && Prazno(r.Tekst)) || !k.Citljivo(r, broj)) yield break;
+            // v3.0 (odluka korisnika 18.11.): upozorenje za valutu samo kada je u rubrici pouzdano pročitan IZNOS (cifre, opciono decimale
+            // i oznaka valute). OCR šum („56: 0128“, „6. 2% 81“, „78 nnarj“) ne pokreće pravilo – najviše INTERNO „r26 nečitljiva“.
+            if (!LiciNaIznos(r.Tekst))
+            {
+                if (napomena) yield return new Pogodak(broj, "valuta-" + broj + "-necitljivo")
+                {
+                    Tezina = Tezina.Info, SamoInterno = true,
+                    Poruka = k.U.Engleski ? "Box " + broj + " is not readable as an amount – check manually." : "r" + broj + " nečitljiva – proveriti ručno.",
+                }.D((k.U.Engleski ? "Agent read: „" : "Agent je pročitao: „") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim() + "“ (" + (k.U.Engleski ? "not an amount" : "ne liči na iznos") + ").");
+                yield break;
+            }
             if (Prazno(r.Vrednost) || !k.P.Valute.Contains((r.Valuta ?? "").Trim().ToUpperInvariant()))
                 yield return P(broj, "valuta-" + broj);
         }
@@ -1169,7 +1195,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private static IEnumerable<Pogodak> X12(Kontekst k)
         {
             foreach (var (r, b) in new[] { (k.C.R26, "26"), (k.C.R27, "27"), (k.C.R28, "28") })
-                foreach (var x in Iznos(k, r, b)) yield return x;
+                foreach (var x in Iznos(k, r, b, napomena: true)) yield return x;   // INTERNO „nečitljiva“ samo jednom (X12), ne i iz R26–R28
         }
 
         private static IEnumerable<Pogodak> X13(Kontekst k)

@@ -146,6 +146,67 @@ namespace Saobracaj.Agent.CimProvera.Tests
             using (var z = ZipFile.OpenRead(Path.Combine(koren, "paket2.zip"))) Assert.IsFalse(z.Entries.Any(e => e.FullName.StartsWith("poruke/")));
         }
 
+        [TestMethod]
+        public void Pad_radnika_nije_obradjen_greska_okruzenja_u_Excelu_INDEKS_SAZETAK_i_obradi_ponovo_neuspele()
+        {
+            // v3.0 (Osnovni 18.11.: Smart App Control blokirao Saobracaj.Common.dll, radnik pao, 143 maila prećutno neobrađena)
+            var koren = NoviFolder("neuspeh");
+            var rp = RadniProstor.Otvori(Path.Combine(koren, "Radni", "N"));
+            var emlovi = new List<string>();
+            foreach (var i in new[] { 1, 2 })
+            {
+                var m = new MimeMessage { Subject = "Aviso " + i, MessageId = "n" + i + "@x", Date = new DateTimeOffset(2026, 11, 18, 10, i, 0, TimeSpan.FromHours(1)) };
+                m.From.Add(MailboxAddress.Parse("a@b.rs")); m.Body = new TextPart("plain") { Text = "tekst" };
+                var f = Path.Combine(koren, i + ".eml"); m.WriteTo(f); emlovi.Add(f);
+            }
+            rp.Uvezi(emlovi);
+            var kljucevi = rp.Hronoloski().Select(x => x.Kljuc).ToList();
+            // radnik je javio ishod samo za prvu poruku, pa pao (blokiran DLL)
+            var razlog = "radnik je završio sa kodom -532462766: Unhandled Exception: System.IO.FileLoadException: Could not load file or assembly 'Saobracaj.Common' … An Application Control policy has blocked this file. (Exception from HRESULT: 0x800711C7)";
+            var bez = RadniProstor.ZabeleziNeobradjene(rp.Koren, kljucevi, new HashSet<string> { kljucevi[0] }, "v", razlog, false, true);
+            Assert.AreEqual(1, bez.Count);
+            rp = RadniProstor.Otvori(rp.Koren);
+            var druga = rp.Hronoloski()[1];
+            Assert.AreEqual("nije obrađen – greška okruženja (blokiran DLL)", druga.Odluka);
+            CollectionAssert.AreEqual(new[] { kljucevi[1] }, rp.Neuspeli("v").Select(x => x.Kljuc).ToArray(), "obradi ponovo neuspele");
+            var red = Zbirno.Redovi(rp, "v").Single(r => r.Stavka.Kljuc == kljucevi[1]);
+            Assert.AreEqual("nije obrađen – greška okruženja (blokiran DLL)", red.Odluka);
+            Assert.AreEqual(RadniProstor.StatusNeuspeh, red.Status);
+            Analiza.ZbirnoIzFoldera(rp.Koren, "v");
+            StringAssert.Contains(File.ReadAllText(Path.Combine(rp.Koren, "_Analiza", "v", "INDEKS.md")), "nije obrađen – greška okruženja (blokiran DLL)");
+            var sz = File.ReadAllText(Path.Combine(rp.Koren, "_Analiza", "v", "SAZETAK.md"));
+            StringAssert.Contains(sz, "## Nisu obrađeni (greška okruženja): 1");
+            StringAssert.Contains(sz, "Aviso 2");
+            // stari rezultat iste verzije se zamenjuje zapisom o neuspehu (ne ostaje kao da je nov)
+            Assert.AreEqual(RadniProstor.StatusNeuspeh, (string)Zbirno.Rezultat(rp, druga, "v")["status"]);
+        }
+
+        [TestMethod, TestCategory("Regresija")]
+        public void Vise_od_25_primalaca_i_interni_nalazi_jedna_interna_kopija()
+        {
+            // Osnovni, UID 488 (HER-SAD81, 41 primalac): izveštaj sa internim nalazima za mail sa više od 25 primalaca pravio je dve interne kopije
+            var pdf = Path.Combine(Folder, "nezavisni", "2026-11-13", "CIM COAL 16", "CIM COAL 16.pdf");
+            if (!File.Exists(pdf)) Assert.Inconclusive("Nema " + pdf);
+            var koren = NoviFolder("primaoci");
+            var m = new MimeMessage { Subject = "Coal 16 – documents", MessageId = "p25@firma.de", Date = new DateTimeOffset(2026, 11, 16, 3, 1, 0, TimeSpan.FromHours(1)) };
+            m.From.Add(MailboxAddress.Parse("disposition@firma.de"));
+            foreach (var i in Enumerable.Range(1, 30)) m.To.Add(MailboxAddress.Parse("primalac" + i + "@firma" + i + ".de"));
+            m.To.Add(MailboxAddress.Parse("priprema@kprevoz.co.rs"));
+            var b = new BodyBuilder { TextBody = "Please find attached the CIM." };
+            b.Attachments.Add("CIM COAL 16.pdf", File.ReadAllBytes(pdf));
+            m.Body = b.ToMessageBody();
+            var eml = Path.Combine(koren, "p25.eml"); m.WriteTo(eml);
+            var rp = RadniProstor.Otvori(Path.Combine(koren, "Radni", "P"));
+            rp.Uvezi(new[] { eml });
+            RezultatAlata r;
+            using (var rad = new RadnikObrade(rp, Offline())) r = rad.Obradi(rp.Hronoloski()[0]);
+            var vrste = r.Obrada.Poruke.Select(p => p.Vrsta).ToList();
+            Assert.AreEqual(1, vrste.Count(v => v == "kopija"), string.Join(", ", vrste));
+            Assert.AreEqual(0, vrste.Count(v => v == "izvestaj"), "više od 25 primalaca – pošiljaocu ništa");
+            StringAssert.StartsWith((string)r.Json["odluka"], "izveštaj samo interno");
+            Assert.IsTrue(r.Obrada.Poruke.Single(p => p.Vrsta == "kopija").Poruka.TextBody.Contains("INTERNO"), "puna interna kopija (sa internim nalazima)");
+        }
+
         [TestMethod, TestCategory("Regresija")]
         public void Isti_ulaz_isti_rezultat_json_alat_i_agent_i_poredjenje_verzija()
         {

@@ -157,6 +157,7 @@ namespace Saobracaj.Agent.CimRadionica
                 new Label { Text = "  Verzija:", AutoSize = true, Padding = new Padding(0, 6, 0, 0) }, tbVerzija,
                 Dugme("Obradi izabrano", async (s, e) => await Obradi(Izabrane())),
                 Dugme("Obradi sve", async (s, e) => await Obradi(rp.Hronoloski())),
+                Dugme("Obradi ponovo neuspele", async (s, e) => { var nu = rp.Neuspeli(VerzijaIzPolja()); if (nu.Count == 0) MessageBox.Show("Nema neuspelih poruka u verziji " + VerzijaIzPolja() + "."); else await Obradi(nu); }),
                 chSamoNit, chBrisiTmp, chAnaliza,
                 Dugme("Kreni ispočetka", (s, e) => { if (MessageBox.Show("Obrisati stanje radnog prostora (dosije, ponavljanja)? Keš čitanja i rezultati ostaju.", "Kreni ispočetka", MessageBoxButtons.YesNo) == DialogResult.Yes) { rp.KreniIspocetka(); OsveziPoruke(); } }),
                 Dugme("Otvori folder", (s, e) => Process.Start("explorer.exe", rp.Koren)));
@@ -244,11 +245,13 @@ namespace Saobracaj.Agent.CimRadionica
             return izabrane;
         }
 
+        private string VerzijaIzPolja() => string.IsNullOrWhiteSpace(tbVerzija.Text) ? RezultatJson.VerzijaPrograma : tbVerzija.Text.Trim();
+
         /// <summary>Obrada u delovima od po VelicinaDela poruka; svaki deo u posebnom procesu (CimRadionica --radnik).</summary>
         private async Task Obradi(List<StavkaProstora> stavke)
         {
             if (radi || stavke.Count == 0) return;
-            p.Verzija = string.IsNullOrWhiteSpace(tbVerzija.Text) ? RezultatJson.VerzijaPrograma : tbVerzija.Text.Trim(); p.Sacuvaj();
+            p.Verzija = VerzijaIzPolja(); p.Sacuvaj();
             var konekcija = p.Online ? p.Konekcija() : null;
             if (p.Online && string.IsNullOrEmpty(konekcija)) { MessageBox.Show("Online režim: konekcija nije podešena (kartica Podešavanja)."); return; }
             if (p.Online && chBrisiTmp.Checked)
@@ -266,14 +269,21 @@ namespace Saobracaj.Agent.CimRadionica
             foreach (var deo in delovi)
             {
                 var posao = new PosaoRadnika { Koren = rp.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = p.Online, Verzija = p.Verzija, Kes = p.Kes, Analiza = chAnaliza.Checked ? rp.Koren : null };
-                await Task.Run(() => PokreniRadnika(posao, konekcija, red =>
+                var javljeni = new HashSet<string>();
+                var neuspeh = await Task.Run(() => PokreniRadnika(posao, konekcija, red =>
                 {
+                    var m = System.Text.RegularExpressions.Regex.Match(red, @"^(?:OK|GRESKA) (.+?) \| ");
+                    if (m.Success) lock (javljeni) javljeni.Add(m.Groups[1].Value);
                     BeginInvoke((Action)(() =>
                     {
                         if (red.StartsWith("OK ") || red.StartsWith("GRESKA ")) { napredak.Value = Math.Min(napredak.Maximum, napredak.Value + 1); if (red.StartsWith("GRESKA ")) greske.Add(red); }
                         Poruka("Obrada " + napredak.Value + "/" + napredak.Maximum + " (" + sw.Elapsed.ToString(@"hh\:mm\:ss") + "): " + (red.Length > 140 ? red.Substring(0, 140) : red));
                     }));
                 }));
+                // v3.0: pad radnika se nikad ne prećutkuje – poruke dela bez ishoda dobijaju „nije obrađen – greška okruženja …“; obrada ide dalje
+                List<StavkaProstora> neobradjene;
+                lock (javljeni) neobradjene = RadniProstor.ZabeleziNeobradjene(rp.Koren, posao.Kljucevi, javljeni, p.Verzija, neuspeh, p.Online, chAnaliza.Checked);
+                if (neobradjene.Count > 0) napredak.Value = Math.Min(napredak.Maximum, napredak.Value + neobradjene.Count);
                 rp = RadniProstor.Otvori(rp.Koren);
                 OsveziPoruke();
             }
@@ -283,10 +293,35 @@ namespace Saobracaj.Agent.CimRadionica
             OsveziVerzije();
             Poruka("Gotovo: " + redom.Count + " poruka za " + sw.Elapsed.ToString(@"hh\:mm\:ss") + (greske.Count > 0 ? ", grešaka " + greske.Count : "") + ". Zbirni Excel: " + Zbirno.Putanja(rp, p.Verzija));
             if (greske.Count > 0) MessageBox.Show(string.Join(Environment.NewLine, greske.Take(20)), "Obrada – greške");
+            // v3.0: spisak poruka koje nisu obrađene (greška okruženja) + ponuda „Obradi ponovo neuspele“
+            var neuspeli = rp.Neuspeli(p.Verzija).Where(x => redom.Any(y => y.Kljuc == x.Kljuc)).ToList();
+            if (neuspeli.Count > 0
+                && MessageBox.Show("NISU OBRAĐENI (" + neuspeli.Count + "):" + Environment.NewLine + string.Join(Environment.NewLine, neuspeli.Take(25).Select(x => rp.Rb(x).ToString("000") + "  " + x.Naslov + " – " + x.Odluka))
+                                   + (neuspeli.Count > 25 ? Environment.NewLine + "… i još " + (neuspeli.Count - 25) : "") + Environment.NewLine + Environment.NewLine + "Obraditi ponovo neuspele sada?",
+                                   "Obrada – neobrađene poruke", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                await Obradi(neuspeli);
         }
 
-        /// <summary>Proces radnika; konekcija samo kroz promenljivu okruženja procesa (nikad u fajl posla).</summary>
-        private static void PokreniRadnika(PosaoRadnika posao, string konekcija, Action<string> red)
+        /// <summary>
+        /// Proces radnika; konekcija samo kroz promenljivu okruženja procesa (nikad u fajl posla). Vraća null kada je radnik završio
+        /// uspešno, inače razlog (izlazni kod i prva linija izuzetka) – pozivalac tada zaustavlja obradu (redosled je hronološki).
+        /// </summary>
+        internal static string PokreniRadnika(PosaoRadnika posao, string konekcija, Action<string> red)
+        {
+            // Windows Smart App Control povremeno odbije učitavanje nepotpisanog DLL-a (FileLoadException 0x800711C7) – radnik padne pre
+            // prve poruke. Tada je ponovni pokušaj bezbedan (ništa nije obrađeno); posle bar jedne obrađene poruke se ne ponavlja.
+            string neuspeh = null;
+            for (int pokusaj = 1; pokusaj <= 3; pokusaj++)
+            {
+                var obradjeno = 0;
+                neuspeh = PokreniRadnikaJednom(posao, konekcija, l => { obradjeno++; red(l); });
+                if (neuspeh == null || obradjeno > 0) return neuspeh;
+                if (pokusaj < 3) System.Threading.Thread.Sleep(5000);
+            }
+            return neuspeh + " (3 pokušaja)";
+        }
+
+        private static string PokreniRadnikaJednom(PosaoRadnika posao, string konekcija, Action<string> red)
         {
             var fajl = Path.Combine(Path.GetTempPath(), "CimRadionica-posao-" + Guid.NewGuid().ToString("N") + ".json");
             File.WriteAllText(fajl, JsonConvert.SerializeObject(posao), new UTF8Encoding(false));
@@ -296,15 +331,18 @@ namespace Saobracaj.Agent.CimRadionica
                 { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8 };
                 if (!string.IsNullOrEmpty(konekcija)) psi.EnvironmentVariables["CIMPROVERA_KONEKCIJA"] = konekcija;
                 else psi.EnvironmentVariables.Remove("CIMPROVERA_KONEKCIJA");
+                string izuzetak = null;
                 using (var pr = Process.Start(psi))
                 {
-                    pr.ErrorDataReceived += (s, e) => { };
+                    pr.ErrorDataReceived += (s, e) => { if (izuzetak == null && e.Data != null && e.Data.Contains("Exception")) izuzetak = e.Data.Trim(); };
                     pr.BeginErrorReadLine();
                     string l;
                     while ((l = pr.StandardOutput.ReadLine()) != null) red(l);
                     pr.WaitForExit();
+                    return pr.ExitCode == 0 ? null : "radnik je završio sa kodom " + pr.ExitCode + (izuzetak != null ? ": " + izuzetak : "");
                 }
             }
+            catch (Exception ex) { return "radnik nije pokrenut: " + ex.Message; }
             finally { try { File.Delete(fajl); } catch { } }
         }
 
@@ -607,7 +645,7 @@ FROM planiranje.tmpTeretnica t ORDER BY t.ID DESC");
             t.Controls.Add(lbTestiranje);
             t.Controls.Add(Traka(new Label { Text = "Folder:", AutoSize = true, Padding = new Padding(0, 6, 0, 0) }, tbTestiranje,
                 Dugme("Pokreni praćenje", (s, e) => PokreniPracenje()), Dugme("Zaustavi", (s, e) => { tajmer.Stop(); posmatrac?.Dispose(); posmatrac = null; Zapis("praćenje zaustavljeno"); }),
-                Dugme("Obradi sada", (s, e) => ProveriTestiranje()),
+                Dugme("Obradi sada (i neuspele)", (s, e) => ProveriTestiranje(true)),
                 Dugme("Kreni ispočetka", (s, e) => KreniIspocetkaTestiranje()),
                 new Label { Text = "Novi .msg/.eml (po datumu slanja) → radni prostor „Testiranje“, _Analiza u istom folderu. Beleške „X - napomena“ / „Zapazanja“ ulaze u ANALIZA.md.", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }));
             return t;
@@ -638,14 +676,16 @@ FROM planiranje.tmpTeretnica t ORDER BY t.ID DESC");
         }
 
         /// <summary>Nove poruke iz foldera Testiranje: uvoz u radni prostor „Testiranje“ i obrada po datumu slanja, sa _Analiza u folderu Testiranje.</summary>
-        private async void ProveriTestiranje()
+        private async void ProveriTestiranje(bool iNeuspele = false)
         {
             if (radi || string.IsNullOrWhiteSpace(p.TestiranjeFolder) || !Directory.Exists(p.TestiranjeFolder)) return;
             var fajlovi = Directory.GetFiles(p.TestiranjeFolder).Where(f => System.Text.RegularExpressions.Regex.IsMatch(f, @"(?i)\.(msg|eml)$")).ToList();
             if (fajlovi.Count == 0) return;
             var test = RadniProstor.Otvori(Path.Combine(p.Radni, "Testiranje"));
             var nove = test.Uvezi(fajlovi);
-            var neobradjene = test.Hronoloski().Where(s => !s.Rezultati.ContainsKey(p.Verzija)).ToList();
+            // v3.0: „Obradi sada“ obrađuje ponovo i poruke koje nisu obrađene zbog greške okruženja
+            var neuspeleRanije = iNeuspele ? new HashSet<string>(test.Neuspeli(p.Verzija).Select(x => x.Kljuc)) : new HashSet<string>();
+            var neobradjene = test.Hronoloski().Where(s => !s.Rezultati.ContainsKey(p.Verzija) || neuspeleRanije.Contains(s.Kljuc)).ToList();
             if (neobradjene.Count == 0) return;
             Zapis("novih: " + nove.Count + ", za obradu: " + neobradjene.Count);
             radi = true;
@@ -655,12 +695,24 @@ FROM planiranje.tmpTeretnica t ORDER BY t.ID DESC");
                 foreach (var deo in Enumerable.Range(0, (neobradjene.Count + p.VelicinaDela - 1) / p.VelicinaDela).Select(i => neobradjene.Skip(i * p.VelicinaDela).Take(p.VelicinaDela).ToList()))
                 {
                     var posao = new PosaoRadnika { Koren = test.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = p.Online, Verzija = p.Verzija, Kes = p.Kes, Analiza = p.TestiranjeFolder };
-                    await Task.Run(() => PokreniRadnika(posao, konekcija, red => BeginInvoke((Action)(() => Zapis(red)))));
+                    var javljeni = new HashSet<string>();
+                    var neuspeh = await Task.Run(() => PokreniRadnika(posao, konekcija, red =>
+                    {
+                        var m = System.Text.RegularExpressions.Regex.Match(red, @"^(?:OK|GRESKA) (.+?) \| ");
+                        if (m.Success) lock (javljeni) javljeni.Add(m.Groups[1].Value);
+                        BeginInvoke((Action)(() => Zapis(red)));
+                    }));
+                    // v3.0: pad radnika – poruke bez ishoda dobijaju „nije obrađen – greška okruženja …“ (i ANALIZA.md u folderu Testiranje)
+                    List<StavkaProstora> bez;
+                    lock (javljeni) bez = RadniProstor.ZabeleziNeobradjene(test.Koren, posao.Kljucevi, javljeni, p.Verzija, neuspeh, p.Online, false);
+                    foreach (var x in bez) { Analiza.NapisiNeuspeh(p.TestiranjeFolder, p.Verzija, RadniProstor.Otvori(test.Koren).Rb(x), x, Path.Combine(test.Koren, x.Rezultati[p.Verzija])); Zapis("NIJE OBRAĐEN: " + x.Naslov + " – " + x.Odluka); }
                 }
                 Analiza.ZbirnoIzFoldera(p.TestiranjeFolder, p.Verzija);
                 test = RadniProstor.Otvori(test.Koren);
                 Zbirno.Sacuvaj(test, p.Verzija);
                 Zapis("gotovo – _Analiza\\" + p.Verzija + " u " + p.TestiranjeFolder);
+                var nu = test.Neuspeli(p.Verzija);
+                if (nu.Count > 0) Zapis("NISU OBRAĐENI (" + nu.Count + "): " + string.Join("; ", nu.Select(x => x.Naslov)) + " – dugme „Obradi sada (i neuspele)“ ih obrađuje ponovo.");
             }
             catch (Exception ex) { Zapis("greška: " + ex.Message); }
             finally { radi = false; }

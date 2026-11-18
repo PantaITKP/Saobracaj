@@ -93,7 +93,17 @@ namespace Saobracaj.Agent.CimRadionica
             if (a.Count >= 2 && a[0] == "--radnik") return Radnik(a[1]);
             if (a.Count >= 3 && a[0] == "--uvezi") return Uvezi(a[1], a.Skip(2).ToList());
             if (a.Count >= 2 && a[0] == "--obradi") return ObradiBezUi(a);
-            if (a.Count >= 3 && a[0] == "--recnik") { var pp = Podesavanja.Ucitaj(); GlavnaForma.Recnik(RadniProstor.Otvori(Path.Combine(pp.Radni, a[1])), a.Count > 3 ? a[3] : pp.Verzija, a[2]); return 0; }
+            // osvežavanje lokalne kopije šifarnika (samo čitanje) – konekcija iz DPAPI fajla ili CIMPROVERA_KONEKCIJA, nikad iz argumenata
+            if (a.Count >= 1 && a[0] == "--sifarnici")
+            {
+                var pp = Podesavanja.Ucitaj();
+                var kon = pp.Konekcija();
+                if (string.IsNullOrEmpty(kon)) { Console.Error.WriteLine("Konekcija nije podešena."); return 1; }
+                var folder = Path.Combine(pp.Koren, "sifarnici");
+                Console.WriteLine("Kopija šifarnika: " + SifarniciKopija.Napravi(kon, folder).ToString("dd.MM.yyyy HH:mm") + " → " + folder);
+                return 0;
+            }
+            if (a.Count >= 3 && a[0] == "--recnik"){ var pp = Podesavanja.Ucitaj(); GlavnaForma.Recnik(RadniProstor.Otvori(Path.Combine(pp.Radni, a[1])), a.Count > 3 ? a[3] : pp.Verzija, a[2]); return 0; }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             var p = Podesavanja.Ucitaj();
@@ -131,29 +141,41 @@ namespace Saobracaj.Agent.CimRadionica
             if (online && string.IsNullOrEmpty(konekcija)) { Console.Error.WriteLine("Online: konekcija nije podešena."); return 1; }
             if (a.Contains("--ispocetka")) rp.KreniIspocetka();
             var samo = Op("--samo")?.Split(',').ToList();
-            var stavke = rp.Hronoloski().Where(s => samo == null || samo.Contains(s.Kljuc) || samo.Contains(rp.Rb(s).ToString("000"))).ToList();
+            // --od NNN: nastavak posle prekida (redni broj u hronološkom redu, bez --ispocetka – dosije ranijih poruka ostaje)
+            var od = int.TryParse(Op("--od"), out var odRb) ? odRb : 1;
+            // --neuspele: samo poruke čiji rezultat ove verzije je „nije obrađen“ (greška okruženja / privremena greška)
+            var neuspeleRanije = a.Contains("--neuspele") ? new HashSet<string>(rp.Neuspeli(verzija).Select(x => x.Kljuc)) : null;
+            var stavke = rp.Hronoloski().Where(s => (samo == null || samo.Contains(s.Kljuc) || samo.Contains(rp.Rb(s).ToString("000"))) && rp.Rb(s) >= od
+                                                   && (neuspeleRanije == null || neuspeleRanije.Contains(s.Kljuc))).ToList();
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int n = 0;
+            var analiza = a.Contains("--analiza");
             for (int i = 0; i < stavke.Count; i += p.VelicinaDela)
             {
                 var deo = stavke.Skip(i).Take(p.VelicinaDela).ToList();
-                var posao = new PosaoRadnika { Koren = rp.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = online, Verzija = verzija, Kes = p.Kes, Analiza = a.Contains("--analiza") ? rp.Koren : null };
-                var fajl = Path.Combine(Path.GetTempPath(), "CimRadionica-posao-" + Guid.NewGuid().ToString("N") + ".json");
-                File.WriteAllText(fajl, JsonConvert.SerializeObject(posao), new UTF8Encoding(false));
-                var psi = new System.Diagnostics.ProcessStartInfo(Application.ExecutablePath, "--radnik \"" + fajl + "\"") { UseShellExecute = false, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8 };
-                if (!string.IsNullOrEmpty(konekcija)) psi.EnvironmentVariables["CIMPROVERA_KONEKCIJA"] = konekcija; else psi.EnvironmentVariables.Remove("CIMPROVERA_KONEKCIJA");
-                using (var pr = System.Diagnostics.Process.Start(psi))
+                var posao = new PosaoRadnika { Koren = rp.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = online, Verzija = verzija, Kes = p.Kes, Analiza = analiza ? rp.Koren : null };
+                var javljeni = new HashSet<string>();
+                var neuspeh = GlavnaForma.PokreniRadnika(posao, konekcija, l =>
                 {
-                    string l;
-                    while ((l = pr.StandardOutput.ReadLine()) != null) { n++; Console.WriteLine(n + "/" + stavke.Count + " [" + sw.Elapsed.ToString(@"hh\:mm\:ss") + "] " + l); }
-                    pr.WaitForExit();
-                }
-                try { File.Delete(fajl); } catch { }
+                    n++; Console.WriteLine(n + "/" + stavke.Count + " [" + sw.Elapsed.ToString(@"hh\:mm\:ss") + "] " + l);
+                    var m = System.Text.RegularExpressions.Regex.Match(l, @"^(?:OK|GRESKA) (.+?) \| ");
+                    if (m.Success) javljeni.Add(m.Groups[1].Value);
+                });
+                // v3.0: pad radnika se nikad ne prećutkuje – poruke dela bez ishoda dobijaju „nije obrađen – greška okruženja …“; obrada ide dalje
+                var neobradjene = RadniProstor.ZabeleziNeobradjene(rp.Koren, posao.Kljucevi, javljeni, verzija, neuspeh, online, analiza);
+                foreach (var s in neobradjene) { n++; Console.WriteLine(n + "/" + stavke.Count + " [" + sw.Elapsed.ToString(@"hh\:mm\:ss") + "] NIJE OBRAĐEN " + s.Kljuc + " | " + s.Odluka); }
+                if (neuspeh != null && neobradjene.Count == 0) Console.Error.WriteLine("Radnik: " + neuspeh + " (sve poruke dela imaju ishod).");
             }
             rp = RadniProstor.Otvori(rp.Koren);
-            if (a.Contains("--analiza")) Analiza.ZbirnoIzFoldera(rp.Koren, verzija);
+            if (analiza) Analiza.ZbirnoIzFoldera(rp.Koren, verzija);
             Console.WriteLine("Zbirni Excel: " + Zbirno.Sacuvaj(rp, verzija) + " (" + sw.Elapsed.ToString(@"hh\:mm\:ss") + ")");
-            return 0;
+            var neuspeli = rp.Neuspeli(verzija);
+            if (neuspeli.Count == 0) return 0;
+            Console.WriteLine();
+            Console.WriteLine("NISU OBRAĐENI (" + neuspeli.Count + "):");
+            foreach (var s in neuspeli) Console.WriteLine("  " + rp.Rb(s).ToString("000") + "  " + s.Datum.ToString("dd.MM.yyyy HH:mm") + "  " + s.Naslov + "  – " + s.Odluka);
+            Console.WriteLine("Ponovna obrada neuspelih: CimRadionica.exe --obradi " + a[1] + " --verzija " + verzija + " --neuspele");
+            return 2;
         }
 
         /// <summary>
@@ -184,7 +206,13 @@ namespace Saobracaj.Agent.CimRadionica
                         }
                         Console.WriteLine("OK " + s.Kljuc + " | " + s.Odluka);
                     }
-                    catch (Exception ex) { Console.WriteLine("GRESKA " + s.Kljuc + " | " + ex.Message.Replace('\n', ' ')); }
+                    catch (Exception ex)
+                    {
+                        // v3.0: rezultat nije zapisan – zapis „nije obrađen“ (stari rezultat iste verzije se ne zadržava)
+                        try { var f = rp.ZabeleziNeuspeh(s, posao.Verzija, Stanje.GreskaOkruzenja(ex) ?? ex.GetType().Name + ": " + ex.Message, posao.Online); rp.Sacuvaj(); if (posao.Analiza != null) Analiza.NapisiNeuspeh(posao.Analiza, posao.Verzija, rp.Rb(s), s, f); }
+                        catch { }
+                        Console.WriteLine("GRESKA " + s.Kljuc + " | " + ex.Message.Replace('\n', ' '));
+                    }
                     Console.Out.Flush();
                 }
             return 0;

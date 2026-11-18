@@ -109,6 +109,48 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         [TestMethod]
+        public void Pad_procesa_tokom_obrade_racuna_pokusaj_i_posle_3_obavestenje_mail_ne_ispada_tiho()
+        {
+            // v3.0: proces agenta padne usred obrade (blokiran DLL, prekid zadatka) – catch se ne izvrši, stanje ostaje kakvo je bilo
+            // na disku u tom trenutku. Simulacija: snimak stanja iz same obrade postaje stanje sledećeg pokretanja.
+            var stanje = new Stanje();
+            var fs = new Stanje.FolderStanje { PoslednjiUid = 10 };
+            int zapoceto = 0, obavestenja = 0;
+            string poslednja = null;
+            for (int krug = 1; krug <= 4; krug++)
+            {
+                string snimak = null;
+                long uidPrePada = 0;
+                var q = new RedPoruka(stanje, fs, 3, null, false) { PosleZadnjegPokusaja = (s, ps) => { obavestenja++; poslednja = ps.PoslednjaGreska; } };
+                q.Obradi(new[] { S(11) }, (s, ps) =>
+                {
+                    zapoceto++;
+                    snimak = Newtonsoft.Json.JsonConvert.SerializeObject(stanje);   // „disk“ u trenutku pada
+                    uidPrePada = fs.PoslednjiUid;
+                    Assert.IsTrue(stanje.Poruke[s.Kljuc].UToku, "u toku se upisuje pre obrade");
+                    ps.Status = "Greske"; return Korak.Obradjena;
+                });
+                if (snimak != null) { stanje = Newtonsoft.Json.JsonConvert.DeserializeObject<Stanje>(snimak); fs.PoslednjiUid = uidPrePada; }   // pad: ishod obrade se ne pamti
+            }
+            Assert.AreEqual(3, zapoceto, "posle 3 prekinuta pokušaja četvrti se ne radi");
+            Assert.AreEqual(1, obavestenja, "interno obaveštenje (ručna provera)");
+            StringAssert.Contains(poslednja, "obrada prekinuta");
+            var p = stanje.Poruke[S(11).Kljuc];
+            Assert.AreEqual(RedPoruka.StatusRucna, p.Status);
+            Assert.IsFalse(p.UToku);
+            Assert.AreEqual(11, fs.PoslednjiUid, "poslednji UID prelazi poruku tek kada je predata na ručnu proveru");
+        }
+
+        [TestMethod]
+        public void Greska_okruzenja_blokiran_DLL_prepoznata()
+        {
+            var ex = new System.IO.FileLoadException("Could not load file or assembly 'Saobracaj.Common'. An Application Control policy has blocked this file. (Exception from HRESULT: 0x800711C7)");
+            StringAssert.StartsWith(Stanje.GreskaOkruzenja(ex), "greška okruženja (blokiran DLL)");
+            Assert.IsNull(Stanje.GreskaOkruzenja(new InvalidOperationException("x")));
+            Assert.AreEqual("greška okruženja (blokiran DLL)", Stanje.GreskaOkruzenja("Unhandled Exception: System.IO.FileLoadException: ... (Exception from HRESULT: 0x800711C7)"));
+        }
+
+        [TestMethod]
         public void Upozorenje_najvise_jednom_na_sat_neuspelo_slanje_se_ne_trosi()
         {
             var st = new Stanje();

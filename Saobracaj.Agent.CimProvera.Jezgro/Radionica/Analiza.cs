@@ -44,6 +44,32 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             return f;
         }
 
+        /// <summary>v3.0: analiza maila koji nije obrađen (greška okruženja) – da se vidi u INDEKS.md i SAZETAK.md. Vraća folder.</summary>
+        public static string NapisiNeuspeh(string koren, string verzija, int rb, StavkaProstora s, string folderRezultata)
+        {
+            var f = Folder(koren, verzija, rb, s);
+            Directory.CreateDirectory(f);
+            foreach (var x in Directory.GetFiles(f)) File.Delete(x);
+            var strane = Path.Combine(f, "strane");
+            if (Directory.Exists(strane)) Directory.Delete(strane, true);
+            var json = File.ReadAllText(Path.Combine(folderRezultata, "rezultat.json"), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(f, "rezultat.json"), json, new UTF8Encoding(false));
+            var j = JObject.Parse(json);
+            var sb = new StringBuilder();
+            sb.AppendLine("# " + rb.ToString("000") + " – " + s.Naslov).AppendLine();
+            sb.AppendLine("| | |").AppendLine("|---|---|");
+            sb.AppendLine("| Datum | " + s.Datum.ToString("dd.MM.yyyy HH:mm zzz", CultureInfo.InvariantCulture) + " |");
+            sb.AppendLine("| Od | " + s.Od + " |");
+            sb.AppendLine("| Message-ID | " + s.MessageId + " |");
+            sb.AppendLine("| Odluka | **" + (string)j["odluka"] + "** (" + RadniProstor.StatusNeuspeh + ") |").AppendLine();
+            sb.AppendLine("## Mail nije obrađen").AppendLine();
+            sb.AppendLine("Obrada nije izvršena zbog greške okruženja, ne zbog sadržaja maila. Nema nalaza, odgovora ni upisa.").AppendLine();
+            sb.AppendLine("```").AppendLine((string)j["greska"] ?? "").AppendLine("```").AppendLine();
+            sb.AppendLine("Ponovna obrada: CimRadionica → **Obradi ponovo neuspele**, ili `CimRadionica.exe --obradi <radni prostor> --verzija " + verzija + " --neuspele`.");
+            File.WriteAllText(Path.Combine(f, "ANALIZA.md"), sb.ToString(), new UTF8Encoding(false));
+            return f;
+        }
+
         /// <summary>JPG strane tovarnih listova, CIT dokumenata i spiskova kola (100 dpi). Vraća (fajl, strana, tip, ime slike).</summary>
         private static List<(string fajl, int strana, string tip, string slika)> Strane(RezultatObrade r, string folder)
         {
@@ -295,6 +321,16 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             sz.AppendLine("# Sažetak – " + verzija).AppendLine();
             sz.AppendLine("- poruka: " + stavke.Count);
             foreach (var g in stavke.GroupBy(x => (string)x.json["odluka"]).OrderByDescending(g => g.Count())) sz.AppendLine("- " + M(g.Key) + ": " + g.Count());
+            // v3.0: mailovi koji nisu obrađeni (greška okruženja) – uvek posebno, nikad tiho
+            var neuspeli = stavke.Where(x => (string)x.json["status"] == RadniProstor.StatusNeuspeh).OrderBy(x => x.rb).ToList();
+            sz.AppendLine().AppendLine("## Nisu obrađeni (greška okruženja): " + neuspeli.Count).AppendLine();
+            if (neuspeli.Count == 0) sz.AppendLine("Nema.");
+            else
+            {
+                sz.AppendLine("| NNN | Datum | Naslov | Razlog |").AppendLine("|---|---|---|---|");
+                foreach (var (rb, j, _) in neuspeli) sz.AppendLine("| " + rb.ToString("000") + " | " + M((string)j["poruka"]?["datum"]) + " | " + M((string)j["poruka"]?["naslov"]) + " | " + M((string)j["odluka"]) + " |");
+                sz.AppendLine().AppendLine("Ponovna obrada: **Obradi ponovo neuspele** ili `--neuspele`.");
+            }
             var nalazi = stavke.SelectMany(x => (x.json["provera"]?["listovi"] as JArray ?? new JArray()).SelectMany(l => (JArray)l["nalazi"])).ToList();
             sz.AppendLine().AppendLine("## Najčešći nalazi").AppendLine().AppendLine("| Pravilo | Rubrika | Težina | Broj |").AppendLine("|---|---|---|---|");
             foreach (var g in nalazi.GroupBy(x => (string)x["pravilo"] + "|" + x["rubrika"] + "|" + x["tezina"]).OrderByDescending(g => g.Count()).Take(30))

@@ -153,6 +153,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataRow("T1 MRN 26RS…", TipDokumenta.TranzitnaDeklaracija, true)]
         [DataRow("Spisak kola CIT 23", TipDokumenta.SpisakKola, true)]
         [DataRow("Wagenliste", TipDokumenta.SpisakKola, true)]
+        [DataRow("zum\nwagonlist\ninvoice\nphytocertificates", TipDokumenta.SpisakKola, true)]
+        [DataRow("vÿkaz vozñov\nEUR 1 D383872", TipDokumenta.SpisakKola, true)]
+        [DataRow("Invoice\nCertificate (copy)", TipDokumenta.SpisakKola, false)]
         [DataRow("Faktura", TipDokumenta.IzvoznaDeklaracija, false)]
         [DataRow("Text", TipDokumenta.TranzitnaDeklaracija, false)]
         public void Prepoznavanje_dokumenta_u_r9(string tekst, string tip, bool ocekivano) => Assert.AreEqual(ocekivano, Provere.Pominje(tekst, tip));

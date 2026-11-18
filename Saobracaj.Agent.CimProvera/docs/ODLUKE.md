@@ -555,6 +555,13 @@ Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti
 
 **Pravila i PRIMER**
 - r58a: naziv izdavaoca se uzima samo iz samog dokumenta (r57, r13, r7). Oznaka mreže („BDŽ:“, „SRB:“) nije naziv. Bez pouzdanog naziva predlog je samo šifra („3057“).
+- r26–r28 (X12, R26–R28), odluka korisnika 18.11.: upozorenje za valutu ide samo ako je u rubrici pouzdano pročitan iznos. Pouzdano znači:
+  - pouzdanost je iznad praga;
+  - tekst liči na iznos: cifre, opciono decimale i oznaka valute.
+
+  OCR šum („56: 0128“, „0128“, „6. 2% 81“, „78 nnarj“) ne pokreće pravilo. Daje samo INTERNO „r26 nečitljiva – proveriti ručno“, jednom po rubrici.
+- r9: „wagonlist“ (bez razmaka) i slovački „výkaz vozňov“ su spisak kola (X9/X20).
+- Mail sa više od 25 primalaca i izveštajem sa internim nalazima: ide jedna, puna interna kopija. Odluka u rezultatu glasi „izveštaj samo interno (više od 25 primalaca)“.
 - RID: UN broj na spisku (kolona ili Kemler/UN po kolima) računa se i kada r21 ne upućuje na spisak. Različita opasna roba = više UN brojeva u r21 ili različit NHM natovarenih kola na spisku.
 - PRIMER:
   - zajednički nalazi („Svi tovarni listovi“) dobijaju brojeve 1…s, a nalazi svakog lista nastavljaju od s+1; tabela maila i krugovi koriste iste brojeve;
@@ -570,6 +577,20 @@ Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti
 - Odgovor se priprema kao u Live režimu: KopijaNa = priprema@kprevoz.co.rs, UpozorenjaNa = agenti@kprevoz.co.rs, transport je prazan.
 - Rezultati se čuvaju po verzijama. Nova verzija za poređenje obrađuje se „ispočetka“ (dosije i ponavljanja radnog prostora se brišu, keš ostaje).
 - Keš čitanja je zajednički za sve radne prostore (`C:\CimRadionica\kes`). Kopija šifarnika je zajednička (`C:\CimRadionica\sifarnici`).
+
+**Nijedan mail ne ispada tiho (odluka korisnika 18.11.)**
+- CimRadionica: ako radnik padne (npr. Smart App Control blokira DLL, HRESULT 0x800711C7), svaki mail tog dela bez ishoda dobija rezultat:
+  - status `NijeObradjen`;
+  - odluka „nije obrađen – greška okruženja (blokiran DLL)“;
+  - stari rezultat iste verzije se zamenjuje, da ne izgleda kao nov.
+
+  Takav mail se vidi u Zbirnom Excel-u, u INDEKS.md, u SAZETAK.md (odeljak „Nisu obrađeni“) i na spisku na kraju obrade.
+
+  Ponovna obrada samo njih: dugme **Obradi ponovo neuspele** ili `--neuspele`. Obrada ostalih delova se nastavlja.
+- Ako radnik padne pre prve poruke, deo se pokreće ponovo, najviše 3 puta. To je bezbedno, jer ništa nije obrađeno.
+- Agent: oznaka „u toku“ se upisuje u stanje pre obrade. Ako proces padne usred maila, sledeće pokretanje računa pokušaj. Posle MaxPokusaja mail ide na ručnu proveru uz interno obaveštenje, sa razlogom („obrada prekinuta … blokiran DLL“).
+- Agent koji uopšte ne može da se pokrene (blokiran .exe) ne može sam da javi grešku. To mora da prati Task Scheduler ili IT.
+- Blokade se ne zaobilaze (bez preimenovanja, spajanja ili premeštanja DLL-ova). Odluku o politici donose korisnik i IT.
 
 **Arhiva**
 - Arhiva se puni samo dopisivanjem; fajlovi su samo za čitanje. Posle promene UIDVALIDITY nove poruke idu u `<folder>@<uidvalidity>`.

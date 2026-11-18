@@ -35,6 +35,35 @@ namespace Saobracaj.Agent.CimProvera
             public string PoslednjaGreska { get; set; }
             /// <summary>v2.8.1: interni izveštaj o CIT 7 je poslat (ne ponavlja se pri ponovnom pokušaju obrade).</summary>
             public bool Cit7Poslat { get; set; }
+            /// <summary>
+            /// v3.0: obrada je započeta, a nije završena – upisuje se PRE obrade. Ako proces agenta padne (blokiran DLL, nestanak struje,
+            /// prekid zadatka), sledeće pokretanje to vidi, računa pokušaj i posle MaxPokusaja šalje interno obaveštenje (mail ne ispada tiho).
+            /// </summary>
+            public bool UToku { get; set; }
+        }
+
+        /// <summary>
+        /// v3.0: greška okruženja – Windows Application Control / Smart App Control je odbio učitavanje fajla (HRESULT 0x800711C7) ili
+        /// fajl programa nije mogao da se učita. Vraća opis („greška okruženja (blokiran DLL): …“) ili null za ostale greške.
+        /// </summary>
+        public static string GreskaOkruzenja(Exception ex)
+        {
+            for (var e = ex; e != null; e = e.InnerException)
+            {
+                var blokiran = e.HResult == unchecked((int)0x800711C7) || (e.Message ?? "").Contains("0x800711C7") || (e.Message ?? "").Contains("Application Control");
+                if (blokiran) return "greška okruženja (blokiran DLL): " + e.Message;
+                if (e is System.IO.FileLoadException || e is BadImageFormatException) return "greška okruženja (fajl programa nije učitan): " + e.Message;
+            }
+            return null;
+        }
+
+        /// <summary>v3.0: isto za tekst greške (izlaz procesa radnika u CimRadionici).</summary>
+        public static string GreskaOkruzenja(string tekst)
+        {
+            if (string.IsNullOrEmpty(tekst)) return null;
+            if (tekst.Contains("0x800711C7") || tekst.Contains("Application Control")) return "greška okruženja (blokiran DLL)";
+            if (tekst.Contains("FileLoadException") || tekst.Contains("BadImageFormatException")) return "greška okruženja (fajl programa nije učitan)";
+            return null;
         }
 
         public Dictionary<string, FolderStanje> Folderi { get; set; } = new Dictionary<string, FolderStanje>();
