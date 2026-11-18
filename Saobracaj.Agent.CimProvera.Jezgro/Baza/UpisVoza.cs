@@ -340,7 +340,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var ne = Zbir(z => z.Neto); var ta = Zbir(z => z.Tara); var br = Zbir(z => z.Bruto);
             decimal Tn(double? kg) => PosaoIzDokumenata.Tone(kg ?? 0);
             // v3.0.1 (3.8, Lukavac02: neto 4,945 t uz broj kola preuzet iz ranijeg zapisa): provera smisla i na nivou grupe posla
-            if (PosaoIzDokumenata.NesmislenNeto(ne, bk, g.All(z => z.Prazna), null) is string bez)
+            // prazna kola (CUV, 9921/9922): neto je uvek 0 (Lukavac02: CUV sa OCR „neto 4,945 t“)
+            if (g.All(z => z.Prazna) && ne > 0)
+            {
+                p.Postavi("Neto" + s, 0m, opis + " – prazna kola: neto 0", "r25/r21", 90, "prazna kola – neto sa lista (" + Tn(ne).ToString(CultureInfo.InvariantCulture) + " t) nije upisan");
+                p.Napomene.Add("Prazna kola (grupa " + s + "): neto sa lista " + Tn(ne).ToString(CultureInfo.InvariantCulture) + " t nije upisan – neto 0");
+            }
+            else if (PosaoIzDokumenata.NesmislenNeto(ne, bk, g.All(z => z.Prazna), null) is string bez)
             {
                 p.Postavi("Neto" + s, 0m, opis + " – " + bez, "r25/r21", 0, "neto nije upisan: " + bez);
                 p.Napomene.Add("Neto grupe " + s + " nije upisan: " + bez);

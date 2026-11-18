@@ -691,7 +691,7 @@ Osnova: PROMPT_v3.0.1 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.0.md`.
 - **Veza iz dosijea** (3.5): kada dosije prepozna isti tovarni list (skenirana i overena verzija ili nova verzija), mail ide u posao ranijeg maila i kada je r62 nesiguran. Overena verzija dopunjuje postojeći zapis lista – ne dodaje kola ni mase.
 - **Različit broj voza ili referenca = različit posao** (3.6): to važi za vozove istog maila, za traženje posla po znacima i za listove iste deonice (Eurolog: 268F, 269F, 270F, 272F → 4 posla).
 - **Provera smisla** (3.8):
-  - natovarena kola sa neto < 1 t po kolima, ili neto spiska < 1 % ili > 300 % od r25 → vrednost se ne upisuje (0), uz napomenu;
+  - natovarena kola sa neto < 1 t po kolima, ili neto spiska < 1 % ili > 300 % od r25 → vrednost se ne upisuje (0), uz napomenu (proverava se po listu i po grupi posla); prazna kola (CUV, 9921/9922) – neto grupe je uvek 0 (Lukavac02: OCR „1@4 945“);
   - tačka predaje (Stanica1/Stanica3) iz teksta r57/r13/r20 koja nije granična stanica upisuje se samo uz pouzdanost ≥ 95; inače NULL i kandidati („Kostolac“ iz „Franko prevoznina (X) Kost…“).
 - **BrojPonude i Referenca** (3.9):
   - BrojPonude je ceo broj (ponuda KP) ili obrazac stranog ugovora sa crticama („42-0003-26“). Ništa drugo: „Kuty br/Lanzhot br“, „KP2026“ i „0362.03“ → NULL.
