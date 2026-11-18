@@ -596,6 +596,33 @@ Ovo su rešenja koja promptovi nisu izričito odredili. Svako se može promeniti
   - Čitanje opšteg OCR-a u kućici koje nijedan isečak ciljanog OCR-a ne potvrđuje više se ne podiže na 0,85. Primer: rukom pisano „001784“ pročitano kao „007777“. Verzija čitača je zato L23.
 - (f) Adrese bez viška navodnika i apostrofa („&lt;x@gmail.com'&gt;“, „'priprema@…'“). Važi za Live primaoce, rezultat, ANALIZA.md, arhivu i uvoz.
 
+**Događaji – ispravke posle obrade „Osnovni“ (odluka korisnika 18.11.)**
+- „12:00/15.11.2026“: datum je posle kose crte (15.11.). „00/15“ (deo vremena) nije datum. Uzima se prvi važeći datum.
+- „17/12:30“ znači dan 17. tekućeg meseca u 12:30. Broj ispred „hh:mm“ nikad nije mesec.
+- Srpski bez dijakritika nije turski. Turski se prepoznaje samo po turskim slovima ili rečima („vagon“ i „tren“ ne važe). Pošiljalac `.rs` ili KP daje prednost srpskom.
+- `[cid:…]`, `[image…]` i nazivi slika (`image001.png@…`) se izbacuju pre analize.
+- „Arrival station of train: Prahovo“: mesto je reč posle dvotačke.
+- „4,5 vagona“ / „3-4 wagons“ je raspon ili razlomak. BROJ_KOLA tada nije broj kola posla: vrednost je tekst, pouzdanost 40, oznaka `raspon`.
+- Broj iz oznake voza („HER-SAD 81“, „LDC8“) nikad nije kašnjenje. „24 delay“ daje 24.
+- Disclaimeri iz potpisa (poverljivost, pogrešan primalac, na en/hu/de/sr/ro) se ne analiziraju, pa nisu OSTALO_VAZNO.
+
+**X12 r26–r28 (odluka korisnika 18.11., TCDD)**
+- Iznos postoji samo ako je ispunjeno nešto od sledećeg: ima valutu, ima bar 3 cifre ili ima decimale.
+- Dvocifren broj bez valute („77“, „78“ ↔ brojevi rubrika 27/28 sa obrasca, „23“) je najviše INTERNO „nečitljiva“.
+- Pravilo važi isto za r26, r27 i r28.
+
+**Opterećenje laptopa (odluka korisnika 18.11., posle Kernel-Power 41 pod punim opterećenjem)**
+- Najviše `BrojRadnika` (podešavanje, podrazumevano 2) procesa radi istovremeno.
+- Prvo ide pred-čitanje: OCR u keš, sa N radnika istovremeno. Zatim hronološka obrada jednim radnikom iz keša, pa redosled i dosije ostaju isti.
+- Radnici rade sa nižim prioritetom (`PrioritetRadnika`, podrazumevano BelowNormal). Tesseract u radniku koristi jednu nit (`OMP_THREAD_LIMIT=1`).
+- Upis u keš je atomičan (privremeni fajl, pa premeštanje), jer dva radnika mogu da pročitaju isti prilog.
+
+**Paket za Claude (odluka korisnika 18.11.)**
+- Paket sadrži samo `_Analiza\<verzija>` (slike strana u sivoj skali, 80 dpi), Zbirno, Poređenje, Rečnik i PROCITAJ. Bez originalnih mailova i bez `rezultati\`.
+- Cilj je manje od 100 MB. Veći paket se deli na delove do 100 MB, a mail se nikad ne deli između delova. Isti filter tajni kao za običan paket.
+- Pravi se dugmetom „Paket za Claude…“ ili sa `--paket-claude <prostor> <verzija> <folder> [dodatni fajlovi]`.
+- „Osnovni“ se ne obrađuje ponovo dok Claude ne završi analizu postojećih rezultata.
+
 **Nijedan mail ne ispada tiho (odluka korisnika 18.11.)**
 - CimRadionica: ako radnik padne (npr. Smart App Control blokira DLL, HRESULT 0x800711C7), svaki mail tog dela bez ishoda dobija rezultat:
   - status `NijeObradjen`;

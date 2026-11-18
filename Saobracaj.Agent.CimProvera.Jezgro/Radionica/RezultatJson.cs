@@ -108,7 +108,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             {
                 ["tip"] = d.Tip, ["mesto"] = d.MestoTekst, ["mesto_id"] = d.MestoID, ["vreme"] = d.Vreme?.ToString("yyyy-MM-dd HH:mm zzz", CultureInfo.InvariantCulture) ?? "",
                 ["vreme_tekst"] = d.VremeTekst, ["zona"] = d.VremenskaZona, ["vrednost"] = d.Vrednost, ["recenica"] = d.Recenica, ["jezik"] = d.Jezik,
-                ["pouzdanost"] = d.Pouzdanost, ["izraz"] = d.Izraz,
+                ["pouzdanost"] = d.Pouzdanost, ["izraz"] = d.Izraz, ["raspon"] = d.Raspon,
             }));
             o["trajanje"] = new JObject(r.Trajanje.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => new JProperty(kv.Key, Math.Round(kv.Value, 1))));
             if (!string.IsNullOrEmpty(r.Greska)) o["greska"] = r.Greska;

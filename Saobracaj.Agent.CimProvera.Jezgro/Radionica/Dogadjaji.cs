@@ -27,6 +27,8 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         public int Pouzdanost;
         /// <summary>Izraz koji je prepoznat (za rečnik izraza po jezicima).</summary>
         public string Izraz = "";
+        /// <summary>v3.0: BROJ_KOLA je raspon ili razlomak („4,5 vagona“, „3-4 wagons“) – vrednost je tekst, nije broj kola posla.</summary>
+        public bool Raspon;
         public override string ToString() => Tip + " " + (VremeTekst.Length > 0 ? VremeTekst + " " : "") + (MestoTekst.Length > 0 ? "@" + MestoTekst + " " : "") + Vrednost + " [" + Jezik + ", " + Pouzdanost + "]";
     }
 
@@ -89,7 +91,15 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         };
 
         private static readonly Regex Mrn = new Regex(@"(?<![A-Z0-9])(\d{2}[A-Z]{2}[A-Z0-9]{12}[0-9A-Z]{2})(?![A-Z0-9])", RegexOptions.Compiled);
-        private static readonly Regex BrojKola = new Regex(@"(?i)(?<!\d)(\d{1,3})\s*(?:x\s*)?(?:wagons?|kola\b|vagon[aie]?\b|vagoane|vagonlar?|Wagen\b|kocsi\b|kocsik|вагона?|wgs?\.?)(?!\w)", RegexOptions.Compiled);
+        // v3.0 (odluka 18.11.): „4,5 vagona“ / „3-4 wagons“ je raspon ili razlomak – broj kola nije siguran (vrednost kao tekst, niska pouzdanost)
+        private static readonly Regex BrojKola = new Regex(@"(?i)(?<![\d,.])(\d{1,3}(?:\s*[,.]\s*\d{1,2}|\s*[-–]\s*\d{1,3})?)\s*(?:x\s*)?(?:wagons?|kola\b|vagon[aie]?\b|vagoane|vagonlar?|Wagen\b|kocsi\b|kocsik|вагона?|wgs?\.?)(?!\w)", RegexOptions.Compiled);
+        // v3.0 (odluka 18.11.): oznaka voza („HER-SAD 81“, „SAD-HER 79“, „LDC8“) – njen broj nikad nije kašnjenje
+        private static readonly Regex OznakaVozaSaBrojem = new Regex(@"\b[A-Z]{2,6}[-_ ][A-Z]{2,6}\s*\d{1,4}\b|\b[A-Z]{2,6}\d{1,4}\b", RegexOptions.Compiled);
+        // v3.0 (odluka 18.11.): ugrađene slike („[cid:image001.png@01DC…]“, „image002.jpg“, „[image: logo.png]“) se izbacuju pre analize
+        private static readonly Regex Slike = new Regex(@"(?i)\[\s*(?:cid|image)\s*:[^\]]*\]|\bcid:\S+|\[image\d*\]|\b[\w\-.]{1,60}\.(?:png|jpe?g|gif|bmp|tiff?)(?:@[\w.]+)?\b", RegexOptions.Compiled);
+        // v3.0 (odluka 18.11.): disclaimer iz potpisa (poverljivost, pogrešan primalac) nije OSTALO_VAZNO – rečenica se ne analizira
+        private static readonly Regex Disclaimer = new Regex(@"(?i)\b(confidential|intended (solely )?for|intended recipient|disclaimer|if you (have )?received this|privileged|do not (copy|disclose|distribute)|"
+            + @"c[íi]mzett|bizalmas|amennyiben ezt a lev[ée]l|t[öo]r[öo]lje|vertraulich|Empf[äa]nger|irrt[üu]mlich|poverljiv|namenjen[ao]? isklju[čc]ivo|ovla[šs][ćc]en[io]? primal|confiden[țt]ial|destinatar)", RegexOptions.Compiled);
         // v3.0 (odluka korisnika 18.11.): ID najave samo iz oblika „ID nnnn“ – „Aviso: 46836/15“ je broj avize/voza, ne ID najave
         private static readonly Regex IdNajave = new Regex(@"(?<![\p{L}\d])ID\s*[:#.]?\s*(\d{3,5})(?![\d/])", RegexOptions.Compiled);
         private static readonly Regex BrojVoza = new Regex(@"(?i)(?:\b(?:train|voz|vlak|Zug|tren|vonat|влак)\s*(?:no\.?|nr\.?|br\.?|broj|number|n°|#)?\s*[:.]?\s*(\d{2,6}[A-Z]?)(?![\d])|(?<![\p{L}\d])([A-Z]{2,6}\d{1,4}[_\-][A-Z0-9]{2,10})(?![\p{L}\d]))", RegexOptions.Compiled);
@@ -100,13 +110,14 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         /// </summary>
         public static List<Dogadjaj> Izvuci(string naslov, string telo, DateTimeOffset datumMaila, string domen = "", Func<string, int?> stanica = null)
         {
-            var nov = Obrada.TekstPosiljaoca(naslov ?? "", telo ?? "");
+            var nov = Slike.Replace(Obrada.TekstPosiljaoca(naslov ?? "", telo ?? ""), " ");
             var rez = new List<Dogadjaj>();
-            var jezikMaila = Jezik(nov);
+            var jezikMaila = Jezik(nov, domen);
             foreach (var rec in Recenice(nov))
             {
+                if (Disclaimer.IsMatch(rec)) continue;
                 // kratka rečenica („MRN 26RS…“, „ETA Subotica 18/morning“) – jezik celog novog dela poruke
-                var jezik = Regex.Matches(rec, @"\p{L}{3,}").Count < 4 ? jezikMaila : Jezik(rec);
+                var jezik = Regex.Matches(rec, @"\p{L}{3,}").Count < 4 ? jezikMaila : Jezik(rec, domen);
                 var zona = Zona(rec, domen, jezik);
                 var (vreme, vremeTekst) = Vreme(rec, datumMaila, zona);
                 var mesto = Mesto(rec);
@@ -126,13 +137,18 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                     {
                         Tip = tip, Jezik = jezik, Izraz = m.Value.Trim(), Recenica = Skrati(rec, 500), MestoTekst = mesto, MestoID = mestoId,
                         Vreme = vremenski ? vreme : null, VremeTekst = vremenski || tip == "KASNJENJE" ? vremeTekst : "", VremenskaZona = vremenski && vremeTekst.Length > 0 ? zona : "",
-                        Vrednost = tip == "KASNJENJE" ? Regex.Match(rec, @"(?i)(\d+)\s*(h|sat[ai]?|hours?|Stunden?|óra|ore|часа|saat|min)").Value : "",
+                        Vrednost = tip == "KASNJENJE" ? Kasnjenje(rec) : "",
                         Pouzdanost = Pouzdanost(tip, jez == jezik, vremeTekst.Length > 0, mesto.Length > 0),
                     });
                 }
                 foreach (Match m in BrojKola.Matches(rec))
+                {
+                    var izrazKola = Regex.Replace(m.Value, @"[\d,.\-–]+\s*", "").Trim();
+                    if (Regex.IsMatch(m.Groups[1].Value, @"[,.\-–]"))
+                    { rez.Add(new Dogadjaj { Tip = "BROJ_KOLA", Vrednost = Regex.Replace(m.Groups[1].Value, @"\s+", ""), Jezik = jezik, Izraz = izrazKola, Recenica = Skrati(rec, 500), MestoTekst = mesto, MestoID = mestoId, Pouzdanost = 40, Raspon = true }); break; }
                     if (int.TryParse(m.Groups[1].Value, out var n) && n > 0 && n <= 120)
-                    { rez.Add(new Dogadjaj { Tip = "BROJ_KOLA", Vrednost = n.ToString(), Jezik = jezik, Izraz = Regex.Replace(m.Value, @"\d+\s*", "").Trim(), Recenica = Skrati(rec, 500), MestoTekst = mesto, MestoID = mestoId, Pouzdanost = 80 }); break; }
+                    { rez.Add(new Dogadjaj { Tip = "BROJ_KOLA", Vrednost = n.ToString(), Jezik = jezik, Izraz = izrazKola, Recenica = Skrati(rec, 500), MestoTekst = mesto, MestoID = mestoId, Pouzdanost = 80 }); break; }
+                }
                 foreach (Match m in IdNajave.Matches(rec))
                     rez.Add(new Dogadjaj { Tip = "ID_NAJAVE", Vrednost = m.Groups[1].Value, Jezik = jezik, Izraz = Regex.Replace(m.Value, @"\d+", "").Trim(' ', ':', '.', '#'), Recenica = Skrati(rec, 500), Pouzdanost = 85 });
                 foreach (Match m in BrojVoza.Matches(rec))
@@ -147,6 +163,16 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             }
             // isti tip + ista vrednost + isto vreme iz više rečenica → jednom (prvi)
             return rez.GroupBy(d => d.Tip + "|" + d.Vrednost + "|" + d.VremeTekst + "|" + d.MestoTekst).Select(g => g.First()).ToList();
+        }
+
+        /// <summary>v3.0: vrednost kašnjenja („3 sata“, „24 delay“) – broj iz oznake voza („HER-SAD 81“) nikad; jedinica kao cela reč.</summary>
+        internal static string Kasnjenje(string rec)
+        {
+            var t = OznakaVozaSaBrojem.Replace(rec ?? "", " ");
+            var m = Regex.Match(t, @"(?i)(?<![\d.,/:])(\d{1,3})\s*(h|sat[ai]?|hours?|Stunden?|óra|ore|часа|saat|min(?:utes?|uta)?)\b");
+            if (m.Success) return m.Value.Trim();
+            m = Regex.Match(t, @"(?i)(?<![\d.,/:])(\d{1,3})\s*(?:\w+\s+)?(delay|ka[šs]njenj\w*|Versp[äa]tung|k[ée]s[ée]s|[îi]nt[âa]rziere|gecikme)");
+            return m.Success ? m.Groups[1].Value : "";
         }
 
         private static int Pouzdanost(string tip, bool istiJezik, bool imaVreme, bool imaMesto)
@@ -174,10 +200,17 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         }
 
         /// <summary>Jezik rečenice (sr, en, de, hu, ro, bg, tr) – po pismu, dijakriticima i rečima.</summary>
-        internal static string Jezik(string t)
+        internal static string Jezik(string t, string domen = null)
         {
             if (Regex.IsMatch(t, @"[Ѐ-ӿ]")) return Regex.IsMatch(t, @"[ђћџљњЂЋЏЉЊ]|\b(вагона|воз|станица|у прилогу)\b", RegexOptions.IgnoreCase) ? "sr" : "bg";
-            if (Regex.IsMatch(t, @"[ığşİĞŞ]") || Regex.IsMatch(t, @"(?i)\b(ve|bir|için|vagon|tren|saygılarımla)\b")) return "tr";
+            // v3.0 (odluka 18.11.): turski samo po turskim slovima ili rečima; „vagon“ / „tren“ su i srpski / rumunski. Srpski bez dijakritika
+            // („Zavrsio kao voz 45660“, „29 vagona“) nije tr; pošiljalac .rs ili KP daje prednost sr
+            var srpskiPosiljalac = Regex.IsMatch(domen ?? "", @"(?i)(\.rs$|kprevoz)");
+            var turskaSlova = Regex.IsMatch(t, @"[ığşİĞŞ]");
+            var turski = turskaSlova || Regex.IsMatch(t, @"(?i)\b(ve|bir|için|vagonlar[ıi]?|treni|saygılarımla|tarihinde)\b");
+            if (turski && !(srpskiPosiljalac && !turskaSlova)) return "tr";
+            if (srpskiPosiljalac && Regex.IsMatch(t, @"(?i)\b(voz|vagona?|kola|zavr[šs]i[oa]|zavr[šs]en|sati?|danas|sutra|stigao|stigla|prispel[ao]|utovar|istovar|kao|za|od|preostal\w*)\b")
+                && !Regex.IsMatch(t, @"(?i)\b(the|and|is|are|we|you|please|train|wagons?|arrival|der|die|und)\b")) return "sr";
             if (Regex.IsMatch(t, @"[őűŐŰ]") || Regex.IsMatch(t, @"(?i)\b(és|vonat|kocsi|érkez|indul|üdvözlettel|holnap)\b")) return "hu";
             if (Regex.IsMatch(t, @"[șțăâîȘȚĂÂÎ]") || Regex.IsMatch(t, @"(?i)\b(și|trenul|vagoane|sosire|plecare|mâine|azi)\b")) return "ro";
             if (Regex.IsMatch(t, @"[ßäöü]") && Regex.IsMatch(t, @"(?i)\b(der|die|das|und|Zug|Wagen|Ankunft|morgen|heute)\b") || Regex.IsMatch(t, @"(?i)\b(Ankunft|Abfahrt|Wagen|Zug|Verspätung)\b")) return "de";
@@ -282,22 +315,35 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             { m = mn2; dan = dn2; mesec = Mesec(mn2.Groups[1].Value); if (mn2.Groups[3].Success) godina = int.Parse(mn2.Groups[3].Value); delovi.Add(mn2.Value.Trim()); }
             else
             {
-                m = Regex.Match(t, @"(?<![\d.])(\d{1,2})[./](\d{1,2})(?:[./](20\d{2}|\d{2}))?\.?(?![\d/])");
-                if (m.Success && int.Parse(m.Groups[1].Value) is int d && int.Parse(m.Groups[2].Value) is int mm && d >= 1 && d <= 31 && mm >= 1 && mm <= 12
-                    && !Regex.IsMatch(t.Substring(m.Index + m.Length), @"^\s*(%|kg|t\b|m\b)"))
+                // v3.0 (odluka 18.11.): „17/12:30“ = dan 17. (tekući mesec) u 12:30 – broj ispred „hh:mm“ nikad nije mesec
+                var dv = Regex.Match(t, @"(?<![\d./:])(\d{1,2})\s*/\s*([01]?\d|2[0-3]):([0-5]\d)(?!\d)");
+                if (dv.Success && int.Parse(dv.Groups[1].Value) is int d0 && d0 >= 1 && d0 <= 31)
                 {
-                    dan = d; mesec = mm;
-                    if (m.Groups[3].Success) godina = m.Groups[3].Value.Length == 2 ? 2000 + int.Parse(m.Groups[3].Value) : int.Parse(m.Groups[3].Value);
-                    delovi.Add(m.Value.TrimEnd('.'));
+                    dan = d0; sat = int.Parse(dv.Groups[2].Value); minut = int.Parse(dv.Groups[3].Value); delovi.Add(dv.Value.Trim());
+                    m = Match.Empty;
+                }
+                else
+                {
+                    // v3.0 (odluka 18.11.): prvi VAŽEĆI datum – „12:00/15.11.2026“: „00/15“ (deo vremena) nije datum, datum je posle kose crte
+                    foreach (Match k in Regex.Matches(t, @"(?<![\d.:])(\d{1,2})[./](\d{1,2})(?:[./](20\d{2}|\d{2}))?\.?(?![\d/]|:\d)"))
+                    {
+                        if (!(int.Parse(k.Groups[1].Value) is int d && int.Parse(k.Groups[2].Value) is int mm && d >= 1 && d <= 31 && mm >= 1 && mm <= 12)) continue;
+                        if (Regex.IsMatch(t.Substring(k.Index + k.Length), @"^\s*(%|kg|t\b|m\b)")) continue;
+                        m = k; dan = d; mesec = mm;
+                        if (k.Groups[3].Success) godina = k.Groups[3].Value.Length == 2 ? 2000 + int.Parse(k.Groups[3].Value) : int.Parse(k.Groups[3].Value);
+                        delovi.Add(k.Value.TrimEnd('.'));
+                        break;
+                    }
                 }
             }
             // vreme: 12:00, 12.00 posle datuma, 12h, 12:00h, „at 14“
             var posleDatuma = m.Success ? t.Substring(m.Index + m.Length) : t;
+            if (sat != null) posleDatuma = "";
             var v = Regex.Match(posleDatuma, @"(?<![\d.,])([01]?\d|2[0-3])[:h]([0-5]\d)\s*(h|č|ч|Uhr|óra)?(?![\d])", RegexOptions.IgnoreCase);
             if (!v.Success && m.Success) v = Regex.Match(posleDatuma, @"^\s*(?:u|at|um|в|saat|ora|la)?\s*([01]?\d|2[0-3])\.([0-5]\d)(?!\d)", RegexOptions.IgnoreCase);
-            if (!v.Success) v = Regex.Match(t, @"(?<![\d.,:])([01]?\d|2[0-3])[:h]([0-5]\d)(?![\d])", RegexOptions.IgnoreCase);
+            if (!v.Success) v = Regex.Match(t, @"(?<![\d.,]|\d:)([01]?\d|2[0-3])[:h]([0-5]\d)(?![\d])", RegexOptions.IgnoreCase);
             if (!v.Success) v = Regex.Match(t, @"(?<![\d.,:])([01]?\d|2[0-3])\s*(?:h|Uhr|óra|ч|часа)\b", RegexOptions.IgnoreCase);
-            if (v.Success) { sat = int.Parse(v.Groups[1].Value); minut = v.Groups.Count > 2 && v.Groups[2].Success && Regex.IsMatch(v.Groups[2].Value, @"^\d+$") ? int.Parse(v.Groups[2].Value) : 0; delovi.Add(v.Value.Trim()); }
+            if (v.Success && sat == null) { sat = int.Parse(v.Groups[1].Value); minut = v.Groups.Count > 2 && v.Groups[2].Success && Regex.IsMatch(v.Groups[2].Value, @"^\d+$") ? int.Parse(v.Groups[2].Value) : 0; delovi.Add(v.Value.Trim()); }
             // „18/morning“, „18. ujutru“
             var dd = Regex.Match(t, @"(?<![\d./])(\d{1,2})\s*[/.]?\s*(" + string.Join("|", DelDana.Select(x => Regex.Escape(x.rec))) + @")\b", RegexOptions.IgnoreCase);
             if (dd.Success && dan == null && int.Parse(dd.Groups[1].Value) is int d2 && d2 >= 1 && d2 <= 31) { dan = d2; delovi.Add(dd.Value); }
@@ -320,6 +366,9 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         /// <summary>Mesto: reč(i) posle predloga (u/na/in/at/nach/bei/în/la/в/до) ili ispred „gr.“/„station“; inače poznata granična mesta.</summary>
         internal static string Mesto(string t)
         {
+            // v3.0 (odluka 18.11.): „Arrival station of train: Prahovo“, „Stanica: Subotica“ – mesto je posle dvotačke
+            var md = Regex.Match(t, @"(?i)\b(?:station|stanica|stanice|Bahnhof|állomás|gara|place|mesto)\b[^:\n]{0,40}:\s*(?<m>\p{L}[\p{L}\-]+(?:\s+(?:gr\.|granica|\p{Lu}[\p{L}\-]+))?)");
+            if (md.Success && char.IsUpper(md.Groups["m"].Value[0])) return md.Groups["m"].Value.Trim();
             var m = Regex.Match(t, @"(?:\b(?:u|na|in|at|to|nach|bei|ab|în|la|в|до|on)\s+)(?<m>\p{Lu}[\p{L}\-]+(?:\s+(?:gr\.|granica|border|Grenze|\p{Lu}[\p{L}\-]+))?)");
             if (m.Success && !Regex.IsMatch(m.Groups["m"].Value, @"^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|May|June|July|August|September|October|November|December|ETA|ETD|CET|UTC|The|We|I|KP|RS|SRB|ID)$")) return m.Groups["m"].Value.Trim();
             m = Regex.Match(t, @"(?<m>\b\p{Lu}[\p{L}\-]+)\s+(?:gr\.|granica|border|station|stanica|Bahnhof|állomás)", RegexOptions.IgnoreCase);

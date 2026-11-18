@@ -197,6 +197,12 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [DataRow("78 nnarj", false)]
         [DataRow("56 ot 28;", false)]
         [DataRow("0", false)]
+        [DataRow("77", false)]
+        [DataRow("78", false)]
+        [DataRow("23", false)]
+        [DataRow("50 EUR", true)]
+        [DataRow("12,50", true)]
+        [DataRow("128", true)]
         public void Iznos_u_r26_prepoznavanje(string tekst, bool iznos) => Assert.AreEqual(iznos, Provere.LiciNaIznos(tekst), tekst);
 
         [TestMethod]
@@ -287,6 +293,24 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var live = PrimaociLive.Iz(m, null);
             Assert.IsTrue(live.To.Contains("eredhungarykft@gmail.com") && live.To.All(a => !a.Contains("'")), live.Opis());
             Assert.AreEqual("x@y.rs", PrimaociLive.Ocisti(" '“x@y.rs”' "));
+        }
+
+        [TestMethod]
+        public void R27_R28_TCDD_dvocifren_broj_bez_valute_samo_interno()
+        {
+            // TCDD-3370A (Osnovni UID 34, 42, 162, 215): u r27 „77“, u r28 „78“ / „23“ – brojevi rubrika sa obrasca, ne iznos
+            foreach (var (rub, tekst) in new[] { ("27", "77"), ("28", "78"), ("28", "23") })
+            {
+                var s = new Scenario { IzvorCim = "ocr" };
+                var iz = F(new Iznos { Vrednost = tekst, Valuta = "" }, tekst); iz.Pouzdanost = 0.88;
+                if (rub == "27") s.C.R27 = iz; else s.C.R28 = iz;
+                var r = Proveri(s);
+                Assert.IsFalse(Svi(r).Any(n => n.Rubrika == rub && !n.SamoInterno), rub + " „" + tekst + "“: " + string.Join(" | ", Svi(r)));
+                StringAssert.Contains(Svi(r).Single(n => n.Rubrika == rub).Tekst, "r" + rub + " nečitljiva");
+            }
+            // isti broj sa valutom ili decimalama je iznos → upozorenje/greška za valutu ostaje kada valuta nije važeća
+            var t = new Scenario(); t.C.R28 = F(new Iznos { Vrednost = "78", Valuta = "XXX" }, "78 XXX");
+            Assert.IsTrue(Svi(Proveri(t)).Any(n => n.Rubrika == "28" && !n.SamoInterno));
         }
     }
 }

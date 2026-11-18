@@ -266,6 +266,19 @@ namespace Saobracaj.Agent.CimRadionica
             var delovi = Enumerable.Range(0, (redom.Count + p.VelicinaDela - 1) / p.VelicinaDela).Select(i => redom.Skip(i * p.VelicinaDela).Take(p.VelicinaDela).ToList()).ToList();
             var sw = Stopwatch.StartNew();
             var greske = new List<string>();
+            // v3.0 (odluka 18.11.): pred-čitanje (OCR u keš) sa najviše BrojRadnika radnika istovremeno, nižeg prioriteta
+            PostaviRadnike(p);
+            if (p.BrojRadnika > 1 && redom.Count > 1)
+            {
+                var citano = 0;
+                Poruka("Pred-čitanje (" + p.BrojRadnika + " radnika)…");
+                await Task.Run(() => PredCitaj(rp.Koren, redom.Select(x => x.Kljuc).ToList(), p, null, l =>
+                {
+                    if (!(l.StartsWith("CITANO ") || l.StartsWith("CITANJE-GRESKA "))) return;
+                    var c = System.Threading.Interlocked.Increment(ref citano);
+                    BeginInvoke((Action)(() => Poruka("Pred-čitanje " + c + "/" + redom.Count + " (" + p.BrojRadnika + " radnika, " + sw.Elapsed.ToString(@"hh\:mm\:ss") + ")")));
+                }));
+            }
             foreach (var deo in delovi)
             {
                 var posao = new PosaoRadnika { Koren = rp.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = p.Online, Verzija = p.Verzija, Kes = p.Kes, Analiza = chAnaliza.Checked ? rp.Koren : null };
@@ -306,6 +319,27 @@ namespace Saobracaj.Agent.CimRadionica
         /// Proces radnika; konekcija samo kroz promenljivu okruženja procesa (nikad u fajl posla). Vraća null kada je radnik završio
         /// uspešno, inače razlog (izlazni kod i prva linija izuzetka) – pozivalac tada zaustavlja obradu (redosled je hronološki).
         /// </summary>
+        /// <summary>v3.0: prioritet procesa radnika (podešavanje PrioritetRadnika; podrazumevano BelowNormal).</summary>
+        internal static ProcessPriorityClass PrioritetRadnika = ProcessPriorityClass.BelowNormal;
+
+        internal static void PostaviRadnike(Podesavanja p)
+        {
+            PrioritetRadnika = Enum.TryParse<ProcessPriorityClass>(p.PrioritetRadnika ?? "", true, out var pr) && pr != ProcessPriorityClass.RealTime && pr != ProcessPriorityClass.High ? pr : ProcessPriorityClass.BelowNormal;
+        }
+
+        /// <summary>
+        /// v3.0 (odluka 18.11.): pred-čitanje – poruke se dele na BrojRadnika radnika koji istovremeno čitaju priloge (OCR) u keš; ništa se ne
+        /// obrađuje ni ne upisuje. Hronološka obrada posle ide iz keša jednim radnikom, pa najviše BrojRadnika procesa radi u isto vreme.
+        /// </summary>
+        internal static void PredCitaj(string koren, List<string> kljucevi, Podesavanja p, string konekcija, Action<string> red)
+        {
+            var n = Math.Max(1, Math.Min(p.BrojRadnika, kljucevi.Count));
+            var grupe = Enumerable.Range(0, n).Select(i => kljucevi.Where((k, j) => j % n == i).ToList()).Where(g => g.Count > 0).ToList();
+            var zadaci = grupe.Select(g => System.Threading.Tasks.Task.Run(() =>
+                PokreniRadnika(new PosaoRadnika { Koren = koren, Kljucevi = g, Online = false, Verzija = "pred-citanje", Kes = p.Kes, SamoCitanje = true }, null, red))).ToArray();
+            System.Threading.Tasks.Task.WaitAll(zadaci);
+        }
+
         internal static string PokreniRadnika(PosaoRadnika posao, string konekcija, Action<string> red)
         {
             // Windows Smart App Control povremeno odbije učitavanje nepotpisanog DLL-a (FileLoadException 0x800711C7) – radnik padne pre
@@ -332,8 +366,11 @@ namespace Saobracaj.Agent.CimRadionica
                 if (!string.IsNullOrEmpty(konekcija)) psi.EnvironmentVariables["CIMPROVERA_KONEKCIJA"] = konekcija;
                 else psi.EnvironmentVariables.Remove("CIMPROVERA_KONEKCIJA");
                 string izuzetak = null;
+                // v3.0: Tesseract (OpenMP) u radniku koristi jednu nit – opterećenje = broj radnika, ne sva jezgra
+                psi.EnvironmentVariables["OMP_THREAD_LIMIT"] = "1";
                 using (var pr = Process.Start(psi))
                 {
+                    try { pr.PriorityClass = PrioritetRadnika; } catch { }
                     pr.ErrorDataReceived += (s, e) => { if (izuzetak == null && e.Data != null && e.Data.Contains("Exception")) izuzetak = e.Data.Trim(); };
                     pr.BeginErrorReadLine();
                     string l;
@@ -412,7 +449,7 @@ namespace Saobracaj.Agent.CimRadionica
                 new Label { Text = "  Uporedi:", AutoSize = true, Padding = new Padding(0, 6, 0, 0) }, cbBila, new Label { Text = "→", AutoSize = true, Padding = new Padding(0, 6, 0, 0) }, cbSada,
                 Dugme("Uporedi verzije", (s, e) => Uporedi()),
                 Dugme("Napravi _Analiza (izabrane / sve)", (s, e) => NapraviAnalizu()),
-                chSamoNe, Dugme("Napravi paket…", (s, e) => Paket())));
+                chSamoNe, Dugme("Napravi paket…", (s, e) => Paket()), Dugme("Paket za Claude…", (s, e) => PaketClaude())));
             return t;
         }
 
@@ -442,6 +479,23 @@ namespace Saobracaj.Agent.CimRadionica
                 if (!File.Exists(Zbirno.Putanja(rp, p.Verzija))) Zbirno.Sacuvaj(rp, p.Verzija);
                 Zbirno.Paket(rp, p.Verzija, d.FileName, chSamoNe.Checked, out var preskoceno);
                 Poruka("Paket: " + d.FileName + (preskoceno.Count > 0 ? " (izostavljeno " + preskoceno.Count + " fajlova sa tajnama)" : ""));
+            }
+        }
+
+        /// <summary>v3.0: paket za Claude – samo _Analiza (slike sivo, 80 dpi), Zbirno, Poređenje, Rečnik (+ PROCITAJ.md iz izabranog foldera); delovi ≤ 100 MB.</summary>
+        private void PaketClaude()
+        {
+            using (var d = new FolderBrowserDialog { Description = "Folder za paket za Claude (delovi do 100 MB)" })
+            {
+                if (d.ShowDialog() != DialogResult.OK) return;
+                if (!File.Exists(Zbirno.Putanja(rp, p.Verzija))) Zbirno.Sacuvaj(rp, p.Verzija);
+                var recnik = Path.Combine(d.SelectedPath, "Recnik_izraza_" + p.Verzija + ".xlsx");
+                Recnik(rp, p.Verzija, recnik);
+                var dodatni = new List<string> { recnik };
+                var procitaj = Path.Combine(d.SelectedPath, "PROCITAJ.md");
+                if (File.Exists(procitaj)) dodatni.Add(procitaj);
+                var delovi = Zbirno.PaketZaClaude(rp, p.Verzija, d.SelectedPath, dodatni, out var preskoceno);
+                Poruka("Paket za Claude: " + string.Join(", ", delovi.Select(x => Path.GetFileName(x) + " " + (new FileInfo(x).Length / 1048576.0).ToString("0") + " MB")) + (preskoceno.Count > 0 ? " (izostavljeno " + preskoceno.Count + ")" : ""));
             }
         }
 

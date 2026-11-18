@@ -16,6 +16,7 @@ CimRadionica je alat za testiranje agenta CimProvera. Koristi isto jezgro kao ag
 ## 2. Obrada
 - **Obradi izabrano** / **Obradi sve**. Opcija **samo izabrana nit** obrađuje celu nit izabrane poruke.
 - Obrada ide hronološki, u delovima od po 20 poruka; svaki deo radi u posebnom procesu. Napredak se vidi u statusnoj traci.
+- Opterećenje: najviše `BrojRadnika` radnika istovremeno (`podesavanja.json`, podrazumevano 2) i niži prioritet (`PrioritetRadnika`, podrazumevano BelowNormal). Prvo pred-čitanje (OCR u keš), pa hronološka obrada iz keša.
 - **Verzija**: oznaka rezultata (npr. `3.0.0`, `3.0.0-proba`). Rezultati idu u `rezultati\<verzija>\<datum>_<naslov>\`:
   - `PRIMER_*.pdf`;
   - `odgovor.html` (Live, nije poslat);
@@ -34,6 +35,7 @@ Kartica **Rezultat** za izabranu poruku prikazuje odgovor, `rezultat.json` i log
   - JobID i polja posla, INTERNO, događaje i trajanje.
 - U kolone **Tačno?** (`da` / `ne` / `delimično`) i **Komentar** upišite svoju ocenu. Ocene ostaju i posle ponovne obrade (kolona **Ključ** se ne menja).
 - **Uporedi verzije**: izaberite dve verzije. Nastaju `Poredjenje_<a>_<b>.xlsx` i `.html`. Promena reda koji je ranije bio „Tačno? = da“ označena je kao **REGRESIJA**.
+- **Paket za Claude…**: samo `_Analiza` (slike strana sivo, 80 dpi), Zbirno, Poređenje, Rečnik i `PROCITAJ.md` iz izabranog foldera, bez mailova i `rezultati\`; delovi do 100 MB.
 - **Napravi paket…**: zip za analizu sa porukama, rezultatima, `_Analiza` i Zbirnim Excel-om, bez lozinki, DPAPI fajlova i connection string-a. Opcija „samo ne/delimično“ pakuje samo redove sa tom ocenom.
 
 ## 5. Pregled poslova i pravila

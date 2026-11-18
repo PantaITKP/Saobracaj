@@ -104,5 +104,82 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var e = IzvlacenjeDogadjaja.Izvuci("Dokumentacija za predaju ID 1615 Kukujevci - Šid gr", "U prilogu dokumentacija.", Mail, "kprevoz.co.rs");
             Assert.AreEqual("1615", e.Single(x => x.Tip == "ID_NAJAVE").Vrednost);
         }
+
+        // ------------------------------------------------------------------------------------------- 8 ispravki iz PROCITAJ.md (18.11.)
+
+        [TestMethod]
+        public void Datum_posle_kose_crte_00_15_nije_datum()
+        {
+            var mail = new DateTimeOffset(2026, 11, 14, 9, 0, 0, TimeSpan.FromHours(2));
+            var (v, t) = IzvlacenjeDogadjaja.Vreme("ETA Carpinis: 12:00/15.11.2026", mail, "EET");
+            Assert.AreEqual(new DateTime(2026, 11, 15, 12, 0, 0), v.Value.DateTime, t);
+            var (v2, t2) = IzvlacenjeDogadjaja.Vreme("ETD Stamora:12:00/14.11.2026", mail, "EET");
+            Assert.AreEqual(new DateTime(2026, 11, 14, 12, 0, 0), v2.Value.DateTime, t2);
+        }
+
+        [TestMethod]
+        public void Dan_kosa_crta_vreme_17_12_30_je_dan_nikad_mesec()
+        {
+            var mail = new DateTimeOffset(2026, 11, 16, 9, 0, 0, TimeSpan.FromHours(1));
+            var (v, t) = IzvlacenjeDogadjaja.Vreme("The train will arrive at 17/12:30 in Subotica.", mail, "CET");
+            Assert.AreEqual(new DateTime(2026, 11, 17, 12, 30, 0), v.Value.DateTime, t);
+        }
+
+        [TestMethod]
+        public void Srpski_bez_dijakritika_nije_turski_posiljalac_rs_i_KP()
+        {
+            var d = IzvlacenjeDogadjaja.Izvuci("RE: Pozicije kola", "Zavrsio kao voz 45660 13.03. u 01h (29vg)\n29 vagona zavrsilo voznju 23.10. u 01:30h", Mail, "pansped.rs");
+            Assert.IsTrue(d.Count > 0 && d.All(x => x.Jezik == "sr"), string.Join(" | ", d));
+            Assert.AreEqual("sr", IzvlacenjeDogadjaja.Jezik("Ostalo za utovar 1 vagon", "kprevoz.co.rs"));
+            Assert.AreEqual("tr", IzvlacenjeDogadjaja.Jezik("Vagonlar yarın saat 10:00'da varacak, saygılarımla", "firma.com.tr"));
+        }
+
+        [TestMethod]
+        public void Cid_i_nazivi_slika_se_izbacuju_pre_analize()
+        {
+            var d = IzvlacenjeDogadjaja.Izvuci("AW: Loading of Herne - Novi Sad (HERSAD81) 14-11",
+                "[cid:ac2c37c3-fde9-4599-9a1b-1234567890ab]\n[cid:image001.png@01DC5A2B.12345670]\nimage002.jpg\nAbfahrt, für 02:00 Uhr am 16.11 wäre nicht das Problem.", Mail, "whe.de");
+            Assert.IsFalse(d.Any(x => x.Tip == "BROJ_VOZA" && (x.Vrednost.Contains("fde9") || x.Vrednost.Contains("image"))), string.Join(" | ", d));
+            Assert.IsTrue(d.Any(x => x.Tip == "POLAZAK"), string.Join(" | ", d));
+        }
+
+        [TestMethod]
+        public void Mesto_posle_dvotacke_Arrival_station_of_train()
+        {
+            Assert.AreEqual("Prahovo", IzvlacenjeDogadjaja.Mesto("DO / Arrival station of train: Prahovo"));
+            Assert.AreEqual("Svetec", IzvlacenjeDogadjaja.Mesto("IZ / Departure station of train: Svetec"));
+        }
+
+        [TestMethod]
+        public void Broj_kola_raspon_4_5_vagona_tekst_niska_pouzdanost()
+        {
+            var d = IzvlacenjeDogadjaja.Izvuci("Utovar", "Natovarena 4,5 vagona treće izmene.", Mail, "kprevoz.co.rs");
+            var k = d.Single(x => x.Tip == "BROJ_KOLA");
+            Assert.AreEqual("4,5", k.Vrednost);
+            Assert.IsTrue(k.Raspon);
+            Assert.IsTrue(k.Pouzdanost <= 50);
+            var e = IzvlacenjeDogadjaja.Izvuci("Utovar", "Danas će biti završen istovar svih 32 vagona.", Mail, "kprevoz.co.rs").Single(x => x.Tip == "BROJ_KOLA");
+            Assert.AreEqual("32", e.Vrednost); Assert.IsFalse(e.Raspon);
+        }
+
+        [TestMethod]
+        public void Broj_iz_oznake_voza_nikad_nije_kasnjenje()
+        {
+            Assert.AreEqual("24", IzvlacenjeDogadjaja.Kasnjenje("HER-SAD 81 has a 24 delay."));
+            Assert.AreEqual("", IzvlacenjeDogadjaja.Kasnjenje("HER-SAD 81 has a delay."));
+            Assert.AreEqual("3 ore", IzvlacenjeDogadjaja.Kasnjenje("Trenul are o întârziere de 3 ore"));
+            var d = IzvlacenjeDogadjaja.Izvuci("HER-SAD 81", "HER-SAD 81 has a 24 delay.", Mail, "ct-herne.com");
+            Assert.IsFalse(d.Any(x => x.Tip == "KASNJENJE" && x.Vrednost.StartsWith("81")), string.Join(" | ", d));
+        }
+
+        [TestMethod]
+        public void Disclaimer_iz_potpisa_nije_OSTALO_VAZNO()
+        {
+            var d = IzvlacenjeDogadjaja.Izvuci("RE: [External mail] Re: [External mail]",
+                "Köszönöm.\nAmennyiben ezt a levelet sérülten kapta meg vagy nem Ön annak valós címzettje, kérjük értesítse a feladót.\n"
+                + "This e-mail is confidential and intended solely for the addressee. If you have received this e-mail in error, please delete it; damaged attachments are not our responsibility.", Mail, "markikft.hu");
+            Assert.IsFalse(d.Any(x => x.Tip == "OSTALO_VAZNO"), string.Join(" | ", d));
+            Assert.IsTrue(IzvlacenjeDogadjaja.Izvuci("Otkaz", "Voz PRAHOVO 005 je otkazan.", Mail, "kprevoz.co.rs").Any(x => x.Tip == "OSTALO_VAZNO"), "pravi otkaz ostaje");
+        }
     }
 }

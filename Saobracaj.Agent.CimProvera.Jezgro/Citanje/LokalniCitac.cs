@@ -60,6 +60,18 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             kesFolder = string.IsNullOrEmpty(cfg.KesFolder) ? Path.Combine(cfg.StanjeFolder, "kes") : cfg.KesFolder;
         }
 
+        /// <summary>
+        /// v3.0: upis u keš preko privremenog fajla i premeštanja – više radnika CimRadionice (pred-čitanje) može istovremeno da pročita
+        /// isti prilog; drugi upis istog ključa se preskače (sadržaj je isti), a čitalac nikad ne vidi polovično upisan fajl.
+        /// </summary>
+        internal static void UpisiAtomicno(string put, string sadrzaj)
+        {
+            var tmp = put + "." + System.Diagnostics.Process.GetCurrentProcess().Id + "." + Guid.NewGuid().ToString("N").Substring(0, 6) + ".tmp";
+            File.WriteAllText(tmp, sadrzaj, Encoding.UTF8);
+            try { if (File.Exists(put)) File.Delete(tmp); else File.Move(tmp, put); }
+            catch (IOException) { try { File.Delete(tmp); } catch { } }
+        }
+
         public RezultatPriloga Procitaj(Prilog p)
         {
             // Ključ keša rezultata: verzija čitača, šabloni, OCR jezici i pragovi – svaka promena znači novo čitanje.
@@ -87,7 +99,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var rez = Klasifikuj(p, strane);
             foreach (var d in rez.Dokumenti) d.Fajl = p.Naziv;
 
-            try { Directory.CreateDirectory(kesFolder); File.WriteAllText(kes, Json.U(rez), Encoding.UTF8); }
+            try { Directory.CreateDirectory(kesFolder); UpisiAtomicno(kes, Json.U(rez)); }
             catch (Exception ex) { log?.Upozorenje("Keš nije upisan: " + ex.Message); }
             log?.Info("  " + p.Naziv + ": " + strane.Count + " str. (" + string.Join(",", strane.Select(s => s.Izvor == IzvorTeksta.Ocr ? "ocr" : s.Izvor == IzvorTeksta.Tekst ? "tekst" : "-"))
                 + ") za " + (int)(DateTime.Now - t0).TotalSeconds + " s – " + Opis(rez));
@@ -123,7 +135,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             catch (IOException ex) { throw new PrivremenaGreskaCitanja("fajl nije dostupan: " + ex.Message, ex); }
             catch (Exception ex) { throw new TrajnaGreskaCitanja("fajl ne može da se otvori: " + ex.Message, ex); }
             if (!uvekOcr)
-                try { Directory.CreateDirectory(kesFolder); File.WriteAllText(kesStrana, Newtonsoft.Json.JsonConvert.SerializeObject(strane), Encoding.UTF8); } catch { }
+                try { Directory.CreateDirectory(kesFolder); UpisiAtomicno(kesStrana, Newtonsoft.Json.JsonConvert.SerializeObject(strane)); } catch { }
             return strane;
         }
 

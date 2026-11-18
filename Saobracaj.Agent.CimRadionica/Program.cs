@@ -20,6 +20,13 @@ namespace Saobracaj.Agent.CimRadionica
         public string Verzija = RezultatJson.VerzijaPrograma;
         public string TestiranjeFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Testiranje");
         public int VelicinaDela = 20;
+        /// <summary>
+        /// v3.0 (odluka 18.11., laptop se ugasio pod punim opterećenjem – Kernel-Power 41): najviše toliko radnika radi istovremeno
+        /// (pred-čitanje/OCR); hronološka obrada posle ide jednim radnikom iz keša. Podrazumevano 2.
+        /// </summary>
+        public int BrojRadnika = 2;
+        /// <summary>Prioritet procesa radnika (Idle, BelowNormal, Normal); podrazumevano BelowNormal.</summary>
+        public string PrioritetRadnika = "BelowNormal";
 
         public string Radni => Path.Combine(Koren, "Radni");
         public string Kes => Path.Combine(Koren, "kes");
@@ -78,6 +85,8 @@ namespace Saobracaj.Agent.CimRadionica
         public string Verzija = "";
         public string Kes = "";
         public string Analiza;   // folder za _Analiza (praćenje foldera Testiranje); null = bez analize
+        /// <summary>v3.0: samo pred-čitanje (OCR u keš), bez obrade – više takvih radnika radi istovremeno.</summary>
+        public bool SamoCitanje;
     }
 
     internal static class Program
@@ -105,6 +114,16 @@ namespace Saobracaj.Agent.CimRadionica
                 pp.TestiranjeFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Testiranje");
                 pp.Sacuvaj();
                 Console.WriteLine("Online režim podešen; konekcija sačuvana (DPAPI, trenutni korisnik) u " + pp.KonekcijaFajl + "; Testiranje: " + pp.TestiranjeFolder);
+                return 0;
+            }
+            // v3.0 (odluka 18.11.): paket za Claude – --paket-claude <prostor> <verzija> <izlazni folder> [dodatni fajlovi…] (delovi ≤ 100 MB)
+            if (a.Count >= 4 && a[0] == "--paket-claude")
+            {
+                var pp = Podesavanja.Ucitaj();
+                var rp0 = RadniProstor.Otvori(Path.Combine(pp.Radni, a[1]));
+                var delovi = Zbirno.PaketZaClaude(rp0, a[2], a[3], a.Skip(4), out var izost);
+                foreach (var d in delovi) Console.WriteLine("Deo: " + d + " (" + (new FileInfo(d).Length / 1048576.0).ToString("0.0") + " MB)");
+                Console.WriteLine("Izostavljeno (tajne): " + izost.Count);
                 return 0;
             }
             // v3.0: paket za analizu iz komandne linije – --paket <prostor> <verzija> <izlaz.zip> [--samo-ne]
@@ -173,6 +192,18 @@ namespace Saobracaj.Agent.CimRadionica
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int n = 0;
             var analiza = a.Contains("--analiza");
+            GlavnaForma.PostaviRadnike(p);
+            // v3.0: pred-čitanje (OCR u keš) sa najviše BrojRadnika radnika istovremeno, pa hronološka obrada jednim radnikom iz keša
+            if (p.BrojRadnika > 1 && stavke.Count > 1)
+            {
+                var citano = 0;
+                GlavnaForma.PredCitaj(rp.Koren, stavke.Select(x => x.Kljuc).ToList(), p, online ? konekcija : null, l =>
+                {
+                    if (l.StartsWith("CITANO ") || l.StartsWith("CITANJE-GRESKA ")) System.Threading.Interlocked.Increment(ref citano);
+                    if (l.StartsWith("CITANJE-GRESKA ")) Console.Error.WriteLine(l);
+                });
+                Console.WriteLine("Pred-čitanje: " + citano + "/" + stavke.Count + " poruka, " + p.BrojRadnika + " radnika (" + sw.Elapsed.ToString(@"hh\:mm\:ss") + ")");
+            }
             for (int i = 0; i < stavke.Count; i += p.VelicinaDela)
             {
                 var deo = stavke.Skip(i).Take(p.VelicinaDela).ToList();
@@ -213,6 +244,17 @@ namespace Saobracaj.Agent.CimRadionica
             var rp = RadniProstor.Otvori(posao.Koren);
             var pa = new PodesavanjaAlata { Online = posao.Online, Konekcija = posao.Online ? Environment.GetEnvironmentVariable("CIMPROVERA_KONEKCIJA") : null, Verzija = posao.Verzija, KesFolder = posao.Kes };
             var analize = new List<(int, RezultatAlata, string)>();
+            if (posao.SamoCitanje)
+            {
+                using (var rad = new RadnikObrade(rp, pa))
+                    foreach (var s in rp.Hronoloski().Where(x => posao.Kljucevi.Contains(x.Kljuc)))
+                    {
+                        try { rad.Procitaj(s); Console.WriteLine("CITANO " + s.Kljuc + " | "); }
+                        catch (Exception ex) { Console.WriteLine("CITANJE-GRESKA " + s.Kljuc + " | " + ex.Message.Replace('\n', ' ')); }
+                        Console.Out.Flush();
+                    }
+                return 0;
+            }
             using (var rad = new RadnikObrade(rp, pa))
                 foreach (var s in rp.Hronoloski().Where(x => posao.Kljucevi.Contains(x.Kljuc)))
                 {

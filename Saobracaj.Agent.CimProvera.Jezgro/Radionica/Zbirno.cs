@@ -261,5 +261,112 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             }
             return izlaz;
         }
+
+        // ------------------------------------------------------------------------------------------- paket za Claude (odluka 18.11.)
+
+        /// <summary>Slika strane za paket: siva skala, rezolucija <paramref name="dpi"/> (izvor je <see cref="Analiza.DpiStrana"/>), JPEG kvaliteta 75.</summary>
+        internal static byte[] SlikaSivo(string fajl, int dpi = 80)
+        {
+            using (var src = new System.Drawing.Bitmap(fajl))
+            {
+                var f = Math.Min(1.0, dpi / (double)Analiza.DpiStrana);
+                int w = Math.Max(1, (int)Math.Round(src.Width * f)), h = Math.Max(1, (int)Math.Round(src.Height * f));
+                using (var dst = new System.Drawing.Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format24bppRgb))
+                {
+                    using (var g = System.Drawing.Graphics.FromImage(dst))
+                    using (var ia = new System.Drawing.Imaging.ImageAttributes())
+                    {
+                        ia.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(new[]
+                        {
+                            new float[] { 0.299f, 0.299f, 0.299f, 0, 0 }, new float[] { 0.587f, 0.587f, 0.587f, 0, 0 }, new float[] { 0.114f, 0.114f, 0.114f, 0, 0 },
+                            new float[] { 0, 0, 0, 1, 0 }, new float[] { 0, 0, 0, 0, 1 },
+                        }));
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        g.DrawImage(src, new System.Drawing.Rectangle(0, 0, w, h), 0, 0, src.Width, src.Height, System.Drawing.GraphicsUnit.Pixel, ia);
+                    }
+                    var enc = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders().First(x => x.MimeType == "image/jpeg");
+                    using (var ep = new System.Drawing.Imaging.EncoderParameters(1))
+                    using (var ms = new MemoryStream())
+                    {
+                        ep.Param[0] = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 75L);
+                        dst.Save(ms, enc, ep);
+                        return ms.ToArray();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// v3.0 (odluka 18.11.): paket za analizu u Claude-u – bez originalnih mailova i bez rezultati\: samo _Analiza\&lt;verzija&gt;
+        /// (slike strana u sivoj skali, 80 dpi), Zbirno, Poređenje i dodatni fajlovi (Rečnik, PROCITAJ). Delovi ≤ <paramref name="maxBajtova"/>;
+        /// mail (folder NNN_…) se nikad ne deli između delova. Bez tajni (isti filter kao <see cref="Paket"/>). Vraća putanje delova.
+        /// </summary>
+        public static List<string> PaketZaClaude(RadniProstor rp, string verzija, string izlazFolder, IEnumerable<string> dodatni, out List<string> preskoceno, long maxBajtova = 100L * 1024 * 1024)
+        {
+            var lokalno = preskoceno = new List<string>();
+            var baza = Path.Combine(rp.Koren, "_Analiza", RadniProstor.BezbednoIme(verzija, 30));
+            if (!Directory.Exists(baza)) throw new DirectoryNotFoundException("Nema " + baza + " – obradite sa „napravi _Analiza“.");
+            Directory.CreateDirectory(izlazFolder);
+            // stavke: (ime u zip-u, bajtovi, grupa) – grupa je folder maila; zajednički fajlovi su grupa „“ (prvi deo)
+            byte[] Bezbedno(string fajl, string ime)
+            {
+                var n = Path.GetFileName(fajl);
+                if (Regex.IsMatch(n, @"(?i)\.(dpapi|config)$")) { lokalno.Add(ime + " (tajna)"); return null; }
+                if (Regex.IsMatch(n, @"(?i)\.(jpe?g|png)$") && fajl.Replace('/', '\\').Contains("\\strane\\")) return SlikaSivo(fajl);
+                var b = File.ReadAllBytes(fajl);
+                if (Regex.IsMatch(n, @"(?i)\.(txt|json|jsonl|md|html|csv|log)$") && Tajna.IsMatch(Encoding.UTF8.GetString(b))) { lokalno.Add(ime + " (sadrži oblik lozinke/connection string-a)"); return null; }
+                return b;
+            }
+            var zajednicki = new List<(string ime, byte[] b)>();
+            void Zaj(string fajl) { if (File.Exists(fajl) && Bezbedno(fajl, Path.GetFileName(fajl)) is byte[] b) zajednicki.Add((Path.GetFileName(fajl), b)); }
+            Zaj(Putanja(rp, verzija));
+            foreach (var p in Directory.GetFiles(rp.Koren, "Poredjenje_*")) Zaj(p);
+            foreach (var d in dodatni ?? Enumerable.Empty<string>()) Zaj(d);
+            foreach (var f in Directory.GetFiles(baza)) if (Bezbedno(f, "_Analiza/" + Path.GetFileName(f)) is byte[] b) zajednicki.Add(("_Analiza/" + verzija + "/" + Path.GetFileName(f), b));
+            var mailovi = new List<(string folder, List<(string ime, byte[] b)> fajlovi)>();
+            foreach (var dir in Directory.GetDirectories(baza).OrderBy(x => x, StringComparer.Ordinal))
+            {
+                var ime = Path.GetFileName(dir);
+                var l = new List<(string, byte[])>();
+                foreach (var f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
+                {
+                    var rel = "_Analiza/" + verzija + "/" + ime + "/" + f.Substring(dir.Length).TrimStart('\\').Replace('\\', '/');
+                    if (Bezbedno(f, rel) is byte[] b) l.Add((rel, b));
+                }
+                mailovi.Add((ime, l));
+            }
+            // procena veličine u zip-u: slike/PDF ≈ ista veličina, tekst ≈ trećina
+            long Procena(IEnumerable<(string ime, byte[] b)> x) => x.Sum(y => Regex.IsMatch(y.ime, @"(?i)\.(jpe?g|png|pdf|xlsx)$") ? y.b.LongLength : y.b.LongLength / 3 + 200);
+            var delovi = new List<List<(string ime, byte[] b)>> { new List<(string, byte[])>(zajednicki) };
+            long tekuci = Procena(zajednicki);
+            foreach (var (folder, fajlovi) in mailovi)
+            {
+                var vel = Procena(fajlovi);
+                if (tekuci + vel > maxBajtova * 0.95 && delovi.Last().Count > zajednicki.Count) { delovi.Add(new List<(string, byte[])>()); tekuci = 0; }
+                delovi.Last().AddRange(fajlovi); tekuci += vel;
+            }
+            var osnova = "Claude_" + RadniProstor.BezbednoIme(rp.Ime, 30) + "_" + RadniProstor.BezbednoIme(verzija, 30);
+            var putanje = delovi.Select((d, i) => Path.Combine(izlazFolder, osnova + (delovi.Count > 1 ? "_deo" + (i + 1) + "od" + delovi.Count : "") + ".zip")).ToList();
+            for (int i = 0; i < delovi.Count; i++)
+            {
+                if (File.Exists(putanje[i])) File.Delete(putanje[i]);
+                using (var z = ZipFile.Open(putanje[i], ZipArchiveMode.Create))
+                {
+                    foreach (var (ime, b) in delovi[i])
+                    {
+                        var e = z.CreateEntry(ime, Regex.IsMatch(ime, @"(?i)\.(jpe?g|png|pdf|xlsx)$") ? CompressionLevel.NoCompression : CompressionLevel.Optimal);
+                        using (var s = e.Open()) s.Write(b, 0, b.Length);
+                    }
+                    var m = new StringBuilder();
+                    m.AppendLine("CimRadionica – paket za analizu (Claude)").AppendLine("Radni prostor: " + rp.Ime + ", verzija " + verzija + ", napravljen " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
+                    m.AppendLine("Deo " + (i + 1) + " od " + delovi.Count + ": " + string.Join(", ", putanje.Select(Path.GetFileName)));
+                    m.AppendLine("Sadržaj: samo _Analiza (slike strana u sivoj skali, 80 dpi), Zbirno, Poređenje, Rečnik, PROCITAJ – bez originalnih mailova i bez rezultati\\.");
+                    m.AppendLine("Mailova u ovom delu: " + delovi[i].Select(x => x.ime.Split('/')).Where(x => x.Length > 3).Select(x => x[2]).Distinct().Count() + ". Bez lozinki, DPAPI fajlova i connection string-a.");
+                    if (lokalno.Count > 0) m.AppendLine().AppendLine("Izostavljeno:").AppendLine(string.Join(Environment.NewLine, lokalno));
+                    using (var w = new StreamWriter(z.CreateEntry("MANIFEST.txt").Open(), new UTF8Encoding(false))) w.Write(m.ToString());
+                }
+            }
+            return putanje;
+        }
     }
 }

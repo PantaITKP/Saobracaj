@@ -207,6 +207,74 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.IsTrue(r.Obrada.Poruke.Single(p => p.Vrsta == "kopija").Poruka.TextBody.Contains("INTERNO"), "puna interna kopija (sa internim nalazima)");
         }
 
+        [TestMethod]
+        public void Paket_za_Claude_samo_Analiza_sivo_80_dpi_delovi_bez_mailova()
+        {
+            var koren = NoviFolder("claude");
+            var rp = RadniProstor.Otvori(Path.Combine(koren, "Radni", "C"));
+            var baza = Path.Combine(rp.Koren, "_Analiza", "v");
+            var rnd = new Random(7);
+            for (int i = 1; i <= 4; i++)
+            {
+                var d = Path.Combine(baza, i.ToString("000") + "_20261118-1000_Mail " + i);
+                Directory.CreateDirectory(Path.Combine(d, "strane"));
+                File.WriteAllText(Path.Combine(d, "ANALIZA.md"), "# " + i, Encoding.UTF8);
+                File.WriteAllText(Path.Combine(d, "rezultat.json"), "{}", Encoding.UTF8);
+                using (var b = new System.Drawing.Bitmap(1000, 1400))
+                {
+                    for (int x = 0; x < 1000; x += 4) for (int y = 0; y < 1400; y += 4) b.SetPixel(x, y, System.Drawing.Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256)));
+                    b.Save(Path.Combine(d, "strane", "CIM_str1.jpg"), System.Drawing.Imaging.ImageFormat.Jpeg);
+                }
+            }
+            File.WriteAllText(Path.Combine(baza, "INDEKS.md"), "# Indeks", Encoding.UTF8);
+            // originalni mail i rezultati\ postoje, ali ne idu u paket
+            Directory.CreateDirectory(rp.Poruke); File.WriteAllText(Path.Combine(rp.Poruke, "x.eml"), "From: a@b", Encoding.UTF8);
+            Directory.CreateDirectory(Path.Combine(rp.Rezultati, "v", "m")); File.WriteAllText(Path.Combine(rp.Rezultati, "v", "m", "log.txt"), "log", Encoding.UTF8);
+            var procitaj = Path.Combine(koren, "PROCITAJ.md"); File.WriteAllText(procitaj, "# Paket", Encoding.UTF8);
+            var tajna = Path.Combine(baza, "001_20261118-1000_Mail 1", "beleska.txt"); File.WriteAllText(tajna, "Data Source=.\\SQLEXPRESS;Integrated Security=True");
+            var velicinaSlike = Zbirno.SlikaSivo(Path.Combine(baza, "001_20261118-1000_Mail 1", "strane", "CIM_str1.jpg")).LongLength;
+            // granica tako da stanu po ~2 maila u deo
+            var delovi = Zbirno.PaketZaClaude(rp, "v", Path.Combine(koren, "izlaz"), new[] { procitaj }, out var izost, (long)(velicinaSlike * 2.3));
+            Assert.IsTrue(delovi.Count >= 2, "podela na delove: " + delovi.Count);
+            Assert.IsTrue(delovi.All(d => Path.GetFileName(d).Contains("_deo")));
+            Assert.AreEqual(1, izost.Count, "beleška sa connection string-om se ne pakuje");
+            var mailUDelu = new Dictionary<string, int>();
+            for (int i = 0; i < delovi.Count; i++)
+                using (var z = ZipFile.OpenRead(delovi[i]))
+                {
+                    Assert.IsFalse(z.Entries.Any(e => e.FullName.StartsWith("poruke/") || e.FullName.StartsWith("rezultati/") || e.Name.EndsWith(".eml")), string.Join(", ", z.Entries.Select(e => e.FullName)));
+                    Assert.IsTrue(z.Entries.Any(e => e.Name == "MANIFEST.txt"));
+                    foreach (var e in z.Entries.Where(e => e.FullName.Split('/').Length > 3))
+                    {
+                        var m = e.FullName.Split('/')[2];
+                        if (mailUDelu.TryGetValue(m, out var di)) Assert.AreEqual(di, i, "mail " + m + " je podeljen između delova");
+                        mailUDelu[m] = i;
+                    }
+                    foreach (var e in z.Entries.Where(e => e.FullName.EndsWith(".jpg")))
+                        using (var st = e.Open()) using (var ms = new MemoryStream()) { st.CopyTo(ms); ms.Position = 0;
+                            using (var b = new System.Drawing.Bitmap(ms))
+                            {
+                                Assert.AreEqual(800, b.Width, "80 dpi (izvor 100 dpi)");
+                                var px = b.GetPixel(4, 4);
+                                Assert.IsTrue(Math.Abs(px.R - px.G) <= 2 && Math.Abs(px.G - px.B) <= 2, "siva skala");
+                            } }
+                }
+            using (var z = ZipFile.OpenRead(delovi[0]))
+                Assert.IsTrue(z.Entries.Any(e => e.Name == "PROCITAJ.md") && z.Entries.Any(e => e.FullName == "_Analiza/v/INDEKS.md"), "zajednički fajlovi u prvom delu");
+            Assert.AreEqual(4, mailUDelu.Count);
+        }
+
+        [TestMethod]
+        public void Kes_upis_atomican_drugi_upis_istog_kljuca_se_preskace()
+        {
+            var d = NoviFolder("kes");
+            var f = Path.Combine(d, "x_L23.json");
+            Saobracaj.Agent.CimProvera.Citanje.LokalniCitac.UpisiAtomicno(f, "{\"a\":1}");
+            Saobracaj.Agent.CimProvera.Citanje.LokalniCitac.UpisiAtomicno(f, "{\"a\":2}");
+            Assert.AreEqual("{\"a\":1}", File.ReadAllText(f));
+            Assert.AreEqual(0, Directory.GetFiles(d, "*.tmp").Length, "bez zaostalih privremenih fajlova");
+        }
+
         [TestMethod, TestCategory("Regresija")]
         public void Isti_ulaz_isti_rezultat_json_alat_i_agent_i_poredjenje_verzija()
         {

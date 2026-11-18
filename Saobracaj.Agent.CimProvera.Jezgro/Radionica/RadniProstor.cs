@@ -15,6 +15,7 @@ using Saobracaj.Agent.CimProvera.Baza;
 using Saobracaj.Agent.CimProvera.Citanje;
 using Saobracaj.Agent.CimProvera.Mail;
 using Saobracaj.Agent.CimProvera.Pravila;
+using Saobracaj.Agent.CimProvera.Prilozi;
 
 namespace Saobracaj.Agent.CimProvera.Radionica
 {
@@ -297,6 +298,7 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
         private readonly ObradaPoruke obrada;
         private readonly Stanje stanje;
         private readonly Sifarnici sifarniciOffline;
+        private readonly Obrada citanje;
         private readonly List<string> zapis = new List<string>();
 
         public RadnikObrade(RadniProstor rp, PodesavanjaAlata pa)
@@ -317,6 +319,7 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
             }
             citac = new LokalniCitac(cfg, log, pravila.Kp);
             var o = new Obrada(pravila, citac, log, cfg.PragPouzdanosti) { RanijiListovi = () => IstorijaListova.Ucitaj(cfg.StanjeFolder) };
+            citanje = new Obrada(pravila, citac, log, cfg.PragPouzdanosti);
             stanje = Stanje.Ucitaj(cfg.StanjeFolder);
             obrada = new ObradaPoruke(cfg, log, o, pravila, stanje, false)
             {
@@ -330,6 +333,19 @@ UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM 
         }
 
         public PravilaSkup Pravila => pravila;
+
+        /// <summary>
+        /// v3.0 (odluka 18.11.): pred-čitanje – prilozi poruke se samo pročitaju (OCR) i upišu u keš; bez dosijea, ponavljanja, odgovora i
+        /// upisa u bazu. Više radnika pred-čitanja radi istovremeno; obrada posle ide hronološki iz keša.
+        /// </summary>
+        public int Procitaj(StavkaProstora s)
+        {
+            var m = rp.Ucitaj(s);
+            var prilozi = Raspakivanje.PriloziMaila(m).ToList();
+            if (prilozi.Count == 0) return 0;
+            citanje.Proveri(prilozi, s.Od ?? "", false, s.Datum.LocalDateTime, false);
+            return prilozi.Count;
+        }
 
         /// <summary>Obrada jedne poruke i zapis rezultata u rezultati\&lt;verzija&gt;\&lt;datum&gt;_&lt;naslov&gt;\.</summary>
         public RezultatAlata Obradi(StavkaProstora s)

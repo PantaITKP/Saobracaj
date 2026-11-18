@@ -811,7 +811,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var t = Regex.Replace(tekst ?? "", @"\s+", " ").Trim().Trim(';', ':', '.', ',').Trim();
             if (t.Length == 0 || t == "0") return false;
-            return IznosRegex.IsMatch(t);
+            if (!IznosRegex.IsMatch(t)) return false;
+            // v3.0 (odluka 18.11., TCDD): iznos ima valutu, ili bar 3 cifre, ili decimale – dvocifren broj bez valute („77“, „78“ ↔ broj
+            // rubrike 27/28 pročitan sa obrasca, „23“) nije iznos, nego najviše INTERNO „nečitljivo“
+            var valuta = Regex.IsMatch(t, @"[A-Za-z€$£]");
+            var decimale = Regex.IsMatch(t, @"\d[.,](\d{1,2}|-{1,2})(?!\d)");
+            var cifara = t.Count(char.IsDigit);
+            return valuta || decimale || cifara >= 3;
         }
 
         private static IEnumerable<Pogodak> Iznos(Kontekst k, Iznos r, string broj, bool napomena = false)
