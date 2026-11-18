@@ -339,6 +339,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
             double? Zbir(Func<ZapisTl, double?> f) => g.Any(z => f(z).HasValue) ? g.Sum(z => f(z) ?? 0) : (double?)null;
             var ne = Zbir(z => z.Neto); var ta = Zbir(z => z.Tara); var br = Zbir(z => z.Bruto);
             decimal Tn(double? kg) => PosaoIzDokumenata.Tone(kg ?? 0);
+            // v3.0.1 (3.8, Lukavac02: neto 4,945 t uz broj kola preuzet iz ranijeg zapisa): provera smisla i na nivou grupe posla
+            if (PosaoIzDokumenata.NesmislenNeto(ne, bk, g.All(z => z.Prazna), null) is string bez)
+            {
+                p.Postavi("Neto" + s, 0m, opis + " – " + bez, "r25/r21", 0, "neto nije upisan: " + bez);
+                p.Napomene.Add("Neto grupe " + s + " nije upisan: " + bez);
+            }
+            else
             p.Postavi("Neto" + s, Tn(ne), opis, "r25/r21", ne.HasValue ? 90 : 0);
             p.Postavi("Tara" + s, Tn(ta), opis, "r25/r21", ta.HasValue ? 90 : 0);
             p.Postavi("Bruto" + s, Tn(br), opis, "r25/r21", br.HasValue ? 90 : 0);
