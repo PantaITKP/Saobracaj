@@ -1104,6 +1104,26 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var r25 = gr.Count >= grupa ? gr[grupa - 1].Where(z => z.Neto.HasValue).Sum(z => z.Neto.Value) : 0;
             // v3.0.1 (3.2): spisak nije usklađen sam sa sobom – mase sa spiska nisu upisane (ostaju iz r25), INTERNO „spisak – proveriti kolone“
             if (p.SpisakNeuskladjen) foreach (var x in p.Napomene.Where(x => x.StartsWith("Spisak kola – proveriti kolone", StringComparison.Ordinal))) ishod.Interno.Add(x);
+            // v3.0.1 (3.2, amonijak UID 259: spisak „neto 1 630,5“ bez tare i bruta, r25 1 071,7 / 838,25 / 1 909,95): spisak samo sa netom ne
+            // može da se proveri sam sa sobom – kada r25 ima sve tri mase usklađene (bruto = neto + tara ± 0,5 %) i razlikuje se > 5 %, važi r25
+            if (gr.Count >= grupa && p.V.TryGetValue("Neto" + g0, out var nspS) && nspS is decimal nsS && nsS > 0
+                && !(p.V.TryGetValue("Tara" + g0, out var tsp) && tsp is decimal tsd && tsd > 0) && !(p.V.TryGetValue("Bruto" + g0, out var bsp) && bsp is decimal bsd && bsd > 0))
+            {
+                var g1 = gr[grupa - 1];
+                double? Z(Func<ZapisTl, double?> f) => g1.All(z => f(z) > 0) ? g1.Sum(z => f(z).Value) : (double?)null;
+                var (n25, t25, b25) = (Z(z => z.Neto), Z(z => z.Tara), Z(z => z.Bruto));
+                if (n25 > 0 && t25 > 0 && b25 > 0 && Math.Abs(b25.Value - (n25.Value + t25.Value)) <= 0.005 * b25.Value && Math.Abs((double)nsS * 1000 - n25.Value) > 0.05 * n25.Value)
+                {
+                    p.V["Neto" + g0] = PosaoIzDokumenata.Tone(n25.Value);
+                    var po = p.Poreklo.FirstOrDefault(x => x.Kolona == "Neto" + g0);
+                    var sr0 = CultureInfo.GetCultureInfo("sr-Latn-RS");
+                    var t = "Spisak kola – proveriti kolone spiska: spisak ima samo neto " + nsS.ToString("N3", sr0) + " t (bez tare i bruta), a r25 je usklađen (neto "
+                            + (n25.Value / 1000).ToString("N3", sr0) + " + tara " + (t25.Value / 1000).ToString("N3", sr0) + " = bruto " + (b25.Value / 1000).ToString("N3", sr0) + " t) – upisan r25";
+                    if (po != null) { po.Vrednost = p.V["Neto" + g0]; po.Rubrika = "r25/r21"; po.Tekst = t; }
+                    ishod.Napomene.Add(t); ishod.Interno.Add(t);
+                    Istorija(jobId, tid, null, null, null, dokId, razlog, PodaciPosla.Skrati(t, 400));
+                }
+            }
             // v3.0.1 (3.8): provera smisla – neto spiska < 1 % ili > 300 % od r25 → ne upisuje se
             if (p.V.TryGetValue("Neto" + g0, out var nsp0) && nsp0 is decimal ns0 && ns0 > 0
                 && PosaoIzDokumenata.NesmislenNeto((double)ns0 * 1000, 0, p.Grupe.Count > 0 && p.Grupe[Math.Min(grupa, p.Grupe.Count) - 1].prazna, r25 > 0 ? r25 : (double?)null) is string bez)
