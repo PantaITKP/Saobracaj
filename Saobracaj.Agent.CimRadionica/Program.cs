@@ -120,6 +120,14 @@ namespace Saobracaj.Agent.CimRadionica
                 Console.WriteLine("Syncfusion ključ sačuvan (DPAPI, trenutni korisnik) u " + put + "; provera: " + Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.StanjeKljuca);
                 return ok ? 0 : 2;
             }
+            // v3.0.1: poređenje dve verzije iz komandne linije – --poredi <prostor> <bila> <sada> (Poredjenje_<bila>_<sada>.xlsx u radnom prostoru)
+            if (a.Count >= 4 && a[0] == "--poredi")
+            {
+                var pp = Podesavanja.Ucitaj();
+                var rp0 = RadniProstor.Otvori(Path.Combine(pp.Radni, a[1]));
+                Console.WriteLine("Poređenje: " + Zbirno.SacuvajPoredjenje(rp0, a[2], a[3]));
+                return 0;
+            }
             if (a.Count >= 1 && a[0] == "--podesi-online")
             {
                 var pp = Podesavanja.Ucitaj();
