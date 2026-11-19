@@ -307,7 +307,12 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             // v3.0.1 (1.1): mastilo u r58a (pečat/potpis ugovornog prevoznika) – za odluku da li je list overen
             c.MastiloR58a = strana.Izvor == IzvorTeksta.Ocr && r.Mastilo("58a") is double m58 ? Math.Round(m58, 4) : -1;
             // v3.0.4: pečat prevoznika – tri stanja i znak odluke (tekst KP pečata, otisak, datum otiska; kucani tekst nije pečat)
-            if (strana.Izvor == IzvorTeksta.Ocr && c.MastiloR58a >= 0) { var (ps, pz) = Pecat58a(r.Rubrika("58a"), c.MastiloR58a); c.PecatPrevoznika = ps; c.PecatZnak = pz; }
+            if (strana.Izvor == IzvorTeksta.Ocr && c.MastiloR58a >= 0)
+            {
+                int okviri = 0; try { okviri = r.OkviriOtiska("58a"); } catch { }
+                var (ps, pz) = Pecat58a(r.Rubrika("58a"), c.MastiloR58a, c.R62, okviri);
+                c.PecatPrevoznika = ps; c.PecatZnak = pz;
+            }
 
             c.ElektronskiIspis = Regex.IsMatch(n, @"ispis elektronskog|ausdruck des elektronischen|print-?out of the electronic|impression de la lettre de voiture electronique");
             c.NapomenaIspisa = c.ElektronskiIspis;
@@ -720,9 +725,23 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         /// najviše jedna nečitljiva, bez datuma i teksta pečata – „3212 KP“, „0022, UZ“); inače „nesigurno“. Broj otpravljanja u r62 i datum
         /// u r29 nisu dokaz pečata.
         /// </summary>
-        internal static (string stanje, string znak) Pecat58a(IList<Rec> reci, double mastilo)
+        internal static (string stanje, string znak) Pecat58a(IList<Rec> reci, double mastilo, Identifikacija r62 = null, int okviriOtiska = 0)
         {
             var m = mastilo.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture);
+            // v3.0.4b (6, 72): strana pretamna – ništa se ne može zaključiti
+            if (mastilo >= 0.5) return ("nesigurno", "strana pretamna (mastilo " + m + ")");
+            // v3.0.4b (2, UID 62): elektronska overa – kod u r58a sa delovima r62 i datumom („54-547893-50089-2154-20261108“)
+            var delovi62 = new[] { r62?.Zemlja, r62?.Stanica, r62?.Preduzece, Regex.Replace(r62?.Broj ?? "", @"\D", "") }
+                .Select(x => Regex.Replace(x ?? "", @"\D", "")).Where(x => x.Length >= 2).ToList();
+            foreach (var w in reci)
+            {
+                var t = w.T ?? "";
+                var grupe = Regex.Matches(t, @"\d+").Cast<Match>().Select(x => x.Value).ToList();
+                if (grupe.Count < 3 || !Regex.IsMatch(t, @"^\d+([-/]\d+){2,}$")) continue;
+                var datum8 = grupe.Any(g => Regex.IsMatch(g, @"^20\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$"));
+                var iz62 = grupe.Count(g => delovi62.Any(d => d == g || (d.Length >= 5 && g.Length >= 5 && (d.StartsWith(g) || g.StartsWith(d)))));
+                if (datum8 && iz62 >= 2) return ("da", "elektronska overa (kod „" + t + "“ sa delovima r62 i datumom)");
+            }
             var tekst = string.Join(" ", reci.Select(w => w.T ?? "")).ToLowerInvariant();
             var kp = new[] { ("Kombinovani", @"kombinov|kjmbin"), ("Prokuplje", @"prokup"), ("Jug Bogdanova", @"bogdanov"), ("UIC", @"(?<![a-z])uic(?![a-z])"), ("PZ 009", @"(?<![a-z])pz\s*0?09") }
                 .Where(t => Regex.IsMatch(tekst, t.Item2)).Select(t => t.Item1).ToList();
@@ -731,13 +750,27 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             var nisko = reci.Where(w => w.Pouzdanost < 0.6 && Slova(w) >= 2).ToList();
             var niskoSlova = nisko.Sum(Slova);
             // v3.0.4: kratki fragmenti (1–2 slova, bez oznake rubrike „a)“) – OCR iz zakrivljenog teksta pečata (UID 39: „j r j j j“)
-            var fragmenti = reci.Where(w => Slova(w) >= 1 && Slova(w) <= 2 && !Regex.IsMatch(w.T ?? "", @"^\(?[a-z]\)$|^\d{1,2}$", RegexOptions.IgnoreCase)).ToList();
+            // v3.0.4b (1, UID 62): pravne forme („a.s.“, „d.o.o.“, „s.r.o.“, „Sp. z o.o.“, „S.A.“, „Kft.“, „GmbH“) i skraćenice velikim
+            // slovima („ČD“, „CD“, „KP“) nisu fragmenti pečata
+            bool PravnaForma(Rec w) => Regex.IsMatch((w.T ?? "").Trim(',', ';', '.', ' '), @"^(a\.?s|d\.?o\.?o|s\.?r\.?o|sp|z|o\.?o|s\.?a|kft|zrt|gmbh|ag|srl|ltd|bv|nv|spa|as|doo|sro)$", RegexOptions.IgnoreCase);
+            bool Skracenica(Rec w) { var s = Regex.Replace(w.T ?? "", @"[^\p{L}]", ""); return s.Length >= 2 && s == s.ToUpperInvariant() && s != s.ToLowerInvariant(); }
+            var fragmenti = reci.Where(w => Slova(w) >= 1 && Slova(w) <= 2 && !Regex.IsMatch(w.T ?? "", @"^\(?[a-z]\)$|^\d{1,2}$", RegexOptions.IgnoreCase) && !PravnaForma(w) && !Skracenica(w)).ToList();
             var pouzdane = reci.Where(w => w.Pouzdanost >= 0.6 && Slova(w) >= 2).ToList();
             if (kp.Count >= 2) return ("da", "tekst KP pečata (" + string.Join(", ", kp) + ")" + (datum ? " + datum" : ""));
             if (mastilo >= 0.02 && nisko.Count >= 2 && niskoSlova >= 6) return ("da", "otisak: mastilo " + m + " + nečitljiv/nagnut tekst (" + nisko.Count + " reči)");
             if (mastilo >= 0.02 && fragmenti.Count >= 4) return ("da", "otisak: mastilo " + m + " + fragmenti zakrivljenog teksta (" + fragmenti.Count + ": „" + string.Join(" ", fragmenti.Select(w => w.T)) + "“)");
             if (datum && mastilo >= 0.015) return ("da", "datum otiska u r58a + mastilo " + m);
+            // v3.0.4b (5): okvir otiska pod uglom ili okrugao (nije uspravan pravougaonik obrasca)
+            if (okviriOtiska > 0 && mastilo >= 0.015) return ("da", "okvir otiska pod uglom (" + okviriOtiska + ") + mastilo " + m);
+            // v3.0.4b (3, UID 230): potpis / rukopis prevoznika – mastilo bez kucanog teksta, nečitljiv rukopis (OCR šum), uz vreme ili datum
+            // kada ih OCR pročita; rukom pisan datum se često ne pročita, pa je dovoljno mastilo ≥ 0,035 i bar tri reči/fragmenta rukopisa
+            var vreme = Regex.IsMatch(tekst, @"(?<!\d)([01]?\d|2[0-3])[:.]\d{2}(?!\d)");
+            if (mastilo >= 0.035 && nisko.Count + fragmenti.Count >= 3 && pouzdane.Count <= 2)
+                return ("da", "potpis/rukopis: mastilo " + m + " + " + (nisko.Count + fragmenti.Count) + " nečitljive reči rukopisa" + (datum || vreme ? " + datum/vreme" : ""));
             if (mastilo <= 0.0075) return ("ne", "r58a bez mastila (" + m + ")");
+            // v3.0.4b (4, UID 146): bez ijednog znaka otiska, potpisa ili koda overe (kucani naziv prevoznika, i kada ga OCR ne pročita) – nema
+            if (nisko.Count <= 1 && fragmenti.Count <= 1 && mastilo < 0.035)
+                return ("ne", "bez otiska, potpisa i koda overe" + (pouzdane.Count > 0 ? " (kucano „" + string.Join(" ", pouzdane.Select(w => w.T)).Trim() + "“)" : ""));
             if (nisko.Count <= 1 && pouzdane.Count > 0 && fragmenti.Count <= 2)
                 return ("ne", "samo kucan tekst u r58a („" + string.Join(" ", pouzdane.Select(w => w.T)).Trim() + "“), bez otiska i datuma");
             return ("nesigurno", "mastilo " + m + ", " + nisko.Count + " nečitljivih reči – nije jasno da li je pečat");

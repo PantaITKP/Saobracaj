@@ -456,6 +456,56 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             return suma / (double)Math.Max(1, (c - a) * (d - b));
         }
 
+        /// <summary>
+        /// v3.0.4 (5): okvir otiska pod uglom ili okrugao (pečat) u pravougaoniku rubrike: povezana grupa mastila bez linija obrasca, bar 25 %
+        /// širine i 45 % visine rubrike, šuplja (≤ 30 % mastila u svom pravougaoniku), dodiruje sve četiri strane svog pravougaonika, a uglovi
+        /// pravougaonika su prazni (≤ 4 % piksela) – uspravan pravougaonik obrasca ili kucani tekst nisu okvir otiska. Broj takvih grupa.
+        /// </summary>
+        public int OkviriOtiska(double rx0, double ry0, double rx1, double ry1)
+        {
+            Linije();
+            int a = Clamp((int)Math.Ceiling(rx0 * W), W), b = Clamp((int)Math.Ceiling(ry0 * H), H), c = Clamp((int)Math.Floor(rx1 * W), W), d = Clamp((int)Math.Floor(ry1 * H), H);
+            if (c - a < 10 || d - b < 10) return 0;
+            var vidjeno = new HashSet<int>();
+            var red = new Stack<int>();
+            int broj = 0;
+            for (int y = b; y < d; y++)
+                for (int x = a; x < c; x++)
+                {
+                    var s = y * W + x;
+                    if (!ink[s] || linija[s] || vidjeno.Contains(s)) continue;
+                    var pik = new List<int>();
+                    int x0 = x, x1 = x, y0 = y, y1 = y;
+                    red.Push(s); vidjeno.Add(s);
+                    while (red.Count > 0)
+                    {
+                        var p = red.Pop(); int px = p % W, py = p / W; pik.Add(p);
+                        if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+                        for (int dy = -1; dy <= 1; dy++)
+                            for (int dx = -1; dx <= 1; dx++)
+                            {
+                                int nx = px + dx, ny = py + dy;
+                                if (nx < a || ny < b || nx >= c || ny >= d) continue;
+                                var q = ny * W + nx;
+                                if (!ink[q] || linija[q] || vidjeno.Contains(q)) continue;
+                                vidjeno.Add(q); red.Push(q);
+                            }
+                    }
+                    int w = x1 - x0 + 1, h = y1 - y0 + 1, n = pik.Count;
+                    if (n < 80 || w < (c - a) * 0.25 || h < (d - b) * 0.45) continue;
+                    if (n / (double)(w * h) > 0.30) continue;
+                    int uglovi = 0; bool l = false, dd = false, g = false, dn = false;
+                    foreach (var p in pik)
+                    {
+                        double fx = (p % W - x0) / (double)w, fy = (p / W - y0) / (double)h;
+                        if ((fx < 0.15 || fx > 0.85) && (fy < 0.15 || fy > 0.85)) uglovi++;
+                        if (fx < 0.2) l = true; if (fx > 0.8) dd = true; if (fy < 0.2) g = true; if (fy > 0.8) dn = true;
+                    }
+                    if (uglovi <= n * 0.04 && l && dd && g && dn) broj++;
+                }
+            return broj;
+        }
+
         private sealed class Komponenta { public int x0 = int.MaxValue, y0 = int.MaxValue, x1, y1, n; public List<int> pikseli = new List<int>(); }
 
         /// <summary>Povezane grupe piksela (8 suseda), redom od vrha strane – deterministično. Veoma velike grupe se preskaču.</summary>

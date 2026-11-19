@@ -933,3 +933,27 @@ Pravila se primenjuju redom; prvo koje važi odlučuje.
 
 - Šifra u r24 čije grupe (prve 4 cifre) nema u tarifi (`planiranje.tmpNHM`, 1 360 grupa) je OCR šum i ne računa se kao znak vrste dokumenta. Primer: „942290“, UID 45 – grupe 9422 nema; X u kućici CUV odlučuje → CUV.
 - Grupe se pune iz učitanih šifarnika (online iz baze, offline iz kopije alata), pre prve provere. Bez tarife se šifra ne proverava. Mali šifarnici iz testova (manje od 200 grupa) se ne koriste.
+
+### 14.4 Dopuna posle pregleda slika 3.0.4b (19.11.)
+
+- **Ocena korisnika:**
+  - UID 39 i 202: „postoji“ je tačno.
+  - UID 62: „postoji“ je tačno, ali iz pogrešnog razloga. Pečat je elektronska overa ČD Cargo, kod „54-547893-50089-2154-20261108“; „a.s.“ i „ČD“ nisu fragmenti.
+  - UID 230: treba „postoji“ (rukom pisano ime, potpis, datum, vreme).
+  - UID 146: treba „nema“ (samo kucan naziv PKP Cargo).
+  - UID 198 i 203: „nesigurno“ je u redu.
+  - UID 6 i 72: „nesigurno“, uz INTERNO „strana pretamna – ručna provera“.
+- **Izmene merila** (`CimParser.Pecat58a`, redom):
+  1. **Strana pretamna** (mastilo r58a ≥ 0,5) → nesigurno, uz INTERNO `STRANA-TAMNA` „Strana pretamna – ručna provera“; list ide na ručnu proveru.
+  2. **Elektronska overa** → postoji. To je kod u r58a od bar tri brojčane grupe odvojene sa „-“ ili „/“, sa datumom ggggmmdd i bar dva dela r62 (zemlja, stanica, preduzeće, broj otpravljanja).
+  3. **Fragmenti** ne obuhvataju pravne forme (a.s., d.o.o., s.r.o., Sp. z o.o., S.A., Kft., Zrt., GmbH, AG, SRL, Ltd…) ni skraćenice velikim slovima (ČD, CD, KP).
+  4. **Okvir otiska pod uglom ili okrugao** (`Raster.OkviriOtiska`) uz mastilo ≥ 0,015 → postoji. Okvir je velika šuplja grupa mastila bez linija obrasca:
+     - bar 25 % širine i 45 % visine rubrike;
+     - ≤ 30 % mastila;
+     - dodiruje sve četiri strane, a uglovi su prazni.
+
+     Uspravan pravougaonik obrasca i kucani tekst nisu okvir.
+  5. **Potpis ili rukopis prevoznika** → postoji: mastilo ≥ 0,035, bar tri nečitljive reči ili fragmenta rukopisa i najviše dve pouzdane kucane reči.
+     - Rukom pisan datum ili vreme se upisuje u znak kada ga OCR pročita.
+     - Bez toga je dovoljan rukopis, jer OCR rukopisni datum obično ne čita (UID 230). Ovo je tumačenje agenta.
+  6. **Bez ijednog znaka otiska, potpisa i koda overe** (najviše jedna nečitljiva reč i jedan fragment, mastilo < 0,035) → nema: kucani naziv prevoznika, i kada ga OCR ne pročita (UID 146).

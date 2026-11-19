@@ -231,6 +231,13 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     rl.Nalazi.Add(new Nalaz { Pravilo = "VRSTA-DOKUMENTA", Rubrika = "30", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tv, Uputstvo = tv, SamoInterno = true, Kljuc = "vrsta-nesigurna" });
                 }
                 try { rl.Pecat = Provere.OpisPecata(k); } catch { }
+                // v3.0.4b (6, 72): strana pretamna – pečat i ostale rubrike se ne mogu pouzdano oceniti, ručna provera
+                if ((cim.PecatZnak ?? "").StartsWith("strana pretamna", StringComparison.Ordinal))
+                {
+                    var tt = u.Engleski ? "Page too dark (" + cim.PecatZnak + ") – manual check." : "Strana pretamna (" + cim.PecatZnak.Replace("strana pretamna ", "") + ") – ručna provera.";
+                    rl.Nalazi.Add(new Nalaz { Pravilo = "STRANA-TAMNA", Rubrika = "58a", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tt, Uputstvo = tt, SamoInterno = true, Kljuc = "strana-tamna" });
+                    rl.ZaRucnuProveru = true;
+                }
                 // v3.0.2 (4): CIT 18 (prateći dokument za otkačena kola, izdaje ga prevoznik) – ne proverava se kao CIM i ne ide pošiljaocu
                 if (Provere.JeCit18(k))
                 {

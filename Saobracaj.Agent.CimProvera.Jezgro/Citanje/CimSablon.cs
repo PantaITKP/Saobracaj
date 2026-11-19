@@ -129,6 +129,14 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 return Math.Max(0, Math.Min(1, 1 - ostatak / u));
             }
 
+            /// <summary>v3.0.4 (5): broj okvira otiska pod uglom / okruglih u rubrici (pečat); 0 bez slike ili rubrike.</summary>
+            public int OkviriOtiska(string id)
+            {
+                if (Raster == null || Obrazac == null || !Obrazac.Rubrike.TryGetValue(id, out var r0)) return 0;
+                var r = NaStrani(r0);
+                return Raster.OkviriOtiska(r[0], r[1], r[2], r[3]);
+            }
+
             public double[] KucicaNaStrani(string id) => Obrazac != null && Obrazac.Kucice.TryGetValue(id, out var r0) ? NaStrani(r0) : null;
 
             /// <summary>Stanje polja za označavanje iz šablona: oznaceno / prazno / nesigurno; null ako polja nema u šablonu ili nema slike.</summary>
