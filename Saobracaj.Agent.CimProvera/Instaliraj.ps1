@@ -204,6 +204,10 @@ Postavi 'StanjeFolder' $Stanje
 $xml.Save($Cfg)
 Ok 'sifrovana lozinka i StanjeFolder upisani u Saobracaj.Agent.CimProvera.exe.config'
 
+if ($ObradaIskljucena) {
+    # v3.0.3: arhiviranju Word -> PDF nije potreban; kljuc se unosi pri ukljucivanju obrade poste (Instaliraj.ps1 bez -ObradaIskljucena)
+    Korak '3b. Syncfusion kljuc se preskace (-ObradaIskljucena: arhiviranje ne pretvara Word u PDF)'
+} else {
 # Syncfusion licencni kljuc (Word -> PDF): DPAPI pod servisnim nalogom, poseban fajl Syncfusion.dpapi (ne config, ne log).
 # Servisni nalog je gore dobio novu lozinku, pa stari Syncfusion.dpapi vise ne moze da se desifruje: kljuc se unosi svaki put.
 Korak '3b. Syncfusion licencni kljuc (Word prilozi -> PDF)'
@@ -233,6 +237,7 @@ if ([string]::IsNullOrWhiteSpace($sf)) {
     Ok 'sifrovan kljuc upisan u Syncfusion.dpapi (citaju ga samo administratori i servisni nalog)'
 }
 
+}
 # v2.9.0: upis u privremene tabele planiranje.tmp* pod servisnim nalogom (Windows prijava, bez lozinke).
 # Konekcija je LOKALNA (.\SQLEXPRESS2008K): Windows prijava lokalnog naloga preko IP adrese ne prolazi (server nije u domenu).
 # Connection string se cuva samo sifrovan (Konekcija.dpapi, DPAPI pod servisnim nalogom) – servisni nalog je gore dobio novu
