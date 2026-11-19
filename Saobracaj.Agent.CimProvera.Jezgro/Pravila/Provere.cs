@@ -979,6 +979,18 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         }
 
         /// <summary>Prazna kola: NHM 9922 (r24 ili r21) uz reči „prazna / empty / leer / üres / goale“ ili samo 9922 u r24.</summary>
+        /// <summary>v3.0.3: znak praznih kola – NHM 9922, „prazna kola / empty / leer / üres“ u r18, r21 ili r24, ili tara bez neta u r25.</summary>
+        internal static bool PraznaKolaZnak(CimList c)
+        {
+            if (PraznaKolaNhm9922(c)) return true;
+            var t = string.Join(" ", c.R18?.Tekst, c.R21?.Tekst, c.R24?.Tekst);
+            if (Regex.IsMatch(t, @"(?i)(?<!\p{L})(empty|prazn\w*|leer\w*|üres|ures|goale|vides?|празн\w*)(?!\p{L})")) return true;
+            var r25 = c.R25?.Tekst ?? "";
+            var imaTaru = Cifre(c.R25?.Tara).Length > 0 || Regex.IsMatch(r25, @"(?i)\bta(ra|re)\b\D{0,6}[1-9]");
+            var imaNeto = Regex.IsMatch(r25, @"(?i)\b(ne[tl]+o|net|n)\b\s*[:.]?\s*[1-9]");
+            return imaTaru && !imaNeto;
+        }
+
         internal static bool PraznaKolaNhm9922(CimList c)
         {
             var nhm = c.R24.Stavke.Select(s => Cifre(s.Sifra + s.Tekst)).Concat(new[] { Cifre(c.R24.Tekst) }).Where(x => x.Length >= 4).ToList();
@@ -1031,6 +1043,10 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var ime = System.IO.Path.GetFileName((k.Dok?.Fajl ?? "").Split('/').Last());
             bool imeCuv = Regex.IsMatch(ime, @"(?i)(?<![A-Za-z])CUV(?![A-Za-z])"), imeCim = Regex.IsMatch(ime, @"(?i)(?<![A-Za-z])CIM(?![A-Za-z])");
             if (imeCuv != imeCim) znaci.Add(("naziv fajla", imeCuv ? "CUV" : "CIM"));
+            // v3.0.3 (odluka korisnika 19.11.): X u kućici CUV uz prazna kola (9922, „prazna kola / empty / leer“, tara bez neta) – CUV;
+            // NHM robe u r24 je tada prethodni tovar, a „CIM“ u nazivu fajla opšti naziv – nisu suprotni znaci (Lukavac02 UID 45/75, ID 1661 UID 162)
+            if (znaci.Count > 0 && znaci[0].izvor == "X u kućici" && znaci[0].vrsta == "CUV" && PraznaKolaZnak(c))
+                znaci.RemoveAll(x => x.vrsta != "CUV");
             if (znaci.Count == 0) return (null, false, "");
             var vrsta = znaci[0].vrsta;
             var nesigurna = znaci.Any(x => x.vrsta != vrsta);

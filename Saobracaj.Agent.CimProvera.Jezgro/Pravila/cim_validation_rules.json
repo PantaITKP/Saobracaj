@@ -280,6 +280,16 @@
           "R29 i R62 (odluka korisnika 19.11.) kao R16: bez pečata prevoznika – upozorenje uz „Posle overe (pečat prevoznika) nedostatak će se smatrati greškom.“; sa pečatom – greška; pečat nesiguran – upozorenje + INTERNO.",
           "CIT 18 (prateći list za otkačena kola) se ne proverava kao CIM i ne ide pošiljaocu: INTERNO „CIT 18 – otkačena kola N, pošiljka r62“; posao originalne pošiljke dobija napomenu, bez originala – novi posao + INTERNO „CIT 18 bez originalnog lista“."
         ]
+      },
+      {
+        "date": "2026-11-19",
+        "version": "3.0.3",
+        "basis": "PROMPT_v3.0.3 (odgovori na pitanja iz 3.0.2)",
+        "changes": [
+          "R30 (ostaje samo INTERNO): nalaz samo kada su OBE kućice (CIM i CUV) pouzdano prazne. Kućica je pouzdano prazna kada je nacrtan kvadrat pronađen (prozor ± 0,045 × ± 0,025 strane; univerzalni obrazac ± 0,04 × ± 0,012) ili u široj okolini nema mastila, i kada je cela na strani; inače „nesigurno“. Nesigurna kućica r30 je samo INTERNO, ne „pošaljite čitljiviji dokument“.",
+          "Vrsta dokumenta (odluka korisnika 19.11.): X u kućici CUV uz prazna kola (9922, „prazna kola / empty / leer“, tara bez neta) je CUV – NHM robe u r24 (prethodni tovar) i „CIM“ u nazivu fajla nisu suprotni znaci.",
+          "KP3 (odluka korisnika 19.11.): KP kao izdavalac (3212 u r62) znači da je KP naveden – upozorenje, ne greška."
+        ]
       }
     ]
   },

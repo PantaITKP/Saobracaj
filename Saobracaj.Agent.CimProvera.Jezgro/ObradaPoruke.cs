@@ -382,7 +382,7 @@ namespace Saobracaj.Agent.CimProvera
             }
             try
             {
-                Upis = Upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp);
+                Upis = Upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp) { Izvor = cfg.IzvorUpisa };
                 var ishod = Upis.Upisi(new Baza.MailZaUpis
                 {
                     MessageId = m.MessageId ?? "", Uid = uid, Sanduce = cfg.Nalog + "|" + folder, Posiljalac = m.From.Mailboxes.FirstOrDefault()?.Address ?? "",

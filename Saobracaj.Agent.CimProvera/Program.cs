@@ -54,7 +54,9 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { Console.Error.WriteLine("Greška u config-u: " + ex); return 1; }
             var log = new Log(cfg.LogFolder, cfg.LogDana);
             Slanje.Dnevnik = log;   // v2.8.4: zaštita režima Test upisuje uklonjene primaoce u log
-            Slanje.Transport = SmtpSlanje.Posalji;   // v3.0: SMTP postavlja samo agent (jezgro samo sastavlja; CimRadionica ne šalje)
+            // v3.0: SMTP postavlja samo agent (jezgro samo sastavlja; CimRadionica ne šalje). v3.0.3 (3.2): komanda „arhiviraj“ samo čita
+            // sanduče – SMTP se ne inicijalizuje (transport ostaje „slanje nije podešeno“), pa ni greška ne može da pošalje mail
+            if (!BezSlanja(args)) Slanje.Transport = SmtpSlanje.Posalji;
             Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
             Baza.Ponude.Konekcija = cfg.Konekcija;   // v2.9.2: platilac preko broja ponude (samo čitanje dbo.Ponudba)
             // Syncfusion ključ (Word → PDF) iz Syncfusion.dpapi; greška se upisuje tek kada Word prilog treba pretvoriti
@@ -291,6 +293,33 @@ namespace Saobracaj.Agent.CimProvera
 
         // ------------------------------------------------------------------------------------------- arhiva (v3.0, tačka 5)
 
+        /// <summary>v3.0.3 (3.2): komande bez slanja pošte – SMTP transport se ne postavlja (arhiviranje: samo IMAP čitanje i upis u arhivu).</summary>
+        internal static bool BezSlanja(IList<string> a) => a != null && a.Count > 0 && a[0] == "arhiviraj";
+
+        /// <summary>
+        /// v3.0.3 (3.4): popis foldera na serveru (samo čitanje: UID, veličina, BODYSTRUCTURE) – broj i veličina svih poruka, prilozi PRIMER,
+        /// poslednji UID i rupe (UID-ovi na serveru od početne tačke kojih nema u arhivi).
+        /// </summary>
+        private static string PopisFoldera(MailKit.IMailFolder f, Arhiva ar, Func<MailKit.IMessageSummary, bool> zaArhivu)
+        {
+            var sve = f.Count == 0 ? new List<MailKit.IMessageSummary>() : f.Fetch(0, -1, new MailKit.FetchRequest(MailKit.MessageSummaryItems.UniqueId | MailKit.MessageSummaryItems.Size
+                | MailKit.MessageSummaryItems.BodyStructure | MailKit.MessageSummaryItems.InternalDate)).ToList();
+            string Mb(double b) => (b / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB";
+            long primer = 0; int saPrimerom = 0;
+            foreach (var s in sve)
+            {
+                var pr = (s.BodyParts ?? Enumerable.Empty<MailKit.BodyPartBasic>()).Where(b => (b.FileName ?? "").StartsWith("PRIMER", StringComparison.OrdinalIgnoreCase)).Sum(b => (long)b.Octets);
+                if (pr > 0) { primer += pr; saPrimerom++; }
+            }
+            var arh = sve.Where(zaArhivu).ToList();
+            var rupe = arh.Where(s => !File.Exists(ar.Putanja(f.FullName, f.UidValidity, s.UniqueId.Id))).Select(s => s.UniqueId.Id).ToList();
+            return f.FullName + " (UIDVALIDITY " + f.UidValidity + "): na serveru " + sve.Count + " poruka, " + Mb(sve.Sum(s => (double)(s.Size ?? 0)))
+                + (sve.Count > 0 ? ", UID " + sve.Min(s => s.UniqueId.Id) + "–" + sve.Max(s => s.UniqueId.Id) : "")
+                + "; prilozi PRIMER: " + Mb(primer) + " u " + saPrimerom + " poruka"
+                + "; za arhivu (od početne tačke): " + arh.Count + ", poslednji UID " + (arh.Count > 0 ? arh.Max(s => s.UniqueId.Id).ToString(CultureInfo.InvariantCulture) : "–")
+                + "; rupe (nema u arhivi): " + (rupe.Count == 0 ? "nema" : rupe.Count + " – UID " + string.Join(", ", rupe.Take(30)) + (rupe.Count > 30 ? " …" : ""));
+        }
+
         internal static string ArhivaKoren(AgentConfig cfg) => string.IsNullOrEmpty(cfg.ArhivaFolder) ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "arhiva") : cfg.ArhivaFolder;
 
         /// <summary>
@@ -304,6 +333,7 @@ namespace Saobracaj.Agent.CimProvera
             var od = long.TryParse(Op("--od-uid") ?? "", out var o) ? o : Math.Max(1, stanje.NultaTackaUid);
             var ar = new Arhiva(ArhivaKoren(cfg));
             int novih = 0, postoji = 0;
+            var popis = new List<string>();
             DateTimeOffset? odVreme = stanje.NultaTacka;
             using (var s = new Sanduce(cfg))
             {
@@ -322,6 +352,7 @@ namespace Saobracaj.Agent.CimProvera
                     if (File.Exists(ar.Putanja(f.FullName, f.UidValidity, u.Id))) { postoji++; continue; }
                     if (ar.Sacuvaj(f.FullName, f.UidValidity, u.Id, f.GetMessage(u), t => log.Upozorenje(t))) novih++;
                 }
+                popis.Add(PopisFoldera(f, ar, s => s.UniqueId.Id >= od));
                 if (cfg.CitajOdlazne)
                     try
                     {
@@ -336,10 +367,13 @@ namespace Saobracaj.Agent.CimProvera
                             if (File.Exists(ar.Putanja(p.FullName, p.UidValidity, u.Id))) { postoji++; continue; }
                             if (ar.Sacuvaj(p.FullName, p.UidValidity, u.Id, p.GetMessage(u), t => log.Upozorenje(t))) novih++;
                         }
+                        var skup = new HashSet<uint>(poslate.Select(x => x.Id));
+                        popis.Add(PopisFoldera(p, ar, s => skup.Contains(s.UniqueId.Id)));
                     }
                     catch (Exception ex) { log.Upozorenje("Arhiviranje: folder poslatih nije dostupan: " + ex.Message); }
             }
-            var izv = "Arhiva " + ar.Koren + " – " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz") + Environment.NewLine + "Novih: " + novih + ", već u arhivi: " + postoji + Environment.NewLine + ar.Izvestaj();
+            var izv = "Arhiva " + ar.Koren + " – " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz") + Environment.NewLine + "Novih: " + novih + ", već u arhivi: " + postoji + Environment.NewLine + ar.Izvestaj()
+                      + "Sanduče (samo čitanje, bez slanja):" + Environment.NewLine + string.Join(Environment.NewLine, popis.Select(x => "  " + x)) + Environment.NewLine;
             File.WriteAllText(Path.Combine(ar.Koren, "izvestaj.txt"), izv, new UTF8Encoding(false));
             log.Info(izv.Replace(Environment.NewLine, " | "));
             Console.WriteLine(izv);
@@ -370,7 +404,21 @@ namespace Saobracaj.Agent.CimProvera
                 try { using (var cmd = new System.Data.SqlClient.SqlCommand("SELECT TOP 0 PonStPon, PonPart FROM dbo.Ponudba", k)) cmd.ExecuteScalar(); }
                 catch (System.Data.SqlClient.SqlException ex) { log.Upozorenje("Ponovna obrada čeka: nema pristupa dbo.Ponudba (pokrenuti OP_913_tmp_Prava.sql) – " + ex.Message); return 2; }
                 // --obrisi-podatke: samo PODACI iz tmp tabela (kao OP_915_tmp_BrisanjePodataka.sql); tmpSinonimi i tmpNHM ostaju
-                if (a.Contains("--obrisi-podatke"))
+                // v3.0.3 (3.5): posle OP_919 samo redovi agenta (Izvor = 'Agent') – podaci alata CimRadionica ostaju
+                bool saIzvorom;
+                using (var chk = new System.Data.SqlClient.SqlCommand("SELECT COL_LENGTH('planiranje.tmpJobs', 'Izvor')", k)) { var d0 = chk.ExecuteScalar(); saIzvorom = d0 != null && !(d0 is DBNull); }
+                if (a.Contains("--obrisi-podatke") && saIzvorom)
+                {
+                    using (var tx = k.BeginTransaction())
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(Saobracaj.Agent.CimProvera.Radionica.RadniProstor.ObrisiSql, k, tx) { CommandTimeout = 300 })
+                    {
+                        cmd.Parameters.AddWithValue("@izvor", "Agent");
+                        cmd.ExecuteNonQuery();
+                        tx.Commit();
+                    }
+                    log.Info("Ponovna obrada: podaci agenta iz tmp tabela obrisani (DELETE, Izvor = 'Agent'; podaci alata, tmpSinonimi i tmpNHM ostaju).");
+                }
+                else if (a.Contains("--obrisi-podatke"))
                 {
                     using (var tx = k.BeginTransaction())
                     using (var cmd = new System.Data.SqlClient.SqlCommand(@"IF OBJECT_ID(N'planiranje.tmpJobsDogadjaj', N'U') IS NOT NULL DELETE FROM planiranje.tmpJobsDogadjaj;

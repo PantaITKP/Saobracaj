@@ -10,6 +10,17 @@
 # nalogu i administratorima. v2.9.0: upis u privremene tabele planiranje.tmp* (Konekcija.dpapi, Windows prijava servisnog
 # naloga; prava daje OP_913_tmp_Prava.sql).
 # Skripta je namerno bez slova sa kvacicama (PowerShell 5.1 cita .ps1 bez BOM-a kao ANSI).
+#
+# v3.0.3 (arhiviranje, PROMPT_v3.0.3 tacka 3): -ObradaIskljucena
+#   powershell -ExecutionPolicy Bypass -File "\\192.168.1.6\Cloude\Agenti\CimProvera\Instaliraj.ps1" -ObradaIskljucena
+#   - sve kao gore (nova lozinka servisnog naloga, DPAPI vrednosti iznova, test veza), ALI:
+#   - bez prvog pokretanja agenta (--once ne obradjuje postu),
+#   - zadatak za obradu poste 'Saobracaj\Agent CimProvera' se pravi sa novom lozinkom i ostaje ISKLJUCEN (Disabled),
+#   - pravi se zadatak 'Saobracaj\Arhiva CimProvera' pod servisnim nalogom (ne SYSTEM): samo arhiviranje sanduceta
+#     ("arhiviraj": IMAP samo citanje, upis u arhiva\, SMTP se ne inicijalizuje), svaki dan u 07:10 i 15:10,
+#   - zadatak arhiviranja se odmah pokrece jednom; izvestaj: arhiva\izvestaj.txt.
+#   Iz sanduceta se nista ne brise.
+param([switch]$ObradaIskljucena)
 
 $ErrorActionPreference = 'Stop'
 $SqlInstanca = 'SQLEXPRESS2008K'
@@ -246,17 +257,42 @@ Remove-Item $out -Force -ErrorAction SilentlyContinue
 if ($kod -ne $null -and $kod -ne 0) { Stop-Greska 'Test veza nije prosao (vidi gore).' }
 Ok 'veze rade'
 
+if ($ObradaIskljucena) {
+    Korak '5. Prvo pokretanje agenta se preskace (-ObradaIskljucena: posta se ne obradjuje)'
+} else {
 Korak '5. Prvo pokretanje agenta (rezim iz config-a; u rezimu Test izvestaji idu samo na IzvestajAdresa)'
 $out = Join-Path $Folder 'prvo_pokretanje.txt'
 $kod = KaoServis @('--once') $out
 Remove-Item $out -Force -ErrorAction SilentlyContinue
 if ($kod -ne $null -and $kod -ne 0) { Stop-Greska "Agent je zavrsio sa greskom (exit $kod). Log: $Folder\logs" }
 Ok 'agent radi'
+}
 
 # ------------------------------------------------------------------ 6. Task Scheduler
 Korak "6. Zadatak '$Zadatak' na 2 minuta"
 $tr = '"' + $Exe + '" --once'
 if ((Alat 'schtasks' @('/Create', '/TN', $Zadatak, '/RU', $PunNalog, '/RP', $SvcLozinka, '/SC', 'MINUTE', '/MO', '2', '/TR', $tr, '/F')) -ne 0) { Stop-Greska 'schtasks /Create nije uspeo' }
+if ($ObradaIskljucena) {
+    if ((Alat 'schtasks' @('/Change', '/TN', $Zadatak, '/DISABLE')) -ne 0) { Stop-Greska "Zadatak '$Zadatak' nije iskljucen - iskljucite ga rucno u Task Scheduler-u ODMAH." }
+    Ok "zadatak '$Zadatak' napravljen sa novom lozinkom i ISKLJUCEN (posta se ne obradjuje)"
+    # ---------------------------------------------------------------- 6b. zadatak arhiviranja (v3.0.3)
+    $ZadArhiva = 'Saobracaj\Arhiva CimProvera'
+    Korak "6b. Zadatak '$ZadArhiva' (samo arhiviranje, 07:10 i 15:10, pod $PunNalog)"
+    $akcija = New-ScheduledTaskAction -Execute $Exe -Argument 'arhiviraj' -WorkingDirectory $Folder
+    $okidaci = @((New-ScheduledTaskTrigger -Daily -At '07:10'), (New-ScheduledTaskTrigger -Daily -At '15:10'))
+    $podes = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2) -StartWhenAvailable
+    Register-ScheduledTask -TaskName 'Arhiva CimProvera' -TaskPath '\Saobracaj\' -Action $akcija -Trigger $okidaci -Settings $podes `
+        -User $PunNalog -Password $SvcLozinka -RunLevel Limited -Description 'Arhiviranje sanduceta (IMAP samo citanje, bez obrade i bez slanja) - CimProvera v3.0.3' -Force | Out-Null
+    $SvcLozinka = $null
+    Ok 'zadatak arhiviranja napravljen'
+    [void](Alat 'schtasks' @('/Run', '/TN', $ZadArhiva))
+    Write-Host '    prvo arhiviranje je pokrenuto (traje nekoliko minuta); izvestaj: arhiva\izvestaj.txt'
+    Write-Host ''
+    Write-Host 'GOTOVO. Obrada poste je ISKLJUCENA; arhiviranje radi u 07:10 i 15:10.' -ForegroundColor Green
+    Write-Host ''
+    Read-Host 'Enter za izlaz'
+    exit 0
+}
 $SvcLozinka = $null
 Ok 'zadatak napravljen (radi i kada niko nije prijavljen; nova instanca se ne pokrece dok prethodna radi)'
 

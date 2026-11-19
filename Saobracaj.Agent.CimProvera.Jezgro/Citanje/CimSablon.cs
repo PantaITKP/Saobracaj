@@ -143,7 +143,23 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 var x = PoljeIzX(id) == StanjePolja.Oznaceno || ImaX(id);
                 // pun X ima gustinu 0,4–0,65; između praga i 0,30 (tanak X ili ivica iskošene kućice) – samo uz dijagonale X-a ili X u tekstu
                 if (g >= Math.Max(pragOznake, 0.30) || x) return StanjePolja.Oznaceno;
-                return g <= pragPraznog ? StanjePolja.Prazno : StanjePolja.Nesigurno;
+                if (g > pragPraznog) return StanjePolja.Nesigurno;
+                return id != "30cim" && id != "30cuv" || PouzdanoPrazno(id) ? StanjePolja.Prazno : StanjePolja.Nesigurno;   // v3.0.3: samo kućice r30
+            }
+
+            /// <summary>
+            /// v3.0.3 (R30 – nema dokaza, nema tvrdnje): prazna kućica je pouzdano prazna samo kada je ceo kvadratić na strani (sken sa
+            /// odsečenim vrhom – „ex docs.pdf“, UID 236/263) i kada je nacrtan kvadratić pronađen ili u široj okolini (± 60 % veličine) nema
+            /// mastila (bled sken sa kvačicom preko ivice kućice – doc00429320261114120847.pdf, UID 48/52).
+            /// </summary>
+            internal bool PouzdanoPrazno(string id)
+            {
+                if (Raster == null) return true;
+                var r = KvadratNaStrani(id);
+                if (r[0] < 0.004 || r[1] < 0.004 || r[2] > 0.996 || r[3] > 0.996) return false;
+                if (nadjenKvadrat.Contains(id)) return true;
+                double w = r[2] - r[0], h = r[3] - r[1];
+                return Raster.Gustina(r[0] - 0.6 * w, r[1] - 0.6 * h, r[2] + 0.6 * w, r[3] + 0.6 * h, false) < 0.03;
             }
 
             /// <summary>
@@ -202,6 +218,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
 
             private List<Oblik> kvadratici;
             private readonly Dictionary<string, double[]> kvadratPolja = new Dictionary<string, double[]>();
+            private readonly HashSet<string> nadjenKvadrat = new HashSet<string>();
 
             /// <summary>
             /// Kvadratić polja na strani: nacrtan kvadratić (i sa X-om unutra) slične veličine najbliži mestu iz šablona – do ±0,035
@@ -216,18 +233,24 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 {
                     kvadratici = kvadratici ?? Raster.Kvadratici(true);
                     double cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, sw = r[2] - r[0], sh = r[3] - r[1];
-                    var dy = Obrazac.Univerzalni ? 0.008 : 0.015;
+                    // v3.0.3 (UID 114, treći primerak CIM WAGON 020-1: šablon pomeren ~0,02 nadole; Unicom CUV kućica ~0,037 udesno) – širi prozor
+                    // samo za kućice CIM/CUV (r30); ostale kućice (r22 izjave, r20, r52, r58b) su blizu jedna drugoj i zadržavaju uži prozor
+                    var r30 = poljeId == "30cim" || poljeId == "30cuv";
+                    var dy = Obrazac.Univerzalni ? (r30 ? 0.012 : 0.008) : (r30 ? 0.025 : 0.015);
+                    var dx = Obrazac.Univerzalni ? (r30 ? 0.04 : 0.035) : (r30 ? 0.045 : 0.035);
                     // kvadratić pripada samo polju čije je mesto iz šablona njemu najbliže (iskošen sken: „yes“ kućica r22 nije r23)
                     double D(Oblik o, double[] t) => Math.Abs(o.Cx - (t[0] + t[2]) / 2) + Math.Abs(o.Cy - (t[1] + t[3]) / 2);
                     var ostala = Obrazac.Polja.Where(kv => kv.Key != poljeId).Select(kv => NaStrani(kv.Value)).ToList();
-                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < dy
+                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < dx && Math.Abs(o.Cy - cy) < dy
                                                   && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.8 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.8
                                                   && ostala.All(t => D(o, t) >= D(o, r)))
                                       .OrderBy(o => Math.Abs(o.Cx - cx) + Math.Abs(o.Cy - cy)).FirstOrDefault();
                     if (Environment.GetEnvironmentVariable("CIMPROVERA_DBG") == "1")
                         Console.Error.WriteLine("[dbg polje] " + poljeId + " šablon " + string.Join(",", r.Select(x => x.ToString("0.000"))) + " → " + (k == null ? "nema kvadratića" : k.X0.ToString("0.000") + "," + k.Y0.ToString("0.000") + "," + k.X1.ToString("0.000") + "," + k.Y1.ToString("0.000"))
-                            + "; kandidata u blizini: " + kvadratici.Count(o => Math.Abs(o.Cx - cx) < 0.06 && Math.Abs(o.Cy - cy) < 0.03));
-                    if (k != null) r = new[] { k.X0, k.Y0, k.X1, k.Y1 };
+                            + "; kandidata u blizini: " + kvadratici.Count(o => Math.Abs(o.Cx - cx) < 0.06 && Math.Abs(o.Cy - cy) < 0.03)
+                            + string.Concat(kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.06 && Math.Abs(o.Cy - cy) < 0.03).Select(o => " [" + o.X0.ToString("0.000") + "," + o.Y0.ToString("0.000") + "," + o.X1.ToString("0.000") + "," + o.Y1.ToString("0.000")
+                                + " vel " + ((o.X1 - o.X0) / sw).ToString("0.00") + "x" + ((o.Y1 - o.Y0) / sh).ToString("0.00") + (ostala.All(t => D(o, t) >= D(o, r)) ? "" : " bliže drugom polju") + "]")));
+                    if (k != null) { r = new[] { k.X0, k.Y0, k.X1, k.Y1 }; nadjenKvadrat.Add(poljeId); }
                 }
                 return kvadratPolja[poljeId] = r;
             }

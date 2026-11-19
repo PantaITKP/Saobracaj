@@ -87,6 +87,8 @@ namespace Saobracaj.Agent.CimProvera
         // v2.9.0: upis u privremene tabele planiranje.tmp* (posle provere; greška ne menja proveru ni izveštaj)
         /// <summary>Upis poslova i teretnica u bazu (podrazumevano isključeno; na serveru true).</summary>
         public bool UpisUBazu;
+        /// <summary>v3.0.3 (3.5, OP_919): izvor upisa u planiranje.tmp* – „Agent“ (podrazumevano) ili „Alat“ (CimRadionica).</summary>
+        public string IzvorUpisa = "Agent";
         /// <summary>Konekcija za upis: samo Konekcija.dpapi (DPAPI pod servisnim nalogom) ili CIMPROVERA_KONEKCIJA (ručni test).</summary>
         public string Konekcija;
 
@@ -176,6 +178,7 @@ namespace Saobracaj.Agent.CimProvera
 
             cfg.Lozinka = Tajna("Lozinka", "CIMPROVERA_LOZINKA");
             cfg.UpisUBazu = B("UpisUBazu", false);
+            cfg.IzvorUpisa = string.Equals(S("IzvorUpisa", "Agent"), "Alat", StringComparison.OrdinalIgnoreCase) ? "Alat" : "Agent";
             cfg.Konekcija = KonekcijaIz(Tajna("Konekcija", "CIMPROVERA_KONEKCIJA"), S("Konekcija", ""));
             return cfg;
         }

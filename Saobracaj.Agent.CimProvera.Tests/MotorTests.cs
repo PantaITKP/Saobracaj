@@ -352,7 +352,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var r = Proveri(s);
             Assert.IsFalse(Ima(r, "R30")); Assert.IsFalse(Ima(r, "R16"));
             var c = string.Join(" | ", Svi(r));
-            StringAssert.Contains(c, "Rubrika 16 nije"); StringAssert.Contains(c, "Rubrika 30 nije");
+            StringAssert.Contains(c, "Rubrika 16 nije");
+            // v3.0.3 (1.1): nesigurna kućica r30 – samo INTERNO, ne „pošaljite čitljiviji dokument“
+            Assert.IsTrue(Svi(r).Any(n => n.Pravilo == "CITLJIVOST" && n.Rubrika == "30" && n.SamoInterno), c);
+            Assert.IsFalse(c.Contains("Rubrika 30 nije"), c);
             // prazne kućice i prazno polje (bez mastila) → greške, i na skenu
             var t = new Scenario { IzvorCim = "ocr" }; t.C.R30.Cim = false; t.C.R16.Datum = ""; t.C.R16.Cas = ""; t.C.R16.KuciceStanje = StatusRubrike.Prazno;
             var rt = Proveri(t);

@@ -292,6 +292,15 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 // Nečitljive rubrike: upozorenje, ne greška pošiljaoca; dokument ide na ručnu proveru.
                 foreach (var r in k.Necitljive.OrderBy(x => x, StringComparer.Ordinal))
                 {
+                    // v3.0.3 (R30): kućica CIM/CUV koja nije pouzdano pročitana (bled sken, kvačica preko ivice, odsečen vrh strane) nije
+                    // razlog da pošiljalac šalje novi dokument – samo INTERNO, bez ručne provere lista
+                    if (r == "30")
+                    {
+                        var t30 = u.Engleski ? "Box 30: the CIM/CUV box is not reliably readable on the scan – not used for findings."
+                                             : "r30: kućica CIM/CUV nije pouzdano pročitana na skenu – ne koristi se za nalaze.";
+                        Dodaj(rl.Nalazi, new Nalaz { Pravilo = "CITLJIVOST", Rubrika = r, Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = t30, Uputstvo = t30, SamoInterno = true, Vrednost = TekstRubrike(cim, r), Kljuc = "citljivost|" + r });
+                        continue;
+                    }
                     var tekst = p.Sistemska("necitljivo", u.Engleski, "Rubrika {field} nije čitljiva na skenu – pošaljite čitljiviji dokument.").Replace("{field}", r);
                     Dodaj(rl.Nalazi, new Nalaz { Pravilo = "CITLJIVOST", Rubrika = r, Tezina = Tezina.Upozorenje, TezinaPravila = Tezina.Upozorenje, Tekst = tekst, Uputstvo = tekst, Vrednost = TekstRubrike(cim, r), Kljuc = "citljivost|" + r });
                     rl.ZaRucnuProveru = true;

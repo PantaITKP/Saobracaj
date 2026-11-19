@@ -802,3 +802,81 @@ Osnova: PROMPT_v3.0.2 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.1.md`.
   - svakodnevno (opcija A): zakazani zadatak pod svc_cimprovera (ne SYSTEM) „Saobracaj.Agent.CimProvera.exe arhiviraj“ jednom dnevno – samo IMAP čitanje, samo dopisivanje u arhivu;
   - svakodnevno (opcija B): komanda `CimRadionica --arhiviraj` koju korisnik pokreće ručno pod svojim nalogom; tada lozinka sandučeta mora biti zaštićena i za taj nalog (DPAPI, „zastiti“).
 - **Tmp podaci alata i agenta** (predlog pre ponovnog uključivanja agenta): CimRadionica i agent pišu u iste `planiranje.tmp*` tabele. Predlog je kolona ili prefiks izvora (npr. `Izvor = 'Radionica' / 'Agent'`) ili posebna šema za alat; dok se to ne uradi, pre uključivanja agenta obrisati podatke alata (DELETE nad `planiranje.tmp*` osim tmpSinonimi i tmpNHM), da agent ne bi spajao nove mailove sa poslovima iz probnih obrada.
+
+## 13. v3.0.3 – odgovori na pitanja iz 3.0.2, kućica CIM, CIT 18, arhiva, izvor tmp podataka (19.11.)
+
+Osnova: PROMPT_v3.0.3.
+
+### 13.1 Odluke korisnika (19.11.)
+
+- **R30 ostaje samo INTERNO.** Nalaz „polje CIM nije označeno“ postoji samo kada su **obe** kućice (CIM i CUV) pouzdano prazne. Kada pošiljaocu bude išao, važiće isti uslov.
+- **CUV i NHM robe u r24:** X u kućici CUV uz prazna kola (NHM 9922, „prazna kola / empty / leer / üres“ u r18, r21 ili r24, ili tara bez neta u r25) znači CUV. NHM robe u r24 je tada prethodni tovar. Ni on ni „CIM“ u nazivu fajla nisu suprotni znaci, pa nema „vrsta dokumenta nesigurna“.
+- **KP3:** izdavalac 3212 u r62 znači da je KP naveden. Daje upozorenje, ne grešku.
+- **Pečat:** merilo se ne menja dok korisnik ne pregleda slike u paketu (10 „pečat nije pouzdano prepoznat“, 5 „pečat prepoznat“).
+
+### 13.2 Kućica CIM/CUV sa slike
+
+- **Prozor za nacrtan kvadrat:**
+  - ± 0,045 širine i ± 0,025 visine strane;
+  - univerzalni obrazac: ± 0,04 i ± 0,012.
+  - Uzrok: UID 114, treći primerak „CIM WAGON 020-1 stampa.pdf“, ima šablon pomeren 0,02 nadole, a CUV kućicu Unicom obrasca 0,037 udesno.
+- **Pouzdano prazna kućica:**
+  - cela je na strani (sken sa odsečenim vrhom, „ex docs.pdf“ UID 236/263, nije prazan nego nesiguran);
+  - nacrtan kvadrat je pronađen ili u široj okolini (± 60 % veličine) nema mastila. Bled sken sa kvačicom preko ivice kućice („doc00429…pdf“, UID 48/52) je nesiguran.
+- **Nesigurna kućica r30** je samo INTERNO „r30: kućica CIM/CUV nije pouzdano pročitana na skenu“. Ne ide pošiljaocu kao „pošaljite čitljiviji dokument“ i ne šalje list na ručnu proveru.
+
+### 13.3 CIT 18
+
+- **Mase:** uzrok gubitka neta i tare (3.0.2) je bio što je oznaka „T:“ iz sledećeg reda r25 („N: 41 050\nT: 21 900“) pročitana kao jedinica „t“. Jedinica mase sada mora biti u istom redu i ne sme biti oznaka (`T:`). Broj se ne nastavlja u sledeći red.
+- **Original bez para po r62:** isti je kada se poklapa sve od sledećeg:
+  - ista ponuda KP;
+  - ista relacija (ista uputna stanica, isto mesto – „BOR TERETNA“ / „BOR“ – ili ista otpravna);
+  - roba iste grupe NHM (kada su obe poznate);
+  - prijem u razmaku do 10 dana.
+- **Oba smera:**
+  - CIT 18 posle originala → napomena na originalu;
+  - CIT 18 pre originala (Osnovni: UID 184 pre UID 230) → posao CIT 18 dobija istoriju CIT18_BEZ_ORIGINALA. Nov posao sa jednim takvim kandidatom ga preuzima (dokumenti, događaji, istorija, napomena), a posao CIT 18 se briše.
+- Više kandidata ili nijedan → posao ostaje poseban, kandidati su u poreklu (tmpJobsPolje, kolona CIT18).
+
+### 13.4 Zamenjena teretnica
+
+- Zamenjeni spisak ostaje kao teretnica, sa `Zamenjena = 1` i `ZamenjenaTeretnicaID` (nova teretnica), i sa istorijom SPISAK_KOLA.
+- Spisak se zamenjuje kada:
+  - ≥ 80 % kola je isto;
+  - dosije prepozna isti tovarni list;
+  - isti fajl je ponovo poslat.
+- Zamenjene teretnice se ne koriste za traženje posla po kolima ni za sabiranje grupe.
+
+### 13.5 Izvor tmp podataka (OP_919)
+
+- Kolona `Izvor` ('Agent' / 'Alat') je u tmpJobs, tmpJobsPolje, tmpJobsIstorija, tmpJobsDogadjaj, tmpTeretnica, tmpTeretnicaStavke i tmpDokument. tmpSinonimi i tmpNHM su zajednički.
+- **Kako se izvor upisuje:**
+  - podrazumevana vrednost je 'Agent';
+  - alat (CimRadionica, `IzvorUpisa = Alat`) posle otvaranja konekcije postavlja `SET CONTEXT_INFO 0x416C6174`, pa novi redovi dobijaju 'Alat' bez izmene INSERT naredbi. SQL Server 2008 R2 nema SESSION_CONTEXT.
+- **Odvojenost:**
+  - jedinstveni indeksi (heš fajla, ključ pošiljke, ključ spiska) važe po izvoru;
+  - pretrage (ključ, dosije, ista kola, nepovezani spiskovi, nedavni poslovi, događaji) vide samo svoj izvor, pa se podaci alata i agenta nikad ne spajaju.
+- **Brisanje:**
+  - `--ispocetka` i dugme u alatu brišu samo `Izvor = 'Alat'`; bez kolone (OP_919 nije pokrenut) alat ne briše ništa;
+  - `ponovna-obrada --obrisi-podatke` agenta briše samo `Izvor = 'Agent'`.
+- Pregledi u alatu (Poslovi, Teretnice) imaju izbor izvora (Alat / Agent / Svi). Teretnice prikazuju i Zamenjena.
+- Postojeći redovi 19.11. su označeni kao 'Alat': agent je isključen od 18.11., a tmp podaci su posle toga pisani samo iz alata.
+- tmpJobsIstorija dobija razloge CIT18 i CIT18_BEZ_ORIGINALA. Bez toga bi veza CIT 18 iz 3.0.2 pala na CHECK ograničenju.
+
+### 13.6 Arhiviranje – server
+
+- **Komanda `arhiviraj`** ne inicijalizuje SMTP: transport ostaje „slanje nije podešeno“ (test). IMAP je samo za čitanje, poruke se samo dopisuju u arhivu, iz sandučeta se ništa ne briše.
+- **Izveštaj** (`arhiva\izvestaj.txt`) daje po folderu:
+  - na serveru: broj i veličinu svih poruka, UID opseg i prostor priloga PRIMER (BODYSTRUCTURE);
+  - za arhivu: broj poruka od početne tačke i poslednji UID;
+  - rupe: UID na serveru koji nije u arhivi.
+- **Zadatak `Saobracaj\Arhiva CimProvera`:**
+  - pod svc_cimprovera (ne SYSTEM), `arhiviraj`, svaki dan u 07:10 i 15:10;
+  - bez DPAPI kopije lozinke na korisnikovom nalogu.
+- **Postavljanje:** lozinku servisnog naloga ne zna niko (Instaliraj.ps1 je pravi nasumično). Zato zadatak pravi `Instaliraj.ps1 -ObradaIskljucena`, koji korisnik pokreće na serveru kao administrator. Skripta:
+  - postavlja novu lozinku servisnog naloga i ponovo šifruje DPAPI vrednosti (lozinka sandučeta, konekcija, Syncfusion ključ);
+  - radi test veza (SMTP samo prijava, bez slanja);
+  - ne pokreće `--once`;
+  - zadatak obrade pravi sa novom lozinkom i odmah ga **isključuje**;
+  - pravi zadatak arhiviranja i jednom ga pokreće.
+- Mehanizam `arhiviranje.zahtev` (v3.0) se ne koristi, jer bi tražio pokretanje zadatka obrade pošte. `arhiviraj` bez `--od-uid` počinje od nulte tačke (UID 191), kao „--od-uid 191“.

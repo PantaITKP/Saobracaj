@@ -159,6 +159,18 @@ namespace Saobracaj.Agent.CimProvera.Tests
             foreach (var z in new[] { "Accompanying document", "Feuille d'accompagnement", "Begleitschein" }) Assert.IsTrue(Provere.JeCit18("x.pdf", z), z);
         }
 
+        [TestMethod, TestCategory("Regresija")]
+        public void CIT18_mase_neto_tara_bruto_ostaju()
+        {
+            // v3.0.3 (2.1, UID 184): u 3.0.1 41,05 / 21,9 / 62,95 t; u 3.0.2 je ostao samo bruto
+            var i = Proveri("CIT 18 31555958441-4.pdf");
+            var l = i.Provera.Listovi.Single();
+            var p = PosaoIzDokumenata.Napravi(l.Cim, l.Dokument, l, new Poklapanje(UpisUBazuTests.Sif()), pravila.Kp, "Status najave_koks za Bor", "x@y.pl");
+            Console.WriteLine("r25: " + l.Cim.R25.Tekst + " | obrazac " + l.Cim.Obrazac + " | " + string.Join("; ", p.Napomene));
+            Assert.AreEqual(41.05m, p.V["Neto1"]); Assert.AreEqual(21.9m, p.V["Tara1"]); Assert.AreEqual(62.95m, p.V["Bruto1"]);
+            Assert.IsFalse(p.Prazna, "CIT 18 natovarenih kola koksa nije prazan");
+        }
+
         // ------------------------------------------------------------------------------------------- 1.1 (3.7) neto intermodalnih spiskova
 
         private static SpisakKola SpisakHer(string folder)

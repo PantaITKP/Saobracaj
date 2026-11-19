@@ -241,7 +241,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             {
                 ["CitajSanduce"] = Slanje.TestnaAdresa, ["From"] = Slanje.TestnaAdresa, ["ReplyTo"] = "priprema@kprevoz.co.rs", ["TestPrimalac"] = Slanje.TestnaAdresa,
                 ["Rezim"] = "Live", ["KopijaNa"] = string.Join(",", pa.KopijaNa), ["UpozorenjaNa"] = Slanje.TestnaAdresa,
-                ["StanjeFolder"] = StanjeFolder, ["LogFolder"] = LogFolder, ["RezultatiFolder"] = "", ["UpisUBazu"] = pa.Online ? "true" : "false",
+                ["StanjeFolder"] = StanjeFolder, ["LogFolder"] = LogFolder, ["RezultatiFolder"] = "", ["UpisUBazu"] = pa.Online ? "true" : "false", ["IzvorUpisa"] = "Alat",
             };
             var cfg = AgentConfig.Ucitaj(nv);
             cfg.Lozinka = null;
@@ -250,19 +250,35 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             return cfg;
         }
 
-        /// <summary>Brisanje PODATAKA iz tmp tabela (DELETE; tmpSinonimi i tmpNHM ostaju) – kao OP_915 i ponovna obrada --obrisi-podatke.</summary>
-        public static void ObrisiTmpPodatke(string konekcija, string prefiks = null)
+        /// <summary>
+        /// Brisanje PODATAKA iz tmp tabela (DELETE; tmpSinonimi i tmpNHM ostaju) – kao OP_915 i ponovna obrada --obrisi-podatke.
+        /// v3.0.3 (3.5): briše samo redove svog izvora (podrazumevano „Alat“); podaci agenta ostaju. Bez kolone Izvor (OP_919 nije pokrenut)
+        /// alat ne briše ništa – greška sa uputstvom.
+        /// </summary>
+        public static void ObrisiTmpPodatke(string konekcija, string prefiks = null, string izvor = UpisUBazu.IzvorAlat)
         {
+            var px = prefiks ?? UpisUBazu.PodrazumevaniPrefiks;
             using (var c = UpisUBazu.Otvori(konekcija))
-            using (var tx = c.BeginTransaction())
-            using (var cmd = new SqlCommand(Sifarnici.Tmp(@"IF OBJECT_ID(N'planiranje.tmpJobsDogadjaj', N'U') IS NOT NULL DELETE FROM planiranje.tmpJobsDogadjaj;
-DELETE FROM planiranje.tmpJobsIstorija; DELETE FROM planiranje.tmpJobsPolje; DELETE FROM planiranje.tmpTeretnicaStavke;
-UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL; DELETE FROM planiranje.tmpTeretnica; DELETE FROM planiranje.tmpJobs; DELETE FROM planiranje.tmpDokument;", prefiks ?? UpisUBazu.PodrazumevaniPrefiks), c, tx) { CommandTimeout = 300 })
             {
-                cmd.ExecuteNonQuery();
-                tx.Commit();
+                using (var chk = new SqlCommand(Sifarnici.Tmp("SELECT COL_LENGTH('planiranje.tmpJobs', 'Izvor')", px), c))
+                    if (chk.ExecuteScalar() is var dužina && (dužina == null || dužina is DBNull))
+                        throw new InvalidOperationException("planiranje.tmp* nema kolonu Izvor – pokrenuti OP_919_tmp_Izvor_Zamenjena.sql (alat bez nje ne briše podatke, da ne obriše podatke agenta).");
+                using (var tx = c.BeginTransaction())
+                using (var cmd = new SqlCommand(Sifarnici.Tmp(ObrisiSql, px), c, tx) { CommandTimeout = 300 })
+                {
+                    cmd.Parameters.AddWithValue("@izvor", izvor == UpisUBazu.IzvorAgent ? UpisUBazu.IzvorAgent : UpisUBazu.IzvorAlat);
+                    cmd.ExecuteNonQuery();
+                    tx.Commit();
+                }
             }
         }
+
+        /// <summary>v3.0.3: DELETE po izvoru (redosled zbog stranih ključeva; reference na dokumente i poslove istog izvora se prvo brišu).</summary>
+        internal const string ObrisiSql = @"DELETE FROM planiranje.tmpJobsDogadjaj WHERE Izvor = @izvor;
+DELETE FROM planiranje.tmpJobsIstorija WHERE Izvor = @izvor; DELETE FROM planiranje.tmpJobsPolje WHERE Izvor = @izvor;
+DELETE FROM planiranje.tmpTeretnicaStavke WHERE Izvor = @izvor;
+UPDATE planiranje.tmpDokument SET JobID = NULL, TeretnicaID = NULL WHERE Izvor = @izvor;
+DELETE FROM planiranje.tmpTeretnica WHERE Izvor = @izvor; DELETE FROM planiranje.tmpJobs WHERE Izvor = @izvor; DELETE FROM planiranje.tmpDokument WHERE Izvor = @izvor;";
 
         internal static string BezbednoIme(string s, int max)
         {

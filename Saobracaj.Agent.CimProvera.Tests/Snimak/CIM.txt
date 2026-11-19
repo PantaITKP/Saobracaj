@@ -1,5 +1,4 @@
 grešaka 0, upozorenja 8, listova 1
-info	VRSTA-DOKUMENTA	r30
 warning	G6	r9
 warning	R1-ISO	r1
 warning	R14	r14

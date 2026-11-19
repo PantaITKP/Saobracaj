@@ -50,7 +50,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 {
                     var arg = new List<object>(); var imena = new List<string>();
                     foreach (var (x, i) in g) { imena.Add("@p" + i); arg.Add("@p" + i); arg.Add(N(x, 400)); arg.Add("@p" + i + "b"); arg.Add(N("<" + x + ">", 400)); }
-                    var sql = "SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE JobID IS NOT NULL AND (MessageID IN (" + string.Join(", ", imena) + ") OR MessageID IN (" + string.Join(", ", imena.Select(x => x + "b")) + "))";
+                    var sql = "SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE JobID IS NOT NULL" + Iz() + " AND (MessageID IN (" + string.Join(", ", imena) + ") OR MessageID IN (" + string.Join(", ", imena.Select(x => x + "b")) + "))";
                     ids.AddRange(Kolona(sql, arg.ToArray()).Select(Broj).Where(x => x > 0));
                 }
                 var r = Jedan(ids, "nit (In-Reply-To/References)");
@@ -60,7 +60,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             if (nit.Length >= 5)
             {
                 var ids = new List<int>();
-                using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL AND Primljeno >= DATEADD(day, -14, @t) AND Primljeno <= DATEADD(day, 1, @t)", "@t", m.Primljeno))
+                using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL AND Primljeno >= DATEADD(day, -14, @t) AND Primljeno <= DATEADD(day, 1, @t)" + Iz(), "@t", m.Primljeno))
                 using (var rd = cmd.ExecuteReader())
                     while (rd.Read()) if (NaslovNiti(rd.GetString(1)) == nit) ids.Add(rd.GetInt32(0));
                 var r = Jedan(ids, "nit (isti naslov bez RE/FW)");
@@ -74,7 +74,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             if (idNajave.Count > 0)
             {
                 var ids = new List<int>();
-                using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL AND Primljeno >= DATEADD(day, -30, @t)", "@t", m.Primljeno))
+                using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL AND Primljeno >= DATEADD(day, -30, @t)" + Iz(), "@t", m.Primljeno))
                 using (var rd = cmd.ExecuteReader())
                     while (rd.Read()) if (IdIzNaslova(rd.GetString(1)).Overlaps(idNajave)) ids.Add(rd.GetInt32(0));
                 var r = Jedan(ids, "ID najave " + string.Join("/", idNajave));
@@ -87,7 +87,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var bvN = ExcelCitac.BrojVoza(m.Naslov);
             if (NormOznaka(bvN).Length >= 3) oznake.Add(NormOznaka(bvN));
             var posloviRef = new List<(int id, string refN, string vozN)>();
-            using (var cmd = Komanda("SELECT ID, ISNULL(Referenca, '') FROM planiranje.tmpJobs WHERE Kreirano >= DATEADD(day, -30, @t)", "@t", m.Primljeno))
+            using (var cmd = Komanda("SELECT ID, ISNULL(Referenca, '') FROM planiranje.tmpJobs WHERE Kreirano >= DATEADD(day, -30, @t)" + Iz(), "@t", m.Primljeno))
             using (var rd = cmd.ExecuteReader())
                 while (rd.Read()) posloviRef.Add((rd.GetInt32(0), NormOznaka(rd.GetString(1)), NormOznaka(ExcelCitac.BrojVozaIzReference(rd.GetString(1)))));
             var naslovN = NormOznaka(m.Naslov);
@@ -113,7 +113,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 if (stanice.Count >= 2)
                 {
                     var ids = new List<int>();
-                    using (var cmd = Komanda(@"SELECT ID, OtpravnaID, UputnaID, Stanica1ID, Stanica3ID FROM planiranje.tmpJobs WHERE Kreirano >= DATEADD(day, -5, @t) AND Kreirano <= DATEADD(day, 5, @t)", "@t", m.Primljeno))
+                    using (var cmd = Komanda(@"SELECT ID, OtpravnaID, UputnaID, Stanica1ID, Stanica3ID FROM planiranje.tmpJobs WHERE Kreirano >= DATEADD(day, -5, @t) AND Kreirano <= DATEADD(day, 5, @t)" + Iz(), "@t", m.Primljeno))
                     using (var rd = cmd.ExecuteReader())
                         while (rd.Read())
                         {

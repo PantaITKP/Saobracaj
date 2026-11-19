@@ -725,7 +725,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
         private const string OznakeNeto = @"neto|netto|netta|neta|nett|ntto|nto|ne[lt1i][li1t]o|netio|nelto|neito|net|n\s?=|n\s?:|wg\.?\s?ladung|ladung|masa\s+inc(?:a|ă)rcat(?:a|ă)|rakom(?:a|á)ny\s+t(?:o|ö)mege|masa\s+robe|masa";
         private const string OznakeTara = @"tara\s+vagona|tara\s+vg\.?|tara|tare|taro|tera|dara|eigengewicht|t\s?=|t\s?:";
         private const string OznakeBruto = @"bruto|brutto|btto|bto|brute|brutt|bru[il1t]o|brulo|gross|gesamt(?:gewicht)?|ukupna\s+te(?:z|ž)ina|masa\s+brut(?:a|ă)|elegyt(?:o|ö)meg|g\s?=|b\s?:";
-        private static readonly Regex MasaRx = new Regex(@"(?i)(?<![\p{L}])(" + OznakeTara + "|" + OznakeBruto + "|" + OznakeNeto + @"|ukupno|total)\s*[:=.]?\s*(\d(?:[\d.,]|\s(?=\d))*)(\s*(?:kg|t|to|tona|tone|tons?)\b)?", RegexOptions.Compiled);
+        private static readonly Regex MasaRx = new Regex(@"(?i)(?<![\p{L}])(" + OznakeTara + "|" + OznakeBruto + "|" + OznakeNeto + @"|ukupno|total)\s*[:=.]?\s*(\d(?:[\d.,]|[ \t](?=\d))*)([ \t]*(?:kg|t|to|tona|tone|tons?)\b(?![ \t]*[:=]))?", RegexOptions.Compiled);   // v3.0.3: jedinica u istom redu, ne oznaka sledećeg reda („N: 41 050\nT: 21 900“)
         private static readonly Regex OznakaRx = new Regex(@"(?i)(?<![\p{L}])(" + OznakeTara + "|" + OznakeBruto + "|" + OznakeNeto + @")(?![\p{L}])", RegexOptions.Compiled);
 
         /// <summary>Vrsta mase po oznaci: „t“ tara, „b“ bruto, „n“ neto (i bez oznake: masa robe), „“ nepoznato.</summary>

@@ -71,6 +71,22 @@ namespace Saobracaj.Agent.CimProvera.Baza
 
         public UpisUBazu(string konekcija, Log log, PraviloKp kp) { this.konekcija = konekcija; this.log = log; this.kp = kp; }
 
+        /// <summary>
+        /// v3.0.3 (3.5, OP_919): izvor podataka u planiranje.tmp* – „Agent“ (CimProvera) ili „Alat“ (CimRadionica). Novi redovi dobijaju izvor
+        /// preko CONTEXT_INFO (podrazumevana vrednost kolone Izvor), a pretrage (ključ, dosije, ista kola, nepovezani spiskovi, nedavni poslovi)
+        /// vide samo svoj izvor – alat i agent ne spajaju podatke.
+        /// </summary>
+        public string Izvor = IzvorAgent;
+        public const string IzvorAgent = "Agent", IzvorAlat = "Alat";
+        private bool? imaIzvor;
+
+        /// <summary>„ AND [alias.]Izvor = 'Alat'“ – prazno dok OP_919 nije pokrenut (kolona ne postoji).</summary>
+        private string Iz(string alias = null)
+        {
+            if (imaIzvor == null) imaIzvor = Skalar("SELECT COL_LENGTH('planiranje.tmpJobs', 'Izvor')") is object o && !(o is DBNull);
+            return imaIzvor.Value ? " AND " + (alias != null ? alias + "." : "") + "Izvor = '" + (Izvor == IzvorAlat ? IzvorAlat : IzvorAgent) + "'" : "";
+        }
+
         /// <summary>Šifarnici (za testove se mogu zadati unapred).</summary>
         public Sifarnici Sifarnici { get => sif; set { sif = value; pk = value == null ? null : new Poklapanje(value); } }
 
@@ -120,6 +136,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
             {
                 if (sif == null) Sifarnici = Sifarnici.Ucitaj(c, log, spoljna, Prefiks);
                 tx = svoja ? c.BeginTransaction(IsolationLevel.ReadCommitted) : spoljna;
+                Izvrsi("SET CONTEXT_INFO " + (Izvor == IzvorAlat ? "0x416C6174" : "0x00"));   // v3.0.3 (OP_919): podrazumevana vrednost kolone Izvor
+                Iz(); ImaZamenjena();   // provera kolona pre prvog otvorenog čitača (konekcija bez MARS)
                 try
                 {
                     UpisiMail(m, ishod);
@@ -150,7 +168,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
         {
             try
             {
-                var ids = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", m.Uid, "@s", N(m.Sanduce, 200));
+                var ids = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL" + Iz(), "@u", m.Uid, "@s", N(m.Sanduce, 200));
                 foreach (var id in ids.Select(x => Convert.ToInt32(x)).OrderBy(x => x))
                 {
                     var red = Red("SELECT " + string.Join(", ", KljucnaPolja) + " FROM planiranje.tmpJobs WHERE ID = @id", "@id", id);
@@ -253,9 +271,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 ishod.Napomene.Add("događaji iz teksta (" + m.Dogadjaji.Count + ") nisu upisani – tabela planiranje.tmpJobsDogadjaj ne postoji (OP_918)");
                 return;
             }
-            var dokument = Skalar("SELECT MIN(ID) FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s", "@u", m.Uid, "@s", N(m.Sanduce, 200));
+            var dokument = Skalar("SELECT MIN(ID) FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s" + Iz(), "@u", m.Uid, "@s", N(m.Sanduce, 200));
             var dokId = dokument == null ? (int?)null : Convert.ToInt32(dokument);
-            var poslovi = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL", "@u", m.Uid, "@s", N(m.Sanduce, 200))
+            var poslovi = Kolona("SELECT DISTINCT JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL" + Iz(), "@u", m.Uid, "@s", N(m.Sanduce, 200))
                 .Select(x => (int?)Convert.ToInt32(x)).ToList();
             // v3.0.1 (5): mail bez svog posla (bez dokumenata) – veza redom: nit, ID najave, broj voza / referenca, relacija + datum;
             // bez sigurne veze događaj ostaje bez posla, sa kandidatima (rezultat.json / ANALIZA.md)
@@ -281,7 +299,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
                 foreach (var d in m.Dogadjaji)
                 {
                     var isti = Skalar(@"SELECT TOP 1 ID FROM planiranje.tmpJobsDogadjaj WHERE ISNULL(JobID, 0) = ISNULL(@j, 0) AND Tip = @t AND ISNULL(Vrednost, '') = @v
-  AND ISNULL(VremeTekst, '') = @vt AND ISNULL(Recenica, '') = @r", "@j", (object)jobId ?? DBNull.Value, "@t", d.Tip, "@v", Prazno(N(d.Vrednost, 200)), "@vt", Prazno(N(d.VremeTekst, 100)), "@r", Prazno(N(d.Recenica, 1000)));
+  AND ISNULL(VremeTekst, '') = @vt AND ISNULL(Recenica, '') = @r" + Iz(), "@j", (object)jobId ?? DBNull.Value, "@t", d.Tip, "@v", Prazno(N(d.Vrednost, 200)), "@vt", Prazno(N(d.VremeTekst, 100)), "@r", Prazno(N(d.Recenica, 1000)));
                     if (isti != null) continue;
                     Izvrsi(@"INSERT planiranje.tmpJobsDogadjaj (JobID, DokumentID, Tip, MestoID, MestoTekst, Vreme, VremeTekst, VremenskaZona, Vrednost, Recenica, Jezik, Pouzdanost)
 VALUES (@j, @d, @t, @mid, @m, @vr, @vt, @z, @v, @r, @jez, @p)", "@j", (object)jobId ?? DBNull.Value, "@d", (object)dokId ?? DBNull.Value, "@t", d.Tip,
@@ -378,7 +396,7 @@ VALUES (@j, @d, @t, @mid, @m, @vr, @vt, @z, @v, @r, @jez, @p)", "@j", (object)jo
         private int UpisiDokument(MailZaUpis m, Prilog f, List<Dokument> docs)
         {
             var hes = f.Hes;
-            var postoji = Skalar("SELECT ID FROM planiranje.tmpDokument WHERE HashFajla = @h", "@h", hes);
+            var postoji = Skalar("SELECT ID FROM planiranje.tmpDokument WHERE HashFajla = @h" + Iz(), "@h", hes);
             if (postoji != null)
             {
                 Izvrsi("UPDATE planiranje.tmpDokument SET BrojPrijema = BrojPrijema + 1, PoslednjePrimljeno = @p WHERE ID = @id", "@p", m.Primljeno, "@id", Convert.ToInt32(postoji));
@@ -475,7 +493,7 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
             {
                 // ključ posla je jedinstven (UX_tmpJobs_Kljuc): drugi voz sa istim ključem „ref:“ dobija nastavak „#2“, „#3“…
                 if (p.V.TryGetValue("KljucPosiljke", out var kv0) && kv0 is string k0 && k0.Length > 0)
-                    for (int n = 2; Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", p.V["KljucPosiljke"]) != null && n < 50; n++)
+                    for (int n = 2; Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k" + Iz(), "@k", p.V["KljucPosiljke"]) != null && n < 50; n++)
                         p.V["KljucPosiljke"] = PodaciPosla.Skrati(k0, 195) + "#" + n;
                 var kol = PosaoIzDokumenata.Kolone.Where(k => p.V.ContainsKey(k)).ToList();
                 var sql = "INSERT planiranje.tmpJobs (" + string.Join(", ", kol) + ", Napomena, Kreirao, Verzija, PoslednjiDokumentID) OUTPUT INSERTED.ID VALUES ("
@@ -601,7 +619,7 @@ VALUES (@j, @t, @k, @s, @n, @d, @r, @nap)", "@j", (object)jobId ?? DBNull.Value,
             var l = new List<KandidatPosla>();
             using (var cmd = Komanda(@"SELECT j.ID, ISNULL(j.KljucPosiljke, ''), ISNULL(j.Referenca, ''), ISNULL(j.OtpravnaID, 0), ISNULL(j.UputnaID, 0),
     ISNULL((SELECT TOP 1 d.Naslov FROM planiranje.tmpDokument d WHERE d.JobID = j.ID ORDER BY d.ID DESC), '')
-FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME())", "@dana", DanaZaVezu))
+FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME())" + Iz("j"), "@dana", DanaZaVezu))
             using (var r = cmd.ExecuteReader())
                 while (r.Read()) l.Add(new KandidatPosla { Id = r.GetInt32(0), Kljuc = r.GetString(1), Referenca = r.GetString(2), Otpravna = r.GetInt32(3), Uputna = r.GetInt32(4), Naslovi = r.GetString(5) });
             return l;
@@ -633,7 +651,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var nat = StanjeSpiska(s) == true;
             int? Dozvoljen(int? j) => j.HasValue && nat && PosaoPraznih(j.Value) ? null : j;
             var r62 = R62Kljuc(s.R62);
-            if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k", "@k", r62) is object o && Dozvoljen(Convert.ToInt32(o)) is int j62) return j62;
+            if (r62 != null && Skalar("SELECT ID FROM planiranje.tmpJobs WHERE KljucPosiljke = @k" + Iz(), "@k", r62) is object o && Dozvoljen(Convert.ToInt32(o)) is int j62) return j62;
             var voz = BrojVozaSpiska(s, d, m);
             var nedavni = NedavniPoslovi();
             if (voz.Length > 0)
@@ -674,7 +692,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             {
                 var u = Regex.Match(oz ?? "", @"^UID (\d+)$");
                 if (!u.Success) continue;
-                var j = Skalar("SELECT TOP 1 JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL ORDER BY ID DESC", "@u", long.Parse(u.Groups[1].Value), "@s", N(m.Sanduce, 200));
+                var j = Skalar("SELECT TOP 1 JobID FROM planiranje.tmpDokument WHERE UID = @u AND Sanduce = @s AND JobID IS NOT NULL" + Iz() + " ORDER BY ID DESC", "@u", long.Parse(u.Groups[1].Value), "@s", N(m.Sanduce, 200));
                 if (j != null) return Convert.ToInt32(j);
             }
             return null;
@@ -704,7 +722,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             parametri.Add("@nat"); parametri.Add(natovaren.HasValue ? (object)(natovaren.Value ? 1 : 0) : DBNull.Value);
             var sql = @"SELECT TOP 1 t.ID, t.JobID, COUNT(*) AS n, (SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke x WHERE x.BrojTeretnice = t.ID) AS ukupno
 FROM planiranje.tmpTeretnica t JOIN planiranje.tmpTeretnicaStavke s ON s.BrojTeretnice = t.ID
-WHERE s.BrojKola IN (" + string.Join(", ", imena) + ") AND t.Kreirano >= DATEADD(day, -@dana, SYSDATETIME())" + (samoSaPoslom ? " AND t.JobID IS NOT NULL" : "") + @"
+WHERE s.BrojKola IN (" + string.Join(", ", imena) + ") AND t.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) AND ISNULL(t.Zamenjena, 0) = 0" + Iz("t") + (samoSaPoslom ? " AND t.JobID IS NOT NULL" : "") + @"
   AND (@nat IS NULL OR NOT EXISTS (SELECT 1 FROM planiranje.tmpTeretnicaStavke y WHERE y.BrojTeretnice = t.ID) OR
        (CASE WHEN EXISTS (SELECT 1 FROM planiranje.tmpTeretnicaStavke x WHERE x.BrojTeretnice = t.ID AND x.Neto > 0) THEN 1 ELSE 0 END) = @nat)
 GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
@@ -776,7 +794,7 @@ GROUP BY t.ID, t.JobID ORDER BY COUNT(*) DESC, t.ID DESC";
             var nhmPosla = jobId.HasValue ? NhmZaKola(jobId.Value, s.Kola.Select(k => k.Broj)) : "";
             DopuniDuzine(s);
             var nove = Stavke(s, nhmPosla);
-            var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME()) ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
+            var postoji = Skalar("SELECT TOP 1 ID FROM planiranje.tmpTeretnica WHERE KljucSpiska LIKE @k + '#%' AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME())" + Iz() + " ORDER BY ID DESC", "@k", kljuc, "@dana", DanaZaVezu);
             int? tid = postoji == null ? (int?)null : Convert.ToInt32(postoji);
             // v2.9.2: teretnica istog spiska vezana za drugi posao, a u ovom mailu je tovarni list tog voza – teretnica prelazi na posao maila
             if (tid != null && jobId.HasValue && (posloviMailaZaSpisak?.Contains(jobId.Value) ?? false)
@@ -930,7 +948,7 @@ FROM planiranje.tmpTeretnicaStavke s JOIN planiranje.tmpTeretnica t ON t.ID = s.
         private int PoveziNepovezane(int jobId, PodaciPosla p, MailZaUpis m, IshodUpisa ishod)
         {
             var nepovezane = new List<(int id, string ref_, string kp, string kljuc)>();
-            using (var cmd = Komanda("SELECT ID, ISNULL(Referenca, ''), ISNULL(KljucPosiljke, ''), ISNULL(KljucSpiska, '') FROM planiranje.tmpTeretnica WHERE JobID IS NULL AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME())", "@dana", DanaZaVezu))
+            using (var cmd = Komanda("SELECT ID, ISNULL(Referenca, ''), ISNULL(KljucPosiljke, ''), ISNULL(KljucSpiska, '') FROM planiranje.tmpTeretnica WHERE JobID IS NULL AND Kreirano >= DATEADD(day, -@dana, SYSDATETIME())" + Iz(), "@dana", DanaZaVezu))
             using (var r = cmd.ExecuteReader())
                 while (r.Read()) nepovezane.Add((r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetString(3)));
             if (nepovezane.Count == 0) return 0;

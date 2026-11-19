@@ -562,7 +562,9 @@ namespace Saobracaj.Agent.CimRadionica
             deli.Panel2.Controls.Add(donji);
             gPoslovi.SelectionChanged += (s, e) => DetaljiPosla();
             t.Controls.Add(deli);
-            t.Controls.Add(Traka(Dugme("Osveži", (s, e) => UcitajPoslove()), new Label { Text = "online: planiranje.tmpJobs (samo čitanje); offline: predlog iz rezultat.json", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }));
+            cbIzvorPoslova.SelectedIndexChanged += (s, e) => UcitajPoslove();
+            t.Controls.Add(Traka(Dugme("Osveži", (s, e) => UcitajPoslove()), new Label { Text = "Izvor:", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }, cbIzvorPoslova,
+                new Label { Text = "online: planiranje.tmpJobs (samo čitanje); offline: predlog iz rezultat.json", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }));
             return t;
         }
 
@@ -573,7 +575,9 @@ namespace Saobracaj.Agent.CimRadionica
             deli.Panel1.Controls.Add(gTeretnice); deli.Panel2.Controls.Add(gStavke);
             gTeretnice.SelectionChanged += (s, e) => StavkeTeretnice();
             t.Controls.Add(deli);
-            t.Controls.Add(Traka(Dugme("Osveži", (s, e) => UcitajTeretnice())));
+            cbIzvorTeretnica.SelectedIndexChanged += (s, e) => UcitajTeretnice();
+            t.Controls.Add(Traka(Dugme("Osveži", (s, e) => UcitajTeretnice()), new Label { Text = "Izvor:", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }, cbIzvorTeretnica,
+                new Label { Text = "zamenjene teretnice (Zamenjena = 1) nisu aktivne", AutoSize = true, Padding = new Padding(6, 6, 0, 0) }));
             return t;
         }
 
@@ -599,6 +603,20 @@ namespace Saobracaj.Agent.CimRadionica
 
         private bool Baza => p.Online && !string.IsNullOrEmpty(p.Konekcija());
 
+        // v3.0.3 (3.5, OP_919): pregledi po izvoru – podrazumevano podaci alata; agent i svi na izbor
+        private static ComboBox IzborIzvora() { var cb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 80 }; cb.Items.AddRange(new object[] { "Alat", "Agent", "Svi" }); cb.SelectedIndex = 0; return cb; }
+        private readonly ComboBox cbIzvorPoslova = IzborIzvora(), cbIzvorTeretnica = IzborIzvora();
+        private bool? imaIzvorKolonu;
+
+        /// <summary>„WHERE alias.Izvor = 'Alat'“ (ili prazno za „Svi“ / pre OP_919).</summary>
+        private string UslovIzvora(ComboBox cb, string alias)
+        {
+            if (imaIzvorKolonu == null)
+                try { imaIzvorKolonu = Upit("SELECT COL_LENGTH('planiranje.tmpJobs', 'Izvor') AS d").Rows[0][0] is object d && !(d is DBNull); } catch { imaIzvorKolonu = false; }
+            var izv = cb.SelectedItem as string ?? "Alat";
+            return imaIzvorKolonu == true && izv != "Svi" ? " WHERE " + alias + ".Izvor = '" + (izv == "Agent" ? "Agent" : "Alat") + "'" : "";
+        }
+
         private void UcitajPoslove()
         {
             try
@@ -608,6 +626,7 @@ namespace Saobracaj.Agent.CimRadionica
  n1.Kod8 AS NHM1, j.BrojKola1, j.Neto1, j.Tara1, j.Bruto1, n2.Kod8 AS NHM2, j.BrojKola2, j.Neto2, j.Tara2, j.Bruto2, j.Referenca, j.BrojPonude, j.KljucPosiljke, LEFT(j.Napomena, 200) AS Napomena
 FROM planiranje.tmpJobs j LEFT JOIN dbo.stanice so ON so.ID = j.OtpravnaID LEFT JOIN dbo.stanice su ON su.ID = j.UputnaID LEFT JOIN dbo.stanice s1 ON s1.ID = j.Stanica1ID
  LEFT JOIN dbo.stanice s3 ON s3.ID = j.Stanica3ID LEFT JOIN dbo.Partnerji pl ON pl.PaSifra = j.PlatilacID LEFT JOIN planiranje.tmpNHM n1 ON n1.ID = j.NHM1 LEFT JOIN planiranje.tmpNHM n2 ON n2.ID = j.NHM2
+ " + UslovIzvora(cbIzvorPoslova, "j") + @"
 ORDER BY j.ID DESC");
                 else
                 {
@@ -646,9 +665,11 @@ ORDER BY j.ID DESC");
             if (!Baza) { Poruka("Teretnice: samo online (planiranje.tmpTeretnica)."); gTeretnice.DataSource = null; return; }
             try
             {
-                gTeretnice.DataSource = Upit(@"SELECT TOP 500 t.ID, t.JobID, t.Grupa, t.BrojTeretnice, t.Referenca, t.KljucSpiska, (SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke s WHERE s.BrojTeretnice = t.ID) AS Kola,
+                var uslov = UslovIzvora(cbIzvorTeretnica, "t");   // postavlja i imaIzvorKolonu (OP_919: Izvor i Zamenjena)
+                var zam = imaIzvorKolonu == true ? " t.Zamenjena, t.ZamenjenaTeretnicaID," : "";
+                gTeretnice.DataSource = Upit(@"SELECT TOP 500 t.ID, t.JobID, t.Grupa," + zam + @" t.BrojTeretnice, t.Referenca, t.KljucSpiska, (SELECT COUNT(*) FROM planiranje.tmpTeretnicaStavke s WHERE s.BrojTeretnice = t.ID) AS Kola,
  (SELECT SUM(Tara) FROM planiranje.tmpTeretnicaStavke s WHERE s.BrojTeretnice = t.ID) AS Tara, (SELECT SUM(Neto) FROM planiranje.tmpTeretnicaStavke s WHERE s.BrojTeretnice = t.ID) AS Neto, t.Napomena
-FROM planiranje.tmpTeretnica t ORDER BY t.ID DESC");
+FROM planiranje.tmpTeretnica t" + uslov + " ORDER BY t.ID DESC");
             }
             catch (Exception ex) { Poruka("Teretnice: " + ex.Message); }
         }
