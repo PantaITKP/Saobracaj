@@ -730,12 +730,15 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             int Slova(Rec w) => Regex.Replace(w.T ?? "", @"\W", "").Length;
             var nisko = reci.Where(w => w.Pouzdanost < 0.6 && Slova(w) >= 2).ToList();
             var niskoSlova = nisko.Sum(Slova);
-            var pouzdane = reci.Where(w => w.Pouzdanost >= 0.6 && Slova(w) >= 1).ToList();
+            // v3.0.4: kratki fragmenti (1–2 slova, bez oznake rubrike „a)“) – OCR iz zakrivljenog teksta pečata (UID 39: „j r j j j“)
+            var fragmenti = reci.Where(w => Slova(w) >= 1 && Slova(w) <= 2 && !Regex.IsMatch(w.T ?? "", @"^\(?[a-z]\)$|^\d{1,2}$", RegexOptions.IgnoreCase)).ToList();
+            var pouzdane = reci.Where(w => w.Pouzdanost >= 0.6 && Slova(w) >= 2).ToList();
             if (kp.Count >= 2) return ("da", "tekst KP pečata (" + string.Join(", ", kp) + ")" + (datum ? " + datum" : ""));
             if (mastilo >= 0.02 && nisko.Count >= 2 && niskoSlova >= 6) return ("da", "otisak: mastilo " + m + " + nečitljiv/nagnut tekst (" + nisko.Count + " reči)");
+            if (mastilo >= 0.02 && fragmenti.Count >= 4) return ("da", "otisak: mastilo " + m + " + fragmenti zakrivljenog teksta (" + fragmenti.Count + ": „" + string.Join(" ", fragmenti.Select(w => w.T)) + "“)");
             if (datum && mastilo >= 0.015) return ("da", "datum otiska u r58a + mastilo " + m);
             if (mastilo <= 0.0075) return ("ne", "r58a bez mastila (" + m + ")");
-            if (nisko.Count <= 1 && pouzdane.Count > 0)
+            if (nisko.Count <= 1 && pouzdane.Count > 0 && fragmenti.Count <= 2)
                 return ("ne", "samo kucan tekst u r58a („" + string.Join(" ", pouzdane.Select(w => w.T)).Trim() + "“), bez otiska i datuma");
             return ("nesigurno", "mastilo " + m + ", " + nisko.Count + " nečitljivih reči – nije jasno da li je pečat");
         }

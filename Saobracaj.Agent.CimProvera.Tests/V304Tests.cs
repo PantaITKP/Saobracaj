@@ -33,6 +33,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 ("UID 52 – r58a prazna", R(), 0.0002, "ne"),
                 ("UID 76 – KP pečat", R(("„Kjmbindvanji", 0.5), ("prevoz“", 0.8), ("UIC:3212,", 0.8), ("18400", 0.9), ("Prokuplje", 0.7), ("ferris!", 0.3), ("jnjjrscrijt", 0.2)), 0.0556, "da"),
                 ("UID 174 – kucano „3212 KP“ (italijanski natpis)", R(("3212", 0.95), ("LU", 0.95)), 0.0302, "ne"),
+                // obrada 3.0.4 (L27): OCR je iz istog okruglog pečata pročitao druge reči – fragmenti „j r j j j“
+                ("UID 39 – okrugli pečat, fragmenti", R(("a)", 0.9), ("j", 0.7), ("r", 0.7), ("j", 0.7), ("j", 0.7), ("j", 0.7)), 0.027, "da"),
             };
             var greske = new List<string>();
             foreach (var (opis, reci, mast, ocekivano) in slucajevi)
