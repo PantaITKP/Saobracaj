@@ -132,9 +132,19 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             public double[] KucicaNaStrani(string id) => Obrazac != null && Obrazac.Kucice.TryGetValue(id, out var r0) ? NaStrani(r0) : null;
 
             /// <summary>Stanje polja za označavanje iz šablona: oznaceno / prazno / nesigurno; null ako polja nema u šablonu ili nema slike.</summary>
-            public string Polje(string id, double pragOznake = 0.15, double pragPraznog = 0.05) =>
-                IzWorda ? PoljeIzX(id) :
-                Gustina(id) is double g ? (g >= pragOznake ? StanjePolja.Oznaceno : g <= pragPraznog ? StanjePolja.Prazno : ImaX(id) ? StanjePolja.Oznaceno : StanjePolja.Nesigurno) : null;
+            /// <remarks>
+            /// v3.0.2: kućica se prepoznaje sa SLIKE i za tekstualni PDF (X je često nacrtan vektorom, nije znak teksta): nacrtan kvadratić
+            /// najbliži mestu iz šablona (i sa X-om unutra), gustina i dijagonale X-a u njemu; „X“ iz teksta je dodatni znak.
+            /// </remarks>
+            public string Polje(string id, double pragOznake = 0.15, double pragPraznog = 0.05)
+            {
+                if (IzWorda) return PoljeIzX(id);
+                if (!(Gustina(id) is double g)) return null;
+                var x = PoljeIzX(id) == StanjePolja.Oznaceno || ImaX(id);
+                // pun X ima gustinu 0,4–0,65; između praga i 0,30 (tanak X ili ivica iskošene kućice) – samo uz dijagonale X-a ili X u tekstu
+                if (g >= Math.Max(pragOznake, 0.30) || x) return StanjePolja.Oznaceno;
+                return g <= pragPraznog ? StanjePolja.Prazno : StanjePolja.Nesigurno;
+            }
 
             /// <summary>
             /// v2.8.4 (4.5): tanak, jasan „X“ u kvadratiću (RE: CIM r30, gustina 0,12 – ispod praga 0,15): mastilo duž OBE dijagonale
@@ -142,8 +152,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             /// </summary>
             public bool ImaX(string poljeId)
             {
-                if (Raster == null || Obrazac == null || !Obrazac.Polja.TryGetValue(poljeId, out var r0)) return false;
-                var r = NaStrani(r0);
+                if (Raster == null || Obrazac == null || !Obrazac.Polja.ContainsKey(poljeId)) return false;
+                var r = KvadratNaStrani(poljeId);
                 double w = r[2] - r[0], h = r[3] - r[1];
                 double sw = w * 0.76, sh = h * 0.76, dx = w * 0.09, dy = h * 0.09;
                 // poravnanje šablona na skenu može biti pomereno za deo kvadratića – X se traži i u bliskoj okolini (do ±40 % veličine)
@@ -191,39 +201,42 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }
 
             private List<Oblik> kvadratici;
+            private readonly Dictionary<string, double[]> kvadratPolja = new Dictionary<string, double[]>();
 
-            /// <summary>Kvadratić polja na strani: iz šablona; kod univerzalnog šablona nacrtani kvadratić najbliži očekivanom mestu.</summary>
-            private double[] KvadratNaStrani(string poljeId)
+            /// <summary>
+            /// Kvadratić polja na strani: nacrtan kvadratić (i sa X-om unutra) slične veličine najbliži mestu iz šablona – do ±0,035
+            /// vodoravno i ±0,015 uspravno (v3.0.2: za SVE obrasce – obrasci Unicom Tranzit / TCDD imaju kućice CIM/CUV pomerene u odnosu
+            /// na šablon CIT); bez nacrtanog kvadratića – mesto iz šablona.
+            /// </summary>
+            internal double[] KvadratNaStrani(string poljeId)
             {
+                if (kvadratPolja.TryGetValue(poljeId, out var gotov)) return gotov;
                 var r = NaStrani(Obrazac.Polja[poljeId]);
-                if (Obrazac.Univerzalni && Raster != null)
+                if (Raster != null)
                 {
-                    kvadratici = kvadratici ?? Raster.Kvadratici();
+                    kvadratici = kvadratici ?? Raster.Kvadratici(true);
                     double cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, sw = r[2] - r[0], sh = r[3] - r[1];
-                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < 0.008
-                                                  && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.6 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.6)
+                    var dy = Obrazac.Univerzalni ? 0.008 : 0.015;
+                    // kvadratić pripada samo polju čije je mesto iz šablona njemu najbliže (iskošen sken: „yes“ kućica r22 nije r23)
+                    double D(Oblik o, double[] t) => Math.Abs(o.Cx - (t[0] + t[2]) / 2) + Math.Abs(o.Cy - (t[1] + t[3]) / 2);
+                    var ostala = Obrazac.Polja.Where(kv => kv.Key != poljeId).Select(kv => NaStrani(kv.Value)).ToList();
+                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < dy
+                                                  && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.8 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.8
+                                                  && ostala.All(t => D(o, t) >= D(o, r)))
                                       .OrderBy(o => Math.Abs(o.Cx - cx) + Math.Abs(o.Cy - cy)).FirstOrDefault();
+                    if (Environment.GetEnvironmentVariable("CIMPROVERA_DBG") == "1")
+                        Console.Error.WriteLine("[dbg polje] " + poljeId + " šablon " + string.Join(",", r.Select(x => x.ToString("0.000"))) + " → " + (k == null ? "nema kvadratića" : k.X0.ToString("0.000") + "," + k.Y0.ToString("0.000") + "," + k.X1.ToString("0.000") + "," + k.Y1.ToString("0.000"))
+                            + "; kandidata u blizini: " + kvadratici.Count(o => Math.Abs(o.Cx - cx) < 0.06 && Math.Abs(o.Cy - cy) < 0.03));
                     if (k != null) r = new[] { k.X0, k.Y0, k.X1, k.Y1 };
                 }
-                return r;
+                return kvadratPolja[poljeId] = r;
             }
 
             /// <summary>Gustina mastila u unutrašnjosti kvadratića (bez ivica okvira).</summary>
             public double? Gustina(string poljeId)
             {
-                if (Raster == null || Obrazac == null || !Obrazac.Polja.TryGetValue(poljeId, out var r0)) return null;
-                var r = NaStrani(r0);
-                // Univerzalni šablon: u drugom izdanju/štampi obrasca kvadratić može biti malo pomeren – uzima se nacrtani kvadratić
-                // slične veličine najbliži očekivanom mestu (do ±0,035 vodoravno, ±0,008 uspravno).
-                if (Obrazac.Univerzalni)
-                {
-                    kvadratici = kvadratici ?? Raster.Kvadratici();
-                    double cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2, sw = r[2] - r[0], sh = r[3] - r[1];
-                    var k = kvadratici.Where(o => Math.Abs(o.Cx - cx) < 0.035 && Math.Abs(o.Cy - cy) < 0.008
-                                                  && (o.X1 - o.X0) > sw * 0.6 && (o.X1 - o.X0) < sw * 1.6 && (o.Y1 - o.Y0) > sh * 0.6 && (o.Y1 - o.Y0) < sh * 1.6)
-                                      .OrderBy(o => Math.Abs(o.Cx - cx) + Math.Abs(o.Cy - cy)).FirstOrDefault();
-                    if (k != null) r = new[] { k.X0, k.Y0, k.X1, k.Y1 };
-                }
+                if (Raster == null || Obrazac == null || !Obrazac.Polja.ContainsKey(poljeId)) return null;
+                var r = KvadratNaStrani(poljeId);
                 double dw = (r[2] - r[0]) * 0.22, dh = (r[3] - r[1]) * 0.22;
                 return Raster.Gustina(r[0] + dw, r[1] + dh, r[2] - dw, r[3] - dh, false);
             }

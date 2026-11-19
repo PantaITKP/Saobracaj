@@ -1,4 +1,4 @@
-grešaka 3, upozorenja 5, listova 1
+grešaka 2, upozorenja 5, listova 1
 error	G3	r9
 error	R1	r1
 warning	R4-ISO	r4
@@ -8,6 +8,5 @@ warning	R18-SPISAK	r18
 recommendation	R24-NHM6	r24
 recommendation	R25-MASA	r25
 warning	X30	r21
-error	KP7-PLATILAC	r7
 recommendation	REC1	r8
 recommendation	REC8	r1

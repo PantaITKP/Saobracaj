@@ -167,7 +167,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             o["nalazi"] = new JArray(l.Nalazi.SelectMany(n => new[] { n }.Concat(n.Takodje)).Select(n => new JObject
             {
                 ["pravilo"] = n.Pravilo, ["rubrika"] = n.Rubrika ?? "", ["tezina"] = n.Tezina, ["tekst"] = n.Tekst ?? "", ["primer"] = n.Primer ?? "",
-                ["dopuna"] = n.Dopuna ?? "", ["samo_interno"] = n.SamoInterno,
+                ["dopuna"] = n.Dopuna ?? "", ["samo_interno"] = n.SamoInterno, ["ublazeno"] = n.Ublazeno,
                 // dokaz: pročitan tekst rubrike na koju se nalaz odnosi
                 ["dokaz"] = n.Vrednost ?? "",
             }));

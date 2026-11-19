@@ -65,6 +65,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         private static bool Greska(Ishod i, string rubrika, string pravilo = null) => Nalazi(i).Any(n => n.Tezina == Tezina.Greska && n.Rubrika == rubrika && (pravilo == null || n.Pravilo == pravilo));
         private static void NemaGreske(Ishod i, string rubrika) => Assert.IsFalse(Greska(i, rubrika), "ne sme greška u r" + rubrika + "\n" + Opis(i));
         /// <summary>v3.0.1 (odluka 18.11., R16): list bez pouzdanog pečata prevoznika – datum/vreme preuzimanja je upozorenje sa napomenom.</summary>
+        /// <summary>v3.0.2: R29 i R62 kao R16 – bez pouzdanog pečata prevoznika upozorenje „Posle overe …“.</summary>
+        private static void ImaBezOvere(Ishod i, string pravilo, string rubrika) => Assert.IsTrue(Nalazi(i).Any(n => n.Pravilo == pravilo && n.Rubrika == rubrika && n.Tezina == Tezina.Upozorenje && ((n.Tekst ?? "").Contains("Posle overe") || (n.Tekst ?? "").Contains("After validation"))), "očekivano " + pravilo + " upozorenje (bez overe)\n" + Opis(i));
         private static void ImaR16BezOvere(Ishod i) => Assert.IsTrue(Nalazi(i).Any(n => n.Pravilo == "R16" && n.Tezina == Tezina.Upozorenje && ((n.Tekst ?? "").Contains("Posle overe") || (n.Tekst ?? "").Contains("After validation"))), "očekivano R16 upozorenje (bez overe)\n" + Opis(i));
         private static void ImaGresku(Ishod i, string rubrika, string pravilo = null) => Assert.IsTrue(Greska(i, rubrika, pravilo), "očekivana greška " + pravilo + " u r" + rubrika + "\n" + Opis(i));
 
@@ -146,7 +148,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             var i = Mail("cuv za 1 vagon", "strahinja.tadic@pansped.rs");
             var c = i.Provera.Listovi.Single().Cim;
             Assert.AreEqual("72", c.R62.Zemlja); Assert.AreEqual("163501", c.R62.Stanica); Assert.AreEqual("3212", c.R62.Preduzece); Assert.AreEqual("", c.R62.Broj);
-            ImaGresku(i, "58a", "KP2"); ImaGresku(i, "62", "R62"); ImaGresku(i, "29", "R29"); ImaR16BezOvere(i);
+            ImaGresku(i, "58a", "KP2"); ImaBezOvere(i, "R62", "62"); ImaBezOvere(i, "R29", "29"); ImaR16BezOvere(i);
             NemaGreske(i, "10"); NemaGreske(i, "20"); NemaGreske(i, "7");
             StringAssert.Contains(c.R10.Tekst, "Kelebia"); StringAssert.Contains(c.R20.Tekst, "Kelebia");
         }
@@ -171,7 +173,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         public void GK30_greske_bez_r7_i_r57()
         {
             var i = Mail("GK30", "ste.obr06@gmail.com");
-            ImaGresku(i, "4", "R4"); ImaR16BezOvere(i); ImaGresku(i, "25", "R25-MASA"); ImaGresku(i, "29"); ImaGresku(i, "62", "R62");
+            ImaGresku(i, "4", "R4"); ImaR16BezOvere(i); ImaGresku(i, "25", "R25-MASA"); ImaBezOvere(i, "R29", "29"); ImaBezOvere(i, "R62", "62");
             NemaGreske(i, "7"); Assert.IsFalse(Nalazi(i).Any(n => n.Rubrika == "57"), Opis(i));
             Assert.IsFalse(Nalazi(i).Any(n => n.Pravilo == "CITLJIVOST"), "PDF sa poljima nije sken");
             var r4 = Nalazi(i).First(n => n.Pravilo == "R4");
@@ -187,7 +189,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var i = Mail("CIM COAL 16", "tibor.tasnadi@pspcargo.ro");
             NemaGreske(i, "4"); NemaGreske(i, "7");
-            ImaGresku(i, "13", "KP3"); ImaR16BezOvere(i); ImaGresku(i, "29");
+            // v3.0.2 (odluka 19.11.): KP je u r57, a nije u r13 – upozorenje „navesti KP i u rubrici 13“
+            Assert.IsTrue(Nalazi(i).Any(n => n.Pravilo == "KP3" && n.Tezina == Tezina.Upozorenje), "očekivano KP3 upozorenje\n" + Opis(i));
+            ImaR16BezOvere(i); ImaBezOvere(i, "R29", "29");
             // v3.0 (2.9.3 tačka 3): tuđi tovarni list – prazna r58a je upozorenje, nikad predlog 3212
             var r58 = Nalazi(i).Single(n => n.Rubrika == "58a");
             Assert.AreEqual(Tezina.Upozorenje, r58.Tezina); Assert.IsFalse((r58.Primer ?? "").Contains("3212"), r58.Primer);

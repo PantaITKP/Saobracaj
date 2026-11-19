@@ -206,6 +206,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
         private static CimList ListSaR57(string tekst, params Prevoznik[] prevoznici)
         {
             var c = MotorTests.IspravanCim();
+            c.R16 = F(new Preuzimanje { Mesto = "Gliwice", SifraStanice = "510700", Zemlja = "51", Datum = "2026-11-05", Cas = "14" }, "510700 Gliwice 51");   // v3.0.2 (2.4): polazak iz inostranstva – KP57 važi
             c.R62 = F(new Identifikacija { Zemlja = "51", Stanica = "070409", Preduzece = "2154", Broj = "14331-0" }, "51 070409 2154 14331");
             c.R58a = F(new UgovorniPrevoznik { Sifra = "2154", Naziv = "ČD Cargo" }, "2154 ČD Cargo");
             c.R57 = F(new PrevozniciRubrika(), tekst);
@@ -232,7 +233,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual(1, a.Count); Assert.AreEqual(Tezina.Upozorenje, a[0].Tezina); StringAssert.Contains(a[0].Tekst, "dopisati UIC 3212");
             var b = Svi(Proveri(ListSaR57("2154 CD Cargo\n3212   Subotica gr. - Bor"))).Where(n => n.Pravilo == "KP57").ToList();
             Assert.AreEqual(1, b.Count); Assert.AreEqual(Tezina.Upozorenje, b[0].Tezina); StringAssert.Contains(b[0].Tekst, "dopisati naziv");
-            var c = Svi(Proveri(ListSaR57("2154 CD Cargo   Bohumin br. - Mosty br.\n3820 CDC Slovakia   Cadca br. - Sturovo br.\n   Subotica br. - Bor Teretna"))).Where(n => n.Pravilo == "KP57").ToList();
+            var lc = ListSaR57("2154 CD Cargo   Bohumin br. - Mosty br.\n3820 CDC Slovakia   Cadca br. - Sturovo br.\n   Subotica br. - Bor Teretna");
+            MotorTests.BezKpUR7iR13(lc);   // v3.0.2 (3): KP u r7/r13 bi samoprovera ublažila na upozorenje
+            var c = Svi(Proveri(lc)).Where(n => n.Pravilo == "KP57").ToList();
             Assert.AreEqual(1, c.Count); Assert.AreEqual(Tezina.Greska, c[0].Tezina);
             // dopuna „3212 KP“ samo uz srpsku deonicu (novi red), nikad pored strane
             Assert.AreEqual("3212 KP", c[0].Dopuna);

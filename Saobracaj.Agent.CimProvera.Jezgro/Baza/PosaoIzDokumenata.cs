@@ -55,6 +55,8 @@ namespace Saobracaj.Agent.CimProvera.Baza
         /// <summary>v3.0.1 (3.5): veza iz dosijea (raniji mail sa istim listom, „UID 46“) i da li je ovo overena verzija već upisanog lista.</summary>
         public string DosijeVeza;
         public bool OverenaVerzija;
+        /// <summary>v3.0.2 (4): CIT 18 – otkačena kola (napomena uz posao originalne pošiljke).</summary>
+        public bool Cit18;
 
         public void Postavi(string kolona, object v, string tekst, string rubrika, int pouzdanost = 100, string kandidati = "", string fajl = "")
         {
@@ -117,10 +119,11 @@ namespace Saobracaj.Agent.CimProvera.Baza
             foreach (var k in new[] { "OrganizatorID", "TipPrevozaID", "Status", "Stanica2ID", "ETD" }) p.V[k] = null;
             p.Obrazac = c.Obrazac ?? "";
             p.DosijeVeza = l?.DosijeVeza; p.OverenaVerzija = l?.OverenaVerzija ?? false;
+            p.Cit18 = (l?.Cit18 ?? false) || Provere.JeCit18(fajl, c.Zaglavlje);
 
             // r8, r14 (i „KP Ponuda 8957“ u r7), r62 – samo vrednosti koje liče na oznaku (v2.9.1, tačka 5.8)
             var r8 = T(c.R8);
-            var ref8 = Oznaka(r8);
+            var ref8 = BezNatpisaVoza(Oznaka(r8));
             // v3.0.1 (3.8/3.9): referenca nije PIB / matični broj stranke (r1–r6), natpis obrasca („Рефернним“) ni OCR šum
             var razlogRef = ref8 == null ? null : NijeReferenca(ref8, r8, c);
             if (razlogRef != null) ref8 = null;
@@ -424,6 +427,14 @@ namespace Saobracaj.Agent.CimProvera.Baza
             return PodaciPosla.Skrati(izbor, 100);
         }
 
+        /// <summary>v3.0.2 (5.5): referenca bez natpisa „Train no.“, „Train no:“, „Zug Nr.“, „Voz br.“, „Vlak č.“, „Vonat sz.“ („Train no. 256F“ → „256F“).</summary>
+        internal static string BezNatpisaVoza(string oznaka)
+        {
+            if (string.IsNullOrWhiteSpace(oznaka)) return oznaka;
+            var t = Regex.Replace(oznaka, @"(?i)^\s*(train|zug|voz|vlak|vonat|tren|pociąg|pociag)(?!\p{L})\s*(no|nr|br|č|c|n°|nº|number|nummer|broj|sz|číslo|cislo)?\s*[.:#]?\s*", "").Trim();
+            return t.Length >= 2 ? t : oznaka;
+        }
+
         /// <summary>
         /// v3.0.1 (3.9): broj ponude – ceo broj (ponuda KP, „8957“) ili obrazac stranog ugovora sa crticama („42-0003-26“). Nije broj ponude:
         /// „Kuty br/Lanzhot br“, „KP2026“, „0362.03“.
@@ -476,6 +487,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var sr = CultureInfo.GetCultureInfo("sr-Latn-RS");
             if (brojKola > 0 && netoKg.Value / brojKola < 1000)
                 return "neto " + (netoKg.Value / 1000).ToString("N3", sr) + " t za " + brojKola + " kola (manje od 1 t po kolima)";
+            // v3.0.2 (5.3): više od 100 t po kolima – nemoguće (pogrešna kolona ili jedinica)
+            if (brojKola > 0 && netoKg.Value / brojKola > 100000)
+                return "neto " + (netoKg.Value / 1000).ToString("N3", sr) + " t za " + brojKola + " kola (više od 100 t po kolima)";
             if (r25NetoKg > 0 && (netoKg.Value < 0.01 * r25NetoKg.Value || netoKg.Value > 3 * r25NetoKg.Value))
                 return "neto " + (netoKg.Value / 1000).ToString("N3", sr) + " t prema r25 " + (r25NetoKg.Value / 1000).ToString("N3", sr) + " t (van 1 %–300 %)";
             return null;
@@ -708,9 +722,9 @@ namespace Saobracaj.Agent.CimProvera.Baza
         }
 
         // v2.9.1 (tačka 5.1): oznake masa na više jezika; reč pre broja određuje vrstu mase
-        private const string OznakeNeto = @"neto|netto|netta|neta|nett|ntto|nto|net|n\s?=|wg\.?\s?ladung|ladung|masa\s+inc(?:a|ă)rcat(?:a|ă)|rakom(?:a|á)ny\s+t(?:o|ö)mege|masa\s+robe|masa";
-        private const string OznakeTara = @"tara\s+vagona|tara\s+vg\.?|tara|tare|dara|eigengewicht|t\s?=";
-        private const string OznakeBruto = @"bruto|brutto|btto|bto|brute|brutt|gross|gesamt(?:gewicht)?|ukupna\s+te(?:z|ž)ina|masa\s+brut(?:a|ă)|elegyt(?:o|ö)meg|g\s?=";
+        private const string OznakeNeto = @"neto|netto|netta|neta|nett|ntto|nto|ne[lt1i][li1t]o|netio|nelto|neito|net|n\s?=|n\s?:|wg\.?\s?ladung|ladung|masa\s+inc(?:a|ă)rcat(?:a|ă)|rakom(?:a|á)ny\s+t(?:o|ö)mege|masa\s+robe|masa";
+        private const string OznakeTara = @"tara\s+vagona|tara\s+vg\.?|tara|tare|taro|tera|dara|eigengewicht|t\s?=|t\s?:";
+        private const string OznakeBruto = @"bruto|brutto|btto|bto|brute|brutt|bru[il1t]o|brulo|gross|gesamt(?:gewicht)?|ukupna\s+te(?:z|ž)ina|masa\s+brut(?:a|ă)|elegyt(?:o|ö)meg|g\s?=|b\s?:";
         private static readonly Regex MasaRx = new Regex(@"(?i)(?<![\p{L}])(" + OznakeTara + "|" + OznakeBruto + "|" + OznakeNeto + @"|ukupno|total)\s*[:=.]?\s*(\d(?:[\d.,]|\s(?=\d))*)(\s*(?:kg|t|to|tona|tone|tons?)\b)?", RegexOptions.Compiled);
         private static readonly Regex OznakaRx = new Regex(@"(?i)(?<![\p{L}])(" + OznakeTara + "|" + OznakeBruto + "|" + OznakeNeto + @")(?![\p{L}])", RegexOptions.Compiled);
 
@@ -947,6 +961,15 @@ namespace Saobracaj.Agent.CimProvera.Baza
                     neto = null; tara = null; bruto = null;
                 }
                 if (bruto == null && tara.HasValue && neto.HasValue) { bruto = tara + neto; opis.Add("bruto izračunat (neto + tara)"); }
+                // v3.0.2 (3.7): bruto se ne računa delimično bez oznake – kola bez tare i bez bruta su izvan zbira bruta
+                var bezTareBruta = g.Kola.Count(k => !k.Prazna && !k.BrutoKg.HasValue && !k.TaraKg.HasValue);
+                if (bruto.HasValue && bezTareBruta > 0) { opis.Add("bruto bez tare za " + bezTareBruta + " kola"); p.Napomene.Add("Spisak kola: bruto bez tare za " + bezTareBruta + " kola"); }
+                // v3.0.2 (3.7): intermodalni spisak – neto je masa tovarnih jedinica sa robom; čista roba samo u napomenu
+                if (s.NetoRobeKg > 0 && grupe.Count == 1)
+                {
+                    opis.Add("masa robe (Netto tovarnih jedinica) " + (s.NetoRobeKg.Value / 1000).ToString("N3", sr) + " t – samo napomena");
+                    p.Napomene.Add("Masa robe (Netto tovarnih jedinica): " + (s.NetoRobeKg.Value / 1000).ToString("N3", sr) + " t – neto posla je masa tovarnih jedinica sa robom");
+                }
                 else if (neto == null && tara.HasValue && bruto.HasValue && bruto >= tara) { neto = bruto - tara; opis.Add("neto izračunat (bruto − tara)"); }
                 else if (tara == null && neto.HasValue && bruto.HasValue && bruto >= neto) { tara = bruto - neto; opis.Add("tara izračunata (bruto − neto)"); }
                 var imaMase = tara.HasValue || neto.HasValue || bruto.HasValue;

@@ -324,6 +324,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public double? UkupnoNetoKg { get; set; }
         [Interni] public double? UkupnoBrutoKg { get; set; }
         [Interni] public double? DuzinaVozaM { get; set; }
+        /// <summary>v3.0.2 (3.7): intermodalni spisak – zbir „Netto“ tovarnih jedinica (čista roba, kg); samo za napomenu i poreklo.</summary>
+        [Interni] public double? NetoRobeKg { get; set; }
+        /// <summary>v3.0.2 (3.7): kolona „Tara“ tovarnih jedinica nije upisana kao tara kola.</summary>
+        [Interni] public bool TaraJedinicaIzostavljena { get; set; }
         [Interni] public string PrelazniPut { get; set; } = "";
         /// <summary>v2.9.1: NHM po tovarnim jedinicama (prikolice/kontejneri na kolima) – intermodalni voz: NHM1 = najčešća grupa po jedinicama.</summary>
         [Interni] public List<string> NhmJedinica { get; set; } = new List<string>();

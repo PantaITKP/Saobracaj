@@ -281,6 +281,37 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             return poena >= 2;
         }
 
+        /// <summary>
+        /// v3.0.2 (3, UID 67: „IŽS: Kombinovani Prevoz 3212“ pročitano kao „12S: Kombinovani 212“): KP je naveden ako tekst ima bilo šta od:
+        /// naziv/alias/3212 (<see cref="JeKp"/>), „Kombinovan…“ (i ćirilica), ili broj koji je OCR varijanta 3212 (jedna cifra razlike:
+        /// „212“, „32I2“, „3Z12“, „3213“) uz „KP“ ili „Kombinovan…“ u istom redu.
+        /// </summary>
+        public bool NavedenTolerantno(string tekst)
+        {
+            if (string.IsNullOrWhiteSpace(tekst)) return false;
+            if (JeKp(tekst)) return true;
+            if (Regex.IsMatch(Normalizuj(tekst), @"(?<![a-z])kombinov")) return true;
+            return UicUzKpTolerantno(tekst);
+        }
+
+        /// <summary>v3.0.2 (3): u istom redu „KP“ ili „Kombinov…“ i broj od 3–4 cifre koji se od UIC šifre razlikuje najviše jednom cifrom
+        /// („212“, „32I2“, „3Z12“).</summary>
+        public bool UicUzKpTolerantno(string tekst)
+        {
+            if (string.IsNullOrWhiteSpace(tekst)) return false;
+            foreach (var red in tekst.Split('\n'))
+            {
+                var n = Normalizuj(OcrIspravka(red));
+                if (!Regex.IsMatch(n, @"(?<![a-z0-9])kp(?![a-z0-9])|kombinov")) continue;
+                foreach (Match m in Regex.Matches(red, @"(?<![\dA-Za-z])[\dIlZz|]{3,4}(?![\dA-Za-z])"))
+                {
+                    var c = Regex.Replace(m.Value, "[Il|]", "1").Replace('Z', '2').Replace('z', '2');
+                    if (Regex.IsMatch(c, @"^\d{3,4}$") && TekstUtil.Rastojanje(c, Uic) <= 1) return true;
+                }
+            }
+            return false;
+        }
+
         public bool JeKpSifra(string sifra) => Regex.Replace(OcrIspravka(sifra ?? ""), @"\D", "") == Uic;
     }
 }

@@ -10,6 +10,22 @@ namespace Saobracaj.Agent.CimProvera.Tests
     {
         private static string Opis(RezultatProvere r) => string.Join(" | ", Svi(r));
 
+        /// <summary>v3.0.2: scenario za testove van klase MotorTests (V302Tests).</summary>
+        internal sealed class ScenarioJavni
+        {
+            public CimList C = IspravanCim();
+            public string Rezim = "kp";
+            public string Fajl = "cim.pdf";
+            public string IzvorCim = "tekst";
+            public RezultatProvere Proveri()
+            {
+                if (pravila == null) Init(null);
+                return MotorTests.Proveri(new Scenario { C = C, Rezim = Rezim, Fajl = Fajl, IzvorCim = IzvorCim });
+            }
+        }
+
+        internal static T Popuni<T>(T r, string tekst = null) where T : Rubrika => F(r, tekst);
+
         // ------------------------------------------------------------------------------------------- 1.1 R16 – datum i vreme preuzimanja
 
         private static Scenario BezDatumaR16(string izvor, double mastilo58a)
@@ -126,9 +142,12 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             var s = new Scenario { Fajl = "CUV 26X609.pdf" };
             s.C.R30 = F(new OznakaDokumenta { Cim = true }, "CIM X ");
-            var n = Prvi(Proveri(s), "R30");
-            Assert.AreEqual(Tezina.Upozorenje, n.Tezina);
-            StringAssert.Contains(n.Tekst, "označen CIM, a dokument je CUV – proveriti");
+            // v3.0.2 (2.2): X u kućici CIM, a naziv fajla kaže CUV – znaci se ne slažu: INTERNO „vrsta dokumenta nesigurna“, bez R30
+            var r = Proveri(s);
+            Assert.IsFalse(Ima(r, "R30"));
+            var n = Prvi(r, "VRSTA-DOKUMENTA");
+            Assert.IsTrue(n.SamoInterno);
+            StringAssert.Contains(n.Tekst, "nesigurna");
         }
 
         // ------------------------------------------------------------------------------------------- 2.2 nečitljivo polje – nema tvrdnje

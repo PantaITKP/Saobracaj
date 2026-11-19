@@ -222,7 +222,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["R26"] = s => s.C.R26 = F(new Iznos { Vrednost = "100", Valuta = "XXX" }, "100 XXX"),
             ["R27"] = s => s.C.R27 = F(new Iznos { Vrednost = "100", Valuta = "" }, "100"),
             ["R28"] = s => s.C.R28 = F(new Iznos { Vrednost = "250", Valuta = "" }, "250"),
-            ["R29"] = s => s.C.R29.Mesto = "",
+            ["R29"] = s => { s.C.R29.Mesto = ""; s.C.ElektronskiIspis = true; s.C.NapomenaIspisa = true; },   // v3.0.2: overen list – greška (radna verzija: upozorenje)
             ["R30"] = s => s.C.R30.Cim = false,
             ["R49"] = s => s.C.R49 = new TekstRubrika(),
             ["R50"] = s => s.C.R50 = new TekstRubrika(),
@@ -264,9 +264,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             ["X23"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.Eur1, Fajl = "EUR1.pdf" }),
             ["X24"] = s => s.Ostali.Add(new Dokument { Tip = TipDokumenta.TabelaMrn, Fajl = "TABELICA.xlsx", Carinski = { new CarinskiPodaci { Mrn = { "26RS000000000009A9" }, MrnPoUti = { new Mrn { Broj = "26RS000000000009A9", Uz = "MSCU1234567" } } } } }),
             ["X25"] = s => { s.C.R29.Datum = "2026-11-16"; s.C.R16.Datum = "2026-11-16"; },
-            ["KP57"] = s => { s.C.R62.Preduzece = "2154"; s.C.R58a.Sifra = "2154"; s.C.R58a.Naziv = "SŽ Cargo"; s.C.R58a.Tekst = "2154 SŽ Cargo"; s.C.R57.Prevoznici.Clear(); s.C.R57.Tekst = "2154 SŽ Cargo"; },
+            ["KP57"] = s => { Inostrani(s); BezKpUR7iR13(s.C); s.C.R62.Preduzece = "2154"; s.C.R58a.Sifra = "2154"; s.C.R58a.Naziv = "SŽ Cargo"; s.C.R58a.Tekst = "2154 SŽ Cargo"; s.C.R57.Prevoznici.Clear(); s.C.R57.Tekst = "2154 SŽ Cargo"; },
             ["KP2"] = s => s.C.R58a = F(new UgovorniPrevoznik { Sifra = "2154", Naziv = "VTG Railtrain" }, "2154 VTG Railtrain"),
-            ["KP3"] = s => s.C.R13.Stavke[0].Tekst = "SŽ Cargo, Niš - Dimitrovgrad",
+            ["KP3"] = s => { s.C.R13.Stavke[0].Tekst = "SŽ Cargo, Niš - Dimitrovgrad"; BezKpVanR13(s); },   // v3.0.2: KP nigde – greška (KP u r57/r58a/r7 – upozorenje)
             ["KP7-PLATILAC"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Frachtzahler HU: Kombinovani prevoz" } } }, "16 Frachtzahler HU: Kombinovani prevoz"),
             ["KP7-NIJE-PLATILAC"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Frachtzahler SRB: Kombinovani prevoz" } } }, "16 Frachtzahler SRB: Kombinovani prevoz"),
             ["KP7-NEJASNO"] = s => s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "IŽS: KP 3212" } } }, "16. IŽS: KP 3212"),
@@ -289,6 +289,29 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         public static IEnumerable<object[]> SvaPravila => Kvarovi.Keys.Select(k => new object[] { k });
+
+        /// <summary>v3.0.2: polazak iz inostranstva (Herne, DE) – KP nije prvi prevoznik, pa se KP57 primenjuje.</summary>
+        internal static void Inostrani(Scenario s)
+        {
+            s.C.R16 = F(new Preuzimanje { Mesto = "Herne", SifraStanice = "801234", Zemlja = "80", Datum = "2026-11-05", Cas = "14" });
+            s.C.R62.Zemlja = "80"; s.C.R62.Stanica = "801234";
+        }
+
+        /// <summary>v3.0.2: KP nije naveden ni u r57, r58a, r7 ni kao izdavalac (r62) – KP3 je greška.</summary>
+        internal static void BezKpVanR13(Scenario s)
+        {
+            s.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "2154", Naziv = "SŽ Cargo", Deonica = "Niš - Dimitrovgrad", StatusPrevoznika = "1" } } }, "2154 SŽ Cargo Niš - Dimitrovgrad 1");
+            s.C.R58a = F(new UgovorniPrevoznik { Sifra = "2154", Naziv = "SŽ Cargo", Adresa = "Beograd", Potpis = true }, "2154 SŽ Cargo, Beograd");
+            s.C.R62.Preduzece = "2154";
+            s.C.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Platilac za deonicu SRB: Lokomotiva d.o.o." } } }, "16 Platilac za deonicu SRB: Lokomotiva d.o.o.");
+        }
+
+        /// <summary>v3.0.2 (3): KP nije ni u r7 ni u r13 – samoprovera nema gde da ga nađe, KP57 ostaje greška.</summary>
+        internal static void BezKpUR7iR13(CimList c)
+        {
+            c.R7 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "16", Tekst = "Platilac za deonicu SRB: Lokomotiva d.o.o." } } }, "16 Platilac za deonicu SRB: Lokomotiva d.o.o.");
+            c.R13 = F(new ListaRubrika { Stavke = { new SifraTekst { Sifra = "3", Tekst = "SŽ Cargo 2154, Niš - Dimitrovgrad gr." } } }, "3. SŽ Cargo 2154, Niš - Dimitrovgrad gr.");
+        }
 
         [DataTestMethod]
         [DynamicData(nameof(SvaPravila))]
@@ -439,6 +462,11 @@ namespace Saobracaj.Agent.CimProvera.Tests
                 Assert.IsFalse(Ima(r, "KP3"), t); Assert.IsFalse(Ima(r, "G5"), t);
             }
             var bez = new Scenario(); bez.C.R13 = F(new ListaRubrika(), "1. via Šid gr.; 3. HŽC 2178");
+            // v3.0.2 (odluka 19.11.): KP je u r57/r58a – upozorenje „navesti KP i u rubrici 13“; KP nigde – greška
+            var u = Prvi(Proveri(bez), "KP3");
+            Assert.AreEqual(Tezina.Upozorenje, u.Tezina);
+            StringAssert.Contains(u.Tekst, "navesti KP i u rubrici 13");
+            BezKpVanR13(bez);
             Assert.AreEqual(Tezina.Greska, Prvi(Proveri(bez), "KP3").Tezina);
         }
 
@@ -546,12 +574,13 @@ namespace Saobracaj.Agent.CimProvera.Tests
         [TestMethod]
         public void KP57_samo_sifra_3212_je_dovoljna_a_3212_u_duzem_broju_nije()
         {
-            var s = new Scenario(); s.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "3212", Deonica = "Šid - Dobova", StatusPrevoznika = "1" } } }, "3212   Šid - Dobova   1");
+            // v3.0.2 (2.4): KP57 važi samo kada KP nije prvi prevoznik ni izdavalac – polazak iz inostranstva
+            var s = new Scenario(); Inostrani(s); s.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "3212", Deonica = "Šid - Dobova", StatusPrevoznika = "1" } } }, "3212   Šid - Dobova   1");
             s.C.R58a = new UgovorniPrevoznik(); s.C.R62.Preduzece = "2154";
             // v2.9.2 (odluka 17.11.): samo UIC 3212 bez naziva – upozorenje „dopisati naziv“, nikad greška
             Assert.IsFalse(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57" && n.Tezina == Tezina.Greska));
             StringAssert.Contains(Prvi(Proveri(s), "KP57").Tekst, "dopisati naziv");
-            var t = new Scenario(); t.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "2179", Naziv = "SŽ", Deonica = "tel. 0113212555" } } }, "2179 SŽ tel. 0113212555");
+            var t = new Scenario(); Inostrani(t); t.C.R57 = F(new PrevozniciRubrika { Prevoznici = { new Prevoznik { Sifra = "2179", Naziv = "SŽ", Deonica = "tel. 0113212555" } } }, "2179 SŽ tel. 0113212555");
             t.C.R58a = new UgovorniPrevoznik(); t.C.R62.Preduzece = "2154";
             Assert.IsTrue(Ima(Proveri(t), "KP57"));
         }

@@ -133,6 +133,9 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             int ridKolona = -1;
             // v2.9.0: red (ćelije) u kome su kola prvi put navedena – vrednosti po kolima za teretnicu
             var redKola = new Dictionary<string, string[]>();
+            // v3.0.2 (HSL HER-SAD 80): broj kola koji se ponavlja u mnogo redova (kolona „poslednja kola“ / Zugschluss u svakom redu) nije broj
+            // kola tog reda – red pripada svojim kolima
+            var redovaPoBroju = redovi.SelectMany(r => r.Select(BrojKola).Where(x => x != null).Distinct()).GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
 
             foreach (var celije in redovi)
             {
@@ -146,6 +149,7 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                     if (ridKolona < 0 && Regex.IsMatch(celije[i], @"^\s*RID\b", RegexOptions.IgnoreCase)) ridKolona = i;
 
                 var kola = celije.Select(BrojKola).Where(x => x != null).Distinct().ToList();
+                if (kola.Count > 1 && kola.Any(x => redovaPoBroju[x] <= 3)) kola = kola.Where(x => redovaPoBroju[x] <= 3).ToList();
                 var uti = UtiRx.Matches(red).Cast<Match>().Select(m => Regex.Replace(m.Value, @"[\s-]", "")).Distinct().ToList();
                 var mrn = MrnRx.Matches(red.ToUpperInvariant()).Cast<Match>().Select(m => m.Value).Distinct().ToList();
                 // v2.9.1: NHM tovarne jedinice (red prikolice/kontejnera, i u redu kola)
@@ -164,8 +168,9 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                     if (spisak.Kola.Any(x => x.Broj == k))
                     {
                         int Brojeva(string[] r) => r.Count(c => Regex.IsMatch((c ?? "").Trim(), @"^\d+([.,]\d+)?$"));
-                        // samo red zaglavlja (najviše jedna brojčana ćelija) se zamenjuje – više redova istih kola (jedinica po redu, SAD-HER 80) ostaju kao ranije
-                        if (redKola.TryGetValue(k, out var stari) && Brojeva(stari) <= 1 && Brojeva(celije) > Brojeva(stari)) redKola[k] = celije;
+                        // samo red zaglavlja (najviše dve brojčane ćelije, HSL: „427“, „12“) se zamenjuje – više redova istih kola (jedinica po redu,
+                        // drugi listovi radne sveske sa nulama, SAD-HER 80) ostaju kao ranije
+                        if (redKola.TryGetValue(k, out var stari) && Brojeva(stari) <= 2 && Brojeva(celije) >= Brojeva(stari) + 3) redKola[k] = celije;
                         continue;
                     }
                     var stavka = new KolaNaSpisku { Broj = k, Uti = uti, Mrn = mrn };
@@ -311,6 +316,26 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
                             k[kv.Key] = kv.Value;
                 kol = k; iZaglavlja = ri;
                 break;
+            }
+            // v3.0.2 (odluka korisnika 19.11., 3.7): intermodalni spisak – neto iz kolone KOLA (Wg.Ladung / Gewicht der Ladung = masa tovarnih
+            // jedinica sa robom, tako da važi Bruto = Neto + Tara kola). „Tara“ i „Brutto“ bez oznake kola su kolone tovarne jedinice (UTI) – ne
+            // upisuju se kao tara/bruto kola; „Netto“ jedinice (čista roba) ide samo u napomenu (NetoRobeKg).
+            if (kol != null && iZaglavlja >= 0 && kol.TryGetValue("neto", out var ni0))
+            {
+                string H(int i) => string.Join(" ", Enumerable.Range(iZaglavlja, 3).Where(x => x < redovi.Count).Select(x => i < redovi[x].Length ? redovi[x][i] ?? "" : ""));
+                bool Kola(string polje, int i) => PrednostKola.Any(x => x.polje == polje && x.rx.IsMatch(TekstUtil.Kljuc(H(i)).Trim()));
+                if (Kola("neto", ni0))
+                {
+                    if (kol.TryGetValue("tara", out var ti0) && !Kola("tara", ti0)) { kol.Remove("tara"); spisak.TaraJedinicaIzostavljena = true; }
+                    if (kol.TryGetValue("bruto", out var bi0) && !Kola("bruto", bi0)) kol.Remove("bruto");
+                    var hdr = redovi[iZaglavlja];
+                    var ri0 = Enumerable.Range(0, hdr.Length).FirstOrDefault(i => i != ni0 && Regex.IsMatch(TekstUtil.Kljuc(hdr[i] ?? "").Trim(), @"^(netto|neto|net)\b"));
+                    if (ri0 > 0 || (hdr.Length > 0 && ri0 == 0 && Regex.IsMatch(TekstUtil.Kljuc(hdr[0] ?? "").Trim(), @"^(netto|neto|net)\b")))
+                    {
+                        var vrednosti = redovi.Skip(iZaglavlja + 1).Where(r => ri0 < r.Length).Select(r => double.TryParse(Regex.Replace((r[ri0] ?? "").Trim(), @"\s", "").Replace(",", "."), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v > 0 ? v : 0).Where(v => v > 0).ToList();
+                        if (vrednosti.Count > 0) spisak.NetoRobeKg = vrednosti.Max() < 200 ? vrednosti.Sum() * 1000 : vrednosti.Sum();
+                    }
+                }
             }
             // CIT 23 (Prilog 4 GLV-TC, „Spisak kola – Wagenliste“): red sa brojevima kolona 1–9 – kolona 6 = neto, 7 = tara, 8 = bruto, 3 = osovine
             var cit23 = redovi.Any(r => r.Any(c => Regex.IsMatch(TekstUtil.Kljuc(c ?? ""), @"spisak kola\s*-?\s*wagenliste|wagenliste|glv\s*-?\s*tc|cit\s*-?\s*23|prilog\s*-?\s*anlage\s*4")));

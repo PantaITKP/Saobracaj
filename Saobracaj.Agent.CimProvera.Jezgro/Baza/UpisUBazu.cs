@@ -341,6 +341,7 @@ VALUES (@j, @d, @t, @mid, @m, @vr, @vt, @z, @v, @r, @jez, @p)", "@j", (object)jo
                 if (s.OtpravnaTekst.Length == 0) s.OtpravnaTekst = o.OtpravnaTekst;
                 if (s.UputnaTekst.Length == 0) s.UputnaTekst = o.UputnaTekst;
                 if (s.NhmZaglavlje.Length == 0) s.NhmZaglavlje = o.NhmZaglavlje;
+                s.NetoRobeKg = s.NetoRobeKg ?? o.NetoRobeKg;   // v3.0.2 (3.7): čista roba iz Trainlist-a – napomena
                 foreach (var k in s.Kola)
                 {
                     var z = o.Kola.FirstOrDefault(x => x.Broj == k.Broj);
@@ -433,6 +434,26 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
         }
 
         /// <summary>Novi blok na početak, stari ostaju (najnoviji gore); preko 2000 znakova skraćuju se najstariji blokovi („…“).</summary>
+        /// <summary>v3.0.2 (5.4): dve vrednosti iste dužine koje se razlikuju samo po znakovima koje OCR meša (0/O, 1/I/l, 5/S, 8/B, 2/Z).</summary>
+        internal static bool OcrVarijanta(string a, string b)
+        {
+            if (a == null || b == null || a == b || a.Length != b.Length) return false;
+            string Klasa(char c)
+            {
+                switch (char.ToUpperInvariant(c))
+                {
+                    case '0': case 'O': case 'D': case 'Q': return "0";
+                    case '1': case 'I': case 'L': case '|': return "1";
+                    case '5': case 'S': return "5";
+                    case '8': case 'B': return "8";
+                    case '2': case 'Z': return "2";
+                    default: return char.ToUpperInvariant(c).ToString();
+                }
+            }
+            for (int i = 0; i < a.Length; i++) if (a[i] != b[i] && Klasa(a[i]) != Klasa(b[i])) return false;
+            return true;
+        }
+
         internal static string SpojiNapomenu(string nova, string stara)
         {
             var t = string.IsNullOrWhiteSpace(stara) ? nova : nova + "\n\n" + stara;
@@ -484,6 +505,13 @@ OUTPUT INSERTED.ID VALUES (@mid, @uid, @san, @pos, @nas, @pri, @ime, @h, @tip, @
                 {
                     promene.Remove(k);
                     Istorija(jid, null, k, Tekst(stara), Tekst(nova), dokId, razlog, "u novom dokumentu nije pročitano – zadržana ranija vrednost");
+                }
+                // v3.0.2 (5.4, Zmajevo SBGT26_SRB04 → SBGT26_SRBO4): nova vrednost koja se razlikuje samo po znakovima koje OCR meša
+                // (0/O, 1/I/l, 5/S, 8/B, 2/Z) ne menja tačan tekst
+                else if (stara is string ss && nova is string ns && OcrVarijanta(ss, ns))
+                {
+                    promene.Remove(k);
+                    Istorija(jid, null, k, ss, ns, dokId, razlog, "OCR varijanta iste vrednosti – zadržan tačan tekst");
                 }
             }
             var napomena = NovaNapomena(jid, m, blok, stari["Napomena"] as string);

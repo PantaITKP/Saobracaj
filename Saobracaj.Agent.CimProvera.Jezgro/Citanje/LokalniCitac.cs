@@ -37,7 +37,7 @@ namespace Saobracaj.Agent.CimProvera.Citanje
     internal sealed class LokalniCitac : ICitacDokumenata, IDisposable
     {
         /// <summary>Menja se kada se promeni logika čitanja – stari keš se tada ne koristi.</summary>
-        public const string VerzijaCitaca = "L24";   // v3.0.1: mera čitljivosti polja (pokrivenost rečima), mastilo r58a, zemlje u svim oblicima. L23 v3.0 (e): opšti OCR kućice bez potvrde isečka ne dobija 0,85; pouzdanost delova r62. L22 v3.0 (0a.5): keš čuva reči i natpise po rubrikama; L21 v2.9.2: prelivanje r57, ponovni OCR r57/r58a, klasifikacija (Wagenliste, mreža obrasca); L20 v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
+        public const string VerzijaCitaca = "L25";   // v3.0.2: kućice sa X (nacrtan kvadrat uz šablon, X u kvadratu), mase po kolima (zaglavlje i ponovljena kolona spiska). L24 v3.0.1: mera čitljivosti polja (pokrivenost rečima), mastilo r58a, zemlje u svim oblicima. L23 v3.0 (e): opšti OCR kućice bez potvrde isečka ne dobija 0,85; pouzdanost delova r62. L22 v3.0 (0a.5): keš čuva reči i natpise po rubrikama; L21 v2.9.2: prelivanje r57, ponovni OCR r57/r58a, klasifikacija (Wagenliste, mreža obrasca); L20 v2.8.4: ciljani OCR – kućica van strane se preskače (ranije „Out of memory.“), L19: nastavak spiska kola CIT 23, orijentacija skena
         /// <summary>Menja se kada se promeni čitanje teksta strana (PDF tekst, OCR, slika strane) – tada se OCR ponavlja.</summary>
         public const string VerzijaTeksta = "L18";   // v2.8.4: orijentacija skena ispod 0,75 (OSD + proba 90°/270°), crno-beli sken, FreeText anotacije
 

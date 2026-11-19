@@ -725,3 +725,74 @@ Osnova: PROMPT_v3.0.1 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.0.md`.
 - Događaji iz mailova bez priloga i iz mailova sa samo slikama iz potpisa se sada upisuju (ranije se mail preskakao pre upisa).
 - SAŽETAK: „događaji: N; vezani za posao: X; nevezani: Y (od toga sa kandidatima: Z)“.
 - Kandidati se u bazi ne čuvaju posebno. `planiranje.tmpJobsDogadjaj` nema kolonu za njih, pa šema tmp tabela ostaje ista.
+
+## 12. v3.0.2 – kućice sa X, KP3, radne verzije, mase (19.11.)
+
+Osnova: PROMPT_v3.0.2 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.1.md`.
+
+### 12.1 Odluke korisnika (19.11.)
+
+**3.7 – „neto“ kod intermodalnih spiskova (prihvaćeno)**
+- Neto = masa tovarnih jedinica sa robom (Wg.Ladung / Gewicht der Ladung). Bruto = Neto + Tara kola.
+- Čista roba (Trainlist „Netto“) ide samo u napomenu i poreklo, ne u Neto.
+- Tara tovarne jedinice (UTI) se ne upisuje kao tara kola.
+- Kada kola nemaju taru, bruto spiska je „bruto bez tare za N kola“ (opis i napomena).
+- HER-SAD 80 (UID 2, 143): problem je bio u čitanju spiska, ne u koloni. Red se zamenjuje samo kada raniji red istih kola ima najviše dve brojčane ćelije (red zaglavlja); drugi listovi radne sveske (SAD-HER 80: list sa nulama) ne zamenjuju pravi red kola. Red zaglavlja nosi broj prvih kola i male brojeve („427“, „12“), a kolona 26 ponavlja broj poslednjih kola („35 80 4956 824-1“) u svakom redu. Zato su poslednja kola dobijala vrednosti prvog reda, a prva kola red zaglavlja (bez tare). Sada se broj kola koji se javlja u više od 3 reda ne računa kao broj kola tog reda, a red kola se menja samo redom sa bar 3 brojčane ćelije više. HER80: neto 995,1 + tara 630,6 = bruto 1 625,7 (r25 995,039); HER81: neto 886,9.
+
+**KP3 – KP u rubrici 13**
+- KP (3212 ili naziv) naveden u r57, r58a ili r7, a nije u r13 → **upozorenje** „Rubrika 13: navesti KP i u rubrici 13 (tačka 3).“
+- KP nije naveden nigde → **greška**, kao do sada.
+- Tumačenje (agent): kao „naveden“ se računa i izdavalac 3212 u r62 (KP je izdao list), jer je r62 među susednim rubrikama samoprovere (tačka 3).
+
+**R29 i R62 – radna verzija (kao R16)**
+- Bez pečata prevoznika → upozorenje uz „Posle overe (pečat prevoznika) nedostatak će se smatrati greškom.“
+- Sa pečatom → greška.
+- Pečat nije pouzdano prepoznat → upozorenje + INTERNO „pečat nije pouzdano prepoznat“.
+- R62: nedostatak („fali“) se proverava samo kada postoje zemlja i stanica; prazna r62 ide po pravilu iznad.
+
+### 12.2 Kućice sa X i vrsta dokumenta
+
+- Kućice 20, 22, 23, 30, 52 i 58 čitaju se **sa slike**, i kod tekstualnog PDF-a i kod skena. Tekstualno „X“ je samo dodatni znak.
+- Tumačenje (agent): kućica je nacrtan kvadrat najbliži šablonu (± 0,035 širine, ± 0,015 visine strane; univerzalni obrazac ± 0,008), veličine 0,6–1,8 šablona, i bliži ovom nego bilo kom drugom polju. Kvadrat sa sadržajem: bar 45 % mastila uz ivicu, sva 4 ugla, sredina nije puna (> 60 % → nije kućica). Polje je označeno kada je gustina ≥ 0,30 ili je u njemu X; Unicom i TCDD obrasci imaju kućice pomerene u odnosu na šablon, pa se ne čita mesto šablona nego nađeni kvadrat.
+- Redosled znakova za vrstu dokumenta: X u kućici → naziv obrasca → NHM 9922 / prazna kola (CUV) ili NHM robe (CIM) → naziv fajla. Važi prvi znak koji postoji.
+- Naziv obrasca je znak samo kada naziv druge vrste nije nigde u zaglavlju strane. Zajednički obrazac štampa oba naslova („Frachtbrief CIM / Wagenbrief CUV“, „Teretni list CIM / Vagonski list CUV“, „CIM fuvarlevél / CUV üres kocsi kísérőlevél“), a OCR često pokvari jedan od njih („Frachtbriet“).
+- Kada se neki drugi znak ne slaže sa prvim → INTERNO „vrsta dokumenta nesigurna“ i ne primenjuju se R30, KP7-PLATILAC, KP3, KP57.
+- CUV: nema provere platioca (KP7-*) ni KP3.
+- KP57 se ne primenjuje kada je KP prvi prevozilac (polazna stanica u Srbiji) ili izdavalac (3212 u r62).
+- R30 je samo INTERNO dok prepoznavanje kućice sa slike nije pokriveno testom (V302Tests ga sada pokriva za dva CUV-a i CIM UID 114; R30 ostaje INTERNO do odluke korisnika).
+
+### 12.3 KP uz OCR toleranciju (UID 67)
+
+- KP je naveden ako tekst sadrži „Kombinovan…“ (i ćirilicom, i „Kombinovi Prevoz“), ili u istom redu „KP“ / „kombinov“ uz broj od 3–4 cifre koji se od 3212 razlikuje najviše jednom cifrom (I/l/| → 1, Z → 2).
+- Važi za KP3, KP57 i KP7.
+- Samoprovera pre slanja traži KP i u susednim rubrikama (r7, r13, r57, r58a, r62). Kada ga nađe, greška postaje upozorenje sa oznakom „ublaženo“ (rezultat.json `ublazeno`).
+- SAŽETAK: „- ublaženo samoproverom: N“.
+
+### 12.4 CIT 18 (UID 184)
+
+- Prepoznaje se po „CIT 18“, „Accompanying document“, „Feuille d'accompagnement“, „Begleitschein“, „prateći list“ (zaglavlje ili naziv fajla).
+- Ne proverava se kao CIM i ne ide pošiljaocu. INTERNO: „CIT 18 – otkačena kola N, pošiljka r62“.
+- Upis: posao originalne pošiljke (po ključu ili po broju otpravljanja r62) dobija napomenu i Istoriju „CIT18“. Bez originala – novi posao + INTERNO „CIT 18 bez originalnog lista“.
+
+### 12.5 Upis poslova – regresije u masama
+
+- **Spisak istog lista** (5.1): drugi spisak sa ≥ 80 % istih kola zamenjuje raniji; sabiraju se samo spiskovi različitih kola. Ista kola: isti broj, ili iste dužine uz pogrešnu UIC kontrolnu cifru i najviše dve različite cifre (OCR).
+- **r25** (5.2): razume „1.845,680“, „2.447,150 kg“, „1.824.000 kg“, „955 450“, „41 050“, jedinice i oznake N/T/B, Netto/Tara/Brutto, i OCR oblike (Nelio, Netio, Nelto, Bruio, Brulo, Taro, Tera).
+- **Smisao** (5.3): za sve izvore – neto < 1 t ili > 100 t po kolima se ne upisuje. Pobeđuje izvor usklađen sam sa sobom (bruto = neto + tara). Kada se r25 i spisak razlikuju, napomena „r25 i spisak se razlikuju: …“.
+- **OCR varijanta** (5.4): nova vrednost koja se od postojeće razlikuje samo zamenama 0/O, 1/I/l, 5/S, 8/B, 2/Z ne gazi tačan tekst (Istorija „OCR varijanta iste vrednosti – zadržan tačan tekst“).
+- **Referenca bez natpisa** (5.5): „Train no. 256F“ → „256F“; isto za Zug Nr., Voz br., Vlak č.
+
+### 12.6 Arhiva i sanduče (19.11.) – stanje i nulta tačka
+
+- **Arhiva ne postoji.** `\192.168.1.6\Cloude\Agenti\CimProvera\arhiva\` nije napravljena: na serveru je agent 2.9.2 (arhiviranje je uvedeno u 3.0), a zadatak je isključen od 18.11. u 14:08.
+- Lozinka sandučeta je DPAPI (CurrentUser) naloga svc_cimprovera, pa sanduče ne može da se čita iz drugog naloga. Broj i veličina poruka i prostor PRIMER fajlova zato nisu izmereni.
+- Stanje agenta (`stanje.json` na serveru), koje važi kao poslednja potvrđena tačka:
+  - INBOX: UIDVALIDITY 1794489150, nulta tačka UID 191 (13.11. 23:41), poslednji obrađen UID 846;
+  - INBOX.Sent: UIDVALIDITY 1794489155, poslednji UID 6;
+  - poslednja obrada 18.11. u 11:32; u stanju je 655 poruka.
+- **Nova nulta tačka (predlog):** poslednji UID koji pokrije arhiva. Do prvog arhiviranja važi: INBOX UID 191–846 je obrađen, ali nije arhiviran; poruke posle UID 846 nisu ni obrađene ni arhivirane. Ništa iz sandučeta se ne briše dok arhiva ne potvrdi ceo opseg 191…poslednji UID bez rupa.
+- **Predlog svakodnevnog arhiviranja bez obrade** (čeka odobrenje):
+  - jednokratno: na serveru postaviti 3.0.2 (uz rezervnu kopiju), staviti `arhiviranje.zahtev` sa „--od-uid 191“ i jednom ručno pokrenuti zadatak pod svc_cimprovera. Agent tada samo arhivira i izlazi, bez obrade pošte (v3.0, tačka 5);
+  - svakodnevno (opcija A): zakazani zadatak pod svc_cimprovera (ne SYSTEM) „Saobracaj.Agent.CimProvera.exe arhiviraj“ jednom dnevno – samo IMAP čitanje, samo dopisivanje u arhivu;
+  - svakodnevno (opcija B): komanda `CimRadionica --arhiviraj` koju korisnik pokreće ručno pod svojim nalogom; tada lozinka sandučeta mora biti zaštićena i za taj nalog (DPAPI, „zastiti“).
+- **Tmp podaci alata i agenta** (predlog pre ponovnog uključivanja agenta): CimRadionica i agent pišu u iste `planiranje.tmp*` tabele. Predlog je kolona ili prefiks izvora (npr. `Izvor = 'Radionica' / 'Agent'`) ili posebna šema za alat; dok se to ne uradi, pre uključivanja agenta obrisati podatke alata (DELETE nad `planiranje.tmp*` osim tmpSinonimi i tmpNHM), da agent ne bi spajao nove mailove sa poslovima iz probnih obrada.

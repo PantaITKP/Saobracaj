@@ -339,7 +339,9 @@ namespace Saobracaj.Agent.CimProvera.Citanje
         }
 
         /// <summary>Prazni kvadratići (polja za označavanje): kvadratni okvir 1–3,2 % širine strane, mastilo uz ivice.</summary>
-        public List<Oblik> Kvadratici()
+        /// <param name="saSadrzajem">v3.0.2: i kvadratić sa X-om unutra (X dodiruje ivice pa je deo iste komponente) – uz ivicu bar 45 % mastila,
+        /// a sredina nije puna (pun crni kvadrat nije kućica).</param>
+        public List<Oblik> Kvadratici(bool saSadrzajem = false)
         {
             Integrali();
             var rez = new List<Oblik>();
@@ -348,16 +350,20 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 int w = k.x1 - k.x0 + 1, h = k.y1 - k.y0 + 1;
                 if (w < W * 0.01 || w > W * 0.032 || h < W * 0.01 || h > W * 0.032) continue;
                 if (Math.Abs(w - h) > Math.Max(w, h) * 0.3) continue;
-                int traka = Math.Max(2, Math.Min(w, h) / 6), uzIvicu = 0;
-                var strane = new int[4];
+                int traka = Math.Max(2, Math.Min(w, h) / 6), uzIvicu = 0, sredina = 0;
+                var strane = new int[4]; var uglovi = new bool[4];
                 foreach (var p in k.pikseli)
                 {
                     int x = p % W, y = p / W;
                     bool l = x - k.x0 < traka, d = k.x1 - x < traka, g = y - k.y0 < traka, dn = k.y1 - y < traka;
                     if (l || d || g || dn) uzIvicu++;
                     if (l) strane[0]++; if (d) strane[1]++; if (g) strane[2]++; if (dn) strane[3]++;
+                    if (x >= k.x0 + w * 0.3 && x <= k.x1 - w * 0.3 && y >= k.y0 + h * 0.3 && y <= k.y1 - h * 0.3) sredina++;
+                    if (l && g) uglovi[0] = true; if (d && g) uglovi[1] = true; if (l && dn) uglovi[2] = true; if (d && dn) uglovi[3] = true;
                 }
-                if (uzIvicu < k.n * 0.85) continue;
+                if (uzIvicu < k.n * (saSadrzajem ? 0.45 : 0.85)) continue;
+                // kvadratić sa sadržajem: sva četiri ugla su mastilo (slovo „O“, „0“, „D“ nema uglove) i sredina nije puna
+                if (saSadrzajem && (!uglovi.All(u => u) || sredina > 0.6 * (w * 0.4) * (h * 0.4))) continue;
                 if (strane[0] < h * 0.7 || strane[1] < h * 0.7 || strane[2] < w * 0.7 || strane[3] < w * 0.7) continue;
                 rez.Add(new Oblik { X0 = k.x0 / (double)W, Y0 = k.y0 / (double)H, X1 = (k.x1 + 1) / (double)W, Y1 = (k.y1 + 1) / (double)H });
             }

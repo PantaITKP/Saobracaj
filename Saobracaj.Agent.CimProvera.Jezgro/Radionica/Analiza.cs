@@ -380,6 +380,9 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             var bezDokaza = pos.Select(x => (x.rb, uid: (string)x.json["poruka"]?["uid"], b: BezPouzdanogDokaza(x.json))).Where(x => x.b.Count > 0).ToList();
             sz.AppendLine().AppendLine("- izveštaji pošiljaocu: " + pos.Count + "; od toga sa nalazom bez pouzdanog dokaza: " + bezDokaza.Count
                 + (bezDokaza.Count > 0 ? " (" + string.Join("; ", bezDokaza.Select(x => x.rb.ToString("000") + " UID " + x.uid + ": " + string.Join(", ", x.b))) + ")" : ""));
+            // v3.0.2 (3): nalazi ublaženi samoproverom (podatak pronađen u susednoj rubrici – upozorenje umesto greške)
+            var ublazeno = stavke.SelectMany(x => (x.json["provera"]?["listovi"] as JArray ?? new JArray()).SelectMany(l => (JArray)l["nalazi"])).Count(n => (bool?)n["ublazeno"] == true);
+            sz.AppendLine("- ublaženo samoproverom: " + ublazeno);
             // v3.0.1 (5): događaji vezani za posao / nevezani
             var sviDog = stavke.SelectMany(x => x.json["dogadjaji"] as JArray ?? new JArray()).ToList();
             var vezani = sviDog.Count(d => !string.IsNullOrEmpty((string)d["posao"]));

@@ -12,7 +12,7 @@
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <!-- verzija programa; v2.9.0: upis u planiranje.tmp* (pravila ostaju 2.8.4, meta.version u cim_validation_rules.json) -->
-    <Version>3.0.1</Version>
+    <Version>3.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

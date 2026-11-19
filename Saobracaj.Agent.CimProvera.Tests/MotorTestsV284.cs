@@ -172,6 +172,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
         public void T9_KP57_kod_spoljnog_posiljaoca_je_greska_posiljaoca()
         {
             var s = new Scenario { Rezim = "spoljni" };
+            MotorTests.Inostrani(s); s.C.R62.Preduzece = "3127";   // v3.0.2 (2.4): polazak Herne, izdavalac HSL – KP nije prvi prevoznik
+            BezKpUR7iR13(s.C);   // v3.0.2 (3): KP ni u r7 ni u r13 – inače samoprovera ublažava na upozorenje
             s.C.R57.Prevoznici.Clear();
             s.C.R57.Prevoznici.Add(new Prevoznik { Sifra = "3127", Naziv = "HSL Logistik GmbH", Deonica = "Herne - Kelebia", StatusPrevoznika = "1" });
             s.C.R58a = F(new UgovorniPrevoznik { Sifra = "3127", Naziv = "HSL" }, "3127 HSL");
@@ -217,6 +219,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // KP tovarni list (r62 = 3212): interni nalaz kao do sada – greška
             var kp = new Scenario();
             kp.C.R62.Broj = "";
+            kp.C.ElektronskiIspis = true; kp.C.NapomenaIspisa = true;   // v3.0.2: overen list – greška (radna verzija: upozorenje, test R29_i_R62_…)
             var rk = Proveri(kp);
             Assert.IsTrue(rk.Listovi.Single().KpRezim);
             Assert.AreEqual(Tezina.Greska, Prvi(rk, "R62").Tezina);

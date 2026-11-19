@@ -38,6 +38,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Kljuc;
         /// <summary>Samo za internu kopiju izveštaja (KP), ne šalje se spoljnom pošiljaocu (npr. r49 koju popunjava KP kao prevoznik).</summary>
         public bool SamoInterno;
+        /// <summary>v3.0.2 (3): ublaženo samoproverom (npr. KP naveden u susednoj rubrici – upozorenje umesto greške).</summary>
+        public bool Ublazeno;
         public List<Nalaz> Takodje = new List<Nalaz>();
         /// <summary>
         /// v2.8.1 – PDF primer: šta se crvenom (narandžastom) bojom dopisuje u rubriku – stvarna vrednost iz dokumenata (zemlja, datum,
@@ -88,6 +90,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string DosijeVeza;
         /// <summary>v3.0.1 (3.5): skenirana i overena verzija već proverenog digitalnog lista (isti list – ne dodaje nova kola ni mase).</summary>
         public bool OverenaVerzija;
+        /// <summary>v3.0.2 (4): CIT 18 – prateći dokument za otkačena kola (samo INTERNO; upis kao napomena uz posao originalne pošiljke).</summary>
+        public bool Cit18;
     }
 
     internal sealed class RezultatProvere
@@ -140,6 +144,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public string Dopuna;
         public string Pogresno;
         public bool DopunaSigurna;
+        /// <summary>v3.0.2 (3): nalaz ublažen samoproverom (podatak je pronađen u susednoj rubrici) – red „ublaženo samoproverom“ u SAŽETKU.</summary>
+        public bool Ublazeno;
         public Pogodak Dop(string dopuna, string pogresno = null, bool sigurna = true) { Dopuna = dopuna; Pogresno = pogresno; DopunaSigurna = sigurna; return this; }
 
         public Pogodak(string rubrika, string kljuc = null) { Rubrika = rubrika; Kljuc = kljuc; }
@@ -211,8 +217,34 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     continue;
                 }
 
+                // v3.0.2 (2.2): vrsta dokumenta (CIM / CUV) – X u kućici, naziv obrasca, NHM 9922 / prazna kola, naziv fajla; kada se znaci
+                // razilaze – INTERNO „vrsta dokumenta nesigurna“ i bez pravila koja zavise od vrste (R30, KP7-PLATILAC, KP3, KP57)
+                var vrsta = Provere.VrstaDokumenta(k);
+                if (vrsta.vrsta != null && !vrsta.nesigurna) cim.Obrazac = vrsta.vrsta;
+                k.VrstaNesigurna = vrsta.nesigurna;
+                if (vrsta.nesigurna)
+                {
+                    var tv = (u.Engleski ? "Document type uncertain (CIM/CUV): " : "Vrsta dokumenta nesigurna (CIM/CUV): ") + vrsta.opis
+                             + (u.Engleski ? " – rules depending on the type (R30, KP7-PLATILAC, KP3, KP57) are not reported; check manually." : " – pravila koja zavise od vrste (R30, KP7-PLATILAC, KP3, KP57) se ne prijavljuju; proveriti ručno.");
+                    rl.Nalazi.Add(new Nalaz { Pravilo = "VRSTA-DOKUMENTA", Rubrika = "30", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tv, Uputstvo = tv, SamoInterno = true, Kljuc = "vrsta-nesigurna" });
+                }
+                // v3.0.2 (4): CIT 18 (prateći dokument za otkačena kola, izdaje ga prevoznik) – ne proverava se kao CIM i ne ide pošiljaocu
+                if (Provere.JeCit18(k))
+                {
+                    var r62t = string.Join(" ", new[] { cim.R62.Zemlja, cim.R62.Stanica, cim.R62.Preduzece, cim.R62.Broj }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                    var kola = Provere.BrojKolaLista(k);
+                    var tc = "CIT 18 – otkačena kola " + (kola.Length > 0 ? kola : "(broj kola nije pročitan)") + ", pošiljka " + (r62t.Length > 0 ? r62t : "(r62 nije pročitana)")
+                             + " – prateći dokument prevoznika, ne proverava se kao CIM i ne ide pošiljaocu.";
+                    rl.Nalazi.Add(new Nalaz { Pravilo = "CIT18", Rubrika = "–", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tc, Uputstvo = tc, SamoInterno = true, Kljuc = "cit18" });
+                    rl.Cit18 = true;
+                    rez.Listovi.Add(rl);
+                    continue;
+                }
                 foreach (var def in p.Sva)
                 {
+                    // v3.0.2: pravila koja zavise od vrste dokumenta – ne kada je vrsta nesigurna; za CUV nema platioca ni KP u r13
+                    if (k.VrstaNesigurna && Provere.ZavisiOdVrste.Contains(def.Id)) continue;
+                    if (cim.Obrazac == "CUV" && Provere.SamoCim.Contains(def.Id)) continue;
                     if (!Provere.Sve.TryGetValue(def.Id, out var fn)) continue;
                     if (def.Json["ne_proverava_se"] != null) continue;   // obrisano pravilo (npr. REC3, REC6, KP6 u v2.8) se ne izvršava
                     // v2.8.4 (9): pravilo za rubriku koju po GLV-CIM popunjava prevoznik (popunjava = „prevoznik“) proverava se i na listu
@@ -478,6 +510,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 Primer = !string.IsNullOrEmpty(pg.Predlog) ? pg.Predlog : (en ? (string)def.Json["primer_en"] : null) ?? (string)def.Json["primer"] ?? "",
                 Kljuc = pg.Kljuc ?? def.Id + "|" + pg.Rubrika + "|" + tekst,
                 SamoInterno = pg.SamoInterno || (bool?)def.Json["samo_interno"] == true,
+                Ublazeno = pg.Ublazeno,
             };
         }
 
@@ -548,6 +581,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
 
         /// <summary>List je pročitan OCR-om (sken) – oznake X i cifre po kućicama se ne vide pouzdano.</summary>
         public bool Ocr => Dok?.Izvor == "ocr";
+
+        /// <summary>v3.0.2 (2.2): znaci za vrstu dokumenta (CIM/CUV) se razilaze – pravila koja zavise od vrste se ne prijavljuju.</summary>
+        public bool VrstaNesigurna;
 
         public IEnumerable<Dokument> Tip(string tip) => Svi.Where(d => d.Tip == tip);
     }

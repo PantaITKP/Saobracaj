@@ -889,17 +889,41 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 yield return P(broj, "valuta-" + broj);
         }
 
+        /// <summary>
+        /// v3.0.2 (odluka korisnika 19.11., 1.3 – isto kao R16): nedostatak koji se popunjava pri overi (r29 mesto i datum, r62 broj otpravljanja /
+        /// šifra preduzeća). Sa pečatom ili potpisom prevoznika – greška; bez pečata (radna verzija) – upozorenje uz napomenu „Posle overe
+        /// (pečat prevoznika) nedostatak će se smatrati greškom.“; pečat nije pouzdano prepoznat – upozorenje + INTERNO.
+        /// </summary>
+        private static IEnumerable<Pogodak> PoOveri(Kontekst k, Pogodak pg)
+        {
+            var o = OveraPrevoznika(k);
+            if (o == Overa.Da) { yield return pg; yield break; }
+            pg.Tezina = Tezina.Upozorenje;
+            pg.Dodatak = ((pg.Dodatak ?? "") + (k.U.Engleski ? " After validation (carrier's stamp) the missing data will be treated as an error." : " Posle overe (pečat prevoznika) nedostatak će se smatrati greškom.")).Trim();
+            yield return pg;
+            if (o == Overa.Nesigurno)
+            {
+                var i = P(pg.Rubrika, (pg.Kljuc ?? "r" + pg.Rubrika) + "-pecat");
+                i.Tezina = Tezina.Info; i.SamoInterno = true;
+                i.Poruka = (k.U.Engleski ? "r" + pg.Rubrika + ": carrier's stamp not reliably recognised – reported as a warning; check manually (" : "r" + pg.Rubrika + ": pečat nije pouzdano prepoznat – nedostatak prijavljen kao upozorenje; proveriti ručno (")
+                           + OveraOpis(k) + ").";
+                yield return i;
+            }
+        }
+
         private static IEnumerable<Pogodak> R29(Kontekst k)
         {
             var r = k.C.R29;
-            if (!r.Popunjena) { yield return P("29", "r29").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
+            if (!r.Popunjena) { foreach (var x in PoOveri(k, P("29", "r29").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"))) yield return x; yield break; }
             if (!k.Citljivo(r, "29")) yield break;
             var fali = new List<string>();
             // mesto ima bar dva slova („.“ ili „13.11.2026.“ nije mesto – cuv za 1 vagon)
             if (Prazno(r.Mesto) || !Regex.IsMatch(r.Mesto, @"\p{L}{2}")) fali.Add(k.U.Engleski ? "place" : "mesto");
             if (Prazno(r.Datum)) fali.Add(k.U.Engleski ? "date of issue (year-month-day)" : "datum ispostavljanja (godina-mesec-dan)");
-            if (fali.Count > 0) yield return P("29", "r29").D((k.U.Engleski ? "Entered: " : "Upisano: ") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim() + ". " + (k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".")
-                .Pr(!Prazno(r.Mesto) && Prazno(r.Datum) && k.Citljivo(r, "29") ? r.Mesto.Trim() + (k.U.Engleski ? ", year-month-day" : ", godina-mesec-dan") : null);
+            if (fali.Count > 0)
+                foreach (var x in PoOveri(k, P("29", "r29").D((k.U.Engleski ? "Entered: " : "Upisano: ") + Regex.Replace(r.Tekst ?? "", @"\s+", " ").Trim() + ". " + (k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".")
+                    .Pr(!Prazno(r.Mesto) && Prazno(r.Datum) && k.Citljivo(r, "29") ? r.Mesto.Trim() + (k.U.Engleski ? ", year-month-day" : ", godina-mesec-dan") : null)))
+                    yield return x;
             // "mesto != naziv firme"
             if (!Prazno(r.Mesto) && (N(r.Mesto) == N(k.C.R1.Naziv) || k.P.Kp.JeKpNaziv(r.Mesto) || Regex.IsMatch(N(r.Mesto), @"\b(d o o|doo|a d|gmbh|ltd|s a|srl|kft|as)\b")))
                 yield return P("29", "r29-mesto").D((k.U.Engleski ? "Instead of a place, a company name is entered: „" : "Umesto mesta upisan je naziv firme: „") + r.Mesto + "“.");
@@ -927,12 +951,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                     pg.Tezina = Tezina.Upozorenje;
                     pg.Poruka = k.U.Engleski ? "Box 30: marked as CIM, but the document is a CUV – please check." : "Rubrika 30: označen CIM, a dokument je CUV – proveriti.";
                     pg.Predlog = k.U.Engleski ? "X in the CUV box" : "X u polju CUV";
+                    pg.SamoInterno = true;   // v3.0.2 (2.5): R30 samo INTERNO
                     yield return pg;
                 }
                 yield break;
             }
             if (!k.Citljivo(r, "30") || r.Cim) yield break;
-            yield return P("30", "r30").D(k.U.Engleski ? "(the CIM box is empty)" : "(polje CIM nije označeno)");
+            // v3.0.2 (2.5): X u kućici se sada prepoznaje sa slike (i u tekstualnom PDF-u – vektorski X); dok se to ne potvrdi na novim
+            // primerima, R30 ide samo u INTERNO
+            var p30 = P("30", "r30").D(k.U.Engleski ? "(the CIM box is empty)" : "(polje CIM nije označeno)");
+            p30.SamoInterno = true;
+            yield return p30;
         }
 
         /// <summary>
@@ -959,11 +988,53 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             return samo9922 || (prazna && Regex.IsMatch(r21, @"\b9922"));
         }
 
-        /// <summary>v3.0.1 (2.1): CIT 18 – prateći list (nije tovarni list CIM): „CIT 18“ u nazivu fajla ili zaglavlju.</summary>
-        internal static bool JeCit18(Kontekst k)
+        /// <summary>
+        /// v3.0.1 (2.1) / v3.0.2 (4): CIT 18 – prateći dokument za kola otkačena iz pošiljke (izdaje ga prevoznik), nije tovarni list CIM:
+        /// „CIT 18“, „Accompanying document“, „Feuille d'accompagnement“, „Begleitschein“ u nazivu fajla ili zaglavlju.
+        /// </summary>
+        internal static bool JeCit18(Kontekst k) => JeCit18(k.Dok?.Fajl, k.C?.Zaglavlje);
+
+        internal static bool JeCit18(string fajl, string zaglavlje)
         {
+            var ime = System.IO.Path.GetFileName((fajl ?? "").Split('/').Last());
+            return Regex.IsMatch(ime + " " + (zaglavlje ?? ""), @"(?i)(?<![A-Za-z])CIT\s*-?\s*18(?!\d)|begleitschein|prateći list|prateci list|accompanying\s+document|feuille\s+d.?accompagnement");
+        }
+
+        /// <summary>v3.0.2 (4): brojevi kola sa lista (r18/r21), za INTERNO napomenu CIT 18.</summary>
+        internal static string BrojKolaLista(Kontekst k) => string.Join(", ", KolaR18(k).Select(x => x.Length == 12 ? x.Substring(0, 2) + " " + x.Substring(2, 2) + " " + x.Substring(4, 4) + " " + x.Substring(8, 3) + "-" + x.Substring(11) : x));
+
+        /// <summary>v3.0.2 (2.2): pravila koja zavise od vrste dokumenta – ne prijavljuju se kada je vrsta (CIM/CUV) nesigurna.</summary>
+        internal static readonly HashSet<string> ZavisiOdVrste = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "R30", "KP7-PLATILAC", "KP3", "KP57" };
+
+        /// <summary>v3.0.2 (2.3): pravila samo za CIM – za CUV nema platioca ni KP u r13.</summary>
+        internal static readonly HashSet<string> SamoCim = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "KP7-PLATILAC", "KP7-NIJE-PLATILAC", "KP7-NEJASNO", "KP3" };
+
+        /// <summary>
+        /// v3.0.2 (2.2): vrsta dokumenta (CIM / CUV) redom: X u kućici (sa slike), naziv obrasca (samo jedan naslov u zaglavlju), NHM 9922 i
+        /// „empty wagons / prazna kola“ (CUV) ili NHM robe (CIM), naziv fajla. Vrsta je prvi znak koji postoji; nesigurna kada se neki drugi znak razlikuje.
+        /// </summary>
+        internal static (string vrsta, bool nesigurna, string opis) VrstaDokumenta(Kontekst k)
+        {
+            var c = k.C;
+            var znaci = new List<(string izvor, string vrsta)>();
+            if (c.R30.Cim != c.R30.Cuv) znaci.Add(("X u kućici", c.R30.Cuv ? "CUV" : "CIM"));
+            var z = c.Zaglavlje ?? "";
+            // zajednički obrazac štampa oba naslova („Frachtbrief CIM / Wagenbrief CUV“, „Teretni list CIM / Vagonski list CUV“, mađ. „CIM
+            // fuvarlevél / CUV üres kocsi kísérőlevél“) – naslov je znak samo kada naziv druge vrste nije nigde u zaglavlju (OCR: „Frachtbriet“)
+            bool imaCim = Regex.IsMatch(z, @"(?<![A-Za-z])CIM(?![A-Za-z])"), imaCuv = Regex.IsMatch(z, @"(?<![A-Za-z])CUV(?![A-Za-z])");
+            bool naslovCuv = !imaCim && Regex.IsMatch(z, @"(?i)wagenbrief\s+cuv|lettre\s+wagon\s+cuv|wagon\s+note|kolski\s+list|vagonski\s+list");
+            bool naslovCim = !imaCuv && Regex.IsMatch(z, @"(?i)frachtbrief|lettre\s+de\s+voiture|consignment\s+note|tovarni\s+list|teretni\s+list|fuvarlev[eé]l");
+            if (naslovCuv != naslovCim) znaci.Add(("naziv obrasca", naslovCuv ? "CUV" : "CIM"));
+            var nhm = c.R24.Stavke.Select(s => Cifre(s.Sifra + s.Tekst)).Concat(new[] { Cifre(c.R24.Tekst) }).Where(x => x.Length >= 4).ToList();
+            if (PraznaKolaNhm9922(c)) znaci.Add(("NHM 9922 / prazna kola", "CUV"));
+            else if (nhm.Count > 0 && nhm.All(x => !x.StartsWith("99"))) znaci.Add(("NHM robe", "CIM"));
             var ime = System.IO.Path.GetFileName((k.Dok?.Fajl ?? "").Split('/').Last());
-            return Regex.IsMatch(ime + " " + (k.C.Zaglavlje ?? ""), @"(?i)(?<![A-Za-z])CIT\s*-?\s*18(?!\d)|begleitschein|prateći list|prateci list|accompanying document");
+            bool imeCuv = Regex.IsMatch(ime, @"(?i)(?<![A-Za-z])CUV(?![A-Za-z])"), imeCim = Regex.IsMatch(ime, @"(?i)(?<![A-Za-z])CIM(?![A-Za-z])");
+            if (imeCuv != imeCim) znaci.Add(("naziv fajla", imeCuv ? "CUV" : "CIM"));
+            if (znaci.Count == 0) return (null, false, "");
+            var vrsta = znaci[0].vrsta;
+            var nesigurna = znaci.Any(x => x.vrsta != vrsta);
+            return (vrsta, nesigurna, string.Join("; ", znaci.Select(x => x.izvor + ": " + x.vrsta)));
         }
 
         private static IEnumerable<Pogodak> R49(Kontekst k)
@@ -1072,7 +1143,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         private static IEnumerable<Pogodak> R62(Kontekst k)
         {
             var r = k.C.R62;
-            if (!r.Popunjena) { yield return P("62", "r62").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"); yield break; }
+            if (!r.Popunjena) { foreach (var x in PoOveri(k, P("62", "r62").D(k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"))) yield return x; yield break; }
             // v2.8.1: sken na kome cifre r62 nisu pouzdano pročitane – interna napomena „r62 nečitljiva – proveriti ručno“, ne greška
             var nepotpuna = Prazno(r.Zemlja) || Prazno(r.Stanica) || Prazno(r.Preduzece) || Prazno(r.Broj);
             if (k.Ocr && (r.NepouzdanoCitanje || ((r.Status == StatusRubrike.Necitljivo || r.Pouzdanost < k.U.Prag || r.OcrSum) && nepotpuna)))
@@ -1094,7 +1165,11 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             if (Prazno(r.Broj)) fali.Add(k.U.Engleski ? "consignment number" : "broj otpravljanja");
             // broj sa slovima („HER-SAD79“, Excel obrazac) se ne proverava po obliku 12345-6
             else if (!Regex.IsMatch(r.Broj, @"\p{L}") && !Regex.IsMatch(Regex.Replace(r.Broj, @"\s", ""), obrazac)) fali.Add((k.U.Engleski ? "consignment number in the format 12345-6 (entered: " : "broj otpravljanja u obliku 12345-6 (upisano: ") + r.Broj + ")");
-            if (fali.Count > 0) yield return P("62", "r62").D((k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".");
+            if (fali.Count == 0) yield break;
+            var pg62 = P("62", "r62").D((k.U.Engleski ? "Missing: " : "Nedostaje: ") + string.Join(", ", fali) + ".");
+            // v3.0.2 (1.3): broj otpravljanja / šifra preduzeća – upisuje se pri overi (zemlja i stanica ostaju greška kao do sada)
+            if (!Prazno(r.Zemlja) && !Prazno(r.Stanica)) foreach (var x in PoOveri(k, pg62)) yield return x;
+            else yield return pg62;
         }
 
         // =========================================================================================== r21_subrules
@@ -1975,12 +2050,48 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// 3212“; samo UIC – upozorenje „dopisati naziv“; ni naziv ni UIC – greška. Ako je KP ugovorni prevoznik u r58a, uslov je
         /// ispunjen. Važi za svaki CIM/CUV.
         /// </summary>
+        /// <summary>
+        /// v3.0.2 (3, samoprovera): rubrika (od r7, r13, r57, r58a, r62) u kojoj je KP naveden (uz OCR toleranciju), osim zadate; null ako nigde.
+        /// </summary>
+        internal static string KpUSusednoj(Kontekst k, string osim)
+        {
+            var c = k.C;
+            var izvori = new (string rub, string tekst)[]
+            {
+                ("57", string.Join("\n", new[] { c.R57.Tekst ?? "" }.Concat(c.R57.Prevoznici.Select(x => (x.Sifra + " " + x.Naziv).Trim())))),
+                ("58a", (c.R58a.Tekst ?? "") + "\n" + c.R58a.Sifra + " " + c.R58a.Naziv),
+                ("13", Tekst(c.R13)), ("7", Tekst(c.R7)),
+            };
+            foreach (var (rub, tekst) in izvori)
+                if (rub != osim && k.P.Kp.NavedenTolerantno(tekst)) return rub;
+            if (osim != "62" && k.P.Kp.JeKpSifra(c.R62.Preduzece) && !c.R62.NepouzdanaZaOdluke) return "62";
+            return null;
+        }
+
+        /// <summary>v3.0.2 (2.4): KP je prvi prevoznik (polazna stanica u Srbiji – r16) ili izdavalac lista (3212 u r62) – mesto mu je u r58a, ne u r57.</summary>
+        internal static bool KpPrviIliIzdavalac(Kontekst k)
+        {
+            var c = k.C;
+            if (k.P.Kp.JeKpSifra(c.R62.Preduzece) && !c.R62.NepouzdanaZaOdluke) return true;
+            var zemlja16 = Cifre(c.R16.Zemlja);
+            if (zemlja16 == "72" || Cifre(c.R16.SifraStanice).StartsWith("72") || Cifre(c.R62.Zemlja) == "72") return true;
+            return SrpskaStanica.IsMatch(" " + PraviloKp.Normalizuj((c.R16.Mesto ?? "") + " " + (c.R16.Tekst ?? "")) + " ");
+        }
+
         private static IEnumerable<Pogodak> KP57(Kontekst k)
         {
             var r = k.C.R57;
             if (r.Popunjena && !k.Citljivo(r, "57")) yield break;
+            // v3.0.2 (2.4): KP kao prvi prevoznik ili izdavalac je ugovorni prevoznik (r58a) – nema KP57; nedostatak u r58a pokriva R58A/KP2
+            if (KpPrviIliIzdavalac(k)) yield break;
             var (naziv, uic) = KpUR57(r, k.P.Kp);
+            // v3.0.2 (3): „Kombinovi Prevoz“, „Kombinovani 212“ – naziv KP uz OCR/pravopisnu toleranciju
+            if (!naziv && Regex.IsMatch(PraviloKp.Normalizuj(r.Tekst ?? ""), @"(?<![a-z])kombinov")) naziv = true;
+            // v3.0.2 (3): „212 KP“, „Kombinovani 212“ – UIC šifra uz OCR toleranciju (jedna cifra) u redu sa KP
+            if (naziv && !uic && k.P.Kp.UicUzKpTolerantno(r.Tekst ?? "")) uic = true;
             if (naziv && uic) yield break;
+            // v3.0.2 (3): OCR tolerancija („Kombinovani 212“)
+            if (!naziv && !uic && k.P.Kp.NavedenTolerantno(string.Join("\n", new[] { r.Tekst ?? "" }.Concat(r.Prevoznici.Select(x => (x.Sifra + " " + x.Naziv).Trim()))))) yield break;
             var en = k.U.Engleski;
             // v3.0 (odluka korisnika 18.11., mail 782): na skenu OCR pročita samo deo šifre uz KP („212 KP“), a r13 navodi 3212 – nije
             // upozorenje pošiljaocu („dopisati UIC 3212“), nego INTERNO „proveriti ručno“
@@ -2016,6 +2127,14 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 pg.Poruka = "r57: KP nije pouzdano pročitan na skenu (pročitano: „" + Regex.Replace(r.Tekst ?? "", @"\s*\n\s*", " / ") + "“" + (srb != null ? "; srpska deonica „" + srb + "“" : "")
                             + (r13Kp ? "; KP sa UIC 3212 naveden u r13" : "") + ") – proveriti ručno.";
                 yield return pg;
+                yield break;
+            }
+            // v3.0.2 (3, samoprovera): KP naveden u r13 ili r7 (uz OCR toleranciju), a nije u r57 – upozorenje „navesti KP i u r57“, ne greška
+            if (KpUSusednoj(k, "57") is string gde && gde != "58a" && gde != "62")
+            {
+                var pu = P("57", "kp57-drugde").D(en ? "KP is stated in box " + gde + ", but not among the carriers in box 57." : "KP je naveden u rubrici " + gde + ", a nije među prevoznicima u rubrici 57.");
+                pu.Tezina = Tezina.Upozorenje; pu.Ublazeno = true;
+                yield return pu;
                 yield break;
             }
             yield return P("57", "kp57").D(r.Popunjena ? (en ? "KP is not listed among the carriers in box 57." : "U rubrici 57 KP nije naveden među prevoznicima.") : (en ? "(box is empty)" : "(rubrika je prazna)"));
@@ -2088,7 +2207,17 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         {
             var r = k.C.R13;
             if (r.Popunjena && !k.Citljivo(r, "13")) yield break;
-            if (k.P.Kp.JeKp(Tekst(r))) yield break;
+            // v3.0.2 (3): KP naveden i uz OCR toleranciju („Kombinovani 212“)
+            if (k.P.Kp.NavedenTolerantno(Tekst(r))) yield break;
+            // v3.0.2 (odluka korisnika 19.11., 1.2) + samoprovera: KP naveden u r57, r58a ili r7, a nije u r13 – upozorenje, ne greška
+            if (KpUSusednoj(k, "13") is string gde)
+            {
+                var pg = P("13", "kp-r13-drugde").D(k.U.Engleski ? "KP is stated in box " + gde + ", but not in box 13." : "KP je naveden u rubrici " + gde + ", a nije u rubrici 13.");
+                pg.Tezina = Tezina.Upozorenje; pg.Ublazeno = true;
+                pg.Poruka = k.U.Engleski ? "Box 13: please state KP in box 13 as well (point 3)." : "Rubrika 13: navesti KP i u rubrici 13 (tačka 3).";
+                yield return pg;
+                yield break;
+            }
             yield return P("13", "kp-r13").D(r.Popunjena ? (k.U.Engleski ? "KP is not stated in box 13." : "U rubrici 13 KP nije naveden.") : (k.U.Engleski ? "(box is empty)" : "(rubrika je prazna)"));
         }
 

@@ -231,16 +231,20 @@ namespace Saobracaj.Agent.CimProvera.Tests
         {
             // (a) mail 782: r57 „212 KP, \ Dimitrovgrad gr. Prahovo“ (OCR), r13 „43.3 BDZ: 3057; 3212“
             var s = new Scenario { IzvorCim = "ocr" };
+            Inostrani(s); s.C.R62.Preduzece = "3057";   // polazak Povelyanovo (BG), izdavalac BDŽ – KP nije prvi prevoznik ni izdavalac
+            BezKpUR7iR13(s.C);
             s.C.R57.Prevoznici.Clear(); s.C.R57.Tekst = "2 пс\n4057 вуке j Povelyanovo - Dragoman gr.\n212 KP,   \\   Dimitrovgrad gr. Prahovo";
-            s.C.R13.Tekst = "43.1 via Dragoman/Dimitrovgrad gr\n43.3 BDZ:   3057;   3212";
+            s.C.R13.Tekst = "43.1 via Dragoman/Dimitrovgrad gr\n43.3 BDZ:   3057;   3212"; s.C.R13.Stavke.Clear();
+            s.C.R58a = F(new UgovorniPrevoznik { Sifra = "3057", Naziv = "BDZ" }, "3057 BDZ");
             var r = Proveri(s);
             Assert.IsFalse(Svi(r).Any(n => n.Pravilo == "KP57" && !n.SamoInterno), string.Join(" | ", Svi(r)));
-            var n57 = Svi(r).Single(n => n.Pravilo == "KP57");
-            Assert.AreEqual(Tezina.Info, n57.Tezina);
-            StringAssert.Contains(n57.Tekst, "proveriti ručno");
-            // bez 3212 u r13 – ostaje upozorenje „dopisati UIC 3212“
+            // v3.0.2 (3): „212“ uz „KP“ u istom redu je 3212 uz OCR toleranciju – KP je naveden, nema KP57 (ni INTERNO), i bez 3212 u r13
+            Assert.IsFalse(Svi(r).Any(n => n.Pravilo == "KP57"), string.Join(" | ", Svi(r)));
             s.C.R13.Tekst = "43.1 via Dragoman/Dimitrovgrad gr"; s.C.R13.Stavke.Clear();
-            Assert.IsTrue(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57" && !n.SamoInterno && n.Tekst.Contains("3212")), string.Join(" | ", Svi(Proveri(s)).Select(n => n.Pravilo + ":" + n.Tezina + ":" + n.SamoInterno + ":" + n.Tekst)));
+            Assert.IsFalse(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57"), string.Join(" | ", Svi(Proveri(s)).Select(n => n.Pravilo + ":" + n.Tezina + ":" + n.SamoInterno + ":" + n.Tekst)));
+            // bez KP u redu – „212“ sam nije KP: na skenu ostaje INTERNO „KP nije pouzdano pročitan – proveriti ručno“ (v2.9)
+            s.C.R57.Tekst = "4057 BDZ Povelyanovo - Dragoman gr.\n212   Dimitrovgrad gr. Prahovo";
+            Assert.IsTrue(Svi(Proveri(s)).Any(n => n.Pravilo == "KP57" && n.Tekst.Contains("proveriti ručno")), string.Join(" | ", Svi(Proveri(s)).Select(n => n.Pravilo + ":" + n.Tezina + ":" + n.Tekst)));
             Assert.IsTrue(Provere.DeoSifreUzKp("212 KP, Dimitrovgrad", "3212") && Provere.DeoSifreUzKp("RS: KP 321", "3212") && !Provere.DeoSifreUzKp("KP 45", "3212"));
         }
 

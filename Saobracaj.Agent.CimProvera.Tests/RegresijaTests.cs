@@ -118,8 +118,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
         public void V292_CIT18_koks_zemlja_posiljaoca_iz_adrese()
         {
             var i = Proveri(@"nezavisni\2026-11-17\CIT 18 31555958441-4.pdf");
-            var r1 = Svi(i).Where(n => n.Rubrika == "1" && !string.IsNullOrEmpty(n.Dopuna)).ToList();
-            Assert.IsTrue(r1.Count > 0 && r1.All(n => n.Dopuna.StartsWith("PL")), Opis(i));
+            // v3.0.2 (4): CIT 18 se ne proverava kao CIM – samo INTERNO, ništa pošiljaocu (ranije: zemlja r1 iz adrese → PL)
+            Assert.IsTrue(Svi(i).Any(n => n.Pravilo == "CIT18" && n.SamoInterno), Opis(i));
+            Assert.IsFalse(Svi(i).Any(n => n.Pravilo != "CIT18" && !n.SamoInterno), Opis(i));
+            Assert.IsTrue(i.Provera.Listovi.All(l => l.Cit18), Opis(i));
         }
 
         // ------------------------------------------------------------------------------------------- HOLCIM
@@ -134,7 +136,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Greska, "9", "R9", "spisak kola"); Ocekuje(i, Tezina.Greska, "9", "R9", "izvozna"); Ocekuje(i, Tezina.Greska, "9", "R9", "tranzitna");
             Assert.AreEqual(1, i.Provera.Listovi[0].Nalazi.Count(n => n.Rubrika == "9" && n.Tezina == Tezina.Greska), "r9 je jedna stavka");
             Ocekuje(i, Tezina.Preporuka, "24", "R24-NHM6", "(u T1: 262190)", primer: "262190"); NeSme(i, "R24");
-            Ocekuje(i, Tezina.Greska, "29", "R29");
+            Ocekuje(i, Tezina.Upozorenje, "29", "R29", "Posle overe");   // v3.0.2 (odluka 19.11.): bez pouzdanog pečata prevoznika – upozorenje
             Ocekuje(i, Tezina.Preporuka, "CIT 23", "X29-NHM6", "2620", primer: "262190"); NeSme(i, "X29");
             // v2.7: KP je u r7 naveden kao platilac za RS
             Ocekuje(i, Tezina.Greska, "7", "KP7-NIJE-PLATILAC", "Kombinovani Prevoz");
@@ -173,7 +175,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
             // v2.8.2: oznake bez brojeva („Tara: / Netto: / Bruto:“) – „masa nije upisana kao broj“
             Ocekuje(i, Tezina.Greska, "25", "R25-MASA", "nije upisana kao broj"); NeSme(i, "R25");
-            Ocekuje(i, Tezina.Greska, "29", "R29");
+            Ocekuje(i, Tezina.Upozorenje, "29", "R29", "Posle overe");   // v3.0.2 (odluka 19.11.): bez pouzdanog pečata prevoznika – upozorenje
             NeSme(i, "R14"); // „KP 2026“ je broj – v2.7
             Ocekuje(i, Tezina.Greska, "9", "X26", "nije priložen");
             Ocekuje(i, Tezina.Upozorenje, "18", "R18-SPISAK", "CIT 23");
@@ -223,16 +225,16 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Assert.AreEqual("K-505", List(i).Sablon);
             CollectionAssert.Contains(i.Provera.Listovi[0].Dokument.Strane, 2);
             Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
-            Ocekuje(i, Tezina.Greska, "29", "R29");
+            Ocekuje(i, Tezina.Upozorenje, "29", "R29", "Posle overe");   // v3.0.2 (odluka 19.11.): bez pouzdanog pečata prevoznika – upozorenje
             NeSme(i, "R57"); NeSme(i, "R57-DEONICA");
-            Ocekuje(i, Tezina.Upozorenje, "7", "KP7-NEJASNO", "16.IŽS: KP 3212");
+            NeSme(i, "KP7-NEJASNO");   // v3.0.2 (2.3): CUV – nema provere platioca (ranije upozorenje „16.IŽS: KP 3212“)
             Ocekuje(i, Tezina.Upozorenje, "9", "G6");
             Ocekuje(i, Tezina.Upozorenje, "1", "R1-ISO");
             NeSme(i, "R22"); NeSme(i, "X5"); NeSme(i, "R23"); NeSme(i, "X1");
             NeSme(i, "X26"); NeSme(i, "G3"); NeSme(i, "X9"); NeSme(i, "X20");
             NeSme(i, "R12"); NeSme(i, "X19"); NeSme(i, "G2");
             // v2.8: R62 važi za svaki list (test 2026-11-13) – r62 ovog CUV-a je prazna
-            Ocekuje(i, Tezina.Greska, "62", "R62", "prazna"); NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP57");
+            Ocekuje(i, Tezina.Upozorenje, "62", "R62", "Posle overe"); NeSme(i, "KP7-PLATILAC"); NeSme(i, "KP7-NIJE-PLATILAC"); NeSme(i, "KP57");
             Assert.IsFalse(Svi(i).Any(n => n.Pravilo == "CITLJIVOST" && Regex.IsMatch(n.Rubrika, "^(1|4|7|10|13|14|18|20|21|2[3-9]|30)$")),
                 "upozorenja „nečitljivo“ sa poleđine: " + Opis(i));
         }
@@ -410,8 +412,8 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Upozorenje, "16", "R16", "Posle overe");   // v3.0.1 (R16): bez pouzdanog pečata prevoznika – upozorenje
             Ocekuje(i, Tezina.Preporuka, "24", "R24-NHM6", "9922", primer: "992200"); NeSme(i, "R24");
             Ocekuje(i, Tezina.Preporuka, "25", "R25-MASA", "praznih kola", primer: "Tara"); NeSme(i, "R25"); Assert.IsFalse(Svi(i).Any(n => n.Pravilo == "R25-MASA" && n.Tezina == Tezina.Greska), "9922: samo preporuka");
-            Ocekuje(i, Tezina.Greska, "7", "KP7-PLATILAC", "Payer for SZ is Ferest Rail");
-            Assert.AreEqual(3, i.Provera.BrojGresaka, Opis(i));   // v3.0.1: R16 je upozorenje (bez pečata)
+            NeSme(i, "KP7-PLATILAC");   // v3.0.2 (2.3): CUV – nema provere platioca
+            Assert.AreEqual(2, i.Provera.BrojGresaka, Opis(i));   // v3.0.1: R16 je upozorenje (bez pečata); v3.0.2: bez KP7-PLATILAC
             // upozorenja
             Ocekuje(i, Tezina.Upozorenje, "4", "R4-ISO", "Romania");
             Ocekuje(i, Tezina.Upozorenje, "21", "X30", "31 wgs");
@@ -476,7 +478,9 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // v2.7: „bez KP u r7“ više nije greška KP7 (KP7 obrisan); platilac za Srbiju ovde nije naveden → KP7-PLATILAC
             Assert.IsFalse(svi.Any(n => n.Pravilo == "KP7" || n.Pravilo == "KP7-NIJE-PLATILAC"), string.Join(" | ", svi));
             Assert.IsTrue(svi.Any(n => n.Pravilo == "KP7-PLATILAC"), string.Join(" | ", svi));
-            Assert.IsTrue(svi.Any(n => n.Pravilo == "KP57" && n.Tezina == Tezina.Greska), string.Join(" | ", svi));
+            // v3.0.2 (2.4): polazak iz Srbije – KP je prvi prevoznik, mesto mu je u r58a: nema KP57, nedostatak pokriva R58A/KP2
+            Assert.IsFalse(svi.Any(n => n.Pravilo == "KP57"), string.Join(" | ", svi));
+            Assert.IsTrue(svi.Any(n => n.Rubrika == "58a" && (n.Tezina == Tezina.Greska || n.Tezina == Tezina.Upozorenje)), string.Join(" | ", svi));
         }
 
         [TestMethod, TestCategory("Regresija")]

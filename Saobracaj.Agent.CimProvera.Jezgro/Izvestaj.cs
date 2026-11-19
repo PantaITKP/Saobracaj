@@ -178,6 +178,8 @@ namespace Saobracaj.Agent.CimProvera
             // v2.8.4: nepouzdano pročitana r62 (rukom upisana na skenu) ne određuje KP tovarni list
             if (r.Listovi.Any(l => l.Cim != null && !l.Cim.R62.NepouzdanaZaOdluke && p.Kp.JeKpSifra(l.Cim.R62.Preduzece))) return RazlogKp;
             if (r.Listovi.Any(l => l.ZaRucnuProveru || !string.IsNullOrEmpty(l.Cim?.NeprepoznatObrazac))) return RazlogRucna;
+            // v3.0.2 (4): CIT 18 (prateći dokument prevoznika) nikad ne ide pošiljaocu – samo INTERNO
+            if (r.Listovi.Count > 0 && r.Listovi.All(l => l.Cit18)) return RazlogRucna;
             return null;
         }
 

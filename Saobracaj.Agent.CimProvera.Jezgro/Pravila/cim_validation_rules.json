@@ -267,6 +267,19 @@
           "R30: kod CUV-a (X u polju CUV, CUV u nazivu fajla, prazna kola NHM 9922) polje CIM je s pravom prazno – nema greške; CIT 18 (prateći list) nije CIM – R30 se ne primenjuje; X u polju CIM na CUV-u – upozorenje „označen CIM, a dokument je CUV – proveriti“.",
           "Nema dokaza – nema tvrdnje: nalaz (greška/upozorenje) u rubrici čiji je tekst nečitljiv po meri polja (OCR pouzdanost, pokrivenost mastila pročitanim rečima, udeo smislenih znakova) ide samo u INTERNO „rN nečitljiva – ručna provera“; mera je u ANALIZA.md. Samoprovera pre slanja: nalaz za pošiljaoca bez pouzdanog dokaza → list na ručnu proveru."
         ]
+      },
+      {
+        "date": "2026-11-19",
+        "version": "3.0.2",
+        "basis": "PROMPT_v3.0.2 i analiza obrade „Osnovni“ (IZVESTAJ_Osnovni_3.0.1)",
+        "changes": [
+          "Vrsta dokumenta: X u kućici (20, 22, 23, 30, 52, 58) čita se sa slike (nacrtan kvadrat uz šablon, X u kvadratu) i kod tekstualnog PDF-a i kod skena; redosled: X u kućici → naziv obrasca → NHM 9922 / prazna kola → naziv fajla. Znaci se ne slažu → INTERNO „vrsta dokumenta nesigurna“ i nema R30, KP7-PLATILAC, KP3, KP57. CUV: nema platioca ni KP3.",
+          "R30 samo INTERNO dok prepoznavanje kućice sa slike nije pokriveno testom.",
+          "KP3 (odluka korisnika 19.11.): KP naveden u r57, r58a ili r7, a nije u r13 – upozorenje „navesti KP i u rubrici 13 (tačka 3)“; nigde – greška. KP57: nema ga kada je KP prvi prevozilac ili izdavalac (3212 u r62).",
+          "KP uz OCR toleranciju: „Kombinovan…“ (i ćirilica, „Kombinovi“), „KP“ uz UIC šifru, 3212 sa jednom pogrešnom cifrom uz Kombinovan/KP – važi za KP3, KP57 i KP7. Samoprovera traži KP i u susednim rubrikama; SAŽETAK: „ublaženo samoproverom: N“.",
+          "R29 i R62 (odluka korisnika 19.11.) kao R16: bez pečata prevoznika – upozorenje uz „Posle overe (pečat prevoznika) nedostatak će se smatrati greškom.“; sa pečatom – greška; pečat nesiguran – upozorenje + INTERNO.",
+          "CIT 18 (prateći list za otkačena kola) se ne proverava kao CIM i ne ide pošiljaocu: INTERNO „CIT 18 – otkačena kola N, pošiljka r62“; posao originalne pošiljke dobija napomenu, bez originala – novi posao + INTERNO „CIT 18 bez originalnog lista“."
+        ]
       }
     ]
   },
