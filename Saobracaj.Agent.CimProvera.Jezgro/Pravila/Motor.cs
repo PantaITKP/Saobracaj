@@ -234,7 +234,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                 // v3.0.4b (6, 72): strana pretamna – pečat i ostale rubrike se ne mogu pouzdano oceniti, ručna provera
                 if ((cim.PecatZnak ?? "").StartsWith("strana pretamna", StringComparison.Ordinal))
                 {
-                    var tt = u.Engleski ? "Page too dark (" + cim.PecatZnak + ") – manual check." : "Strana pretamna (" + cim.PecatZnak.Replace("strana pretamna ", "") + ") – ručna provera.";
+                    var mera = cim.PecatZnak.Substring("strana pretamna".Length).Trim();   // „(mastilo 0.963)“
+                    var tt = u.Engleski ? "Page too dark " + mera.Replace("mastilo", "ink") + " – manual check." : "Strana pretamna " + mera + " – ručna provera.";
                     rl.Nalazi.Add(new Nalaz { Pravilo = "STRANA-TAMNA", Rubrika = "58a", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tt, Uputstvo = tt, SamoInterno = true, Kljuc = "strana-tamna" });
                     rl.ZaRucnuProveru = true;
                 }

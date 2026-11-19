@@ -67,6 +67,10 @@ namespace Saobracaj.Agent.CimProvera.Tests
             // UID 6, 72: strana pretamna – nesigurno
             var t = CimParser.Pecat58a(R(), 0.9627);
             Assert.AreEqual("nesigurno", t.stanje); StringAssert.StartsWith(t.znak, "strana pretamna");
+            // INTERNO „Strana pretamna (mastilo 0.963) – ručna provera.“ (bez dvostrukih zagrada)
+            var s = new MotorTests.ScenarioJavni { IzvorCim = "ocr" }; s.C.MastiloR58a = 0.9627; s.C.PecatPrevoznika = t.stanje; s.C.PecatZnak = t.znak;
+            var tamna = MotorTests.Svi(s.Proveri()).Single(n => n.Pravilo == "STRANA-TAMNA");
+            Assert.AreEqual("Strana pretamna (mastilo 0.963) – ručna provera.", tamna.Tekst); Assert.IsTrue(tamna.SamoInterno);
             // UID 198, 203: nagnut bled okvir – bez prepoznatog okvira ostaje nesigurno, sa prepoznatim okvirom postoji
             var r198 = R(("je", 0.54), ("rar", 0.60), ("е", 0.48), ("[", 0.85), ("janjc,", 0.46), ("7", 0.59), ("p,", 0.77), ("Sa,", 0.54), ("ce", 0.79), ("b", 0.52), ("signa", 0.57));
             Assert.AreEqual("nesigurno", CimParser.Pecat58a(r198, 0.0174).stanje);

@@ -75,7 +75,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             return c;
         }
 
-        private static RezultatProvere Proveri(Scenario s)
+        internal static RezultatProvere Proveri(Scenario s)
         {
             var u = new UlazProvere
             {
@@ -85,7 +85,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             return new Motor(pravila).Proveri(u);
         }
 
-        private static IEnumerable<Nalaz> Svi(RezultatProvere r) => r.Listovi.SelectMany(l => l.Nalazi.Concat(l.Nalazi.SelectMany(n => n.Takodje)));
+        internal static IEnumerable<Nalaz> Svi(RezultatProvere r) => r.Listovi.SelectMany(l => l.Nalazi.Concat(l.Nalazi.SelectMany(n => n.Takodje)));
         private static bool Ima(RezultatProvere r, string id) => Svi(r).Any(n => n.Pravilo == id);
         private static Nalaz Prvi(RezultatProvere r, string id) => Svi(r).First(n => n.Pravilo == id);
 
