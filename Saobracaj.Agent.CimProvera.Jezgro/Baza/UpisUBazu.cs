@@ -80,6 +80,13 @@ namespace Saobracaj.Agent.CimProvera.Baza
         public const string IzvorAgent = "Agent", IzvorAlat = "Alat";
         private bool? imaIzvor;
 
+        /// <summary>v3.0.3: šifarnici pre prve provere (grupe NHM za vrstu dokumenta – Provere.NhmGrupe); greška se samo beleži.</summary>
+        public void UcitajSifarnike()
+        {
+            if (sif != null) return;
+            using (var c0 = Otvori(konekcija)) Sifarnici = Sifarnici.Ucitaj(c0, log, null, Prefiks);
+        }
+
         /// <summary>„ AND [alias.]Izvor = 'Alat'“ – prazno dok OP_919 nije pokrenut (kolona ne postoji).</summary>
         private string Iz(string alias = null)
         {

@@ -163,6 +163,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 o["rubrike"] = Rubrike(c, l.Dokument?.Izvor == "ocr");
                 // v3.0.1 (2.3): samoprovera – nalazi za pošiljaoca bez pouzdanog dokaza (mora biti prazno)
                 o["bez_dokaza"] = new JArray(Motor.BezDokaza(l).Select(n => n.Pravilo + " r" + n.Rubrika));
+                o["pecat"] = l.Pecat ?? "";   // v3.0.4: pečat prevoznika i znak odluke
             }
             o["nalazi"] = new JArray(l.Nalazi.SelectMany(n => new[] { n }.Concat(n.Takodje)).Select(n => new JObject
             {

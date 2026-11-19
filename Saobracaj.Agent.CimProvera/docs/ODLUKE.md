@@ -895,3 +895,41 @@ Osnova: PROMPT_v3.0.3.
 - **Nova nulta tačka:** poslednji UID koji pokriva arhiva je **899** (19.11. u 14:48). Arhiva se dopunjuje u 07:10 i 15:10.
   - Pri ponovnom uključivanju agent nastavlja od svog stanja (UID 847), a ne od 899, da bi poruke 847+ bile obrađene.
   - Iz sandučeta se sme obrisati samo ono što je u arhivi, i to tek posle druge kopije arhive.
+
+## 14. v3.0.4 – merilo pečata, NHM koje nema u tarifi (19.11.)
+
+Osnova: odgovor korisnika posle 3.0.3 (pregled 15 slika pečata iz paketa).
+
+### 14.1 Odluka korisnika – pečat prevoznika
+
+- **Tri stanja:**
+  - **pečat postoji** → greška (kao do sada);
+  - **pečata nema** (r58a prazna ili samo kucan/štampan tekst) → radna verzija: upozorenje sa napomenom „Posle overe…“, bez INTERNO „pečat nije pouzdano prepoznat“;
+  - **nesigurno** → upozorenje + INTERNO, odnosno greši se u korist upozorenja.
+- **Dokaz pečata:** otisak – okvir (krug, pravougaonik), nagnut ili otisnut tekst, boja, potpis, datum otiska. KP pečat se prepoznaje po tekstu: „Kombinovani prevoz“, „UIC CODE KP 3212“, „Prokuplje“ i datum.
+- **Nije dokaz pečata:** kucano „3212 KP“ ili „0072“ u r58a, popunjen broj otpravljanja u r62, datum u r29.
+- Ista strana obrasca mora da daje isti rezultat.
+- Znak odluke se upisuje u ANALIZA.md za svaki list.
+
+### 14.2 Tumačenje (agent) – merilo iz čitača (`CimParser.Pecat58a`, sken)
+
+Pravila se primenjuju redom; prvo koje važi odlučuje.
+
+1. **Postoji – tekst KP pečata:** bar dva od: Kombinov…, Prokup…, Bogdanov…, UIC, PZ 009 (među svim rečima r58a, i nisko pouzdanim).
+2. **Postoji – otisak:** mastilo r58a ≥ 0,02 i bar dve nisko pouzdane reči (OCR < 0,6) sa ukupno ≥ 6 slova. Zakrivljen ili nagnut tekst pečata OCR čita kao nisko pouzdan šum.
+3. **Postoji – datum otiska:** datum u r58a (dd.mm.gggg ili „13 4 2026“) i mastilo ≥ 0,015.
+4. **Nema:** mastilo r58a ≤ 0,0075.
+5. **Nema – samo kucan tekst:** pouzdane reči, najviše jedna nisko pouzdana, bez teksta pečata i datuma.
+6. **Nesigurno:** sve ostalo.
+
+- Mastilo r58a ne uključuje odštampane natpise obrasca, a uključuje kucani tekst. Zato samo mastilo nije dovoljno: UID 174 ima 0,030 zbog kucanog „3212 KP“ i italijanskog natpisa koji šablon ne poznaje.
+- Ispis elektronskog lista znači da pečat postoji. Draft, nacrt ili digitalni dokument znače da pečata nema (kao do sada).
+- **Kalibracija:** svih 15 slika iz paketa 3.0.3 daje ishod koji je korisnik utvrdio (test `V304Tests.Pecat_15_slika_iz_paketa_303`).
+  - Slike 11–15 iz 3.0.3 nisu birane po prepoznatom pečatu, nego po grešci R16/R29/R62. R62 je greška i bez pečata kad u r62 nedostaju zemlja ili stanica.
+  - Zato je UID 3, str. 5 („r58a prazna“) bio pogrešno označen kao „prepoznat“; merilo je za str. 3 i 5 davalo isti R62.
+  - Pravi lažni pečat bio je UID 174.
+
+### 14.3 NHM koje nema u tarifi
+
+- Šifra u r24 čije grupe (prve 4 cifre) nema u tarifi (`planiranje.tmpNHM`, 1 360 grupa) je OCR šum i ne računa se kao znak vrste dokumenta. Primer: „942290“, UID 45 – grupe 9422 nema; X u kućici CUV odlučuje → CUV.
+- Grupe se pune iz učitanih šifarnika (online iz baze, offline iz kopije alata), pre prve provere. Bez tarife se šifra ne proverava. Mali šifarnici iz testova (manje od 200 grupa) se ne koriste.

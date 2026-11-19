@@ -306,6 +306,8 @@ namespace Saobracaj.Agent.CimProvera.Citanje
             }
             // v3.0.1 (1.1): mastilo u r58a (pečat/potpis ugovornog prevoznika) – za odluku da li je list overen
             c.MastiloR58a = strana.Izvor == IzvorTeksta.Ocr && r.Mastilo("58a") is double m58 ? Math.Round(m58, 4) : -1;
+            // v3.0.4: pečat prevoznika – tri stanja i znak odluke (tekst KP pečata, otisak, datum otiska; kucani tekst nije pečat)
+            if (strana.Izvor == IzvorTeksta.Ocr && c.MastiloR58a >= 0) { var (ps, pz) = Pecat58a(r.Rubrika("58a"), c.MastiloR58a); c.PecatPrevoznika = ps; c.PecatZnak = pz; }
 
             c.ElektronskiIspis = Regex.IsMatch(n, @"ispis elektronskog|ausdruck des elektronischen|print-?out of the electronic|impression de la lettre de voiture electronique");
             c.NapomenaIspisa = c.ElektronskiIspis;
@@ -709,6 +711,33 @@ namespace Saobracaj.Agent.CimProvera.Citanje
                 if (broj == "" && stanica != "" && cif.Length >= 5 && cif.Length <= 7) { broj = g; continue; }
             }
             r.Zemlja = zemlja; r.Stanica = stanica; r.Preduzece = preduzece; r.Broj = broj;
+        }
+
+        /// <summary>
+        /// v3.0.4 (merilo pečata, odluka korisnika 19.11.): pečat ugovornog prevoznika u r58a sa skena. „da“ – tekst KP pečata (bar dva od:
+        /// Kombinovani, Prokuplje, Jug Bogdanova, UIC, PZ 009), otisak (mastilo ≥ 0,02 i nečitljiv/nagnut tekst – bar dve nisko pouzdane
+        /// reči sa ≥ 6 slova) ili datum otiska uz mastilo ≥ 0,015; „ne“ – r58a bez mastila (≤ 0,0075) ili samo kucan tekst (pouzdane reči,
+        /// najviše jedna nečitljiva, bez datuma i teksta pečata – „3212 KP“, „0022, UZ“); inače „nesigurno“. Broj otpravljanja u r62 i datum
+        /// u r29 nisu dokaz pečata.
+        /// </summary>
+        internal static (string stanje, string znak) Pecat58a(IList<Rec> reci, double mastilo)
+        {
+            var m = mastilo.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture);
+            var tekst = string.Join(" ", reci.Select(w => w.T ?? "")).ToLowerInvariant();
+            var kp = new[] { ("Kombinovani", @"kombinov|kjmbin"), ("Prokuplje", @"prokup"), ("Jug Bogdanova", @"bogdanov"), ("UIC", @"(?<![a-z])uic(?![a-z])"), ("PZ 009", @"(?<![a-z])pz\s*0?09") }
+                .Where(t => Regex.IsMatch(tekst, t.Item2)).Select(t => t.Item1).ToList();
+            var datum = Regex.IsMatch(tekst, @"(?<!\d)\d{1,2}\s*\.\s*\d{1,2}\s*[. ]\s*(20)?\d{2}(?!\d)") || Regex.IsMatch(tekst, @"(?<!\d)\d{1,2}\s+\d{1,2}\s+20\d{2}(?!\d)");
+            int Slova(Rec w) => Regex.Replace(w.T ?? "", @"\W", "").Length;
+            var nisko = reci.Where(w => w.Pouzdanost < 0.6 && Slova(w) >= 2).ToList();
+            var niskoSlova = nisko.Sum(Slova);
+            var pouzdane = reci.Where(w => w.Pouzdanost >= 0.6 && Slova(w) >= 1).ToList();
+            if (kp.Count >= 2) return ("da", "tekst KP pečata (" + string.Join(", ", kp) + ")" + (datum ? " + datum" : ""));
+            if (mastilo >= 0.02 && nisko.Count >= 2 && niskoSlova >= 6) return ("da", "otisak: mastilo " + m + " + nečitljiv/nagnut tekst (" + nisko.Count + " reči)");
+            if (datum && mastilo >= 0.015) return ("da", "datum otiska u r58a + mastilo " + m);
+            if (mastilo <= 0.0075) return ("ne", "r58a bez mastila (" + m + ")");
+            if (nisko.Count <= 1 && pouzdane.Count > 0)
+                return ("ne", "samo kucan tekst u r58a („" + string.Join(" ", pouzdane.Select(w => w.T)).Trim() + "“), bez otiska i datuma");
+            return ("nesigurno", "mastilo " + m + ", " + nisko.Count + " nečitljivih reči – nije jasno da li je pečat");
         }
     }
 }

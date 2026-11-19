@@ -262,6 +262,10 @@ namespace Saobracaj.Agent.CimProvera
                     Prethodni = m.References.Concat(string.IsNullOrEmpty(m.InReplyTo) ? new string[0] : new[] { m.InReplyTo }).Distinct().ToList(),
                 };
                 var pocetakProvere = DateTime.Now;
+                // v3.0.3: grupe NHM iz tarife (tmpNHM) pre prve provere – vrsta dokumenta ne računa nepostojeću šifru (OCR šum) kao znak
+                if (Pravila.Provere.NhmGrupe == null && cfg.UpisUBazu && !dryRun && !string.IsNullOrEmpty(cfg.Konekcija))
+                    try { Upis = Upis ?? new Baza.UpisUBazu(cfg.Konekcija, log, pravila.Kp) { Izvor = cfg.IzvorUpisa }; Upis.UcitajSifarnike(); }
+                    catch (Exception ex) { log.Upozorenje("Šifarnici nisu učitani pre provere (NHM tarifa): " + ex.Message); }
                 try { ishod = obrada.Proveri(prilozi, od, cfg.JeInterni(od), datum, en); }
                 catch (Exception ex)
                 {

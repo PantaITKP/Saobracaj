@@ -1,11 +1,10 @@
-grešaka 3, upozorenja 8, listova 1
+grešaka 4, upozorenja 7, listova 1
 warning	R1-ISO	r1
 warning	R4-ISO	r4
 error	R9	r9
 warning	R14	r14
 recommendation	R24-NHM6	r24
-warning	R29	r29
-info	R29	r29
+error	R29	r29
 warning	R21-MRN	r21
 error	X19	r62
 warning	X23	r9

@@ -92,6 +92,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         public bool OverenaVerzija;
         /// <summary>v3.0.2 (4): CIT 18 – prateći dokument za otkačena kola (samo INTERNO; upis kao napomena uz posao originalne pošiljke).</summary>
         public bool Cit18;
+        /// <summary>v3.0.4: pečat prevoznika – „postoji / nema / nesigurno – znak“ (ANALIZA.md).</summary>
+        public string Pecat = "";
     }
 
     internal sealed class RezultatProvere
@@ -228,6 +230,7 @@ namespace Saobracaj.Agent.CimProvera.Pravila
                              + (u.Engleski ? " – rules depending on the type (R30, KP7-PLATILAC, KP3, KP57) are not reported; check manually." : " – pravila koja zavise od vrste (R30, KP7-PLATILAC, KP3, KP57) se ne prijavljuju; proveriti ručno.");
                     rl.Nalazi.Add(new Nalaz { Pravilo = "VRSTA-DOKUMENTA", Rubrika = "30", Tezina = Tezina.Info, TezinaPravila = Tezina.Info, Tekst = tv, Uputstvo = tv, SamoInterno = true, Kljuc = "vrsta-nesigurna" });
                 }
+                try { rl.Pecat = Provere.OpisPecata(k); } catch { }
                 // v3.0.2 (4): CIT 18 (prateći dokument za otkačena kola, izdaje ga prevoznik) – ne proverava se kao CIM i ne ide pošiljaocu
                 if (Provere.JeCit18(k))
                 {

@@ -3,12 +3,9 @@ warning	G6	r9
 warning	R1-ISO	r1
 warning	R14	r14
 warning	R16	r16
-info	R16	r16
 recommendation	R25-MASA	r25
 warning	R29	r29
-info	R29	r29
 warning	R62	r62
-info	R62	r62
 warning	R49	r49
 warning	X2	r7
 recommendation	REC1	r8

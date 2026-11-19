@@ -553,11 +553,30 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             var ime = System.IO.Path.GetFileName((k.Dok?.Fajl ?? "").Split('/').Last());
             if (Regex.IsMatch(ime + " " + (c.Zaglavlje ?? ""), @"(?i)(?<!\p{L})(draft|nacrt|radna verzija|entwurf|proforma|pro forma|predlog)(?!\p{L})")) return Overa.Ne;
             if (!k.Ocr) return Overa.Ne;
+            // v3.0.4: merilo pečata iz čitača (tekst KP pečata / otisak / datum otiska; kucani tekst nije pečat)
+            if (c.PecatPrevoznika == "da") return Overa.Da;
+            if (c.PecatPrevoznika == "ne") return Overa.Ne;
+            if (c.PecatPrevoznika == "nesigurno") return Overa.Nesigurno;
             var r = c.R58a;
             var mast = c.MastiloR58a;
             if (!r.Popunjena && mast >= 0 && mast <= PragMastilaPecata * 0.25) return Overa.Ne;
             if (r.Popunjena && ImaPrevoznika58a(k, r) && mast >= PragMastilaPecata) return Overa.Da;
             return Overa.Nesigurno;
+        }
+
+        /// <summary>v3.0.4 (6): stanje pečata i znak odluke – za ANALIZA.md (svaki list).</summary>
+        internal static string OpisPecata(Kontekst k)
+        {
+            var c = k.C;
+            var o = OveraPrevoznika(k);
+            var st = o == Overa.Da ? "postoji" : o == Overa.Ne ? "nema" : "nesigurno";
+            string znak;
+            if (c.ElektronskiIspis) znak = "ispis elektronskog tovarnog lista";
+            else if (Regex.IsMatch(System.IO.Path.GetFileName((k.Dok?.Fajl ?? "").Split('/').Last()) + " " + (c.Zaglavlje ?? ""), @"(?i)(?<!\p{L})(draft|nacrt|radna verzija|entwurf|proforma|pro forma|predlog)(?!\p{L})")) znak = "radna verzija (draft / nacrt u nazivu ili zaglavlju)";
+            else if (!k.Ocr) znak = "digitalni dokument (tekst PDF-a, Word, Excel) – bez pečata";
+            else if (c.PecatZnak.Length > 0) znak = c.PecatZnak;
+            else znak = OveraOpis(k);
+            return st + " – " + znak;
         }
 
         /// <summary>Mastilo u r58a (udeo površine) od kog se smatra da pored kucanog teksta postoji pečat/potpis.</summary>
@@ -1025,6 +1044,9 @@ namespace Saobracaj.Agent.CimProvera.Pravila
         /// v3.0.2 (2.2): vrsta dokumenta (CIM / CUV) redom: X u kućici (sa slike), naziv obrasca (samo jedan naslov u zaglavlju), NHM 9922 i
         /// „empty wagons / prazna kola“ (CUV) ili NHM robe (CIM), naziv fajla. Vrsta je prvi znak koji postoji; nesigurna kada se neki drugi znak razlikuje.
         /// </summary>
+        /// <summary>v3.0.3: grupe NHM (Kod4) iz tarife (planiranje.tmpNHM) – puni ih Sifarnici.Pripremi; null = tarifa nije učitana (šifra se ne proverava).</summary>
+        internal static HashSet<string> NhmGrupe;
+
         internal static (string vrsta, bool nesigurna, string opis) VrstaDokumenta(Kontekst k)
         {
             var c = k.C;
@@ -1038,6 +1060,8 @@ namespace Saobracaj.Agent.CimProvera.Pravila
             bool naslovCim = !imaCuv && Regex.IsMatch(z, @"(?i)frachtbrief|lettre\s+de\s+voiture|consignment\s+note|tovarni\s+list|teretni\s+list|fuvarlev[eé]l");
             if (naslovCuv != naslovCim) znaci.Add(("naziv obrasca", naslovCuv ? "CUV" : "CIM"));
             var nhm = c.R24.Stavke.Select(s => Cifre(s.Sifra + s.Tekst)).Concat(new[] { Cifre(c.R24.Tekst) }).Where(x => x.Length >= 4).ToList();
+            // v3.0.3 (UID 45: „942290“): šifra čije grupe nema u tarifi (tmpNHM) je OCR šum – nije znak vrste
+            if (NhmGrupe != null) nhm = nhm.Where(x => x.StartsWith("99") || NhmGrupe.Contains(x.Substring(0, 4))).ToList();
             if (PraznaKolaNhm9922(c)) znaci.Add(("NHM 9922 / prazna kola", "CUV"));
             else if (nhm.Count > 0 && nhm.All(x => !x.StartsWith("99"))) znaci.Add(("NHM robe", "CIM"));
             var ime = System.IO.Path.GetFileName((k.Dok?.Fajl ?? "").Split('/').Last());

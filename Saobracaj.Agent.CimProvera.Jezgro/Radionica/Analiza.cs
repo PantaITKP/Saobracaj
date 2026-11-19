@@ -193,6 +193,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                     sb.AppendLine("| " + rub + " | " + p.Value["status"] + " | " + M((string)p.Value["tekst"]) + " | " + p.Value["pouzdanost"] + " | " + MeraTekst(p.Value["citljivost"] as JObject) + " | " + M(string.Join("; ", naRub)) + " |");
                 }
                 sb.AppendLine();
+                if (!string.IsNullOrEmpty((string)l["pecat"])) sb.AppendLine("**Pečat prevoznika:** " + M((string)l["pecat"])).AppendLine();   // v3.0.4
                 if (l["bez_dokaza"] is JArray bd && bd.Count > 0)
                     sb.AppendLine("**Samoprovera: nalazi bez pouzdanog dokaza** (list na ručnoj proveri): " + M(string.Join(", ", bd.Select(x => (string)x)))).AppendLine();
                 sb.AppendLine("### Nalazi").AppendLine();

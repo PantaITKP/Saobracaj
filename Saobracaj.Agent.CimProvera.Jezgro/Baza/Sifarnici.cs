@@ -50,6 +50,10 @@ namespace Saobracaj.Agent.CimProvera.Baza
         /// <summary>Priprema normalizovanih naziva (posle punjenja listi, i u testovima).</summary>
         public Sifarnici Pripremi()
         {
+            // v3.0.3 (UID 45, „942290“): grupe NHM iz tarife za proveru vrste dokumenta – šifra koje nema u tarifi je OCR šum
+            // (samo cela tarifa – bar 200 grupa; mali šifarnici iz testova ne menjaju proveru)
+            var grupe = new HashSet<string>(Nhm.Select(x => x.Kod4).Where(x => x.Length == 4));
+            if (grupe.Count >= 200) Pravila.Provere.NhmGrupe = grupe;
             foreach (var s in Stanice) { s.Norm = Slicnost.Stanica(s.Opis); s.KodCifre = Regex.Replace(s.Kod ?? "", @"\D", ""); s.Drzava = (s.Drzava ?? "").Trim().ToUpperInvariant(); }
             foreach (var p in Partneri)
             {

@@ -290,6 +290,15 @@
           "Vrsta dokumenta (odluka korisnika 19.11.): X u kućici CUV uz prazna kola (9922, „prazna kola / empty / leer“, tara bez neta) je CUV – NHM robe u r24 (prethodni tovar) i „CIM“ u nazivu fajla nisu suprotni znaci.",
           "KP3 (odluka korisnika 19.11.): KP kao izdavalac (3212 u r62) znači da je KP naveden – upozorenje, ne greška."
         ]
+      },
+      {
+        "date": "2026-11-19",
+        "version": "3.0.4",
+        "basis": "Odgovor korisnika posle 3.0.3 (pregled 15 slika pečata)",
+        "changes": [
+          "Pečat prevoznika (R16, R29, R62 kod radne verzije): tri stanja. „Postoji“ – tekst KP pečata (bar dva od: Kombinovani, Prokuplje, Jug Bogdanova, UIC, PZ 009), otisak (mastilo ≥ 0,02 i nečitljiv/nagnut tekst) ili datum otiska u r58a uz mastilo ≥ 0,015. „Nema“ – r58a bez mastila ili samo kucan tekst („3212 KP“, „0072“), bez INTERNO napomene. Inače „nesigurno“ (upozorenje + INTERNO). Broj otpravljanja u r62 i datum u r29 nisu dokaz pečata. Znak odluke je u ANALIZA.md za svaki list.",
+          "Vrsta dokumenta: NHM čije grupe nema u tarifi (planiranje.tmpNHM) je OCR šum i nije suprotan znak („942290“, UID 45)."
+        ]
       }
     ]
   },

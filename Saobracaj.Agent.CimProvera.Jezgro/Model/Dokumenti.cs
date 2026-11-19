@@ -252,6 +252,10 @@ namespace Saobracaj.Agent.CimProvera.Model
         [Interni] public string R58bPolje { get; set; } = "";
         /// <summary>v3.0.1 (1.1): sken – mastilo podataka u r58a (pečat/potpis prevoznika), udeo površine; -1 = nije mereno (tekst PDF-a, Word, Excel).</summary>
         [Interni] public double MastiloR58a { get; set; } = -1;
+        /// <summary>v3.0.4: pečat ugovornog prevoznika u r58a sa skena – „da“, „ne“, „nesigurno“ („“ = nije sken / nije ocenjeno).</summary>
+        [Interni] public string PecatPrevoznika { get; set; } = "";
+        /// <summary>v3.0.4: znak na osnovu kog je odlučeno o pečatu (za ANALIZA.md).</summary>
+        [Interni] public string PecatZnak { get; set; } = "";
         [Opis("Rubrika 21 - Naznačenje robe.")] public NaznacenjeRobe R21 { get; set; } = new NaznacenjeRobe();
         [Opis("Rubrika 22 - Naročita pošiljka (popunjeno ako je polje označeno).")] public TekstRubrika R22 { get; set; } = new TekstRubrika();
         [Opis("Rubrika 23 - RID (tekst tačno kako piše, npr. 'X').")] public TekstRubrika R23 { get; set; } = new TekstRubrika();

@@ -136,7 +136,7 @@ namespace Saobracaj.Agent.CimProvera.Tests
             Ocekuje(i, Tezina.Greska, "9", "R9", "spisak kola"); Ocekuje(i, Tezina.Greska, "9", "R9", "izvozna"); Ocekuje(i, Tezina.Greska, "9", "R9", "tranzitna");
             Assert.AreEqual(1, i.Provera.Listovi[0].Nalazi.Count(n => n.Rubrika == "9" && n.Tezina == Tezina.Greska), "r9 je jedna stavka");
             Ocekuje(i, Tezina.Preporuka, "24", "R24-NHM6", "(u T1: 262190)", primer: "262190"); NeSme(i, "R24");
-            Ocekuje(i, Tezina.Upozorenje, "29", "R29", "Posle overe");   // v3.0.2 (odluka 19.11.): bez pouzdanog pečata prevoznika – upozorenje
+            Ocekuje(i, Tezina.Greska, "29", "R29");   // v3.0.4 (merilo pečata): KP pečat u r58a (tekst KP pečata – UID 82, slika 06) – pečat postoji, greška
             Ocekuje(i, Tezina.Preporuka, "CIT 23", "X29-NHM6", "2620", primer: "262190"); NeSme(i, "X29");
             // v2.7: KP je u r7 naveden kao platilac za RS
             Ocekuje(i, Tezina.Greska, "7", "KP7-NIJE-PLATILAC", "Kombinovani Prevoz");
