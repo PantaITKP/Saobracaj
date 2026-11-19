@@ -1,5 +1,18 @@
 # CimProvera – izmene programa
 
+## 2026-11-19 – v3.0.3 (postavljeno na server; obrada pošte ostaje ISKLJUČENA)
+
+Server prelazi sa 2.9.2 na 3.0.3. Sve odluke su u `docs/ODLUKE.md` (odeljci 10–13), a ovde je kratak pregled.
+
+- **3.0** – CimRadionica (alat za ponovnu obradu), arhiva sandučeta, događaji iz teksta maila (OP_918).
+- **3.0.1** – R16, R1/R4 i ISO zemlje; „nema dokaza – nema tvrdnje“ (mera čitljivosti polja); samoprovera pre slanja; upis poslova (kopije, spiskovi, provera smisla mase).
+- **3.0.2** – kućice sa X sa slike, vrsta dokumenta CIM/CUV; KP3, KP57 i KP uz OCR toleranciju; R29/R62 kod radnih verzija; CIT 18; mase.
+- **3.0.3** – kućica CIM (R30 samo INTERNO, kada su obe kućice pouzdano prazne); CUV uz prethodni tovar; CIT 18 (mase i original po ponudi); zamenjena teretnica; kolona `Izvor` u tmp tabelama (OP_919, već pokrenut); `arhiviraj` bez SMTP-a i sa izveštajem o sandučetu; `Instaliraj.ps1 -ObradaIskljucena` pravi zadatak arhiviranja (07:10, 15:10) pod svc_cimprovera.
+- **Rezervna kopija** 2.9.2 je u `backup-pre-3.0.3-20261119-1357`.
+- **Pravila** su sada iz 3.0.3 (do sada su bila 2.8.4).
+- **Config servera nije menjan.** Novi ključevi imaju podrazumevane vrednosti.
+
+
 ## 2026-11-17 – v2.9.2: platilac preko broja ponude, KP u r57, ispravke posle testova 16.–17.11. i ponovne obrade od UID 191 (pravila ostaju 2.8.4)
 
 - **Platilac preko broja ponude** (`Baza\Ponude.cs`, `Provere.PonudaZaList`): broj ponude iz r7, pa r13, pa r14 („Ponuda 8957“, „Ponuda8957“, „Ponuda br.“, „ponuda:“, „KP Ponuda“, „po ponudi 8926“, „prema ponudi“, „Offer“, „offer nr 5856“, „according offer nr“, „acc. to offer no.“, „Angebot (Nr.)“, „Ajánlat“; najbliži oznaci SRB / KP / 3212). Samo ceo broj (1–6 cifara) se traži parametrizovanim upitom nad `dbo.Ponudba` (samo `PonStPon`, `PonPart`) i `dbo.Partnerji`; važenje se ne proverava. Nađena ponuda: nema KP7-NIJE-PLATILAC / KP7-PLATILAC / KP7-NEJASNO, r7 se ne označava u PRIMER-u, `PlatilacID = PonPart`, `BrojPonude`, poreklo „ponuda 8957 → PonPart naziv“ (100). Nije nađena: greška kao do sada + „Ponuda 8957 nije pronađena u sistemu KP“. Firma X u r7 i ponuda drugog partnera Y: samo INTERNO „r7 navodi X, ponuda 8957 glasi na Y“, upisuje se Y. Baza nedostupna: pošiljaocu ništa, interno „ponuda nije proverena – baza nedostupna“, mail se ponavlja u sledećem prolazu (posle poslednjeg pokušaja – samo interno). `OP_913`: `GRANT SELECT ON dbo.Ponudba` (pokreće korisnik); ponovna obrada čeka to pravo.
