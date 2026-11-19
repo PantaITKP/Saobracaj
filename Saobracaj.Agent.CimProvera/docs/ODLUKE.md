@@ -880,3 +880,18 @@ Osnova: PROMPT_v3.0.3.
   - zadatak obrade pravi sa novom lozinkom i odmah ga **isključuje**;
   - pravi zadatak arhiviranja i jednom ga pokreće.
 - Mehanizam `arhiviranje.zahtev` (v3.0) se ne koristi, jer bi tražio pokretanje zadatka obrade pošte. `arhiviraj` bez `--od-uid` počinje od nulte tačke (UID 191), kao „--od-uid 191“.
+
+### 13.7 Prvo arhiviranje (19.11.2026. u 14:45–14:48) i nova nulta tačka
+
+- Zadatak `Saobracaj\Arhiva CimProvera` je napravio `Instaliraj.ps1 -ObradaIskljucena`; korisnik ga je pokrenuo na serveru. Zadatak radi pod svc_cimprovera i završio je sa rezultatom 0. Zadatak obrade pošte je ostao Disabled.
+- **INBOX** (UIDVALIDITY 1794489150):
+  - na serveru: 899 poruka, 1 043,8 MB, UID 1–899 bez rupa;
+  - arhivirano: UID 191–899, 709 poruka, 839,7 MB; od toga su 109 sopstveni odgovori agenta (80,7 MB);
+  - rupa nema;
+  - prilozi PRIMER: 98,0 MB u 80 poruka (odgovori agenta u režimu Test stižu u INBOX).
+- **INBOX.Sent** (UIDVALIDITY 1794489155): 6 poruka (43,6 MB), sve pre nulte tačke, pa se ne arhiviraju. Agent šalje preko SMTP-a i ne upisuje kopiju u Sent.
+- UID 1–190 (190 poruka, oko 204 MB) su pre nulte tačke (13.11. u 23:41) i nisu u arhivi. Arhiviraju se samo ako korisnik to zatraži (`arhiviraj --od-uid 1`).
+- Agent je obradio do UID 846 (stanje.json, 18.11.). UID 847–899 (53 poruke) su arhivirani, ali nisu obrađeni.
+- **Nova nulta tačka:** poslednji UID koji pokriva arhiva je **899** (19.11. u 14:48). Arhiva se dopunjuje u 07:10 i 15:10.
+  - Pri ponovnom uključivanju agent nastavlja od svog stanja (UID 847), a ne od 899, da bi poruke 847+ bile obrađene.
+  - Iz sandučeta se sme obrisati samo ono što je u arhivi, i to tek posle druge kopije arhive.

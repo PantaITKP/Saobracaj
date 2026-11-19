@@ -815,7 +815,12 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 if (cit18Kandidati.Length > 0)
                     UpisiPoreklo(jid, null, new PoljePorekla { Kolona = "CIT18", Vrednost = null, Tekst = cit18Bez, Rubrika = "CIT 18", Pouzdanost = 0, Kandidati = PodaciPosla.Skrati("original nije siguran – kandidati: " + cit18Kandidati, 400) }, dokId);
             }
-            else if (id == null) PreuzmiCit18(jid, ZnaciCit18Posla(jid), dokId, ishod);
+            else if (id == null)
+            {
+                // dokument maila se vezuje za posao tek posle UpisiVoz – prijem novog posla je prijem ovog maila
+                var zp = ZnaciCit18Posla(jid); zp.Primljeno = zp.Primljeno ?? m.Primljeno;
+                PreuzmiCit18(jid, zp, dokId, ishod);
+            }
             // zapisi TL (poreklo grupa) i istorija povratka
             foreach (var l in voz.Listovi)
             {
