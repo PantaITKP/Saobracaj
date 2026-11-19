@@ -777,10 +777,16 @@ Osnova: PROMPT_v3.0.2 i analiza Claude-a `IZVESTAJ_Osnovni_3.0.1.md`.
 ### 12.5 Upis poslova – regresije u masama
 
 - **Spisak istog lista** (5.1): drugi spisak sa ≥ 80 % istih kola zamenjuje raniji; sabiraju se samo spiskovi različitih kola. Ista kola: isti broj, ili iste dužine uz pogrešnu UIC kontrolnu cifru i najviše dve različite cifre (OCR).
+  - Spisak zamenjuje raniji i kada su kola različita, ako je ista pošiljka:
+    - dosije je prepoznao isti tovarni list (nova, skenirana ili overena verzija) iz ranijeg maila – Coal 17: UID 260 zamenjuje spisak UID 140;
+    - isti fajl je ponovo poslat (ispravljen spisak u odgovoru) – Zmajevo: „CIT 23 Zmajevo-CR.xlsx“ UID 176 zamenjuje UID 175.
+  - Napomena: „spisak kola zamenjuje raniji spisak istog posla (…) – ne sabira se“.
 - **r25** (5.2): razume „1.845,680“, „2.447,150 kg“, „1.824.000 kg“, „955 450“, „41 050“, jedinice i oznake N/T/B, Netto/Tara/Brutto, i OCR oblike (Nelio, Netio, Nelto, Bruio, Brulo, Taro, Tera).
 - **Smisao** (5.3): za sve izvore – neto < 1 t ili > 100 t po kolima se ne upisuje. Pobeđuje izvor usklađen sam sa sobom (bruto = neto + tara). Kada se r25 i spisak razlikuju, napomena „r25 i spisak se razlikuju: …“.
 - **OCR varijanta** (5.4): nova vrednost koja se od postojeće razlikuje samo zamenama 0/O, 1/I/l, 5/S, 8/B, 2/Z ne gazi tačan tekst (Istorija „OCR varijanta iste vrednosti – zadržan tačan tekst“).
 - **Referenca bez natpisa** (5.5): „Train no. 256F“ → „256F“; isto za Zug Nr., Voz br., Vlak č.
+  - Broj voza posla se čita i iz reference bez natpisa („256F“ → 256). Bez toga je u prvoj obradi 3.0.2 spisak voza 256 (UID 57) preko iste prepiske otišao u posao voza 258 (56 kola).
+  - Veza iz dosijea (ista prepiska) ne spaja spisak sa poslom drugog broja voza (3.6).
 
 ### 12.6 Arhiva i sanduče (19.11.) – stanje i nulta tačka
 

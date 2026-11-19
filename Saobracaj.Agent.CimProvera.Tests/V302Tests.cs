@@ -223,6 +223,19 @@ namespace Saobracaj.Agent.CimProvera.Tests
         }
 
         [TestMethod]
+        public void Broj_voza_iz_reference_bez_natpisa()
+        {
+            // v3.0.2 (5.5 → 3.6): referenca se upisuje bez „Train no.“, a broj voza posla mora i dalje da se prepozna
+            // (Osnovni 3.0.2, UID 57: spisak voza 256 je bez ovoga otišao u posao voza 258)
+            Assert.AreEqual("256", ExcelCitac.BrojVozaIzReference("256F"));
+            Assert.AreEqual("258", ExcelCitac.BrojVozaIzReference("Train no: 258F"));
+            Assert.AreEqual("47811", ExcelCitac.BrojVozaIzReference("47811"));
+            Assert.AreEqual("", ExcelCitac.BrojVozaIzReference("DOSNISBAR26"));
+            Assert.AreEqual("", ExcelCitac.BrojVozaIzReference("SBGT26_SRB04"));
+            Assert.AreEqual("", ExcelCitac.BrojVozaIzReference("Budamar Coal 17"));
+        }
+
+        [TestMethod]
         public void OCR_varijanta_ne_menja_tacan_tekst_i_referenca_bez_natpisa()
         {
             Assert.IsTrue(UpisUBazu.OcrVarijanta("SBGT26_SRB04", "SBGT26_SRBO4"));

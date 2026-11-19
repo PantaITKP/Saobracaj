@@ -113,6 +113,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
         {
             var ishod = new IshodUpisa();
             promeneMaila = ishod.Promene;
+            istiListIzUid.Clear();
             var svoja = spoljna == null;
             c = svoja ? Otvori(konekcija) : spoljna.Connection;
             try
@@ -637,14 +638,21 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             var nedavni = NedavniPoslovi();
             if (voz.Length > 0)
             {
-                var istiVoz = nedavni.Where(j => ExcelCitac.BrojVoza(j.Referenca) == voz || ExcelCitac.BrojVoza(j.Naslovi) == voz).OrderByDescending(j => j.Id).ToList();
+                var istiVoz = nedavni.Where(j => ExcelCitac.BrojVozaIzReference(j.Referenca) == voz || ExcelCitac.BrojVoza(j.Naslovi) == voz).OrderByDescending(j => j.Id).ToList();
                 if (istiVoz.Count >= 1 && Dozvoljen(istiVoz[0].Id) is int jv) return jv;
             }
             // v2.9.2: natovaren spisak ne ide uz posao praznih istih kola (exLDC7 → LDC8); spisak praznih kola sme uz natovaren posao
             // (povratak praznih kola – grupa 2)
             var tKola = TeretnicaIstihKola(kola, true, StanjeSpiska(s) == true ? true : (bool?)null);
             if (Dozvoljen(tKola?.jobId) is int jk) return jk;
-            return Dozvoljen(PosaoIzDosijea(m));
+            // v3.0.2 (3.6): ista prepiska (dosije) ne spaja različite vozove – spisak voza 256 ne ide u posao voza 258 (UID 57)
+            var jd = Dozvoljen(PosaoIzDosijea(m));
+            if (jd is int jdv && voz.Length > 0)
+            {
+                var vozPosla = ExcelCitac.BrojVozaIzReference(Skalar("SELECT ISNULL(Referenca, '') FROM planiranje.tmpJobs WHERE ID = @j", "@j", jdv) as string ?? "");
+                if (vozPosla.Length > 0 && vozPosla != voz) return null;
+            }
+            return jd;
         }
 
         /// <summary>v2.9.2: posao samo praznih kola (NHM 9921/9922, CUV) – svi zapisi tovarnih listova su prazna kola.</summary>

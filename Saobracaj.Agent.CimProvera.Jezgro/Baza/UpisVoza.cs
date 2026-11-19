@@ -553,7 +553,7 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                     {
                         Id = r.GetInt32(0), O = r.IsDBNull(1) ? (int?)null : r.GetInt32(1), U = r.IsDBNull(2) ? (int?)null : r.GetInt32(2), Referenca = N(r.GetString(3)), Kljuc = r.GetString(4),
                         PouzdO = Convert.ToInt32(r.GetValue(5)), PouzdU = Convert.ToInt32(r.GetValue(6)), Primljeno = r.IsDBNull(7) ? (DateTime?)null : r.GetDateTime(7),
-                        Ponuda = Convert.ToString(r.GetValue(8)).Trim(), BrojKola = Convert.ToInt32(r.GetValue(9)), BrojVoza = NormOznaka(ExcelCitac.BrojVoza(r.GetString(3))),
+                        Ponuda = Convert.ToString(r.GetValue(8)).Trim(), BrojKola = Convert.ToInt32(r.GetValue(9)), BrojVoza = NormOznaka(ExcelCitac.BrojVozaIzReference(r.GetString(3))),
                     };
             if (kand.Count == 0) return (null, null);
             using (var cmd = Komanda("SELECT DISTINCT JobID, ISNULL(Naslov, '') FROM planiranje.tmpDokument WHERE JobID IS NOT NULL"))
@@ -704,11 +704,16 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
             // v3.0.1 (3.5, YU DIN UID 54): dosije je prepoznao isti tovarni list iz ranijeg maila – mail ide u posao tog maila i kada je r62 nesiguran
             if (id == null)
                 foreach (var l in voz.Listovi.Where(x => !string.IsNullOrEmpty(x.P.DosijeVeza)))
-                    if (PosaoMaila(l.P.DosijeVeza, m) is int jd0) { id = jd0; veza = "dosije: isti tovarni list kao " + l.P.DosijeVeza + (l.P.OverenaVerzija ? " (skenirana i overena verzija)" : ""); break; }
+                    if (PosaoMaila(l.P.DosijeVeza, m) is int jd0)
+                    {
+                        id = jd0; veza = "dosije: isti tovarni list kao " + l.P.DosijeVeza + (l.P.OverenaVerzija ? " (skenirana i overena verzija)" : "");
+                        foreach (Match u in Regex.Matches(l.P.DosijeVeza, @"UID (\d+)")) istiListIzUid.Add(long.Parse(u.Groups[1].Value));
+                        break;
+                    }
             var glavni0 = voz.Listovi.OrderByDescending(x => !x.P.Prazna).ThenByDescending(x => x.BrojKola).First();
             if (id == null && glavni0.P.BrojVoza.Length > 0 && glavni0.Otpravna is int o0 && glavni0.Uputna is int u0)
             {
-                var isti = NedavniPoslovi().Where(j => ExcelCitac.BrojVoza(j.Referenca) == glavni0.P.BrojVoza && j.Otpravna == o0 && j.Uputna == u0).OrderByDescending(j => j.Id).FirstOrDefault();
+                var isti = NedavniPoslovi().Where(j => ExcelCitac.BrojVozaIzReference(j.Referenca) == glavni0.P.BrojVoza && j.Otpravna == o0 && j.Uputna == u0).OrderByDescending(j => j.Id).FirstOrDefault();
                 if (isti != null) { id = isti.Id; veza = "isti voz " + glavni0.P.BrojVoza + " i relacija"; }
             }
             // v2.9.2 (3a.1): r62 nije pouzdan ključ – posao po zbiru znakova (ID iz naslova / r8 / kola + relacija, …)
@@ -996,6 +1001,29 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
         /// grupi 2). Razlika neto r25 ↔ spisak &gt; 1 % → napomena u poreklu i istoriji. Granični prelaz sa spiska (r69 „Prelazni put“, CER
         /// „Érkezési állomás“) kada posao nema pouzdan prelaz.
         /// </summary>
+        /// <summary>v3.0.2 (5.1): UID-ovi ranijih mailova čiji je tovarni list (po dosijeu) isti kao list ovog maila – njihov spisak se zamenjuje.</summary>
+        private readonly HashSet<long> istiListIzUid = new HashSet<long>();
+
+        /// <summary>
+        /// v3.0.2 (5.1): raniji spisak istog posla je ista pošiljka (zamenjuje se, ne sabira) kada je njegov mail po dosijeu isti tovarni list
+        /// (nova, skenirana ili overena verzija – Coal 17, UID 260 → UID 140) ili kada je isti fajl ponovo poslat (ispravljen spisak u odgovoru –
+        /// Zmajevo, „CIT 23 Zmajevo-CR.xlsx“ UID 175 → 176).
+        /// </summary>
+        private string IstaPosiljkaSpiska(int tid, int drugaTid)
+        {
+            (long? uid, string ime) Dok(int t)
+            {
+                using (var cmd = Komanda("SELECT TOP 1 d.UID, ISNULL(d.ImeFajla, '') FROM planiranje.tmpTeretnica t JOIN planiranje.tmpDokument d ON d.ID = t.DokumentID WHERE t.ID = @t", "@t", t))
+                using (var r = cmd.ExecuteReader())
+                    return r.Read() ? (r.IsDBNull(0) ? (long?)null : Convert.ToInt64(r.GetValue(0)), r.GetString(1)) : ((long?)null, "");
+            }
+            var (uid, ime) = Dok(drugaTid);
+            if (uid.HasValue && istiListIzUid.Contains(uid.Value)) return "isti tovarni list kao UID " + uid.Value + " (dosije)";
+            var (uidMoj, imeMoj) = Dok(tid);
+            if (ime.Length > 0 && string.Equals(ime, imeMoj, StringComparison.OrdinalIgnoreCase) && uid != uidMoj) return "isti fajl „" + ime + "“ ponovo poslat";
+            return null;
+        }
+
         private void PosaoIzTeretnice(int jobId, int tid, int? dokId, string razlog, IshodUpisa ishod, SpisakKola izvorni = null)
         {
             var s = new SpisakKola();
@@ -1032,6 +1060,8 @@ FROM planiranje.tmpJobs j WHERE j.Kreirano >= DATEADD(day, -@dana, SYSDATETIME()
                 // v3.0.2 (5.1, Coal 17: 34 → 67 kola; Zmajevo grupa 2: 27 → 54): spisak ISTIH kola (i OCR varijante brojeva) je nova verzija
                 // istog spiska – zamenjuje raniji, ne sabira se; sabiraju se samo spiskovi različitih kola
                 if (druga.Count == 0 || Grupa(druga) != mojaGrupa || UdeoIstihKola(s.Kola.Select(k => k.Broj).ToList(), druga.Select(k => k.Broj).ToList()) >= 0.2) continue;
+                // ista pošiljka (dosije ili isti fajl ponovo poslat) – novi spisak zamenjuje raniji i kada su kola različita (ispravljen spisak)
+                if (IstaPosiljkaSpiska(tid, t) is string ista) { ishod.Napomene.Add("spisak kola zamenjuje raniji spisak istog posla (" + ista + ") – ne sabira se"); continue; }
                 s.Kola.AddRange(druga); foreach (var k in druga) mojaKola.Add(k.Broj);
                 drugiSpiskovi++;
             }

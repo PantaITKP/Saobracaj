@@ -472,6 +472,17 @@ namespace Saobracaj.Agent.CimProvera.Prilozi
             return m.Success ? m.Groups[1].Value : "";
         }
 
+        /// <summary>
+        /// v3.0.2 (5.5): broj voza iz Reference posla – i bez natpisa, jer se referenca od 3.0.2 upisuje bez „Train no.“ („256F“ → 256).
+        /// </summary>
+        internal static string BrojVozaIzReference(string referenca)
+        {
+            var b = BrojVoza(referenca);
+            if (b.Length > 0) return b;
+            var m = Regex.Match(referenca ?? "", @"^\s*(\d{3,6})\s*[A-Za-z]?\s*$");
+            return m.Success ? m.Groups[1].Value : "";
+        }
+
         /// <summary>v2.9.0: zaglavlje spiska – broj voza, otpravna i uputna stanica, NHM (redovi „Otpravna stanica | …“).</summary>
         internal static void ZaglavljeSpiska(List<string[]> redovi, SpisakKola spisak, string opisIzvora)
         {

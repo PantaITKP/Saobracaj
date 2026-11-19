@@ -89,7 +89,7 @@ namespace Saobracaj.Agent.CimProvera.Baza
             var posloviRef = new List<(int id, string refN, string vozN)>();
             using (var cmd = Komanda("SELECT ID, ISNULL(Referenca, '') FROM planiranje.tmpJobs WHERE Kreirano >= DATEADD(day, -30, @t)", "@t", m.Primljeno))
             using (var rd = cmd.ExecuteReader())
-                while (rd.Read()) posloviRef.Add((rd.GetInt32(0), NormOznaka(rd.GetString(1)), NormOznaka(ExcelCitac.BrojVoza(rd.GetString(1)))));
+                while (rd.Read()) posloviRef.Add((rd.GetInt32(0), NormOznaka(rd.GetString(1)), NormOznaka(ExcelCitac.BrojVozaIzReference(rd.GetString(1)))));
             var naslovN = NormOznaka(m.Naslov);
             var poOznaci = posloviRef.Where(p => (p.vozN.Length >= 3 && oznake.Contains(p.vozN)) || (p.refN.Length >= 4 && (oznake.Contains(p.refN) || naslovN.Contains(p.refN)))).Select(p => p.id).ToList();
             if (poOznaci.Count > 0)
