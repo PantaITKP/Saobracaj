@@ -205,7 +205,14 @@ namespace Saobracaj.Agent.CimRadionica
             var online = a.Contains("--online") || (p.Online && !a.Contains("--offline"));
             var konekcija = online ? p.Konekcija() : null;
             if (online && string.IsNullOrEmpty(konekcija)) { Console.Error.WriteLine("Online: konekcija nije podešena."); return 1; }
-            if (a.Contains("--ispocetka")) rp.KreniIspocetka();
+            if (a.Contains("--ispocetka"))
+            {
+                rp.KreniIspocetka();
+                // v3.0.3 (3.5): online ispočetka briše tmp podatke SAMO alata (Izvor = 'Alat'); podaci agenta, tmpSinonimi i tmpNHM ostaju
+                if (online)
+                    try { RadniProstor.ObrisiTmpPodatke(konekcija); Console.WriteLine("Tmp podaci alata obrisani (Izvor = 'Alat'; podaci agenta ostaju)."); }
+                    catch (Exception ex) { Console.Error.WriteLine("Brisanje tmp podataka alata nije uspelo: " + ex.Message); return 1; }
+            }
             var samo = Op("--samo")?.Split(',').ToList();
             // --od NNN: nastavak posle prekida (redni broj u hronološkom redu, bez --ispocetka – dosije ranijih poruka ostaje)
             var od = int.TryParse(Op("--od"), out var odRb) ? odRb : 1;
