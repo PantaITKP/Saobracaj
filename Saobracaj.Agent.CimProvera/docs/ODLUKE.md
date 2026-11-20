@@ -1054,3 +1054,24 @@ Korisnik je 20.11. pregledao paket 3.0.4c i potvrdio merilo pečata. `Jezgro.dll
 - **Posle uključivanja** isti upit mora da da iste brojeve za `Alat`; novi redovi su samo `Agent`:
   `SELECT Izvor, COUNT(*), MAX(ID), CHECKSUM_AGG(CHECKSUM(*)) FROM planiranje.tmpJobs GROUP BY Izvor` (isto za tmpTeretnica, tmpTeretnicaStavke, tmpDokument).
   Zbir alata se menja samo kada alat obrađuje online (CimRadionica `--ispocetka --online` briše i piše `Alat`).
+
+### 15.7 Arhiva celog sandučeta pre pražnjenja (20.11.)
+
+- **Odluka korisnika:** pre pražnjenja agenti@ arhivira se sve – INBOX od UID 1 (i poruke pre 191) i ceo INBOX.Sent. Briše korisnik, agent ništa.
+- **Kako je urađeno:** zadatak arhiviranja uvek pokreće `arhiviraj` bez parametara, pa je dodato:
+  - `arhiviraj --sve` (INBOX od UID 1 i ceo folder poslatih);
+  - jednokratni fajl `arhiviranje.zahtev` u folderu agenta (ovde „--sve“). Arhiviranje ga čita i preimenuje u `.gotovo` sa ishodom.
+
+  Zadatak se ne menja. Pokrenut je 20.11. u 08:50, a završen u 08:51 sa kodom 0.
+- **Rezultat** (arhiva `D:\Cloude\Agenti\CimProvera\arhiva`, indeks `arhiva\indeks.csv`):
+
+| Folder | UIDVALIDITY | Na serveru | U arhivi | UID | Rupe | Veličina |
+|---|---|---:|---:|---|---|---:|
+| INBOX | 1794489150 | 899 | 899 | 1–899 | nema | 1 043,8 MB |
+| INBOX.Sent | 1794489155 | 6 | 6 | 1–6 | nema | 43,6 MB |
+
+  Nezavisna provera indeksa i diska: svaki UID ima red u indeksu i neprazan `.eml`, bez duplikata; arhiva ukupno 1 087,6 MB.
+- **Posle pražnjenja:**
+  - UIDVALIDITY ostaje, a nove poruke dobijaju UID od 900.
+  - Nulta tačka pri uključivanju je 899 za INBOX (prazan folder na serveru) i 6 za Sent (pozicija se ne vraća unazad).
+  - Folderi se ne brišu ni ne prave ponovo: ako to ipak promeni UIDVALIDITY, arhiva otvara novi podfolder `<folder>@<uidvalidity>`.

@@ -40,6 +40,8 @@ namespace Saobracaj.Agent.CimProvera
                                    zaustavlja zadatak, pravi rezervnu kopiju stanja (stanje\arhiva\datum_vreme),
                                    briše spisak obrađenih mailova i keš (OCR, rezultati), postavlja nultu tačku i
                                    ponovo uključuje zadatak; pravila, šabloni, config, logovi i testovi ostaju
+  arhiviraj [--od-uid N] [--sve]   arhiva sandučeta (IMAP samo čitanje, bez SMTP-a); --sve = INBOX od UID 1 i ceo folder poslatih;
+                                   jednokratni parametri za zadatak arhiviranja: fajl arhiviranje.zahtev (npr. „--sve“)
   nulta-tacka-arhiva [--suvo] [--max-min 60]
                                    v3.0.5: nulta tačka = poslednji UID pokriven arhivom (arhiva\izvestaj.txt i indeks.csv, bez IMAP-a);
                                    samo dok je zadatak obrade isključen; rezervna kopija stanja, red u nulta_tacka.txt
@@ -144,7 +146,7 @@ namespace Saobracaj.Agent.CimProvera
                     return 0;
                 }
                 if (a.Count > 0 && a[0] == "ponovna-obrada") return PonovnaObrada(cfg, log, a);
-                if (a.Count > 0 && a[0] == "arhiviraj") return Arhiviraj(cfg, log, a);
+                if (a.Count > 0 && a[0] == "arhiviraj") return ArhivirajSaZahtevom(cfg, log, a);
                 if (a.Count > 0 && a[0] == "nulta-tacka-arhiva") return NultaTackaArhive.Pokreni(cfg, log, a);
                 if (a.Count > 1 && a[0] == "preuzmi")
                 {
@@ -327,14 +329,40 @@ namespace Saobracaj.Agent.CimProvera
         internal static string ArhivaKoren(AgentConfig cfg) => string.IsNullOrEmpty(cfg.ArhivaFolder) ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "arhiva") : cfg.ArhivaFolder;
 
         /// <summary>
-        /// arhiviraj [--od-uid N]: sve poruke INBOX-a od UID-a N (podrazumevano nulta tačka) i foldera poslatih od istog vremena → arhiva\&lt;folder&gt;\&lt;UID&gt;.eml
+        /// v3.0.5: zadatak arhiviranja uvek pokreće „arhiviraj“ bez parametara. Jednokratni parametri idu u fajl „arhiviranje.zahtev“ u folderu
+        /// agenta (npr. „--sve“); arhiviranje ih dodaje, a fajl preimenuje u „.u_toku“ pa „.gotovo“ (sa ishodom). Zadatak se ne menja.
+        /// </summary>
+        internal static int ArhivirajSaZahtevom(AgentConfig cfg, Log log, List<string> a)
+        {
+            var zahtev = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "arhiviranje.zahtev");
+            if (!File.Exists(zahtev)) return Arhiviraj(cfg, log, a);
+            var uToku = Path.ChangeExtension(zahtev, ".u_toku");
+            if (File.Exists(uToku)) File.Delete(uToku);
+            File.Move(zahtev, uToku);
+            var arg = new List<string>(a);
+            arg.AddRange(File.ReadAllLines(uToku).Where(x => !x.TrimStart().StartsWith("#")).SelectMany(x => x.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)));
+            log.Info("Arhiviranje po zahtevu (arhiviranje.zahtev): " + string.Join(" ", arg.Skip(1)));
+            int rez;
+            try { rez = Arhiviraj(cfg, log, arg); }
+            catch (Exception ex) { log.Greska("Arhiviranje po zahtevu nije uspelo", ex); rez = 1; }
+            File.AppendAllText(uToku, Environment.NewLine + "# " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz") + " – završeno, kod " + rez + " (izveštaj: arhiva\\izvestaj.txt)" + Environment.NewLine);
+            var gotovo = Path.ChangeExtension(zahtev, ".gotovo");
+            if (File.Exists(gotovo)) File.Delete(gotovo);
+            File.Move(uToku, gotovo);
+            return rez;
+        }
+
+        /// <summary>
+        /// arhiviraj [--od-uid N] [--sve]: sve poruke INBOX-a od UID-a N (podrazumevano nulta tačka) i foldera poslatih od istog vremena → arhiva\&lt;folder&gt;\&lt;UID&gt;.eml
         /// + indeks.csv. IMAP samo za čitanje; ništa se ne briše. Postojeće poruke u arhivi se preskaču. Izveštaj: arhiva\izvestaj.txt.
         /// </summary>
         private static int Arhiviraj(AgentConfig cfg, Log log, List<string> a)
         {
             string Op(string ime) { var i = a.IndexOf(ime); return i > 0 && i + 1 < a.Count ? a[i + 1] : null; }
             var stanje = Stanje.Ucitaj(cfg.StanjeFolder);
-            var od = long.TryParse(Op("--od-uid") ?? "", out var o) ? o : Math.Max(1, stanje.NultaTackaUid);
+            // v3.0.5: --sve = INBOX od UID 1 i ceo folder poslatih (pre pražnjenja sandučeta)
+            var sve = a.Contains("--sve");
+            var od = sve ? 1 : long.TryParse(Op("--od-uid") ?? "", out var o) ? o : Math.Max(1, stanje.NultaTackaUid);
             var ar = new Arhiva(ArhivaKoren(cfg));
             int novih = 0, postoji = 0;
             var popis = new List<string>();
@@ -362,10 +390,10 @@ namespace Saobracaj.Agent.CimProvera
                     {
                         var p = s.Odlazni();
                         p.Open(MailKit.FolderAccess.ReadOnly);
-                        var sve = p.Search(MailKit.Search.SearchQuery.All).OrderBy(u => u.Id).ToList();
-                        var datumi = sve.Count == 0 ? new Dictionary<MailKit.UniqueId, DateTimeOffset?>() : p.Fetch(sve, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).ToDictionary(x => x.UniqueId, x => x.InternalDate);
-                        var poslate = sve.Where(u => !odVreme.HasValue || (datumi.TryGetValue(u, out var d) && d.HasValue && d.Value >= odVreme.Value)).ToList();
-                        log.Info("Arhiviranje: " + p.FullName + " (" + poslate.Count + " poruka od " + (odVreme?.ToString("dd.MM.yyyy HH:mm") ?? "početka") + ")");
+                        var svi = p.Search(MailKit.Search.SearchQuery.All).OrderBy(u => u.Id).ToList();
+                        var datumi = svi.Count == 0 ? new Dictionary<MailKit.UniqueId, DateTimeOffset?>() : p.Fetch(svi, new MailKit.FetchRequest(MailKit.MessageSummaryItems.InternalDate)).ToDictionary(x => x.UniqueId, x => x.InternalDate);
+                        var poslate = svi.Where(u => sve || !odVreme.HasValue || (datumi.TryGetValue(u, out var d) && d.HasValue && d.Value >= odVreme.Value)).ToList();
+                        log.Info("Arhiviranje: " + p.FullName + " (" + poslate.Count + " poruka od " + (sve ? "početka (--sve)" : odVreme?.ToString("dd.MM.yyyy HH:mm") ?? "početka") + ")");
                         foreach (var u in poslate)
                         {
                             if (File.Exists(ar.Putanja(p.FullName, p.UidValidity, u.Id))) { postoji++; continue; }
