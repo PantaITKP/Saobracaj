@@ -12,13 +12,15 @@
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <!-- verzija programa; v2.9.0: upis u planiranje.tmp* (pravila ostaju 2.8.4, meta.version u cim_validation_rules.json) -->
-    <Version>3.0.4</Version>
+    <Version>3.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- v3.0: pravila, šabloni i tessdata su u jezgru (Saobracaj.Agent.CimProvera.Jezgro) i kopiraju se u izlaz agenta odatle. -->
     <None Include="Instaliraj.ps1" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Reset-CimProvera.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Ukljuci-TestRezim.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Iskljuci-Hitno.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

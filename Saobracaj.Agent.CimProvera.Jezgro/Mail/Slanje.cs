@@ -40,13 +40,62 @@ namespace Saobracaj.Agent.CimProvera.Mail
         /// </summary>
         internal static Action<AgentConfig, MimeMessage> Transport = (c, m) => throw new InvalidOperationException("Slanje nije podešeno (transport nije postavljen) – CimRadionica ne šalje mail.");
 
-        public static void Posalji(AgentConfig cfg, MimeMessage m)
+        /// <summary>
+        /// v3.0.5: samo priprema bez slanja (CimRadionica – transport je prazan; prekidač se ne primenjuje jer ništa ne izlazi).
+        /// Agent ovo nikad ne postavlja.
+        /// </summary>
+        internal static bool SamoPriprema;
+
+        /// <summary>v3.0.5: ishod svakog slanja (poslato / blokirano + razlog) – agent ga upisuje u dnevnik za dnevni sažetak.</summary>
+        internal static Action<MimeMessage, bool, string> ZapisSlanja;
+
+        /// <summary>v3.0.5: folder u koji se čuva poruka koju prekidač nije pustio (.eml, za pregled); null = ne čuva se.</summary>
+        internal static Func<AgentConfig, string> FolderNeposlatih = c => string.IsNullOrEmpty(c?.StanjeFolder) ? null : System.IO.Path.Combine(c.StanjeFolder, "neposlato");
+
+        /// <summary>Slanje kroz zaštitu režima Test i prekidač (v3.0.5). Vraća false kada prekidač nije pustio poruku (ništa nije poslato).</summary>
+        public static bool Posalji(AgentConfig cfg, MimeMessage m)
         {
             OznaciOdgovor(m);
             // v2.8.4: zaštita režima Test – dok je Rezim = Test, svaki primalac (To, Cc, Bcc) koji nije agenti@kprevoz.co.rs se uklanja
             // pre slanja, bez obzira na to šta je sastavio ostali kod
             if (cfg.Rezim == Rezim.Test) SamoTestnaAdresa(m, ZapisZastite);
+            // v3.0.5: prekidač – proverava se pri svakom slanju (fajl hitnog isključivanja, Rezim iz config-a na disku, Live samo uz
+            // odobren spisak pošiljalaca); ako ne pušta, ne šalje se ništa – INTERNO: log, stanje\neposlato\*.eml i dnevnik
+            if (!SamoPriprema)
+            {
+                var razlog = Prekidac.Proveri(cfg, m, ZapisZastite);
+                if (razlog != null)
+                {
+                    Blokirano(cfg, m, razlog);
+                    return false;
+                }
+            }
             Transport(cfg, m);
+            try { ZapisSlanja?.Invoke(m, true, null); } catch { }
+            return true;
+        }
+
+        private static void Blokirano(AgentConfig cfg, MimeMessage m, string razlog)
+        {
+            string fajl = null;
+            try
+            {
+                var f = FolderNeposlatih(cfg);
+                if (!string.IsNullOrEmpty(f))
+                {
+                    System.IO.Directory.CreateDirectory(f);
+                    var ime = Regex.Replace(m.Subject ?? "", @"[^\p{L}\p{N} _.-]", "_").Trim();
+                    if (ime.Length > 60) ime = ime.Substring(0, 60);
+                    fajl = System.IO.Path.Combine(f, DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") + "_" + ime + ".eml");
+                    using (var s = System.IO.File.Create(fajl)) m.WriteTo(s);
+                }
+            }
+            catch { fajl = null; }
+            var tekst = "INTERNO: slanje blokirano – " + razlog + ". Ništa nije poslato (naslov „" + m.Subject + "“, primaoci: "
+                        + string.Join(", ", m.To.Mailboxes.Concat(m.Cc.Mailboxes).Concat(m.Bcc.Mailboxes).Select(x => x.Address)) + ")"
+                        + (fajl != null ? "; poruka sačuvana u " + fajl : "") + ".";
+            if (Dnevnik != null) Dnevnik.Greska(tekst); else ZapisZastite?.Invoke(tekst);
+            try { ZapisSlanja?.Invoke(m, false, razlog); } catch { }
         }
 
         /// <summary>Uklanja sve primaoce (To, Cc, Bcc; i grupe) osim <see cref="TestnaAdresa"/>; svaki uklonjen se upisuje u log.</summary>

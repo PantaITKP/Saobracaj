@@ -40,6 +40,9 @@ namespace Saobracaj.Agent.CimProvera
                                    zaustavlja zadatak, pravi rezervnu kopiju stanja (stanje\arhiva\datum_vreme),
                                    briše spisak obrađenih mailova i keš (OCR, rezultati), postavlja nultu tačku i
                                    ponovo uključuje zadatak; pravila, šabloni, config, logovi i testovi ostaju
+  nulta-tacka-arhiva [--suvo] [--max-min 60]
+                                   v3.0.5: nulta tačka = poslednji UID pokriven arhivom (arhiva\izvestaj.txt i indeks.csv, bez IMAP-a);
+                                   samo dok je zadatak obrade isključen; rezervna kopija stanja, red u nulta_tacka.txt
   --test-veze                      proverava pravila, šablon, OCR (tessdata), IMAP i SMTP, bez obrade
   --zastiti <vrednost>             DPAPI šifrovanje za config (pokrenuti pod servisnim nalogom)
   Word prilozi (.docx/.doc/.rtf) se pretvaraju u PDF preko Syncfusion DocIO; ključ je u Syncfusion.dpapi (Instaliraj.ps1)";
@@ -142,6 +145,7 @@ namespace Saobracaj.Agent.CimProvera
                 }
                 if (a.Count > 0 && a[0] == "ponovna-obrada") return PonovnaObrada(cfg, log, a);
                 if (a.Count > 0 && a[0] == "arhiviraj") return Arhiviraj(cfg, log, a);
+                if (a.Count > 0 && a[0] == "nulta-tacka-arhiva") return NultaTackaArhive.Pokreni(cfg, log, a);
                 if (a.Count > 1 && a[0] == "preuzmi")
                 {
                     // preuzmi <uid> [--odlazni] [--izlaz folder]: čuva priloge jedne poruke (folder se otvara samo za čitanje; ništa se ne menja)
@@ -294,7 +298,7 @@ namespace Saobracaj.Agent.CimProvera
         // ------------------------------------------------------------------------------------------- arhiva (v3.0, tačka 5)
 
         /// <summary>v3.0.3 (3.2): komande bez slanja pošte – SMTP transport se ne postavlja (arhiviranje: samo IMAP čitanje i upis u arhivu).</summary>
-        internal static bool BezSlanja(IList<string> a) => a != null && a.Count > 0 && a[0] == "arhiviraj";
+        internal static bool BezSlanja(IList<string> a) => a != null && a.Count > 0 && (a[0] == "arhiviraj" || a[0] == "nulta-tacka-arhiva");
 
         /// <summary>
         /// v3.0.3 (3.4): popis foldera na serveru (samo čitanje: UID, veličina, BODYSTRUCTURE) – broj i veličina svih poruka, prilozi PRIMER,

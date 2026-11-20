@@ -758,45 +758,15 @@ FROM planiranje.tmpTeretnica t" + uslov + " ORDER BY t.ID DESC");
             Zapis("Testiranje: kreće ispočetka");
         }
 
-        /// <summary>Nove poruke iz foldera Testiranje: uvoz u radni prostor „Testiranje“ i obrada po datumu slanja, sa _Analiza u folderu Testiranje.</summary>
+        /// <summary>
+        /// Nove poruke iz foldera Testiranje: uvoz u radni prostor „Testiranje“ i obrada po datumu slanja, sa _Analiza u folderu Testiranje;
+        /// v3.0.5: posle svake obrade paket za Claude (_Paket\Claude\Claude_Testiranje_&lt;datum&gt;.zip) – TestiranjeObrada.
+        /// </summary>
         private async void ProveriTestiranje(bool iNeuspele = false)
         {
             if (radi || string.IsNullOrWhiteSpace(p.TestiranjeFolder) || !Directory.Exists(p.TestiranjeFolder)) return;
-            var fajlovi = Directory.GetFiles(p.TestiranjeFolder).Where(f => System.Text.RegularExpressions.Regex.IsMatch(f, @"(?i)\.(msg|eml)$")).ToList();
-            if (fajlovi.Count == 0) return;
-            var test = RadniProstor.Otvori(Path.Combine(p.Radni, "Testiranje"));
-            var nove = test.Uvezi(fajlovi);
-            // v3.0: „Obradi sada“ obrađuje ponovo i poruke koje nisu obrađene zbog greške okruženja
-            var neuspeleRanije = iNeuspele ? new HashSet<string>(test.Neuspeli(p.Verzija).Select(x => x.Kljuc)) : new HashSet<string>();
-            var neobradjene = test.Hronoloski().Where(s => !s.Rezultati.ContainsKey(p.Verzija) || neuspeleRanije.Contains(s.Kljuc)).ToList();
-            if (neobradjene.Count == 0) return;
-            Zapis("novih: " + nove.Count + ", za obradu: " + neobradjene.Count);
             radi = true;
-            try
-            {
-                var konekcija = p.Online ? p.Konekcija() : null;
-                foreach (var deo in Enumerable.Range(0, (neobradjene.Count + p.VelicinaDela - 1) / p.VelicinaDela).Select(i => neobradjene.Skip(i * p.VelicinaDela).Take(p.VelicinaDela).ToList()))
-                {
-                    var posao = new PosaoRadnika { Koren = test.Koren, Kljucevi = deo.Select(x => x.Kljuc).ToList(), Online = p.Online, Verzija = p.Verzija, Kes = p.Kes, Analiza = p.TestiranjeFolder };
-                    var javljeni = new HashSet<string>();
-                    var neuspeh = await Task.Run(() => PokreniRadnika(posao, konekcija, red =>
-                    {
-                        var m = System.Text.RegularExpressions.Regex.Match(red, @"^(?:OK|GRESKA) (.+?) \| ");
-                        if (m.Success) lock (javljeni) javljeni.Add(m.Groups[1].Value);
-                        BeginInvoke((Action)(() => Zapis(red)));
-                    }));
-                    // v3.0: pad radnika – poruke bez ishoda dobijaju „nije obrađen – greška okruženja …“ (i ANALIZA.md u folderu Testiranje)
-                    List<StavkaProstora> bez;
-                    lock (javljeni) bez = RadniProstor.ZabeleziNeobradjene(test.Koren, posao.Kljucevi, javljeni, p.Verzija, neuspeh, p.Online, false);
-                    foreach (var x in bez) { Analiza.NapisiNeuspeh(p.TestiranjeFolder, p.Verzija, RadniProstor.Otvori(test.Koren).Rb(x), x, Path.Combine(test.Koren, x.Rezultati[p.Verzija])); Zapis("NIJE OBRAĐEN: " + x.Naslov + " – " + x.Odluka); }
-                }
-                Analiza.ZbirnoIzFoldera(p.TestiranjeFolder, p.Verzija);
-                test = RadniProstor.Otvori(test.Koren);
-                Zbirno.Sacuvaj(test, p.Verzija);
-                Zapis("gotovo – _Analiza\\" + p.Verzija + " u " + p.TestiranjeFolder);
-                var nu = test.Neuspeli(p.Verzija);
-                if (nu.Count > 0) Zapis("NISU OBRAĐENI (" + nu.Count + "): " + string.Join("; ", nu.Select(x => x.Naslov)) + " – dugme „Obradi sada (i neuspele)“ ih obrađuje ponovo.");
-            }
+            try { await Task.Run(() => TestiranjeObrada.Obradi(p, iNeuspele, red => BeginInvoke((Action)(() => Zapis(red))))); }
             catch (Exception ex) { Zapis("greška: " + ex.Message); }
             finally { radi = false; }
         }

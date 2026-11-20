@@ -1,5 +1,25 @@
 # CimProvera – izmene programa
 
+## 2026-11-20 – v3.0.5: priprema Test režima na serveru (obrada pošte ostaje ISKLJUČENA)
+
+Odluke su u `docs/ODLUKE.md`, odeljak 15.
+
+- **Server:** 20.11. u 00:28 postavljen je `Jezgro.dll` 3.0.4 (merilo pečata, ODLUKE 14). Rezervna kopija je `backup-pre-3.0.4-20261120-0028`.
+- **Prekidač** (`Mail\Prekidac.cs`) radi pri svakom slanju i na početku svakog prolaza:
+  - Test → isključivo agenti@;
+  - Live → samo uz `OdobreniPosiljaoci`;
+  - sve ostalo → ništa se ne šalje (INTERNO: log, `stanje\neposlato`, dnevnik).
+
+  `Rezim` se čita iz config-a pri svakom slanju. Fajl `SLANJE_ZAUSTAVLJENO` služi za hitno isključivanje.
+- **Nulta tačka iz arhive:** komanda `nulta-tacka-arhiva [--suvo]` postavlja poslednji UID pokriven arhivom, bez IMAP-a i bez SMTP-a.
+- **Dnevni sažetak** ide na agenti@ jednom dnevno (`DnevniSazetakSat`, podrazumevano 7), iz `stanje\dnevnik\*.jsonl`.
+- **Skripte:**
+  - `Ukljuci-TestRezim.ps1 [-Suvo]`: provera → arhiviranje → nulta tačka → uključivanje zadatka;
+  - `Iskljuci-Hitno.ps1`;
+  - `Instaliraj.ps1 -ObradaIskljucena -SaSyncfusion`: Syncfusion ključ bez uključivanja obrade.
+- **CimRadionica:** `--testiranje [--neuspele]`, a kartica Testiranje posle svake obrade pravi `_Paket\Claude\Claude_Testiranje_<datum>.zip`.
+- **Novi ključevi config-a** (svi neobavezni): `OdobreniPosiljaoci`, `DnevniSazetakSat`. Config servera se ne menja.
+
 ## 2026-11-19 – v3.0.3 (postavljeno na server; obrada pošte ostaje ISKLJUČENA)
 
 Server prelazi sa 2.9.2 na 3.0.3. Sve odluke su u `docs/ODLUKE.md` (odeljci 10–13), a ovde je kratak pregled.

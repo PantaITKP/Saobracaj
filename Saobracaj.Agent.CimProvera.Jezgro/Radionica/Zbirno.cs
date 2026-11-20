@@ -301,10 +301,14 @@ namespace Saobracaj.Agent.CimProvera.Radionica
         /// (slike strana u sivoj skali, 80 dpi), Zbirno, Poređenje i dodatni fajlovi (Rečnik, PROCITAJ). Delovi ≤ <paramref name="maxBajtova"/>;
         /// mail (folder NNN_…) se nikad ne deli između delova. Bez tajni (isti filter kao <see cref="Paket"/>). Vraća putanje delova.
         /// </summary>
-        public static List<string> PaketZaClaude(RadniProstor rp, string verzija, string izlazFolder, IEnumerable<string> dodatni, out List<string> preskoceno, long maxBajtova = 100L * 1024 * 1024)
+        /// <param name="analizaKoren">v3.0.5: koren u kom je _Analiza (Testiranje: folder Testiranje); null = radni prostor.</param>
+        /// <param name="osnovaImena">v3.0.5: ime paketa bez .zip (npr. „Claude_Testiranje_2026-11-20“); null = Claude_&lt;prostor&gt;_&lt;verzija&gt;.</param>
+        /// <param name="ukljuciMail">v3.0.5: samo folderi mailova za koje vraća true (npr. mailovi obrađeni u ovoj obradi); null = svi.</param>
+        public static List<string> PaketZaClaude(RadniProstor rp, string verzija, string izlazFolder, IEnumerable<string> dodatni, out List<string> preskoceno, long maxBajtova = 100L * 1024 * 1024,
+            string analizaKoren = null, string osnovaImena = null, Func<string, bool> ukljuciMail = null)
         {
             var lokalno = preskoceno = new List<string>();
-            var baza = Path.Combine(rp.Koren, "_Analiza", RadniProstor.BezbednoIme(verzija, 30));
+            var baza = Path.Combine(analizaKoren ?? rp.Koren, "_Analiza", RadniProstor.BezbednoIme(verzija, 30));
             if (!Directory.Exists(baza)) throw new DirectoryNotFoundException("Nema " + baza + " – obradite sa „napravi _Analiza“.");
             Directory.CreateDirectory(izlazFolder);
             // stavke: (ime u zip-u, bajtovi, grupa) – grupa je folder maila; zajednički fajlovi su grupa „“ (prvi deo)
@@ -327,6 +331,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
             foreach (var dir in Directory.GetDirectories(baza).OrderBy(x => x, StringComparer.Ordinal))
             {
                 var ime = Path.GetFileName(dir);
+                if (ukljuciMail != null && !ukljuciMail(ime)) continue;
                 var l = new List<(string, byte[])>();
                 foreach (var f in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
                 {
@@ -345,7 +350,7 @@ namespace Saobracaj.Agent.CimProvera.Radionica
                 if (tekuci + vel > maxBajtova * 0.95 && delovi.Last().Count > zajednicki.Count) { delovi.Add(new List<(string, byte[])>()); tekuci = 0; }
                 delovi.Last().AddRange(fajlovi); tekuci += vel;
             }
-            var osnova = "Claude_" + RadniProstor.BezbednoIme(rp.Ime, 30) + "_" + RadniProstor.BezbednoIme(verzija, 30);
+            var osnova = osnovaImena ?? "Claude_" + RadniProstor.BezbednoIme(rp.Ime, 30) + "_" + RadniProstor.BezbednoIme(verzija, 30);
             var putanje = delovi.Select((d, i) => Path.Combine(izlazFolder, osnova + (delovi.Count > 1 ? "_deo" + (i + 1) + "od" + delovi.Count : "") + ".zip")).ToList();
             for (int i = 0; i < delovi.Count; i++)
             {

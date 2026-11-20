@@ -262,7 +262,7 @@ namespace Saobracaj.Agent.CimProvera
             return kod;
         }
 
-        private static int Zadatak(string ime, string komanda, string opcija, out string izlaz)
+        internal static int Zadatak(string ime, string komanda, string opcija, out string izlaz)
         {
             var psi = new ProcessStartInfo("schtasks.exe", komanda + " /TN \"" + ime + "\" " + opcija)
             { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };

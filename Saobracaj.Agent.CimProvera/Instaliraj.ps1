@@ -20,7 +20,8 @@
 #     ("arhiviraj": IMAP samo citanje, upis u arhiva\, SMTP se ne inicijalizuje), svaki dan u 07:10 i 15:10,
 #   - zadatak arhiviranja se odmah pokrece jednom; izvestaj: arhiva\izvestaj.txt.
 #   Iz sanduceta se nista ne brise.
-param([switch]$ObradaIskljucena)
+#   v3.0.5: -ObradaIskljucena -SaSyncfusion - isto, ali se unosi i Syncfusion kljuc (Word prilozi -> PDF), npr. pre Ukljuci-TestRezim.ps1
+param([switch]$ObradaIskljucena, [switch]$SaSyncfusion)
 
 $ErrorActionPreference = 'Stop'
 $SqlInstanca = 'SQLEXPRESS2008K'
@@ -204,7 +205,7 @@ Postavi 'StanjeFolder' $Stanje
 $xml.Save($Cfg)
 Ok 'sifrovana lozinka i StanjeFolder upisani u Saobracaj.Agent.CimProvera.exe.config'
 
-if ($ObradaIskljucena) {
+if ($ObradaIskljucena -and -not $SaSyncfusion) {
     # v3.0.3: arhiviranju Word -> PDF nije potreban; kljuc se unosi pri ukljucivanju obrade poste (Instaliraj.ps1 bez -ObradaIskljucena)
     Korak '3b. Syncfusion kljuc se preskace (-ObradaIskljucena: arhiviranje ne pretvara Word u PDF)'
 } else {

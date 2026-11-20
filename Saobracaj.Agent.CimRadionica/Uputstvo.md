@@ -63,3 +63,5 @@ Kartica **Testiranje** prati `Desktop\Testiranje\`:
 - `_Analiza` nastaje u istom folderu;
 - beleške `X - napomena.txt/.docx` i `Zapazanja.docx/.txt` ulaze u ANALIZA.md i ne obrađuju se kao mail;
 - **Kreni ispočetka** briše stanje i rezultate praćenja.
+- v3.0.5: posle svake obrade nastaje paket za Claude **samo sa mailovima te obrade**: `Desktop\Testiranje\_Paket\Claude\Claude_Testiranje_<datum>.zip`. Drugi paket istog dana dobija `_2`, `_3`.
+- Isto bez prozora: `CimRadionica.exe --testiranje` (sa `--neuspele` ponovo obrađuje i neuspele). Verzija rezultata je `Verzija` iz `podesavanja.json`.

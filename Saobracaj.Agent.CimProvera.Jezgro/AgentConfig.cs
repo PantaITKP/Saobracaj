@@ -36,6 +36,17 @@ namespace Saobracaj.Agent.CimProvera
         public string PosiljalacIzvestaja; // From izveštaja (ključ From ili PosiljalacIzvestaja; podrazumevano = sanduče)
         public string ReplyTo;             // Reply-To izveštaja (ključ ReplyTo; podrazumevano = From)
         public Rezim Rezim;
+        /// <summary>v3.0.5: vrednost ključa Rezim tačno kako piše u config-u (prekidač: samo „Test“ ili „Live“ dozvoljavaju slanje; bez ključa = Test).</summary>
+        public string RezimTekst = "Test";
+        /// <summary>
+        /// v3.0.5: prekidač se proverava pri SVAKOM slanju – agent ponovo čita ključ Rezim iz exe.config (izmena važi odmah, bez restarta).
+        /// Null (CimRadionica, testovi) = <see cref="RezimTekst"/>.
+        /// </summary>
+        public Func<string> RezimSada;
+        /// <summary>v3.0.5: Live je dozvoljen samo uz odobren spisak pošiljalaca (adrese ili @domen; ključ OdobreniPosiljaoci).</summary>
+        public List<string> OdobreniPosiljaoci = new List<string>();
+        /// <summary>v3.0.5: dnevni sažetak na agenti@ – u prvom prolazu posle ovog sata, za prethodni dan (ključ DnevniSazetakSat; -1 = isključen).</summary>
+        public int DnevniSazetakSat = 7;
         public string IzvestajAdresa;      // u režimu Test svi izveštaji idu ovde (ključ TestPrimalac ili IzvestajAdresa)
         public List<string> KopijaNa = new List<string>();
         /// <summary>v2.8.4 (10): adrese koje automatski prosleđuju poštu na agenti@ – ne idu u primaoce u Live režimu (ključ ProsledjivanjeNaAgenti).</summary>
@@ -94,7 +105,13 @@ namespace Saobracaj.Agent.CimProvera
 
         public string Bazni => AppDomain.CurrentDomain.BaseDirectory;
 
-        public static AgentConfig Ucitaj() => Ucitaj(ConfigurationManager.AppSettings);
+        public static AgentConfig Ucitaj()
+        {
+            var cfg = Ucitaj(ConfigurationManager.AppSettings);
+            // v3.0.5: prekidač – pri svakom slanju ključ Rezim se čita ponovo iz exe.config na disku
+            cfg.RezimSada = () => { ConfigurationManager.RefreshSection("appSettings"); return ConfigurationManager.AppSettings["Rezim"]; };
+            return cfg;
+        }
 
         /// <summary>
         /// Podešavanja iz appSettings. Adrese nisu u kodu: CitajSanduce (ili Nalog) = sanduče koje se čita i nalog za IMAP/SMTP,
@@ -121,6 +138,9 @@ namespace Saobracaj.Agent.CimProvera
                 OdlazniFolder = S("OdlazniFolder", ""),
                 CitajOdlazne = B("CitajOdlazne", true),
                 Rezim = string.Equals(S("Rezim", "Test"), "Live", StringComparison.OrdinalIgnoreCase) ? Rezim.Live : Rezim.Test,
+                RezimTekst = a["Rezim"] == null ? "Test" : a["Rezim"].Trim(),   // ključa nema = podrazumevano Test; prazna vrednost = prekidač ne pušta
+                OdobreniPosiljaoci = L("OdobreniPosiljaoci", ""),
+                DnevniSazetakSat = I("DnevniSazetakSat", 7),
                 InterniDomeni = L("InterniDomeni", "kprevoz.co.rs"),
                 KopijaNa = L("KopijaNa", ""),
                 ProsledjivanjeNaAgenti = L("ProsledjivanjeNaAgenti", ""),

@@ -104,6 +104,17 @@ namespace Saobracaj.Agent.CimRadionica
             if (a.Count >= 2 && a[0] == "--radnik") { try { Saobracaj.Agent.CimProvera.Prilozi.WordUPdf.UcitajKljuc(); } catch { } return Radnik(a[1]); }
             if (a.Count >= 3 && a[0] == "--uvezi") return Uvezi(a[1], a.Skip(2).ToList());
             if (a.Count >= 2 && a[0] == "--obradi") return ObradiBezUi(a);
+            // v3.0.5: --testiranje [--neuspele] – nove .msg/.eml iz foldera Testiranje (kao kartica Testiranje) + paket za Claude posle obrade
+            if (a.Count >= 1 && a[0] == "--testiranje")
+            {
+                var pt = Podesavanja.Ucitaj();
+                if (pt.Online && string.IsNullOrEmpty(pt.Konekcija())) { Console.Error.WriteLine("Online: konekcija nije podešena."); return 1; }
+                GlavnaForma.PostaviRadnike(pt);
+                var it = TestiranjeObrada.Obradi(pt, a.Contains("--neuspele"), Console.WriteLine);
+                Console.WriteLine("Testiranje (" + pt.TestiranjeFolder + ", verzija " + pt.Verzija + "): fajlova " + it.Fajlova + ", novih " + it.Novih + ", obrađeno " + it.ZaObradu
+                    + ", neuspelih " + it.Neuspeli.Count + "; paket: " + (it.Paketi.Count == 0 ? "–" : string.Join(", ", it.Paketi)));
+                return it.Neuspeli.Count > 0 ? 2 : 0;
+            }
             // v3.0 (odluka 18.11.): online režim na laptopu – konekcija iz CIMPROVERA_KONEKCIJA (nikad iz argumenata) se čuva DPAPI-jem
             // za trenutnog korisnika; folder Testiranje na Desktop-u
             // v3.0.1 (4.3): Syncfusion licencni ključ (Word → PDF) za nalog korisnika na laptopu – iz promenljive CIMPROVERA_SYNCFUSION (postavlja je

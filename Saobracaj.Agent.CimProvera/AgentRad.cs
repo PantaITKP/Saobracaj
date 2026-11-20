@@ -36,6 +36,15 @@ namespace Saobracaj.Agent.CimProvera
             // ključ je ponovo ispravan: sledeći kvar ključa se opet javlja
             if (WordUPdf.KljucUcitan) stanje.Upozorenja.Remove("syncfusion-kljuc");
             File.WriteAllText(Path.Combine(cfg.StanjeFolder, "heartbeat.txt"), DateTimeOffset.Now.ToString("o"));
+            // v3.0.5: prekidač – hitno isključivanje (fajl SLANJE_ZAUSTAVLJENO) ili režim koji nije Test / Live sa odobrenim spiskom:
+            // prolaz se ne izvršava (pošta se ne čita, ništa se ne šalje i ne upisuje); poruke čekaju sledeći ispravan prolaz
+            var blokada = Prekidac.RazlogBlokade(cfg);
+            if (blokada != null)
+            {
+                log.Greska("INTERNO: prolaz se ne izvršava – " + blokada + ". Pošta se ne čita, ništa se ne šalje i ne upisuje.");
+                return 1;
+            }
+            if (!dryRun) Slanje.ZapisSlanja = (m, ok, razlog) => DnevniSazetak.ZapisiSlanje(cfg.StanjeFolder, DateTime.Now, m, ok, razlog);
             PravilaSkup pravila;
             try { pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log); }
             catch (Exception ex) { log.Greska("Pravila nisu učitana", ex); Upozori(stanje, "pravila", "Pravila nisu učitana: " + ex.Message); return 1; }
@@ -51,6 +60,8 @@ namespace Saobracaj.Agent.CimProvera
                 if (stanje.NultaTackaNalog != null)
                     log.Info("Nulta tačka: vreme reseta " + (stanje.NultaTacka.HasValue ? stanje.NultaTacka.Value.ToString("dd.MM.yyyy HH:mm:ss zzz") : "–") + ", UID " + (stanje.NultaTackaUid > 0 ? stanje.NultaTackaUid + " (" + stanje.NultaTackaNalog + ", UIDVALIDITY " + stanje.NultaTackaUidValidity + ")" : "još nije zapisan (zapisuje se u ovom krugu)") + " – obrađuju se samo poruke primljene posle reseta.");
                 log.Info("Sanduče: " + cfg.Nalog + " (From " + cfg.PosiljalacIzvestaja + ", Reply-To " + cfg.ReplyTo + (cfg.Rezim == Rezim.Test ? ", test primalac " + cfg.IzvestajAdresa : "") + ", režim " + cfg.Rezim + ")");
+                log.Info("Prekidač: " + (Prekidac.Vazeci(cfg, out _) == Rezim.Test ? "režim Test – slanje isključivo na " + Slanje.TestnaAdresa
+                         : "režim Live – spoljni primaoci samo sa odobrenog spiska (" + cfg.OdobreniPosiljaoci.Count + ")") + "; upis u bazu " + (cfg.UpisUBazu ? "Izvor = " + cfg.IzvorUpisa : "isključen") + ".");
                 using (var s = new Sanduce(cfg))
                 {
                     s.Povezi();
@@ -70,6 +81,7 @@ namespace Saobracaj.Agent.CimProvera
                 return 1;
             }
             DnevnaListaSifarnika(stanje);
+            DnevniSazetakAkoTreba(stanje);
             if (!dryRun) stanje.Sacuvaj();
             log.Info("Kraj: obrađeno " + obradjeno + " poruka; OCR strana " + citac.BrojOcrStrana + ".");
             return 0;
@@ -258,7 +270,17 @@ namespace Saobracaj.Agent.CimProvera
                 try { new Arhiva(cfg.ArhivaFolder).Sacuvaj(f.FullName, f.UidValidity, uid.Id, m, t => log.Upozorenje(t)); }
                 catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": poruka nije upisana u arhivu: " + ex.Message); }
             obradaPoruke.Poredi = (fajlovi, r, en, opis) => Poredi(indeks, sanduce, f, fajlovi, r, pravila, en, opis, uid.Id);
-            return obradaPoruke.Obradi(new UlaznaPoruka { Poruka = m, Uid = uid.Id, Folder = f.FullName, Kljuc = s.Kljuc, Odlazni = odlazni, Izvor = "imap" }, ps).Korak;
+            var ulaz = new UlaznaPoruka { Poruka = m, Uid = uid.Id, Folder = f.FullName, Kljuc = s.Kljuc, Odlazni = odlazni, Izvor = "imap" };
+            RezultatObrade rez;
+            try { rez = obradaPoruke.Obradi(ulaz, ps); }
+            catch (Exception ex)
+            {
+                // v3.0.5: dnevnik za dnevni sažetak (greška obrade); izuzetak ide dalje kao i ranije (RedPoruka – ponovni pokušaj)
+                if (!dryRun) try { DnevniSazetak.ZapisiPoruku(cfg.StanjeFolder, DateTime.Now, ulaz, null, ex.GetType().Name + ": " + ex.Message); } catch { }
+                throw;
+            }
+            if (!dryRun) try { DnevniSazetak.ZapisiPoruku(cfg.StanjeFolder, DateTime.Now, ulaz, rez); } catch (Exception ex) { log.Upozorenje("  UID " + uid.Id + ": dnevnik nije upisan: " + ex.Message); }
+            return rez.Korak;
         }
 
         /// <summary>
@@ -290,6 +312,35 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex) { log.Upozorenje("Lista za šifarnik nije sačuvana: " + ex.Message); }
         }
 
+        /// <summary>
+        /// v3.0.5: dnevni sažetak na agenti@ – u prvom prolazu posle DnevniSazetakSat, za svaki dan od poslednjeg poslatog do juče (najviše 7).
+        /// Neuspelo slanje se ponavlja posle 10 minuta; blokirano prekidačem se ne označava kao poslato.
+        /// </summary>
+        private void DnevniSazetakAkoTreba(Stanje stanje)
+        {
+            if (dryRun) return;
+            try
+            {
+                var dani = DnevniSazetak.ZaSlanje(cfg.StanjeFolder, DateTime.Now, cfg.DnevniSazetakSat);
+                if (dani.Count == 0 || !stanje.SmeUpozorenje("dnevni-sazetak-pokusaj", 1)) return;
+                foreach (var dan in dani)
+                {
+                    var rezim = Prekidac.Vazeci(cfg, out _)?.ToString() ?? cfg.RezimTekst;
+                    var tekst = DnevniSazetak.Sastavi(cfg.StanjeFolder, dan, rezim, Environment.MachineName, VerzijaPrograma);
+                    var m = Slanje.Nova(cfg, new[] { Slanje.TestnaAdresa }, null, "[CimProvera] Dnevni sažetak " + dan.ToString("dd.MM.yyyy."), tekst);
+                    m.Headers.Replace(Slanje.ZaglavljeVrste, "dnevni-sazetak");
+                    if (!Slanje.Posalji(cfg, m)) { stanje.ZapisiUpozorenje("dnevni-sazetak-pokusaj", false, 1); return; }
+                    DnevniSazetak.OznaciPoslato(cfg.StanjeFolder, dan);
+                    log.Info("Dnevni sažetak za " + dan.ToString("dd.MM.yyyy.") + " poslat na " + Slanje.TestnaAdresa + ".");
+                }
+            }
+            catch (Exception ex)
+            {
+                stanje.ZapisiUpozorenje("dnevni-sazetak-pokusaj", false, 1);
+                log.Greska("Dnevni sažetak nije poslat (ponovni pokušaj za 10 min): " + ex.Message);
+            }
+        }
+
         private bool Upozori(Stanje stanje, string kljuc, string tekst, int sati = 6)
         {
             if (dryRun) return false;
@@ -301,8 +352,12 @@ namespace Saobracaj.Agent.CimProvera
             }
             try
             {
-                Slanje.Posalji(cfg, Slanje.Nova(cfg, new[] { cfg.UpozorenjaNa }, null, "[CimProvera] Upozorenje: " + kljuc, tekst
-                    + Environment.NewLine + Environment.NewLine + "Server: " + Environment.MachineName + ", " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz")));
+                if (!Slanje.Posalji(cfg, Slanje.Nova(cfg, new[] { cfg.UpozorenjaNa }, null, "[CimProvera] Upozorenje: " + kljuc, tekst
+                    + Environment.NewLine + Environment.NewLine + "Server: " + Environment.MachineName + ", " + DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm zzz"))))
+                {
+                    stanje.ZapisiUpozorenje(kljuc, false, sati);   // v3.0.5: prekidač nije pustio – INTERNO je već u logu
+                    return false;
+                }
                 stanje.ZapisiUpozorenje(kljuc, true, sati);
                 log.Info("Upozorenje „" + kljuc + "“ poslato na " + cfg.UpozorenjaNa + ".");
                 return true;

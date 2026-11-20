@@ -324,6 +324,7 @@ DELETE FROM planiranje.tmpTeretnica WHERE Izvor = @izvor; DELETE FROM planiranje
             log = new Log(rp.LogFolder) { Tiho = true, Prati = red => { lock (zapis) zapis.Add(red); } };
             // nikad SMTP: pripremljena poruka se samo beleži (ObradaPoruke) i čuva u odgovor.html
             Slanje.Transport = (c, m) => { };
+            Slanje.SamoPriprema = true;   // v3.0.5: alat ništa ne šalje – prekidač agenta se ne primenjuje
             Slanje.Dnevnik = log;
             Izvestaj.Potpis = PotpisIzvestaja.Iz(cfg);
             pravila = PravilaSkup.Ucitaj(cfg.PravilaFolder, cfg.PravilaFajl, cfg.StanjeFolder, log);

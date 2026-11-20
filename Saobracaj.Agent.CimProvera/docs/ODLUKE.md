@@ -957,3 +957,100 @@ Pravila se primenjuju redom; prvo koje važi odlučuje.
      - Rukom pisan datum ili vreme se upisuje u znak kada ga OCR pročita.
      - Bez toga je dovoljan rukopis, jer OCR rukopisni datum obično ne čita (UID 230). Ovo je tumačenje agenta.
   6. **Bez ijednog znaka otiska, potpisa i koda overe** (najviše jedna nečitljiva reč i jedan fragment, mastilo < 0,035) → nema: kucani naziv prevoznika, i kada ga OCR ne pročita (UID 146).
+
+## 15. v3.0.5 – Test režim na serveru (20.11.)
+
+Korisnik je 20.11. pregledao paket 3.0.4c i potvrdio merilo pečata. `Jezgro.dll` 3.0.4 (commit eaf76f0) je postavljen na server; rezervna kopija je `backup-pre-3.0.4-20261120-0028`. Zadatak obrade ostaje isključen dok ga korisnik ne uključi skriptom.
+
+### 15.1 Odluka korisnika (20.11.)
+
+- Test režim se priprema, ali se **ne uključuje**. Uključuje ga korisnik skriptom `Ukljuci-TestRezim.ps1`, a hitno isključuje skriptom `Iskljuci-Hitno.ps1`.
+- **Nulta tačka** = poslednji UID pokriven arhivom u trenutku uključivanja.
+- Agent upisuje sa `Izvor = 'Agent'`. Podaci alata (`Izvor = 'Alat'`) ostaju netaknuti.
+- **Prekidač:** u Test režimu sve ide isključivo na agenti@kprevoz.co.rs, i to se proverava pri svakom slanju. Ako režim nije Test, ni Live sa odobrenim spiskom pošiljalaca, ne šalje se ništa (INTERNO).
+- **Dnevni sažetak** ide na agenti@ jednom dnevno: broj mailova, odluke, izveštaji, greške po pravilu, upis poslova.
+- **Testiranje:** obrađuje se radni prostor `Testiranje` (nove .msg iz `Desktop\Testiranje`). Posle svake obrade pravi se paket `_Paket\Claude\Claude_Testiranje_<datum>.zip`.
+
+### 15.2 Prekidač (`Mail\Prekidac.cs`, `Slanje.Posalji`)
+
+- **Kada se proverava:**
+  - pri svakom slanju (izveštaji, interne poruke, upozorenja, dnevni sažetak);
+  - na početku svakog prolaza agenta. Ako prekidač ne pušta, prolaz se ne izvršava: pošta se ne čita, ništa se ne šalje i ne upisuje, a poruke čekaju sledeći ispravan prolaz.
+- **Ključ `Rezim`** se pri svakom slanju čita ponovo iz `exe.config` na disku, pa izmena važi odmah.
+  - Bez ključa važi podrazumevani **Test**.
+  - **Test** → svaki primalac osim agenti@ se uklanja, kao od 2.8.4 (zaštita ostaje nepromenjena). Zatim se proverava da nije ostao nijedan drugi primalac.
+  - **Live** → samo uz neprazan `OdobreniPosiljaoci` (adrese ili @domen). Spoljni primaoci su samo oni sa spiska; interni domen (`InterniDomeni`) ostaje.
+  - Ako je proces pokrenut u Test režimu, ostaje Test i kada config u međuvremenu kaže Live.
+  - **Bilo šta drugo** ne pušta ništa: prazna vrednost, pogrešno napisano („Tset“), Live bez spiska, config koji se ne može pročitati.
+- **Hitno isključivanje:** dok u folderu agenta postoji fajl `SLANJE_ZAUSTAVLJENO`, ne šalje se ništa, ni na agenti@. Proces koji upravo radi vidi fajl pre sledećeg slanja.
+- **Kada slanje nije pušteno, INTERNO:**
+  - greška u logu „INTERNO: slanje blokirano – <razlog>“;
+  - poruka se čuva u `stanje\neposlato\*.eml`;
+  - red ide u dnevnik.
+
+  Poruka se ne ponavlja automatski. Uz Live bez spiska ni pravila ni sanduče se ne dotiču, jer se prolaz uopšte ne izvršava.
+- **CimRadionica** nikad ne šalje (prazan transport, `Slanje.SamoPriprema`), pa se prekidač na nju ne primenjuje.
+
+### 15.3 Nulta tačka iz arhive (`NultaTackaArhive.cs`, komanda `nulta-tacka-arhiva`)
+
+- **Redosled u `Ukljuci-TestRezim.ps1`:**
+  1. Zadatak arhiviranja se pokreće odmah i čeka se kraj.
+  2. Komanda (bez IMAP-a i lozinke) čita `arhiva\izvestaj.txt` i `indeks.csv`.
+- **Komanda odbija ako:**
+  - izveštaj arhive nije od ovog arhiviranja (≤ 30 min);
+  - neki folder ima rupe;
+  - poslednji UID INBOX-a na serveru nije u arhivi;
+  - zadatak obrade je uključen;
+  - agent upravo radi (muteks).
+- **Nulta tačka po folderu:**
+  - INBOX = poslednji arhivirani UID (= poslednji na serveru);
+  - INBOX.Sent = poslednji UID na serveru u trenutku arhiviranja. Sve do njega je ili u arhivi ili pre početne tačke; rupa nema.
+- **Upis u `stanje.json`:**
+  - pozicija čitanja (`poslednji_uid`) i `nulta_tacka_uid`;
+  - vreme nulte tačke = vreme arhiviranja.
+
+  Pozicija se nikad ne vraća unazad. Pre izmene se pravi kopija `stanje\arhiva\pre-nulte-tacke-<vreme>\stanje.json`, a red ide u `nulta_tacka.txt` pored exe-a.
+- **Poruke do nulte tačke** agent ne obrađuje. Ostaju u arhivi i po potrebi se obrađuju u CimRadionici.
+- **Stanje 20.11. (pre uključivanja):** agent je stao na INBOX UID 846 (18.11.), arhiva pokriva UID 191–899 (19.11. 15:10). Bez nove nulte tačke agent bi krenuo od 847.
+- **Posle hitnog isključivanja** ponovno uključivanje daje novu nultu tačku: mailovi stigli dok je agent bio isključen su u arhivi, ali ih agent ne obrađuje.
+- **Nulta tačka Test režima:** — *upisuje se pri uključivanju (red iz `nulta_tacka.txt`).*
+
+### 15.4 Dnevni sažetak (`DnevniSazetak.cs`)
+
+- **Dnevnik:** svaka obrađena poruka (i pokušaj koji je završio greškom) i svako slanje (poslato / blokirano) upisuju se u `stanje\dnevnik\yyyy-MM-dd.jsonl`. Upisuju se folder, UID, pošiljalac, naslov, status, pripremljene poruke, pravila sa težinom i brojevi upisa. Sadržaj dokumenata se ne upisuje.
+- **Kada se šalje:** u prvom prolazu posle `DnevniSazetakSat` (podrazumevano 7), za svaki dan od poslednjeg poslatog do juče, najviše 7 dana.
+  - Prvi sažetak obuhvata dan uključivanja.
+  - Šalje se na agenti@, uz zaglavlje „sopstveni izveštaj“, pa ga agent ne obrađuje.
+  - Neuspelo slanje se ponavlja posle 10 minuta.
+- **Sadržaj:**
+  - **mailovi:** dolazni i odlazni; sopstvene poruke agenta se broje posebno;
+  - **odluke** po statusu maila (Ispravan, Greske, +RucnaProvera, NemaCim, IstiPrilog…);
+  - **izveštaji:** pripremljeno po vrsti, poslato, blokirano prekidačem i zašto;
+  - **greške po pravilu:** greška / upozorenje / INTERNO;
+  - **upis poslova** (novi, izmenjeni, isti, teretnice, stavke) i greške upisa;
+  - **greške obrade.**
+
+### 15.5 Testiranje (CimRadionica)
+
+- Kartica **Testiranje** i komanda `CimRadionica.exe --testiranje [--neuspele]` rade isto (`TestiranjeObrada`):
+  1. nove .msg/.eml iz foldera Testiranje → radni prostor „Testiranje“;
+  2. obrada po datumu slanja;
+  3. `_Analiza` u folderu Testiranje i Zbirni Excel;
+  4. paket za Claude **samo sa mailovima ove obrade**: `<Testiranje>\_Paket\Claude\Claude_Testiranje_<yyyy-MM-dd>.zip`. Drugi paket istog dana dobija `_2`, `_3`; preko 100 MB se deli na delove.
+- Paket ne sadrži originalne mailove, lozinke, DPAPI fajlove ni connection string.
+
+### 15.6 Kontrola: podaci alata ostaju netaknuti
+
+- **Polazno stanje 20.11. u 00:55** (pre uključivanja; samo čitanje, `CHECKSUM_AGG(CHECKSUM(*))` po izvoru):
+
+| Tabela | Izvor | Redova | Max ID | Kontrolni zbir |
+|---|---|---:|---:|---:|
+| tmpJobs | Alat | 39 | 1026 | 604803696 |
+| tmpTeretnica | Alat | 39 | 854 | -501307226 |
+| tmpTeretnicaStavke | Alat | 997 | 21886 | 1549642821 |
+| tmpDokument | Alat | 297 | 6300 | -807027546 |
+
+  Redova sa `Izvor = 'Agent'` nema.
+- **Posle uključivanja** isti upit mora da da iste brojeve za `Alat`; novi redovi su samo `Agent`:
+  `SELECT Izvor, COUNT(*), MAX(ID), CHECKSUM_AGG(CHECKSUM(*)) FROM planiranje.tmpJobs GROUP BY Izvor` (isto za tmpTeretnica, tmpTeretnicaStavke, tmpDokument).
+  Zbir alata se menja samo kada alat obrađuje online (CimRadionica `--ispocetka --online` briše i piše `Alat`).

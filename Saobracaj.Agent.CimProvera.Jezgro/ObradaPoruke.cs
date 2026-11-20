@@ -74,6 +74,8 @@ namespace Saobracaj.Agent.CimProvera
         /// <summary>Trajanje faza (s): citanje (provera sa čitanjem), upis, ukupno.</summary>
         public Dictionary<string, double> Trajanje = new Dictionary<string, double>();
         public string Greska;
+        /// <summary>v3.0.5: greška upisa u planiranje.tmp* (rollback) – za dnevni sažetak.</summary>
+        public string GreskaUpisa;
     }
 
     /// <summary>
@@ -401,6 +403,7 @@ namespace Saobracaj.Agent.CimProvera
             catch (Exception ex)
             {
                 log.Greska("  UID " + uid + ": upis u bazu nije uspeo (rollback) – provera i izveštaj nisu promenjeni", ex);
+                rez.GreskaUpisa = ex.Message;
                 Upozori("upis-baza", "Upis u privremene tabele (planiranje.tmp*) nije uspeo za mail UID " + uid + " „" + m.Subject + "“: " + ex.Message
                     + Environment.NewLine + "Transakcija je vraćena (rollback). Provera i izveštaj su poslati normalno. Detalji su u logu.", 6);
                 return null;
